@@ -115,6 +115,8 @@ that consumes too much context leaves insufficient room for the actual work.
 
 After initial skill creation, shift to building real artifacts to discover gaps. See [references/practice-driven-refinement.md](references/practice-driven-refinement.md) for the full pattern. Key idea: build using only skills as reference, let compiler errors reveal what's missing, update skills immediately, commit after each fix.
 
+**Study generated output, not just source.** For code generation frameworks, the generated files ARE the API contract. Read `build/src/`, `build/template/`, and every output directory. The generated base class, event/command/data product packages, and template stubs define the exact function signatures, naming conventions, and type paths your implementation must use. Reading only the generator source or YAML schemas gives you the input format but not the output contract.
+
 ### 6. Update Memory
 
 After consolidation, update MEMORY.md with:
