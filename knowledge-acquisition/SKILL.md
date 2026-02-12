@@ -100,6 +100,17 @@ When the study session finishes, the main session MUST review before accepting:
 - If a skill is <100 lines, consider merging into a related skill
 - If a skill is >500 lines, split into SKILL.md + references/
 
+**Context budget awareness:**
+Skills are loaded into the agent's context window before task execution. A skill
+that consumes too much context leaves insufficient room for the actual work.
+- SKILL.md alone: aim for 150-350 lines (sweet spot for most tasks)
+- SKILL.md + all references combined: stay under ~800 lines total
+- Only reference files explicitly linked from SKILL.md are loaded
+- Dense tasks (multi-file code generation) need MORE free context -- keep skills leaner
+- Shallow tasks (lookup, quick answers) tolerate larger skills
+- When in doubt, move detailed examples to references/ and keep SKILL.md as an index
+- Test by asking: "Can a model ingest this skill AND still do a complex task?"
+
 ### 5. Update Memory
 
 After consolidation, update MEMORY.md with:
