@@ -333,7 +333,12 @@ Missing any of these causes code generation errors.
 
 **Commands YAML:**
 - Field is `arg_type`, not `type` or `parameters` (those are NOT valid keys)
+- For no-argument commands, OMIT `arg_type` entirely (don't use `arg_type: None`)
 - Command arguments must be a separate packed record type, not inline fields
+
+**Events YAML:**
+- No `level` field in schema -- events are typed by their `param_type` only
+- Omit `param_type` for events with no parameter
 
 **Packed record fields:**
 - `Natural` needs 31 bits -- does NOT fit `U16` format. Use `Interfaces.Unsigned_16` for U16 fields.
