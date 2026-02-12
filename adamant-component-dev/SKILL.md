@@ -142,6 +142,19 @@ parameters:
     type: Packed_U16.T
     default: "(Value => 0)"             # Ada-syntax default initializer
 
+# Parameters require a modify connector in component YAML:
+#   - description: The parameter update connector.
+#     kind: modify
+#     type: Parameter_Update.T
+# Implementation overrides:
+#   Parameter_Update_T_Modify: call Self.Process_Parameter_Update(Arg)
+#   Update_Parameters_Action: hook called AFTER params applied (emit event, update HW)
+#   Validate_Parameters(Self, Param_Name : Param_Type.U) -> Valid/Invalid
+# Access current values: Self.{Param_Name}.{Field} (e.g., Self.Start_Count.Value)
+# Call Self.Update_Parameters periodically (e.g., in Tick) to apply staged params.
+# NAMING: param type package must NOT match param name (collision with base record field).
+#   Bad: param "My_Params" with type "My_Params.T". Good: type "Packed_My_Params.T".
+
 # component_name.faults.yaml
 faults:
   - name: Discontinuous_Time_Fault
@@ -440,6 +453,10 @@ component_name/test/
 
 - **Passive**: Synchronous processing (filters, dividers, counters, algorithm wrappers)
 - **Active**: Message queue for async connectors (routers, command handlers)
+  - `Init` MUST call `Self.Init_Base(Queue_Size)` to allocate the queue
+  - Async handler: `{Type}_T_Recv_Async` (called by auto-generated `Cycle` after dequeue)
+  - Overflow handler: `{Type}_T_Recv_Async_Dropped` (called when queue full)
+  - Command connectors stay `recv_sync` even on active components
 - **Active + Subtasks**: Isolate blocking I/O (serial/socket interfaces)
 
 ## Formal Verification
