@@ -11,12 +11,12 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | Skill | Lines | Purpose |
 |-------|-------|---------|
 | `adamant-skill-selector` | 119 | **Read first.** Maps tasks to skills. |
-| `adamant-component-dev` | 425+453 ref | Components: YAML models, generated API, implementation patterns |
+| `adamant-component-dev` | 443+453 ref | Components: YAML models, generated API, implementation patterns |
 | `adamant-assembly-dev` | 317+104 ref | Assemblies: scheduling, routing, ID assignment |
 | `adamant-build-system` | 292 | Redo commands, code gen pipeline, build paths |
 | `adamant-framework-components` | 281 | Catalog of all 55 built-in components |
 | `adamant-type-system` | 451 | YAML type definitions, format codes, Ada type hierarchy |
-| `adamant-testing` | 372+179 ref | Test harness, History API, assertions, common errors |
+| `adamant-testing` | 415+179 ref | Test harness, History API, assertions, common errors |
 | `adamant-algorithm-wrapping` | 243+111 ref | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
 | `adamant-project-setup` | 187 | New project scaffolding, env/activate, Docker, config |
 
@@ -29,10 +29,11 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 
 ## Validation Status
 
-- Component generation: ~95% first-try compile rate (4/4 clean in latest round)
-- Testing: test stimulus API and history comparison patterns now documented
+- Component generation: ~90% first-try compile rate (sensor_mux clean, mode_manager_v2 1 fix, limit_checker 2 fixes, orbit_propagator 5 fixes in latest round)
+- Testing: sensor_mux 3/3 passing first try; test compilation reliable, assertion logic still needs careful component-behavior matching
 - Algorithm wrapping: C shim pattern validated; custom vs xmera type handling clarified
 - Assembly integration: 10-component assembly links to 3.7MB ELF
+- Common fix categories: command naming (no _Execute suffix), Invalid_Command procedure signature, format: on custom record fields, qualifying ambiguous literals, .U->.T parameter conversion
 
 ## Non-Adamant Skills
 
