@@ -44,7 +44,7 @@ connectors:
     kind: send
 ```
 
-Add `Parameter_Update.T` modify connector if algorithm has tunable config.
+Add `Parameter_Update.T` modify connector ONLY if algorithm has runtime-tunable config. Most wrappers are minimal: no events, no parameters, no faults. Real xmera-components typically have only tick + request + data_product + get(time) connectors. Don't over-engineer.
 
 ### Data Dependencies
 
@@ -114,7 +114,8 @@ end Tick_T_Recv_Sync;
 
 **Type conversion chain:** `Packed.T` (wire) -> `Unpack` -> `.U` (Ada record) -> `.C.To_C` -> `.C.U_C` (C-compatible) and reverse.
 
-### Error Handlers (always include)
+### Error Handlers
+Safety-critical wrappers use `pragma Assert (False)` -- silent failure with assertion, NOT events:
 ```ada
 overriding procedure Invalid_Data_Dependency
   (Self : in out Instance; Id : in Data_Product_Types.Data_Product_Id;
@@ -177,6 +178,11 @@ cd test/ && redo test                  # Tests pass
 ```
 
 Verify C++ library linkage: `nm libgncAlgorithms.a | grep <algorithm>`
+
+### Ada Bindings Conventions
+- Opaque handles: use `null record` (not `System.Address`) -- framework convention
+- Pointer types: `type Foo_Access is access all Foo;` with `limited private` in public
+- Suppress style warnings on generated bindings: `pragma Style_Checks (Off);`
 
 ## Common Pitfalls
 
