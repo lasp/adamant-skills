@@ -34,6 +34,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 - Algorithm wrapping: C shim pattern validated; custom vs xmera type handling clarified
 - Assembly integration: 10-component assembly links to 3.7MB ELF
 - Common fix categories: command naming (no _Execute suffix), Invalid_Command procedure signature, format: on custom record fields, qualifying ambiguous literals, .U->.T parameter conversion
+- Best practice: spawn component + tests together for highest test accuracy (3/3 vs ~50% when tests spawned separately)
 
 ## Non-Adamant Skills
 
