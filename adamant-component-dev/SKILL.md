@@ -179,6 +179,21 @@ events:
 
 **Component-specific packed types**: Place `name.record.yaml`, `name.array.yaml`, or `name.enums.yaml` in component directory for component-specific types.
 
+## Available Data Structures (src/data_structures/)
+
+| Package | Generic Params | Key Operations | Use Case |
+|---------|---------------|----------------|----------|
+| Binary_Tree | Element_Type, <, > | Add, Search (O(log n)), Remove | Static lookup tables |
+| Fifo | T | Push, Pop, Peek, Get_Count | Simple typed queues |
+| Circular_Buffer | (byte-based) | Push, Pop, Peek, Num_Bytes_Free | Streaming byte data |
+| Queue | (extends Circular_Buffer) | Push, Pop with length prefix | Variable-length elements |
+| Priority_Queue | | Push with priority, Pop highest | Priority scheduling |
+| Protected_Circular_Buffer | | Thread-safe Push/Pop | Shared byte buffers |
+| Protected_Priority_Queue | | Thread-safe priority ops | Shared priority queues |
+| Database | | Key-value storage | Configuration data |
+
+Binary_Tree is a sorted array underneath (O(log n) search, O(n) insert). Best for data inserted once at startup.
+
 ## Connector Kind Compatibility
 
 Connectors wire in pairs by direction:
