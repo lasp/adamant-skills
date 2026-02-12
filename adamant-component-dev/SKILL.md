@@ -215,6 +215,34 @@ items:
     type: Packed_U32.T
 ```
 
+## Generated Code: What You Get for Free
+
+From component YAML, the generator creates:
+- **Base class** (`Component-Name.ads/adb`): connectors, queue management, lifecycle
+- **Implementation stubs** (`Component-Name-Implementation.ads/adb`): developer extends these
+- **Feature model packages**: `Self.Events.*`, `Self.Data_Products.*`, `Self.Commands.*`, `Self.Faults.*`, `Self.Parameters.*`
+
+Key generated methods on `Self`:
+- `Self.Event_T_Send_If_Connected(...)` -- always use `_If_Connected` variant
+- `Self.Data_Product_T_Send_If_Connected(...)`
+- `Self.Sys_Time_T_Get` -- system time service
+- `Self.Is_{Connector}_Connected(Index)` -- check before sending on arrayed connectors
+
+From assembly YAML, the generator creates:
+- Assembly package with lifecycle: `Init_Base` -> `Set_Id_Bases` -> `Map_Data_Dependencies` -> `Connect_Components` -> `Init_Components` -> `Set_Up_Components` -> `Start_Components`
+- Component instance declarations in `{Assembly}_Components` package
+- Task objects for active components with synchronization
+
+From record YAML, the generator creates:
+- **U** (unpacked), **T** (packed big-endian), **T_Le** (packed little-endian) types
+- `Pack(U) return T` / `Unpack(T) return U` conversion
+- `To_Byte_Array` / `From_Byte_Array` serialization
+- `Valid(U) return Boolean` field validation
+- `-Representation`, `-Validation`, `-Assertion`, `-C` child packages
+- Python and MATLAB ground classes
+
+See [references/implementation-patterns.md](references/implementation-patterns.md) for Ada implementation idioms (connector usage, thread safety, command handlers, lifecycle hooks, change detection).
+
 ## Tester Component Generation
 
 `redo templates` generates a reciprocal tester with inverse connectors (sends become recvs). Tester forces all invokee connectors synchronous (no queues in test). White-box access to component internals via tester instance.
