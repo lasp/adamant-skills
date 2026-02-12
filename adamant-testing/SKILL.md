@@ -154,14 +154,18 @@ end Component_Name_Tests.Implementation;
 ```ada
 overriding procedure Set_Up_Test (Self : in out Instance) is
 begin
-   -- For passive components:
+   -- Step 1: Init_Base (NO component params here!)
    Self.Tester.Init_Base;
+   -- For active components: Self.Tester.Init_Base (Queue_Size => ...);
    
-   -- For active components (provide queue size):
-   Self.Tester.Init_Base (Queue_Size => Self.Tester.Component_Instance.Get_Max_Queue_Element_Size * 3);
-   
-   -- Wire and initialize
+   -- Step 2: Wire connectors
    Self.Tester.Connect;
+   
+   -- Step 3: Component init (THIS is where init params go)
+   Self.Tester.Component_Instance.Init (My_Param => 42);
+   -- Skip this step if component YAML has no init: section
+   
+   -- Step 4: Complete setup
    Self.Tester.Component_Instance.Set_Up;
 end Set_Up_Test;
 
@@ -373,7 +377,9 @@ with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
 
 7. **Command response status type**: In command response assertions, use `Command_Enums.Command_Response_Status.Success/Failure`, NOT `Command_Execution_Status`. The command response record's Status field is `Command_Response_Status.E`.
 
-8. **Typed histories don't auto-clear (MOST COMMON ERROR)**: Clearing `T.Data_Product_T_Recv_Sync_History` does NOT clear individual typed histories like `T.Counter_History`. When checking typed histories after clearing raw histories, use CUMULATIVE counts: if an event fired twice total (once before clear, once after), the typed history count is 2 even though the raw history count is 1. Either use cumulative counts or clear typed histories explicitly: `T.My_Event_History.Clear;`
+8. **Init params go to Component_Instance.Init, NOT Init_Base**: `Self.Tester.Init_Base` takes NO component params (only Queue_Size for active). Component init params go to `Self.Tester.Component_Instance.Init(Param => Value)`. Order: Init_Base -> Connect -> Component_Instance.Init -> Set_Up.
+
+9. **Typed histories don't auto-clear (MOST COMMON ERROR)**: Clearing `T.Data_Product_T_Recv_Sync_History` does NOT clear individual typed histories like `T.Counter_History`. When checking typed histories after clearing raw histories, use CUMULATIVE counts: if an event fired twice total (once before clear, once after), the typed history count is 2 even though the raw history count is 1. Either use cumulative counts or clear typed histories explicitly: `T.My_Event_History.Clear;`
 
 ## Testing Best Practices
 
