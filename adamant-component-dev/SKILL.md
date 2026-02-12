@@ -329,7 +329,18 @@ Missing any of these causes code generation errors.
 - `Event_T_Send`, `Data_Product_T_Send`, etc. are procedures you CALL, not override.
 - Only the `*_Dropped` handlers are overridden.
 
-**Command dispatch:**
+**Command_T_Recv_Sync is REQUIRED** when commands.yaml exists. This is the entry point for all commands. Standard pattern:
+```ada
+overriding procedure Command_T_Recv_Sync (Self : in out Instance; Arg : in Command.T) is
+   Stat : constant Command_Response_Status.E := Self.Execute_Command (Arg);
+begin
+   Self.Command_Response_T_Send_If_Connected ((
+      Source_Id => Arg.Header.Source_Id,
+      Registration_Id => Self.Command_Reg_Id,
+      Command_Id => Arg.Header.Id,
+      Status => Stat));
+end Command_T_Recv_Sync;
+```
 - Use `Self.Execute_Command(Arg)` to dispatch commands (NOT `Self.Process_Command`).
 - Returns `Command_Response_Status.E` (not `Command_Execution_Status.E`).
 
