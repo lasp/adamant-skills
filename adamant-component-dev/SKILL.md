@@ -109,6 +109,27 @@ packets:
     id: 7
     type: Status_Data.T
 
+# component_name.parameters.yaml
+parameters:
+  - name: Start_Count
+    description: The value to start counting at.
+    type: Packed_U16.T
+    default: "(Value => 0)"             # Ada-syntax default initializer
+
+# component_name.faults.yaml
+faults:
+  - name: Discontinuous_Time_Fault
+    description: A discontinuous time was detected.
+    param_type: Packed_U32.T            # Optional typed context with fault
+  - name: Zero_Time_Fault
+    description: A time restart at zero was detected.
+                                        # No param_type = no context data
+
+# component_name.requirements.yaml
+requirements:
+  - text: The component shall send a packet whenever it is scheduled to run.
+    description: Traceability and verification context.
+
 # component_name.tests.yaml
 tests:
   - name: Nominal_Test
@@ -129,6 +150,64 @@ fields:
   - name: Packet_Type    #   E1/E2 (enum), U8x{{ size }} (byte array, Jinja2)
     type: My_Enum.E
     format: E8
+```
+
+## Hardware Interface Models
+
+```yaml
+# system_registers.register_map.yaml -- Memory-mapped register definitions
+items:
+  - address: 0x4000_0004
+    name: First_Register
+    type: Packed_U32.Register_T
+  - address: 0x4000_0010
+    name: Second_Register
+    type: Packed_Poly_32_Type.Register_T
+
+# nonvolatile_store.memory_map.yaml -- Sequential memory layout
+start_address: 0x0600000
+length: 2097152                          # 2MB
+items:
+  - name: Time
+    type: Sys_Time.T
+  - name: Counter
+    type: Packed_U32.T
+```
+
+## Packed Type Advanced Features
+
+```yaml
+# Variable length record (single variable field, must be last, byte-aligned)
+fields:
+  - name: Header
+    type: Packed_U16.T
+    format: U16
+  - name: Data
+    type: Variable_Type.T
+    format: U8x{{ size }}
+    variable_length: True
+    variable_length_offset: 1          # CCSDS pattern: stored length = actual - 1
+
+# Field modifiers for problematic types
+  - name: Address_Field
+    type: System.Address
+    format: U32
+    skip_validation: True              # Skip autocoded validation (access types, etc.)
+  - name: Raw_Bytes
+    type: Packed_Byte_Array.T
+    format: U8x4
+    byte_image: True                   # Hex byte display instead of semantic formatting
+```
+
+## Tester Component Generation
+
+`redo templates` generates a reciprocal tester with inverse connectors (sends become recvs). Tester forces all invokee connectors synchronous (no queues in test). White-box access to component internals via tester instance.
+
+```
+component_name/test/
+├── component_name.tests.yaml
+├── component-component_name-implementation-tester.ads/adb   # Generated tester
+└── component_name_tests-implementation.ads/adb              # Handwritten test cases
 ```
 
 ## Execution Model Selection

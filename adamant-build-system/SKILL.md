@@ -26,7 +26,7 @@ One YAML model generates many outputs (Ada specs, HTML docs, LaTeX, Python groun
 *.component.yaml       *.assembly.yaml        *.record.yaml          *.array.yaml
 *.commands.yaml        *.events.yaml          *.data_products.yaml   *.data_dependencies.yaml
 *.parameters.yaml      *.faults.yaml          *.packets.yaml         *.tests.yaml
-*.view.yaml
+*.view.yaml            *.register_map.yaml    *.memory_map.yaml      *.requirements.yaml
 ```
 
 ## Build Path System
@@ -53,9 +53,21 @@ export BUILD_PATH="/path1:/path2"      # Override computed path
 export EXTRA_BUILD_PATH="/extra"       # Add to computed path
 export EXTRA_BUILD_ROOTS="/root"       # Add roots scanned for .path files
 export REMOVE_BUILD_PATH="/path"       # Exclude from path
+export ADAMANT_CONFIGURATION_YAML=/path/to/project.configuration.yaml
 ```
 
 Default BUILD_ROOTS: Adamant repo root + current project root (found via `.git`).
+File names must be unique across entire build path -- duplicates cause ambiguous linking.
+
+### Compilation Modes
+Set via TARGET: `Linux` (Development), `Linux_Test` (Test + coverage-ready), `Pico` (Production).
+- **Production**: optimized, no debug, validity checking off
+- **Development**: `-O0 -g`, RM validity checks (`-gnatVd`)
+- **Debug**: `-O0 -g -gnata`, all validity checks (`-gnatVa`), Initialize_Scalars
+- **Test**: Debug + coverage instrumentation
+- **Coverage**: Test mode with gcovr reporting
+
+Ada runtime modes: **Full** (Jorvik profile, default), **SFP** (small-footprint), **ZFP** (zero-footprint, bare metal).
 
 ## Redo Commands
 

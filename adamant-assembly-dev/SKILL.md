@@ -100,7 +100,7 @@ connections:
 
 ### Views (Focused Diagrams)
 ```yaml
-# views/data_flow.assembly_name.view.yaml
+# views/data_flow.assembly_name.view.yaml -- simple component list
 description: Data processing subsystem
 components: [instance_1, instance_2]
 connections:
@@ -108,6 +108,17 @@ connections:
     from_connector: data_Send
     to_component: instance_2
     to_connector: data_Recv_Sync
+
+# views/parameters.assembly_name.view.yaml -- filter rules
+description: Parameter subsystem
+rule: include_component_types & exclude_connector
+filters:
+  - name: include_component_types
+    type: component_type
+    include: [Example_Parameters, Example_Science]
+  - name: exclude_connector
+    type: connector_name
+    exclude: [Science_Instance.Command_T_Recv_Async]
 ```
 
 ## Main Program Pattern
