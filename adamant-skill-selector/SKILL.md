@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 9 Adamant skills totaling ~2400 lines. Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 9 Adamant skills totaling ~3534 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
