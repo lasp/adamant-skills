@@ -380,6 +380,43 @@ Also: `Packed_F32.T`, `Packed_Boolean.T`, `Packed_Natural.T`, `Packed_Poly_Type.
 
 **There is NO Packed_U8.** Use `Packed_Byte.T` for 8-bit values.
 
+## Sub-Byte Packed Fields (CRITICAL)
+
+For fields smaller than 8 bits, the base Ada type MUST fit in the allocated bits. `Interfaces.Unsigned_8` does NOT work for U3 -- Ada cannot fit 8-bit type in 3 bits.
+
+Solutions:
+1. **`preamble` with constrained subtypes**: Define in YAML preamble section
+   ```yaml
+   preamble: |
+     subtype Three_Bit_Type is Interfaces.Unsigned_8 range 0 .. 7;
+     type Apid_Type is mod 2**11;
+     type Sequence_Count_Type is mod 2**14;
+   ```
+2. **Use `mod` types** for arbitrary bit widths: `type My_Field_Type is mod 2**N;`
+3. **Use enum types** with `E1`, `E2`, etc. format for 1-bit/2-bit enums
+
+Field type must be small enough for the format:
+- U1-U7: Use `mod 2**N` or constrained subtype in preamble
+- U8: `Interfaces.Unsigned_8`
+- U9-U15: `mod 2**N` in preamble
+- U16: `Interfaces.Unsigned_16`
+- U17-U31: `mod 2**N` in preamble
+- U32: `Interfaces.Unsigned_32`
+
+Example (CCSDS header pattern from framework):
+```yaml
+preamble: |
+  subtype Three_Bit_Version_Type is Interfaces.Unsigned_8 range 0 .. 7;
+  type Ccsds_Apid_Type is mod 2**11;
+fields:
+  - name: Version
+    type: Three_Bit_Version_Type
+    format: U3
+  - name: Apid
+    type: Ccsds_Apid_Type
+    format: U11
+```
+
 ## Common Pitfalls
 
 - **Do NOT use `Boolean` as a packed record field type** -- causes schema validation errors in documentation generation. Use `Interfaces.Unsigned_8` with `format: U8` and 0/1 defaults instead. Or use `packed_boolean.T` from the framework types.
