@@ -90,8 +90,8 @@ redo run                # Build and run (requires main.adb)
 
 ### Test and Verify
 ```bash
-redo test               # Unit tests (current directory)
-redo test_all           # Recursive tests
+redo test               # Unit tests -- run from test/ subdirectory, NOT component root
+redo test_all           # Recursive tests (run from any directory, descends into all test/ dirs)
 redo prove              # SPARK proof
 redo prove_all          # Recursive SPARK proof
 redo analyze            # Static analysis (CodePeer/GNATSAS)
