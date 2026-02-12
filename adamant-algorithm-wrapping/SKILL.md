@@ -20,13 +20,19 @@ See [references/c-shim-bindings.md](references/c-shim-bindings.md) for Stages 1-
 
 ## Input Strategy: Parameters vs Data Dependencies
 
-**Parameters** (modify connector): fixed spacecraft properties, tunable gains, configuration arrays. Changed infrequently, validated on update.
-- Spacecraft inertia, control gains, slew properties, threshold values
+**Parameters** (modify connector): fixed spacecraft properties, tunable gains, configuration arrays. Changed infrequently, validated on update. If in doubt, ask: "does this change during flight?" No -> parameter.
+- Spacecraft inertia (ALWAYS a parameter, never a data dependency)
+- Control gains, slew properties, threshold values, damping coefficients
 
 **Data Dependencies** (request connector): dynamic telemetry from other components. Fetched each tick, staleness-checked.
 - Attitude state, ephemeris, sensor readings, navigation solutions
 
 **Stateful algorithms** (sunSearch, slew planners): may need a reset/init call with current time before first use. Track configuration state (e.g., `Slews_Configured : Boolean`) and call algorithm reset in `Update_Parameters_Action` when config changes.
+
+**Before creating custom packed types**, check if framework types already exist:
+- `adamant-xmera-components/src/types/` for GNC-specific types (Att_Guid, Nav_Att, etc.)
+- `adamant/src/types/` for general framework types (Packed_F32, Packed_U32, etc.)
+Reuse existing types whenever possible -- don't recreate what's already there.
 
 ## Stage 4: Component YAML Model
 
