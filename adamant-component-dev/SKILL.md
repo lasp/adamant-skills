@@ -29,6 +29,8 @@ component_name/
     └── component_name_tests-implementation.ads/adb
 ```
 
+**CRITICAL**: Do NOT create a `build/` directory. The build system generates it. Creating it manually (even with correct-looking files) prevents redo from running code generation.
+
 ## Development Workflow
 
 ```bash
@@ -204,55 +206,13 @@ events:
 
 **Component-specific packed types**: Place `name.record.yaml`, `name.array.yaml`, or `name.enums.yaml` in component directory for component-specific types.
 
-## Available Data Structures (src/data_structures/)
-
-| Package | Generic Params | Key Operations | Use Case |
-|---------|---------------|----------------|----------|
-| Binary_Tree | Element_Type, <, > | Add, Search (O(log n)), Remove | Static lookup tables |
-| Fifo | T | Push, Pop, Peek, Get_Count | Simple typed queues |
-| Circular_Buffer | (byte-based) | Push, Pop, Peek, Num_Bytes_Free | Streaming byte data |
-| Queue | (extends Circular_Buffer) | Push, Pop with length prefix | Variable-length elements |
-| Priority_Queue | | Push with priority, Pop highest | Priority scheduling |
-| Protected_Circular_Buffer | | Thread-safe Push/Pop | Shared byte buffers |
-| Protected_Priority_Queue | | Thread-safe priority ops | Shared priority queues |
-| Database | | Key-value storage | Configuration data |
-
-Binary_Tree is a sorted array underneath (O(log n) search, O(n) insert). Best for data inserted once at startup.
-
 ## Connector Kind Compatibility
 
-Connectors wire in pairs by direction:
 ```
-send        -> recv_sync | recv_async     (invoker -> invokee)
-request     -> service                     (invoker -> invokee, returns value)
-get         -> return                      (invoker -> invokee, returns value)
-provide     -> modify                      (invokee -> invoker, bidirectional)
+send    -> recv_sync | recv_async    request -> service
+get     -> return                    provide -> modify
 ```
-
-Array connector (`count: 0` or `count: N`): one-to-many fan-out with index.
-Mixed async priorities on a single component -> automatic priority queue.
-
-## Hardware Interface Models
-
-```yaml
-# system_registers.register_map.yaml -- Memory-mapped register definitions
-items:
-  - address: 0x4000_0004
-    name: First_Register
-    type: Packed_U32.Register_T
-  - address: 0x4000_0010
-    name: Second_Register
-    type: Packed_Poly_32_Type.Register_T
-
-# nonvolatile_store.memory_map.yaml -- Sequential memory layout
-start_address: 0x0600000
-length: 2097152                          # 2MB
-items:
-  - name: Time
-    type: Sys_Time.T
-  - name: Counter
-    type: Packed_U32.T
-```
+Array connector (`count: 0` or N): one-to-many fan-out with index.
 
 
 ## Generated Code API Reference
@@ -291,18 +251,9 @@ component_name/test/
   - Consider passive if you only have recv_sync connectors (no own task needed)
 - **Active + Subtasks**: Isolate blocking I/O (serial/socket interfaces)
 
-## Formal Verification
-
-```bash
-redo prove                                    # Prove current component
-redo prove_all                               # Recursive proof
-PROVE_SWITCHES="--level=4" redo prove        # Higher effort
-PROVE_SWITCHES="--timeout=30" redo prove     # Longer per-VC timeout
-```
-
-## C/C++ Algorithm Wrapping
-
-For wrapping C++ algorithms (GNC, etc.) into Adamant components, see the dedicated [adamant-algorithm-wrapping](../adamant-algorithm-wrapping/SKILL.md) skill. It covers the full pipeline: C shim creation, Ada binding generation, packed record conversion, component YAML patterns, type conversion chain (T -> U -> C.U_C), and unit testing.
+## Related Skills
+- **Formal verification**: See `adamant-build-system` (prove section)
+- **C++ algorithm wrapping**: See `adamant-algorithm-wrapping`
 
 ## Common Pitfalls
 
@@ -318,10 +269,27 @@ Missing any of these causes code generation errors.
 
 **Implementation spec with clauses:**
 - Only `with` what's needed: typically `Tick`, `Command`, `Parameter_Update` (for modify connector), and any CUSTOM types used in your private record (e.g. `My_Custom_Type`)
-- The generated base class always has `with` for: `Sys_Time`, `Event`, `Data_Product`, `Fault` (if used), `Basic_Types`. It has `with Interfaces; use Interfaces;` and `use Command_Enums;` ONLY when the component has commands. Components WITHOUT commands must add `with Interfaces;` and `use type Interfaces.Unsigned_32;` themselves if they need arithmetic on Unsigned types.
-- **CRITICAL**: Do NOT add `with` for ANY of these -- they are NOT standalone packages and/or are already visible: `Command_Execution_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces`. Putting `with Command_Execution_Status;` or `with Command_Response_Status;` at the top of the body is a COMPILATION ERROR.
-- When the component has commands, `use Interfaces;` and `use Command_Enums;` are already in scope from the generated base. No need for `use type Interfaces.Unsigned_16;` etc. in the body. You DO need `use Command_Execution_Status;` in the body (or inside each command function) to use bare `Success`/`Failure`.
-- Any custom enumeration types used in instance record fields must be declared in the public part of the implementation spec (before `type Instance is new ... with private;` if used publicly, or in private declarations)
+- The generated base class ALWAYS has `with Interfaces; use Interfaces;` and `with` for: `Sys_Time`, `Event`, `Data_Product`, `Fault` (if used), `Basic_Types`. Components with commands also get `use Command_Enums;`. No manual `with Interfaces;` or `use type` clauses needed.
+- **CRITICAL**: Do NOT `with` any of these (already visible or not standalone packages): `Command_Execution_Status`, `Command_Response_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces`. Adding `with Command_Execution_Status;` is a COMPILATION ERROR.
+- For components with commands: add `use Command_Execution_Status;` in the body to use bare `Success`/`Failure`.
+- Custom enumeration types used in instance record fields must be declared in the public part of the implementation spec.
+
+**Implementation spec structure (MANDATORY pattern):**
+```ada
+with Tick;        -- Only with connector/custom types you actually use
+with Command;     -- Only if component has commands
+
+package Component.My_Component.Implementation is
+   type Instance is new My_Component.Base_Instance with private;  -- PUBLIC: opaque
+private
+   type Instance is new My_Component.Base_Instance with record    -- PRIVATE: fields
+      My_Field : Interfaces.Unsigned_32 := 0;
+   end record;
+   overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T);
+   -- All overriding declarations go in private section
+end Component.My_Component.Implementation;
+```
+The `with private` in public + full record in `private` is REQUIRED. Putting the record directly in the public part is a compilation error.
 
 **Get connectors are NOT overridden:**
 - `Sys_Time_T_Get` is a get connector -- the base class provides it. Do NOT override it.
@@ -393,18 +361,16 @@ end Command_T_Recv_Sync;
 - `Natural` needs 31 bits -- does NOT fit `U16` format. Use `Interfaces.Unsigned_16` for U16 fields.
 - Packed `.T` types inherit serialization fields -- cannot be used as simple record aggregates for default initialization. Store individual scalar fields instead.
 
-**Parameters:**
-- `Validate_Parameters` takes INDIVIDUAL unpacked (`.U`) arguments, one per parameter -- NOT a combined record
+**Parameters (additional):**
 - Parameters REQUIRE `default` in YAML (schema-enforced)
-- `Self.Update_Parameters` must be called explicitly (typically in Tick handler) to apply staged values
-- Negative defaults for `Interfaces.Integer_32` fields break generated code (unary minus visibility issue)
-- `Parameter_Update_Status` type lives in `Parameter_Enums.Parameter_Update_Status`
+- `Self.Update_Parameters` must be called explicitly (in Tick handler) to apply staged values
+- Negative defaults for `Interfaces.Integer_32` break generated code (unary minus visibility)
+- `Parameter_Update_Status` lives in `Parameter_Enums.Parameter_Update_Status`
 
 **Visibility:**
-- `Interfaces` package is NOT auto-with'd. Add `with: ["Interfaces"]` in component YAML or `with Interfaces;` in handwritten files.
-- Use `use type Interfaces.Unsigned_32;` for arithmetic operators.
-- `Errant_Field_Number` in Invalid_Command/Invalid_Parameter is `Unsigned_32` (NOT `Basic_Types.Unsigned_32` or `Interfaces.Unsigned_32`). The base class imports Interfaces and renames it.
-- No `Invalid_Command_Received` event unless you explicitly define it in events.yaml.
+- `Interfaces` is ALWAYS auto-with'd and `use`d by the generated base. Do NOT add it manually.
+- `Errant_Field_Number` in Invalid_Command/Invalid_Parameter is `Unsigned_32` (base renames from Interfaces).
+- No `Invalid_Command_Received` event unless explicitly defined in events.yaml.
 
 **Duplicate connector types get numbered:**
 - Two `Event.T` send connectors become `Event_T_Send` (1st) and `Event_T_Send_2` (2nd)
@@ -422,12 +388,7 @@ end Command_T_Recv_Sync;
 - If you add `Command_Response_T_Send`, you MUST add `Command_Response_T_Send_Dropped`.
 - Forgetting one produces: "type must be declared abstract or X overridden".
 
-**Testing:**
-- Test directories need `env.py` containing `from environments import test`
-- `Self.Tester` is `Instance_Access` (pointer), NOT `Instance` -- use `Instance_Access renames`
-- `Tick.T` requires both `Time : Sys_Time.T` and `Count` fields: `(Time => (0, 0), Count => 1)`
-- Test flow: `Init_Base` -> `Connect` -> component `Init` -> `Set_Up` -> send stimuli -> check histories
-- `Packet.T` header has `Time`, `Id`, `Sequence_Count`, `Buffer_Length` -- all required
+**Testing:** See `adamant-testing` skill for full patterns. Key gotcha: test dirs use `env.py` (NOT `.all_path`).
 
 ## Target Hardware Abstraction
 

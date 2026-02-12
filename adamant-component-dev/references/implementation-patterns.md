@@ -20,7 +20,10 @@ Every async connector has a `*_Dropped` handler (default `is null`).
 
 ## Instance Record Organization
 
+The instance record MUST be in the private section of the spec. Public part declares `type Instance is new Base_Instance with private;`.
+
 ```ada
+-- In private section:
 type Instance is new Base_Instance with record
    -- Configuration (from Init)
    Max_Count : Natural := 0;
