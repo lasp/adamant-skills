@@ -314,6 +314,25 @@ Each feature YAML file requires matching connectors in the component YAML:
 - `data_dependencies.yaml` -> `Data_Product_Fetch.T` / `Data_Product_Return.T` request
 Missing any of these causes code generation errors.
 
+**Implementation spec with clauses:**
+- Only `with` what's needed: typically `Tick`, `Command`, `Parameter_Update` (for modify connector)
+- The base class provides visibility for `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Packed_*` types, `Basic_Types`, `Interfaces`, `Unsigned_32`, `Command_Execution_Status`, `Parameter_Validation_Status`, `Command_Response_Status`
+- Do NOT `with Parameter_Validation_Status` -- it's not a standalone package. Use it directly (visible from base).
+
+**Get connectors are NOT overridden:**
+- `Sys_Time_T_Get` is a get connector -- the base class provides it. Do NOT override it.
+- You CALL `Self.Sys_Time_T_Get` in your code, you don't implement it.
+
+**Send connectors are NOT overridden:**
+- `Event_T_Send`, `Data_Product_T_Send`, etc. are procedures you CALL, not override.
+- Only the `*_Dropped` handlers are overridden.
+
+**Command dispatch:**
+- Use `Self.Execute_Command(Arg)` to dispatch commands (NOT `Self.Process_Command`).
+- Returns `Command_Response_Status.E` (not `Command_Execution_Status.E`).
+
+**Invalid_Command is REQUIRED** when commands.yaml exists. Missing it causes "type must be declared abstract" error.
+
 **Init parameter types:**
 - Use standard Ada types for init params: `Positive`, `Natural`, `Boolean`, `Interfaces.Unsigned_32`
 - NOT `Interfaces.IEEE_Float_32` -- use `Short_Float` or `Long_Float` for floats
