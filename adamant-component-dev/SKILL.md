@@ -285,6 +285,8 @@ component_name/test/
   - Async handler: `{Type}_T_Recv_Async` (called by auto-generated `Cycle` after dequeue)
   - Overflow handler: `{Type}_T_Recv_Async_Dropped` (called when queue full)
   - Command connectors stay `recv_sync` even on active components
+  - If active but NO recv_async connectors: must override `Cycle` procedure (task body)
+  - Consider passive if you only have recv_sync connectors (no own task needed)
 - **Active + Subtasks**: Isolate blocking I/O (serial/socket interfaces)
 
 ## Formal Verification
@@ -336,6 +338,7 @@ Missing any of these causes code generation errors.
   Call `Self.Process_Parameter_Update(Arg)` in the body.
 - Missing any of these produces "type must be declared abstract" error
 - There is NO combined `Component_Name_Parameters.U` record type. Parameters package only has creation functions.
+- `Update_Parameters_Action` is abstract -- must override even if just `is null`
 
 **Connector YAML:**
 - `get` kind CANNOT have `type` field -- only `return_type` and `kind`
