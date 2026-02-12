@@ -260,3 +260,5 @@ The assembly model classifies each component instance as:
 - `init`/`commands`/`events`/`data_products`/`parameters`/`faults`/`packets` -- has that feature model
 
 This drives which generated lifecycle methods exist.
+
+See [references/cosmos-integration.md](references/cosmos-integration.md) for COSMOS (OpenC3) ground system integration: generated config format, protocol files, plugin setup, scripting API, and Adamant-to-COSMOS type mapping.
