@@ -101,6 +101,15 @@ These patterns cause compilation errors if violated:
 - **Data dependencies**: require `request` connector (`Data_Product_Fetch.T`), NOT `get`
 - **Parameters**: require `modify` connector, NOT `recv_sync`
 
+### Wrapping a C++ algorithm into an Adamant component
+**Load:** `adamant-algorithm-wrapping`
+- C shim creation, Ada binding generation (h2ads), packed record conversion
+- Component YAML patterns for passive wrapper components
+- Data dependency flow, type conversion chain (T -> U -> C.U_C)
+- Unit testing with Python reference values
+
+**Also load:** `adamant-component-dev` (for general component patterns) and `adamant-type-system` (for packed record YAML)
+
 ## When NOT to Use This Selector
 
 - **General Ada/SPARK questions**: These skills are Adamant-specific. Generic Ada knowledge is already in the model.
