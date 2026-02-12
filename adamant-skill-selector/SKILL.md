@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 8 Adamant skills totaling ~2260 lines. Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 9 Adamant skills totaling ~2400 lines. Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -51,6 +51,13 @@ You have 8 Adamant skills totaling ~2260 lines. Loading all of them wastes conte
 - Catalog of all 55 built-in components organized by subsystem
 - Command routing, telemetry, sequencing, fault management, parameters, etc.
 
+### Setting up a new Adamant project
+**Load:** `adamant-project-setup`
+- Project directory structure, .do file setup, env/activate script
+- Configuration YAML (buffer sizes, stack margin)
+- Docker integration (compose override, build commands)
+- .gitignore, .all_path requirements, common pitfalls
+
 ### Build system, compilation, code generation
 **Load:** `adamant-build-system`
 - Redo commands (build, test, prove, clean)
@@ -93,6 +100,7 @@ You have 8 Adamant skills totaling ~2260 lines. Loading all of them wastes conte
 | Ground system integration (COSMOS) | assembly-dev | build-system |
 | Memory-mapped register interface | type-system | component-dev |
 | Create system architecture from scratch | assembly-dev | framework-components |
+| Start a new Adamant project | project-setup | build-system |
 
 ## Naming Conventions (quick reference)
 
