@@ -338,7 +338,11 @@ end Command_T_Recv_Sync;
 - Use `Self.Execute_Command(Arg)` to dispatch commands (NOT `Self.Process_Command`).
 - Returns `Command_Response_Status.E` (not `Command_Execution_Status.E`).
 
-**Invalid_Command is REQUIRED** when commands.yaml exists. Missing it causes "type must be declared abstract" error.
+**Invalid_Command is REQUIRED** when commands.yaml exists. Missing it causes "type must be declared abstract" error. It is a PROCEDURE (not a function) with 4 parameters:
+```ada
+overriding procedure Invalid_Command (Self : in out Instance; Cmd : in Command.T; Errant_Field_Number : in Unsigned_32; Errant_Field : in Basic_Types.Poly_Type);
+```
+Do NOT make it `function ... return Command_Execution_Status.E` -- that's a different signature and won't override.
 
 **Init parameter types:**
 - Use standard Ada types for init params: `Positive`, `Natural`, `Boolean`, `Interfaces.Unsigned_32`
@@ -383,6 +387,10 @@ end Command_T_Recv_Sync;
 **Events YAML:**
 - No `level` field in schema -- events are typed by their `param_type` only
 - Omit `param_type` for events with no parameter
+
+**Custom record types (*.record.yaml):**
+- EVERY field MUST have a `format:` code (`F32` for Short_Float, `U16`/`U32` for unsigned, `E8` for enums). Missing format = build error "is NOT a packed type".
+- See `adamant-type-system` skill for full format reference.
 
 **Packed record fields:**
 - `Natural` needs 31 bits -- does NOT fit `U16` format. Use `Interfaces.Unsigned_16` for U16 fields.
