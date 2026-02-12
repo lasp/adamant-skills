@@ -17,6 +17,7 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 | `adamant-framework-components` | ~280 | Catalog of all 55 built-in components by subsystem |
 | `adamant-type-system` | ~400 | YAML type definitions, format codes, generated Ada type hierarchy |
 | `adamant-testing` | ~470 | Test harness generation, History API, async dispatch, error injection |
+| `adamant-algorithm-wrapping` | ~300 | Complete pipeline for wrapping C++ algorithms: C shims, Ada bindings, packed records, component implementation, unit tests |
 
 ## Key Principles
 

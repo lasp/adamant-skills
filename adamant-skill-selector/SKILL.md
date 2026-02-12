@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 6 Adamant skills totaling ~2200 lines. Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 7 Adamant skills totaling ~2500 lines. Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -59,6 +59,19 @@ You have 6 Adamant skills totaling ~2200 lines. Loading all of them wastes conte
 - Generated file map per YAML model type
 - Cross-compilation, Docker environment, SPARK prove config
 
+### Wrapping C++ algorithms into Adamant components
+**Load:** `adamant-algorithm-wrapping`
+- Complete 7-stage pipeline: C shim -> Ada bindings -> packed records -> component implementation -> unit tests
+- C shim patterns (shared types headers, opaque handles, POD conversions)
+- h2ads tool usage and Ada binding transformation rules
+- C struct to packed record YAML conversion
+- Component YAML models for algorithm wrappers
+- Integration testing patterns comparing against Python reference tests
+
+**Also load if needed:**
+- `adamant-component-dev` -- for understanding component implementation patterns
+- `adamant-type-system` -- if creating new packed record types not covered in the examples
+
 ### COSMOS ground system integration
 **Load:** `adamant-assembly-dev` (references/cosmos-integration.md)
 - Generated command/telemetry config files
@@ -76,6 +89,7 @@ You have 6 Adamant skills totaling ~2200 lines. Loading all of them wastes conte
 | Choose components for a subsystem | framework-components | assembly-dev |
 | Full component lifecycle (build+test) | component-dev | testing |
 | SPARK verification | build-system (prove section) | component-dev |
+| Wrap C++ algorithm into Adamant component | algorithm-wrapping | component-dev |
 
 ## Naming Conventions (quick reference)
 
