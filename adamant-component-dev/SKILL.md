@@ -318,7 +318,7 @@ Missing any of these causes code generation errors.
 
 **Implementation spec with clauses:**
 - Only `with` what's needed: typically `Tick`, `Command`, `Parameter_Update` (for modify connector), and any CUSTOM types used in your private record (e.g. `My_Custom_Type`)
-- The generated base class already has `with` + `use` for: `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Packed_*` types, `Basic_Types`, `Interfaces`, `Command_Enums`, `Command_Types`, `Data_Product_Types`, `Event_Types`. It also has `use Interfaces;` making `Unsigned_32` etc. directly visible, and `use Command_Enums;` making `Command_Execution_Status` visible.
+- The generated base class always has `with` for: `Sys_Time`, `Event`, `Data_Product`, `Fault` (if used), `Basic_Types`. It has `with Interfaces; use Interfaces;` and `use Command_Enums;` ONLY when the component has commands. Components WITHOUT commands must add `with Interfaces;` and `use type Interfaces.Unsigned_32;` themselves if they need arithmetic on Unsigned types.
 - Do NOT add `with` for ANY of these -- they are NOT standalone packages and/or are already visible: `Command_Execution_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces`
 
 **Get connectors are NOT overridden:**
