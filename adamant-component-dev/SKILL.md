@@ -513,6 +513,33 @@ if Is_Dep_Status_Success (Ref_Status) and then Is_Dep_Status_Success (Nav_Status
    -- call algorithm
 ```
 
+## Common Pitfalls
+
+**Connector YAML:**
+- `get` kind CANNOT have `type` field -- only `return_type` and `kind`
+- `count` must be a literal integer, not a reference (e.g., `count: 4`, never `count: "Init.N"`)
+- `request` kind DOES use both `type` (outgoing) and `return_type` (incoming)
+
+**Commands YAML:**
+- Field is `arg_type`, not `type` or `parameters` (those are NOT valid keys)
+- Command arguments must be a separate packed record type, not inline fields
+
+**Packed record fields:**
+- `Natural` needs 31 bits -- does NOT fit `U16` format. Use `Interfaces.Unsigned_16` for U16 fields.
+- Packed `.T` types inherit serialization fields -- cannot be used as simple record aggregates for default initialization. Store individual scalar fields instead.
+
+**Visibility:**
+- `Interfaces` package is NOT auto-with'd. Add `with: ["Interfaces"]` in component YAML or `with Interfaces;` in handwritten files.
+- Use `use type Interfaces.Unsigned_32;` for arithmetic operators.
+- No `Invalid_Command_Received` event unless you explicitly define it in events.yaml.
+
+**Testing:**
+- Test directories need `env.py` containing `from environments import test`
+- `Self.Tester` is `Instance_Access` (pointer), NOT `Instance` -- use `Instance_Access renames`
+- `Tick.T` requires both `Time : Sys_Time.T` and `Count` fields: `(Time => (0, 0), Count => 1)`
+- Test flow: `Init_Base` -> `Connect` -> component `Init` -> `Set_Up` -> send stimuli -> check histories
+- `Packet.T` header has `Time`, `Id`, `Sequence_Count`, `Buffer_Length` -- all required
+
 ## Target Hardware Abstraction
 
 Same interface, target-specific body via build path:

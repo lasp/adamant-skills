@@ -35,12 +35,16 @@ tests:
 
 ## Test Environment Setup
 
-**env.py pattern:**
+**Minimum env.py** (required for AUnit and test build paths):
 ```python
-from environments import test, modify_build_path
+from environments import test  # noqa: F401
+```
+
+**Extended env.py** (for extra build paths, e.g., mock dependencies):
+```python
+from environments import test, modify_build_path  # noqa: F401
 import os
 this_dir = os.path.dirname(os.path.realpath(__file__))
-# Isolate test build from main component build
 modify_build_path.add_to_build_path([this_dir, this_dir + os.sep + ".."])
 ```
 
@@ -196,6 +200,19 @@ T.Event_T_Recv_Sync_History.Clear;
 -- Meta operations
 Natural_Assert.Eq (T.History.Get_Depth, 20);  -- Configured depth
 Boolean_Assert.Eq (T.History.Is_Full, False);
+```
+
+### Sending Stimuli
+
+```ada
+-- Tick (requires both Time and Count):
+T.Tick_T_Send ((Time => (0, 0), Count => 1));
+
+-- Command:
+T.Command_T_Send (T.Commands.My_Command ((Arg_Field => Value)));
+
+-- Data product:
+T.Data_Product_T_Send ((Header => ..., Buffer => ...));
 ```
 
 ## Dual-Level Capture Pattern

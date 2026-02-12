@@ -274,7 +274,9 @@ This drives which generated lifecycle methods exist.
         stale_limit_us: 1000000             # 0 = never stale
 ```
 - **`with:` packages must exist in build path** -- don't include assembly-specific packages (like `Start_Up`) unless you've created them.
-- **Unconnected `send` connectors are warnings, not errors** -- `_If_Connected` guards handle them at runtime.
+- **Unconnected `send` connectors are warnings, not errors** -- `_If_Connected` guards handle them at runtime. BUT some framework components (Command_Router, Tick_Divider) use non-guarded sends internally.
+- **Command_Router's `Command_Response_T_To_Forward_Send_Count` minimum is 1** -- and `Set_Up` iterates ALL allocated forward connectors with non-guarded sends. MUST be connected (loopback to router's own `Command_Response_T_Recv_Async` if no external command source).
+- **Rate_Group `Tick_T_Send_Count` must exactly match connected components** -- Rate_Group iterates ALL allocated tick send connectors with non-guarded sends.
 - **Sys_Time_T_Get must be wired for every component** that has a `get` connector for time (most components).
 
 See [references/cosmos-integration.md](references/cosmos-integration.md) for COSMOS (OpenC3) ground system integration: generated config format, protocol files, plugin setup, scripting API, and Adamant-to-COSMOS type mapping.

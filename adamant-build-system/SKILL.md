@@ -239,9 +239,20 @@ Build sessions use SQLite databases in `~/.adamant/tmp/{session_id}/`:
 
 ## Test Environment Configuration
 
-Test directories can include `env.py` to set environment:
+### Test Directory Setup
+
+Test directories REQUIRE:
+1. `.all_path` file (empty is fine)
+2. `env.py` with `from environments import test` (provides AUnit paths)
+3. `component_name.tests.yaml` (test definitions)
+
 ```python
-# test/env.py
+# test/env.py -- MINIMUM required content:
+from environments import test  # noqa: F401
+```
+
+Additional environment setup:
+```python
 import os
 os.environ['EXTRA_BUILD_PATH'] = '/path/to/test/dependencies'
 ```
