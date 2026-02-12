@@ -280,6 +280,8 @@ component_name/test/
 ## Execution Model Selection
 
 - **Passive**: Synchronous processing (filters, dividers, counters, algorithm wrappers)
+  - Only has `Init` if component YAML defines `init:` section with parameters
+  - Do NOT add `overriding procedure Init` unless YAML has init params
 - **Active**: Message queue for async connectors (routers, command handlers)
   - `Init` MUST call `Self.Init_Base(Queue_Size)` to allocate the queue
   - Async handler: `{Type}_T_Recv_Async` (called by auto-generated `Cycle` after dequeue)
