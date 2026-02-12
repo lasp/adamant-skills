@@ -375,10 +375,10 @@ end Sys_Time.Representation;
 
 ## Framework Packed Types (built-in)
 
-Available integer packed types: `Packed_U16.T`, `Packed_U32.T`, `Packed_U64.T`
+Available integer packed types: `Packed_Byte.T`, `Packed_U16.T`, `Packed_U32.T`, `Packed_U64.T`
 Also: `Packed_F32.T`, `Packed_Boolean.T`, `Packed_Natural.T`, `Packed_Poly_Type.T`
 
-**There is NO Packed_U8.** Use `Packed_U16.T` for 8-bit values or create a custom packed record.
+**There is NO Packed_U8.** Use `Packed_Byte.T` for 8-bit values.
 
 ## Common Pitfalls
 
