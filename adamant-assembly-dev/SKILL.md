@@ -139,16 +139,24 @@ filters:
 ## Main Program Pattern
 
 ```ada
-with Assembly_Package;
+with Ada.Real_Time; use Ada.Real_Time;
+with Assembly_Name;
+
 procedure Main is
-   Assembly : Assembly_Package.Instance;
 begin
-   Assembly.Init (Assembly_Package.Init_Base_Args);
-   Assembly.Connect_Components;
-   Assembly.Start_Components;
-   loop delay 1.0; end loop;
+   Assembly_Name.Init_Base;
+   Assembly_Name.Set_Id_Bases;
+   Assembly_Name.Connect_Components;
+   Assembly_Name.Init_Components;
+   Assembly_Name.Set_Up_Components;
+   Assembly_Name.Start_Components;
+
+   loop
+      delay until Clock + Milliseconds (1000);
+   end loop;
 end Main;
 ```
+**CRITICAL**: The assembly API is package-level procedures (NOT instance methods). Names are `Init_Base`, `Set_Id_Bases`, `Connect_Components`, `Init_Components`, `Set_Up_Components`, `Start_Components`, `Stop_Components`. Use `delay until` (NOT `delay 1.0`) for Ravenscar compliance.
 
 ## Build Commands
 
