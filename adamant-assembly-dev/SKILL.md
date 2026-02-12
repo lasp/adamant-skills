@@ -274,6 +274,8 @@ This drives which generated lifecycle methods exist.
         stale_limit_us: 1000000             # 0 = never stale
 ```
 - **Assembly API is package-level, not instance**: Use `Assembly_Name.Init_Base`, `Assembly_Name.Set_Id_Bases`, etc. -- NOT instance methods.
+- **Unique main procedure names**: Each assembly needs a unique `procedure Name` and filename. Multiple assemblies with `procedure Main` in `main.adb` cause build path conflicts.
+- **Ravenscar: absolute delays only**: Use `delay until Clock + Milliseconds (N)`, NEVER `delay 1.0` (relative delays violate Ravenscar profile).
 - **`with:` packages must exist in build path** -- don't include assembly-specific packages (like `Start_Up`) unless you've created them.
 - **Unconnected `send` connectors are warnings, not errors** -- `_If_Connected` guards handle them at runtime. BUT some framework components (Command_Router, Tick_Divider) use non-guarded sends internally.
 - **Command_Router's `Command_Response_T_To_Forward_Send_Count` minimum is 1** -- and `Set_Up` iterates ALL allocated forward connectors with non-guarded sends. MUST be connected (loopback to router's own `Command_Response_T_Recv_Async` if no external command source).
