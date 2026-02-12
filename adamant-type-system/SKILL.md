@@ -373,6 +373,11 @@ package Sys_Time.Representation is
 end Sys_Time.Representation;
 ```
 
+## Common Pitfalls
+
+- **Do NOT use `Boolean` as a packed record field type** -- causes schema validation errors in documentation generation. Use `Interfaces.Unsigned_8` with `format: U8` and 0/1 defaults instead. Or use `packed_boolean.T` from the framework types.
+- **`Natural` needs 31 bits** -- does NOT fit U16 format. Use `Interfaces.Unsigned_16` for U16 fields.
+
 ## Usage in Components
 
 Types integrate with component development workflow:
