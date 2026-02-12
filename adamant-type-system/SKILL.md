@@ -373,6 +373,13 @@ package Sys_Time.Representation is
 end Sys_Time.Representation;
 ```
 
+## Framework Packed Types (built-in)
+
+Available integer packed types: `Packed_U16.T`, `Packed_U32.T`, `Packed_U64.T`
+Also: `Packed_F32.T`, `Packed_Boolean.T`, `Packed_Natural.T`, `Packed_Poly_Type.T`
+
+**There is NO Packed_U8.** Use `Packed_U16.T` for 8-bit values or create a custom packed record.
+
 ## Common Pitfalls
 
 - **Do NOT use `Boolean` as a packed record field type** -- causes schema validation errors in documentation generation. Use `Interfaces.Unsigned_8` with `format: U8` and 0/1 defaults instead. Or use `packed_boolean.T` from the framework types.

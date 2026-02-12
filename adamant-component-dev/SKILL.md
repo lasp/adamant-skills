@@ -369,6 +369,7 @@ Missing any of these causes code generation errors.
 **Visibility:**
 - `Interfaces` package is NOT auto-with'd. Add `with: ["Interfaces"]` in component YAML or `with Interfaces;` in handwritten files.
 - Use `use type Interfaces.Unsigned_32;` for arithmetic operators.
+- `Errant_Field_Number` in Invalid_Command/Invalid_Parameter is `Unsigned_32` (NOT `Basic_Types.Unsigned_32` or `Interfaces.Unsigned_32`). The base class imports Interfaces and renames it.
 - No `Invalid_Command_Received` event unless you explicitly define it in events.yaml.
 
 **Duplicate connector types get numbered:**
