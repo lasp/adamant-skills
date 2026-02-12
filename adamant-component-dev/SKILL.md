@@ -273,6 +273,8 @@ component_name/test/
 8. [ ] Empty `.all_path` file present
 9. [ ] All entity names unique across events, data products, commands, faults, parameters
 10. [ ] `use Command_Execution_Status;` INSIDE package body (not before it)
+11. [ ] `get` connectors use `return_type:` NOT `type:` in YAML
+12. [ ] `request` connectors have both `type:` and `return_type:` in YAML
 
 ## Common Pitfalls
 
