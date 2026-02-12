@@ -359,6 +359,8 @@ end Command_T_Recv_Sync;
 
 **Packed record fields:**
 - `Natural` needs 31 bits -- does NOT fit `U16` format. Use `Interfaces.Unsigned_16` for U16 fields.
+- **There is NO `Packed_U8`.** Use `Packed_U16.T` for small integers or `Packed_Byte.T` for 8-bit values.
+- Enum literal names must NOT collide with framework package names (e.g., `Fault` conflicts with `Fault` package -- use `Faulted` instead).
 - Packed `.T` types inherit serialization fields -- cannot be used as simple record aggregates for default initialization. Store individual scalar fields instead.
 
 **Parameters (additional):**
