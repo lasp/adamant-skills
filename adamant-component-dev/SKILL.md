@@ -43,7 +43,7 @@ redo build/svg/comp.svg                   # Diagram
 ```yaml
 description: What this component does
 execution: passive|active|either
-with_spark: true                      # Enable SPARK for generated code (optional)
+# SPARK: add all.prove.yaml in component dir + pragma SPARK_Mode in Ada files
 with:                                 # Extra Ada "with" dependencies
   - "Package_Name"
 preamble: |                           # Ada code injected into generated spec

@@ -92,8 +92,8 @@ redo run                # Build and run (requires main.adb)
 ```bash
 redo test               # Unit tests -- run from test/ subdirectory, NOT component root
 redo test_all           # Recursive tests (run from any directory, descends into all test/ dirs)
-redo prove              # SPARK proof (requires with_spark: true in component model)
-redo prove_all          # Recursive SPARK proof (only processes SPARK-enabled components)
+redo prove              # SPARK proof (requires all.prove.yaml in component dir)
+redo prove_all          # Recursive SPARK proof (only processes dirs with all.prove.yaml)
 redo analyze            # Static analysis (CodePeer/GNATSAS)
 redo analyze_all        # Recursive analysis
 redo coverage           # Coverage (sets coverage target automatically)
