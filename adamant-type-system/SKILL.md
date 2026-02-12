@@ -89,6 +89,35 @@ enums:
         description: The state is enabled
 ```
 
+**Generated Ada pattern for standalone enums:**
+```ada
+-- From basic_enums.enums.yaml:
+package Basic_Enums is
+   package Enable_Disable_Type is
+      type E is (Disabled, Enabled);       -- The enum type is always named E
+      for E use (Disabled => 0, Enabled => 1);
+   end Enable_Disable_Type;
+end Basic_Enums;
+
+-- Usage in Ada code:
+State : Basic_Enums.Enable_Disable_Type.E := Basic_Enums.Enable_Disable_Type.Enabled;
+-- Or with use clause:
+use Basic_Enums.Enable_Disable_Type;
+State : E := Enabled;
+```
+
+**In record YAML, reference enum types as `Package.Enum_Name.E`:**
+```yaml
+fields:
+  - name: State
+    type: Basic_Enums.Enable_Disable_Type.E
+    format: E8
+```
+
+**Preamble enums** (defined inside a record YAML preamble) are different -- they live directly in the generated packed type package, not as child packages with type `E`.
+
+**Name collision warning:** Data product names must not collide with packed type names in scope. If you have a `Power_Status.T` type, do not name a data product `Power_Status` -- rename it (e.g., `Power_Telemetry`).
+
 ## Special Field Attributes
 
 ### Validation Control
