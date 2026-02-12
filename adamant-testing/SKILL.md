@@ -337,7 +337,7 @@ build/bin/Linux_Test/test.elf 2>&1 | sed 's,\x1B\[[0-9;]*[a-zA-Z],,g' > $3 | tru
 Use this hierarchy (most preferred first):
 
 1. **Packed type assertions** (preferred): `Packed_U32_Assert.Eq(...)`, `Packed_F32_Assert.Eq(...)`, `Event_Assert.Eq(...)` -- type-safe, clear error messages, match framework conventions
-2. **Smart_Assert pattern**: `Smart_Assert.Eq(actual, expected)` -- generic, works with any type that has Image
+2. **Smart_Assert**: REQUIRES generic instantiation before use. `Smart_Assert` contains generic procedures (`Eq`, `Neq`, `Gt`, etc.) that must be instantiated with a type and Image function. Do NOT call `Smart_Assert.Eq(...)` directly -- it won't compile. Prefer packed type assertions or Basic_Assertions instead.
 3. **Basic_Assertions**: `Natural_Assert.Eq(...)`, `Boolean_Assert.Eq(...)` -- for counts, flags
 4. **AUnit Assert** (fallback): `Assert(condition, "message")` -- only when no typed assertion fits
 
@@ -346,7 +346,8 @@ Use this hierarchy (most preferred first):
 Packed_U32_Assert.Eq (T.Counter_History.Get (1), (Value => 42));
 
 -- GOOD: smart assert for custom types
-Smart_Assert.Eq (T.Custom_History.Get (1).Field, Expected_Value);
+-- Smart_Assert requires instantiation -- prefer pragma Assert or Basic_Assertions for non-packed types
+pragma Assert (T.Command_Response_T_Recv_Sync_History.Get (1).Status = Command_Response_Status.Success);
 
 -- OK: basic assertion for counts
 Natural_Assert.Eq (T.Event_T_Recv_Sync_History.Get_Count, 3);
@@ -359,7 +360,7 @@ Import the assertion packages you need:
 ```ada
 with Basic_Assertions; use Basic_Assertions;           -- Natural_Assert, Boolean_Assert
 with Packed_U32.Assertion; use Packed_U32.Assertion;   -- Packed_U32_Assert
-with Smart_Assert;                                      -- Smart_Assert.Eq
+-- Smart_Assert requires generic instantiation -- avoid direct use; prefer packed assertions or pragma Assert
 with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
 ```
 
@@ -382,6 +383,10 @@ with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
 8. **Init params go to Component_Instance.Init, NOT Init_Base**: `Self.Tester.Init_Base` takes NO component params (only Queue_Size for active). Component init params go to `Self.Tester.Component_Instance.Init(Param => Value)`. Order: Init_Base -> Connect -> Component_Instance.Init -> Set_Up.
 
 9. **Typed histories don't auto-clear (MOST COMMON ERROR)**: Clearing `T.Data_Product_T_Recv_Sync_History` does NOT clear individual typed histories like `T.Counter_History`. When checking typed histories after clearing raw histories, use CUMULATIVE counts: if an event fired twice total (once before clear, once after), the typed history count is 2 even though the raw history count is 1. Either use cumulative counts or clear typed histories explicitly: `T.My_Event_History.Clear;`
+
+10. **Change detection initial state**: Components using change detection (comparing current value to a shadow variable) will fire a DP update on the FIRST tick because the initial shadow value (typically 0) differs from the computed value. Account for this extra DP in history counts. Example: if Link_Active starts at shadow=0 and first tick sets it to 1, that's a change -- expect Get_Count=2 after going back to 0, not 1.
+
+11. **`use type` for operator visibility**: When using `pragma Assert` or direct `=` comparisons on enumeration types (e.g., `Command_Response_Status.E`), you need `use type Command_Enums.Command_Response_Status.E;` in the `with` section. Without it, the `=` operator is not directly visible.
 
 ## Testing Best Practices
 
