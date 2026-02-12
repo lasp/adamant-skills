@@ -119,17 +119,23 @@ data_dependencies:
     type: Sensor_Data.T
     description: Required sensor input
 
-# Data dependencies require a request connector in the component YAML:
-#   - description: Fetch a data product item from the database.
-#     type: Data_Product_Fetch.T
-#     return_type: Data_Product_Return.T
-#     kind: request
-# And this override in the implementation spec (from generated template):
+# Data dependencies require TWO things in component YAML:
+#   1. A Sys_Time.T get connector (for stale reference)
+#   2. A request connector:
+#     - description: Fetch data product from database
+#       type: Data_Product_Fetch.T
+#       return_type: Data_Product_Return.T
+#       kind: request
+# Implementation spec MUST override:
 #   overriding function Get_Data_Dependency (Self : in out Instance;
 #     Id : in Data_Product_Types.Data_Product_Id) return Data_Product_Return.T
 #     is (Self.Data_Product_Fetch_T_Request ((Id => Id)));
-# The generator creates Self.Get_{Dep_Name}(Value => out_var, Stale_Reference => time)
-# which returns Data_Product_Enums.Data_Dependency_Status.E
+#   overriding procedure Invalid_Data_Dependency (Self : in out Instance;
+#     Id : in Data_Product_Types.Data_Product_Id; Ret : in Data_Product_Return.T);
+# Generated API for each dependency named "Foo":
+#   Status := Self.Get_Foo (Stale_Reference => time, Value => out_var);
+#   -- Returns Data_Product_Enums.Data_Dependency_Status.E
+#   -- Need: use Data_Product_Enums.Data_Dependency_Status; for = operator
 
 # component_name.packets.yaml
 packets:
