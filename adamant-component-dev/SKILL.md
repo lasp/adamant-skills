@@ -515,6 +515,16 @@ if Is_Dep_Status_Success (Ref_Status) and then Is_Dep_Status_Success (Nav_Status
 
 ## Common Pitfalls
 
+**Required connectors for feature models:**
+Each feature YAML file requires matching connectors in the component YAML:
+- `commands.yaml` -> `Command.T` recv_sync + `Command_Response.T` send
+- `events.yaml` -> `Event.T` send
+- `data_products.yaml` -> `Data_Product.T` send
+- `faults.yaml` -> `Fault.T` send
+- `parameters.yaml` -> `Parameter_Update.T` modify
+- `data_dependencies.yaml` -> `Data_Product_Fetch.T` / `Data_Product_Return.T` request
+Missing any of these causes code generation errors.
+
 **Connector YAML:**
 - `get` kind CANNOT have `type` field -- only `return_type` and `kind`
 - `count` must be a literal integer, not a reference (e.g., `count: 4`, never `count: "Init.N"`)
