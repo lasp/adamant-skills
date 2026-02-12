@@ -111,7 +111,11 @@ that consumes too much context leaves insufficient room for the actual work.
 - When in doubt, move detailed examples to references/ and keep SKILL.md as an index
 - Test by asking: "Can a model ingest this skill AND still do a complex task?"
 
-### 5. Update Memory
+### 5. Practice-Driven Refinement
+
+After initial skill creation, shift to building real artifacts to discover gaps. See [references/practice-driven-refinement.md](references/practice-driven-refinement.md) for the full pattern. Key idea: build using only skills as reference, let compiler errors reveal what's missing, update skills immediately, commit after each fix.
+
+### 6. Update Memory
 
 After consolidation, update MEMORY.md with:
 - What was studied and when
