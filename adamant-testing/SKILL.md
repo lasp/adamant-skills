@@ -234,6 +234,10 @@ Status := T.Validate_Parameters;  -- Calls component's Validate_Parameters
 Status := T.Update_Parameters;    -- Marks ready_to_update
 T.Tick_T_Send (The_Tick);          -- Component calls Self.Update_Parameters in tick
 -- Parameter_Update_Status type: Parameter_Enums.Parameter_Update_Status.E
+
+-- Request connector: override tester's *_T_Service to return test data:
+-- Default returns uninitialized Data_Product_Return.T (fetch will fail).
+-- In tester .adb, set To_Return.The_Status := Data_Product_Enums.Fetch_Status.Success;
 ```
 
 ## Dual-Level Capture Pattern
