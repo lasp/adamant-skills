@@ -338,6 +338,11 @@ end Command_T_Recv_Sync;
 - Use `Self.Execute_Command(Arg)` to dispatch commands (NOT `Self.Process_Command`).
 - Returns `Command_Response_Status.E` (not `Command_Execution_Status.E`).
 
+**Command handler function names match the YAML command name EXACTLY:**
+- YAML `name: Set_Mode` -> `overriding function Set_Mode (Self : in out Instance; Arg : in ...) return Command_Execution_Status.E;`
+- Do NOT append `_Execute` or any suffix. The generated abstract function uses the exact YAML command name.
+- Commands with `arg_type:` get `Arg : in <arg_type>` parameter. Commands without get no extra parameter.
+
 **Invalid_Command is REQUIRED** when commands.yaml exists. Missing it causes "type must be declared abstract" error. It is a PROCEDURE (not a function) with 4 parameters:
 ```ada
 overriding procedure Invalid_Command (Self : in out Instance; Cmd : in Command.T; Errant_Field_Number : in Unsigned_32; Errant_Field : in Basic_Types.Poly_Type);
