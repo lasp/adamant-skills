@@ -30,9 +30,10 @@ See [references/c-shim-bindings.md](references/c-shim-bindings.md) for Stages 1-
 **Stateful algorithms** (sunSearch, slew planners): may need a reset/init call with current time before first use. Track configuration state (e.g., `Slews_Configured : Boolean`) and call algorithm reset in `Update_Parameters_Action` when config changes.
 
 **Before creating custom packed types**, check if framework types already exist:
-- `adamant-xmera-components/src/types/` for GNC-specific types (Att_Guid, Nav_Att, etc.)
+- `adamant/src/types/packed_arrays/` for vector types: `Packed_F32x3` (3-element float vector), `Packed_F32x9` (3x3 matrix), etc.
 - `adamant/src/types/` for general framework types (Packed_F32, Packed_U32, etc.)
-Reuse existing types whenever possible -- don't recreate what's already there.
+- `adamant-xmera-components/src/types/` for GNC-specific types: Att_Guid, Nav_Att, Packed_F32x3_Record (wraps F32x3 in a record), etc.
+Reuse existing types whenever possible -- don't recreate what's already there. New types can be created in `adamant-xmera-components/src/types/` for wrapping support.
 
 ## Stage 4: Component YAML Model
 
