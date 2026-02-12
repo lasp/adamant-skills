@@ -275,6 +275,9 @@ component_name/test/
 10. [ ] `use Command_Execution_Status;` INSIDE package body (not before it)
 11. [ ] `get` connectors use `return_type:` NOT `type:` in YAML
 12. [ ] `request` connectors have both `type:` and `return_type:` in YAML
+13. [ ] Custom record YAML fields have `format:` specified (e.g., `format: F32` for `Short_Float`, `format: U32` for `Unsigned_32`). Missing format = "is NOT a packed type" build error.
+14. [ ] Qualify ambiguous literals: `Parameter_Validation_Status.Valid`, `Command_Execution_Status.Success` (bare `Valid`/`Success` can be invisible or ambiguous)
+15. [ ] Parameter accessor `Self.<Param_Name>` returns `.U` -- convert to `.T` when passing to events: `My_Type.T (Self.My_Param)`
 
 ## Common Pitfalls
 
