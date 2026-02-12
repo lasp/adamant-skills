@@ -24,16 +24,22 @@ assembly_name/
 ### Top-Level Fields
 ```yaml
 description: What this assembly does
-with:                                 # Ada package imports
+with:                                 # Ada package imports for .ads
   - Start_Up
   - System
   - Ada.Interrupts.Names
   - My_Assembly_Commands
-prepreamble: |                        # Before component declarations (pragma, elaborate)
+with_adb:                             # Ada package imports for .adb only
+  - Implementation_Only_Package
+prepreamble: |                        # Before package spec (pragma, elaborate)
   pragma Unreferenced (Start_Up);
   pragma Elaborate_All (Start_Up);
 preamble: |                           # Inside package spec (types, variables)
   Dividers : aliased Component.Tick_Divider.Divider_Array_Type := [1 => 5, 2 => 10, 3 => 1];
+subassemblies:                        # Include other assemblies
+  - Sub_Assembly_Name
+id_bases:                             # Assembly-level ID base offsets
+  - "Event_Id_Base => 1280"
 ```
 
 ### Component Instantiation
@@ -111,13 +117,22 @@ connections:
 
 # views/parameters.assembly_name.view.yaml -- filter rules
 description: Parameter subsystem
+layout: left-to-right                 # or top-to-bottom, right-to-left, bottom-to-top
+show_component_type: true             # Show/hide labels (all default true)
+show_component_execution: true
+show_component_priority: true
+show_component_name: true
+show_connector_type: true
+show_data_dependencies: true
+hide_group_outline: false
+preamble: "rankdir=LR;"              # DOT snippet at digraph start
 rule: include_component_types & exclude_connector
 filters:
   - name: include_component_types
-    type: component_type
-    include: [Example_Parameters, Example_Science]
-  - name: exclude_connector
-    type: connector_name
+    type: component_type              # Filter types: component_name, component_name_context,
+    include: [Example_Parameters]     #   component_type, component_type_context,
+  - name: exclude_connector           #   component_execution, connector_name, connector_type,
+    type: connector_name              #   connector_kind, data_dependency_name, data_dependency_type
     exclude: [Science_Instance.Command_T_Recv_Async]
 ```
 

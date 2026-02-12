@@ -124,8 +124,13 @@ redo build/xml/assembly_name.xml          # System interface document
 `all.prove.yaml` in a component/package directory configures `redo prove`:
 ```yaml
 description: GNATprove configuration
-level: 1          # Proof effort (0-4)
-mode: "silver"    # bronze/silver/gold/platinum
+level: 2          # 0-4, default 2. Levels set prover/timeout/memlimit:
+                  #   0: cvc4 only, 1s timeout
+                  #   1: cvc4+z3+altergo, 1s
+                  #   2: cvc4+z3+altergo, 5s, counterexamples on
+                  #   3: same, 20s, 2GB memlimit
+                  #   4: same, 60s, 2GB memlimit
+mode: "gold"      # check|check_all|flow|prove|all|stone|bronze|silver|gold (default: gold)
 ```
 
 Override via environment: `PROVE_SWITCHES="--level=4 --timeout=30" redo prove`
@@ -151,6 +156,22 @@ hardware_action.ads              # Shared spec (.all_path)
 linux/hardware_action.adb        # Dev no-op (.Linux_path)
 pico/hardware_action.adb         # Real hardware (.Pico_path)
 ```
+
+## Adamant Configuration
+
+`adamant.configuration.yaml` (or project-specific via `ADAMANT_CONFIGURATION_YAML` env var) sets system-wide buffer sizes:
+```yaml
+description: Project configuration
+data_product_buffer_size: 100         # All buffer sizes are REQUIRED
+command_buffer_size: 100
+event_buffer_size: 100
+parameter_buffer_size: 100
+packet_buffer_size: 500
+ccsds_packet_buffer_size: 500
+stack_margin: 100                     # Stack margin bytes (bareboard only; Linux uses 12KB fixed)
+```
+
+Values are accessible in both source code and YAML models. Schema allows additional key-value pairs.
 
 ## Test Environment Configuration
 

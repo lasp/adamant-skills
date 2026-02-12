@@ -49,6 +49,9 @@ with:                                 # Extra Ada "with" dependencies
 preamble: |                           # Ada code injected into generated spec
   subtype Custom_Type is Natural range 1 .. 100;
 
+without:                              # Remove auto-deduced "with" dependencies
+  - "Unused_Package"
+
 connectors:
   - description: Human-readable purpose of this connector
     kind: recv_sync|recv_async|send|get|provide|service|modify|request|return
@@ -62,11 +65,13 @@ generic:                              # Ada generic type parameters
   parameters:
     - name: T
       formal_type: "type T is private;"
+      optional: true                  # Only valid if formal_type has a default
 
 discriminant:                         # Compile-time record discriminants
   parameters:
     - name: "Max_Count"
       type: "Natural"
+      not_null: true                  # Reject null access values
 
 init:                                 # Runtime initialization parameters
   description: What these parameters configure
@@ -74,7 +79,16 @@ init:                                 # Runtime initialization parameters
     - name: "Param"
       type: "Natural"
       default: "10"
+      not_null: true                  # Also available here
       description: What this parameter does
+
+interrupts:                           # Interrupt services (for interrupt_servicer etc.)
+  - name: Timer_Interrupt
+    description: Handles periodic timer
+
+subtasks:                             # Internal subtasks (assembly must configure priority/stack)
+  - name: Listener
+    description: Background listener task
 ```
 
 ## Feature Model Formats
@@ -134,6 +148,18 @@ requirements:
 tests:
   - name: Nominal_Test
     description: Test nominal behavior
+
+# name.enums.yaml -- standalone enumeration definitions
+enums:
+  - name: My_State
+    description: Operating states
+    literals:
+      - name: Off
+        value: 0                        # Explicit value (optional; defaults to near-zero)
+      - name: On
+        value: 1
+      - name: Error
+        value: 255
 ```
 
 ## Packed Type Model
@@ -150,6 +176,21 @@ fields:
   - name: Packet_Type    #   E1/E2 (enum), U8x{{ size }} (byte array, Jinja2)
     type: My_Enum.E
     format: E8
+    default: "My_Enum.Default_Value"   # Field default when record instantiated
+    byte_image: true                   # Print as unsigned_8 array (no Ada 'Image)
+    skip_validation: true              # Skip autocode validation
+  - name: Payload
+    type: Byte_Array
+    variable_length: "Header.Length"   # Length determined by another field
+    variable_length_offset: -4         # Apply offset to length calculation
+
+# name.array.yaml
+description: Packed array type
+type: My_Element_Type
+format: U32                           # For primitive types
+length: 10                            # Fixed array length
+byte_image: false                     # Print using element 'Image (default)
+skip_validation: false                # Enable validation (default)
 ```
 
 ## Hardware Interface Models
@@ -172,31 +213,6 @@ items:
     type: Sys_Time.T
   - name: Counter
     type: Packed_U32.T
-```
-
-## Packed Type Advanced Features
-
-```yaml
-# Variable length record (single variable field, must be last, byte-aligned)
-fields:
-  - name: Header
-    type: Packed_U16.T
-    format: U16
-  - name: Data
-    type: Variable_Type.T
-    format: U8x{{ size }}
-    variable_length: True
-    variable_length_offset: 1          # CCSDS pattern: stored length = actual - 1
-
-# Field modifiers for problematic types
-  - name: Address_Field
-    type: System.Address
-    format: U32
-    skip_validation: True              # Skip autocoded validation (access types, etc.)
-  - name: Raw_Bytes
-    type: Packed_Byte_Array.T
-    format: U8x4
-    byte_image: True                   # Hex byte display instead of semantic formatting
 ```
 
 ## Tester Component Generation
