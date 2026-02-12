@@ -411,7 +411,7 @@ See [references/implementation-patterns.md](references/implementation-patterns.m
 
 See [references/lasel-reference.md](references/lasel-reference.md) for the LASEL command sequence language (used with command_sequencer component).
 
-See [references/testing-patterns.md](references/testing-patterns.md) for test setup, History API, async dispatch, assertions, error injection, and parameter testing patterns.
+See [adamant-testing](../adamant-testing/SKILL.md) skill for test setup, History API, async dispatch, assertions, error injection, and data dependency testing patterns.
 
 ## Tester Component Generation
 
