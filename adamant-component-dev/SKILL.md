@@ -333,7 +333,8 @@ Missing any of these causes code generation errors.
   ) return Parameter_Validation_Status.E;
   ```
   The template default returns `Valid`. Override only if cross-parameter validation needed.
-- `overriding procedure Invalid_Parameter (Self : in out Instance; ...);`
+- `overriding procedure Invalid_Parameter (Self : in out Instance; Par : in Parameter.T; Errant_Field_Number : in Unsigned_32; Errant_Field : in Basic_Types.Poly_Type);`
+  Note: Par is `Parameter.T`, NOT `Parameter_Update.T`.
 - `overriding procedure Parameter_Update_T_Modify (Self : in out Instance; Arg : in out Parameter_Update.T);`
   Call `Self.Process_Parameter_Update(Arg)` in the body.
 - Missing any of these produces "type must be declared abstract" error
