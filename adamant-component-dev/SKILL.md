@@ -172,6 +172,18 @@ faults:
     description: A time restart at zero was detected.
                                         # No param_type = no context data
 
+**Fault API (generated from faults.yaml):**
+Faults follow the SAME pattern as events -- create a `Fault.T` record and send it:
+```ada
+-- Send a fault report (correct):
+Self.Fault_T_Send_If_Connected (Self.Faults.Undervoltage_Fault (The_Time));
+-- With param_type:
+Self.Fault_T_Send_If_Connected (Self.Faults.Bad_Value_Fault (The_Time, (Value => X)));
+```
+Do NOT use `Self.Undervoltage_Fault.Set_Status(...)` -- that API does not exist.
+`Self.Faults` is a generated package instance (like `Self.Events` and `Self.Data_Products`).
+No `with Fault_Types;` needed in implementation spec -- `Fault` is auto-provided.
+
 # component_name.requirements.yaml
 requirements:
   - text: The component shall send a packet whenever it is scheduled to run.
