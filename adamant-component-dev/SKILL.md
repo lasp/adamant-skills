@@ -271,6 +271,8 @@ component_name/test/
 6. [ ] NO `with` for auto-provided packages (Interfaces, Event, Data_Product, Sys_Time, etc.)
 7. [ ] NO `build/` directory created
 8. [ ] Empty `.all_path` file present
+9. [ ] All entity names unique across events, data products, commands, faults, parameters
+10. [ ] `use Command_Execution_Status;` INSIDE package body (not before it)
 
 ## Common Pitfalls
 
@@ -369,6 +371,9 @@ end Command_T_Recv_Sync;
 - Field is `arg_type`, not `type` or `parameters` (those are NOT valid keys)
 - For no-argument commands, OMIT `arg_type` entirely (don't use `arg_type: None`)
 - Command arguments must be a separate packed record type, not inline fields
+
+**Entity name uniqueness:**
+- ALL entity names (events, data products, commands, faults, parameters) must be unique across the component. An event named `Foo` and a data product named `Foo` causes a code generation error.
 
 **Events YAML:**
 - No `level` field in schema -- events are typed by their `param_type` only
