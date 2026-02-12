@@ -140,23 +140,33 @@ filters:
 
 ```ada
 with Ada.Real_Time; use Ada.Real_Time;
+with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Exceptions; use Ada.Exceptions;
 with Assembly_Name;
 
 procedure Main is
+   Wait_Time : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (1000000);
+   Start_Time : constant Ada.Real_Time.Time := Ada.Real_Time.Clock + Wait_Time;
 begin
    Assembly_Name.Init_Base;
    Assembly_Name.Set_Id_Bases;
    Assembly_Name.Connect_Components;
    Assembly_Name.Init_Components;
-   Assembly_Name.Set_Up_Components;
-   Assembly_Name.Start_Components;
+
+   Put_Line ("Starting assembly...");
+   delay until Start_Time;
+   Assembly_Name.Start_Components;    -- Start active tasks FIRST
+   Assembly_Name.Set_Up_Components;   -- Then register commands (needs router running)
 
    loop
       delay until Clock + Milliseconds (1000);
    end loop;
+exception
+   when E : others =>
+      Put_Line ("EXCEPTION: " & Exception_Information (E));
 end Main;
 ```
-**CRITICAL**: The assembly API is package-level procedures (NOT instance methods). Names are `Init_Base`, `Set_Id_Bases`, `Connect_Components`, `Init_Components`, `Set_Up_Components`, `Start_Components`, `Stop_Components`. Use `delay until` (NOT `delay 1.0`) for Ravenscar compliance.
+**CRITICAL ordering**: `Start_Components` BEFORE `Set_Up_Components`. Set_Up registers commands with the Command_Router, which must already be running (active task). Add a 1-second delay before Start to let elaboration settle. The assembly API is package-level procedures (NOT instance methods). Use `delay until` (NOT `delay 1.0`) for Ravenscar compliance.
 
 ## Build Commands
 
@@ -288,7 +298,36 @@ This drives which generated lifecycle methods exist.
 - **Unconnected `send` connectors are warnings, not errors** -- `_If_Connected` guards handle them at runtime. BUT some framework components (Command_Router, Tick_Divider) use non-guarded sends internally.
 - **Command_Router's `Command_Response_T_To_Forward_Send_Count` minimum is 1** -- and `Set_Up` iterates ALL allocated forward connectors with non-guarded sends. MUST be connected (loopback to router's own `Command_Response_T_Recv_Async` if no external command source).
 - **Rate_Group `Tick_T_Send_Count` must exactly match connected components** -- Rate_Group iterates ALL allocated tick send connectors with non-guarded sends.
-- **Sys_Time_T_Get must be wired for every component** that has a `get` connector for time (most components).
+- **Sys_Time_T_Get must be wired for EVERY component that has it** -- including Ticker! Unconnected `get` connectors cause silent task crashes at runtime (assertion failure in the task, no visible error). The assembly generator does NOT validate unconnected `get` connectors.
+- **Do NOT invent connectors on framework components** -- check the component YAML. Event_Text_Logger has ONLY `Event_T_Recv_Async` (no Sys_Time_T_Get, no Tick). Product_Database has `Data_Product_T_Recv_Sync`, `Data_Product_Fetch_T_Service`, `Event_T_Send`, `Sys_Time_T_Get` (and commands if enabled).
+- **Lifecycle order in main.adb**: `Start_Components` BEFORE `Set_Up_Components`. Set_Up registers commands with the router which must be running. Add a 1s delay before Start.
+
+### Observation Infrastructure Pattern
+```yaml
+# Minimal event visibility: Splitter + Event_Text_Logger
+  - type: Splitter
+    name: Event_Splitter_Instance
+    generic_types:
+      - "T => Event.T"
+    init_base:
+      - "T_Send_Count => 1"                    # Match to downstream count
+  - type: Event_Text_Logger
+    name: Event_Text_Logger_Instance
+    priority: 1
+    stack_size: 50000
+    secondary_stack_size: 10000
+    init_base:
+      - "Queue_Size => 3 * Event_Text_Logger_Instance.Get_Max_Queue_Element_Size"
+    discriminant:
+      - "Event_To_Text => Assembly_Event_To_Text.Event_To_Text'Access"
+  - type: Product_Database
+    name: Product_Database_Instance
+    init:
+      - "Minimum_Data_Product_Id => Assembly_Data_Products.Minimum_Data_Product_Id"
+      - "Maximum_Data_Product_Id => Assembly_Data_Products.Maximum_Data_Product_Id"
+      - "Send_Event_On_Missing => False"
+```
+Wire ALL component `Event_T_Send` to `Event_Splitter_Instance.T_Recv_Sync`. Wire splitter `T_Send` index 1 to logger's `Event_T_Recv_Async`. Wire ALL `Data_Product_T_Send` to `Product_Database_Instance.Data_Product_T_Recv_Sync`. Add `Assembly_Event_To_Text` and `Assembly_Data_Products` to assembly `with:`.
 
 ## Real-World Subsystem Patterns (from linux_example)
 
