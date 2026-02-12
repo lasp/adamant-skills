@@ -279,4 +279,28 @@ This drives which generated lifecycle methods exist.
 - **Rate_Group `Tick_T_Send_Count` must exactly match connected components** -- Rate_Group iterates ALL allocated tick send connectors with non-guarded sends.
 - **Sys_Time_T_Get must be wired for every component** that has a `get` connector for time (most components).
 
+## Real-World Subsystem Patterns (from linux_example)
+
+### Parameter System Wiring
+Three-component pattern: `Parameters` (active table) + `Parameter_Store` (default/NVM) + `Parameter_Manager` (copy commands):
+```yaml
+  - type: Parameters
+    init_base:
+      - "Queue_Size => 3 * Parameters_Instance.Get_Max_Queue_Element_Size"
+      - "Parameter_Update_T_Provide_Count => 2"  # One per component with parameters
+    init:
+      - "Parameter_Table_Entries => Assembly_Parameter_Table.Parameter_Table_Entries'Access"
+      - "Table_Id => Assembly_Parameter_Table.Parameter_Table_Id"
+```
+Connect `Parameter_Update_T_Provide` to each component's `Parameter_Update_T_Modify`.
+
+### Event System Chain
+`Event_Splitter` -> `Event_Filter` -> `Event_Limiter` -> `Event_Packetizer`. Splitter fans out to filtered path + unfiltered post-mortem log.
+
+### Fault System
+`Fault_Correction` component maps fault IDs to corrective commands via a response table. Connect all component `Fault_T_Send` to it.
+
+### Assembly-Generated Constants
+Assemblies auto-generate packages: `Assembly_Commands`, `Assembly_Events`, `Assembly_Data_Products` with `Number_Of_Commands`, `Minimum_Event_Id`, `Maximum_Event_Id`, etc. Use in init.
+
 See [references/cosmos-integration.md](references/cosmos-integration.md) for COSMOS (OpenC3) ground system integration: generated config format, protocol files, plugin setup, scripting API, and Adamant-to-COSMOS type mapping.
