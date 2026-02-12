@@ -36,7 +36,7 @@ fields:
 - **Unsigned integers**: U3, U5, U8, U11, U14, U16, U32, U64
 - **Signed integers**: I3, I8, I16, I32, I64
 - **Enums**: E1, E2, E8 (bit width matches enum representation)
-- **Floats**: F32, F64 (IEEE 754 standard)
+- **Floats**: F32 (`Short_Float`), F64 (`Long_Float`). Do NOT use `Interfaces.IEEE_Float_32` -- it's not recognized by the type system.
 - **Byte arrays**: U8x{{ size }} (Jinja2 template for config variables)
 
 ### Variable Length Fields

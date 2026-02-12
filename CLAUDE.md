@@ -23,7 +23,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 ## Key Principles
 
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
-- **Compiler-validated.** 25+ rounds of build-test-fix cycles. R25: watchdog_manager compiled with zero errors on first try.
+- **Compiler-validated.** 25+ rounds of build-test-fix cycles. Components now compile clean on first try when skills are followed.
 - **Selector-driven.** Load 1-2 skills per task, not all 9.
 
 ## Non-Adamant Skills

@@ -280,7 +280,7 @@ Missing any of these causes code generation errors.
 
 **Implementation spec with clauses:**
 - Only `with` what's needed: typically `Tick`, `Command`, `Parameter_Update` (for modify connector), and any CUSTOM types used in your private record (e.g. `My_Custom_Type`)
-- The generated base class ALWAYS has `with Interfaces; use Interfaces;` and `with` for: `Sys_Time`, `Event`, `Data_Product`, `Fault` (if used), `Basic_Types`. Components with commands also get `use Command_Enums;`. No manual `with Interfaces;` or `use type` clauses needed.
+- The generated base class includes `with Interfaces; use Interfaces;` when the component has init params, commands, or other features referencing Interfaces types. It is NOT always present. If your component has no init/commands but needs Unsigned types, add `with: ["Interfaces"]` in the component YAML. The base always has `with` for connector types (`Sys_Time`, `Event`, `Data_Product`, `Fault` if used, `Basic_Types`). Components with commands also get `use Command_Enums;`.
 - **CRITICAL**: Do NOT `with` any of these (already visible or not standalone packages): `Command_Execution_Status`, `Command_Response_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces`. Adding `with Command_Execution_Status;` is a COMPILATION ERROR.
 - For components with commands: add `use Command_Execution_Status;` in the body to use bare `Success`/`Failure`.
 - Custom enumeration types used in instance record fields must be declared in the public part of the implementation spec.
@@ -381,7 +381,7 @@ end Command_T_Recv_Sync;
 - `Parameter_Update_Status` lives in `Parameter_Enums.Parameter_Update_Status`
 
 **Visibility:**
-- `Interfaces` is ALWAYS auto-with'd and `use`d by the generated base. Do NOT add it manually.
+- `Interfaces` is auto-with'd when init params, commands, or other features use Interfaces types. For simple components without these, add `with: ["Interfaces"]` in YAML if you need Unsigned types.
 - `Errant_Field_Number` in Invalid_Command/Invalid_Parameter is `Unsigned_32` (base renames from Interfaces).
 - No `Invalid_Command_Received` event unless explicitly defined in events.yaml.
 
