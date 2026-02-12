@@ -200,12 +200,37 @@ Verify C++ library linkage: `nm libgncAlgorithms.a | grep <algorithm>`
 - Pointer types: `type Foo_Access is access all Foo;` with `limited private` in public
 - Suppress style warnings on generated bindings: `pragma Style_Checks (Off);`
 
+## When .C.U_C Exists vs When It Doesn't
+
+The `.C.U_C` type and `To_C`/`To_Ada` conversion functions are generated ONLY for types that have a corresponding `-c.ads` child package. This happens when:
+- The type is in `adamant-xmera-components/src/types/` with explicit C bindings
+- The code generator produces `type_name-c.ads` / `type_name-c.adb` child packages
+
+For **custom YAML records in your own project**, `.C.U_C` does NOT exist. Instead:
+- Define the Ada binding spec (`*_algorithm_c.ads`) with `T` or `U` types directly
+- Use `access constant Type_Name.T` for pointer parameters in C bindings
+- Or define a separate C-compatible Ada record with `Convention => C` and convert manually
+
+**Ada binding spec for custom types (no .C child):**
+```ada
+function Normalize (Self : Foo_Access; Input : access constant Vector3f.T) return Result.T
+  with Import => True, Convention => C, External_Name => "Foo_normalize";
+```
+
+**Ada binding spec for xmera types (with .C child):**
+```ada
+function Update (Self : Foo_Access; Input : access constant Input_Type.C.U_C) return Output_Type.C.U_C
+  with Import => True, Convention => C, External_Name => "Foo_update";
+```
+
 ## Common Pitfalls
 
 - **Type precision mismatch:** C `float` -> `Short_Float` (F32), C `double` -> `Long_Float` (F64). Never swap.
 - **C struct duplication:** Always use Adamant packed records for C structs, never standalone Ada packages.
 - **Missing constant validation:** `#define` constants must be validated at elaboration via `pragma Assert` against imported C getter functions.
 - **Tick timestamp `(0, 0)`:** Causes data dependency staleness failures. Use `T.System_Time`.
+- **`get` connector uses `return_type`, NOT `type`:** `kind: get` connectors ONLY have `return_type`. Using `type` causes code generation failure.
+- **Send_Dropped overrides:** EVERY send connector requires a `*_Send_Dropped` override (even `is null`). Check Event_T_Send, Data_Product_T_Send, Fault_T_Send, Command_Response_T_Send.
 - **Missing `.all_path`:** In component dir (not test dir). Causes template generation failures.
 - **Library not in CMakeLists.txt:** Algorithm must be added to fp32-fsw-xmera build to link.
 
