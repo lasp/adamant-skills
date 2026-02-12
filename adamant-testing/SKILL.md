@@ -235,6 +235,11 @@ Status := T.Update_Parameters;    -- Marks ready_to_update
 T.Tick_T_Send (The_Tick);          -- Component calls Self.Update_Parameters in tick
 -- Parameter_Update_Status type: Parameter_Enums.Parameter_Update_Status.E
 
+-- Commands and parameters: ALWAYS use T.Commands and T.Parameters (tester accessors)
+-- NEVER create local Command/Parameter instances -- they lack proper ID bases
+T.Command_T_Send (T.Commands.Set_Value ((Value => 42)));  -- correct
+-- Local_Cmds : Commands.Instance; ... Local_Cmds.Set_Value(...)  -- WRONG, crashes
+
 -- Command ID access (getter function, not field):
 Cmd_Id := T.Commands.Get_Reset_Counter_Id;  -- NOT T.Commands.Reset_Counter_Id
 
