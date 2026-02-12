@@ -533,6 +533,11 @@ if Is_Dep_Status_Success (Ref_Status) and then Is_Dep_Status_Success (Nav_Status
 - Use `use type Interfaces.Unsigned_32;` for arithmetic operators.
 - No `Invalid_Command_Received` event unless you explicitly define it in events.yaml.
 
+**Send connector dropped handlers:**
+- EVERY send connector generates a `*_Send_Dropped` procedure that MUST be overridden (even as `is null`).
+- If you add `Command_Response_T_Send`, you MUST add `Command_Response_T_Send_Dropped`.
+- Forgetting one produces: "type must be declared abstract or X overridden".
+
 **Testing:**
 - Test directories need `env.py` containing `from environments import test`
 - `Self.Tester` is `Instance_Access` (pointer), NOT `Instance` -- use `Instance_Access renames`

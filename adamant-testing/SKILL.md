@@ -219,11 +219,14 @@ use type Command_Enums.Command_Execution_Status.E;
 -- Tick (requires both Time and Count):
 T.Tick_T_Send ((Time => (0, 0), Count => 1));
 
--- Command:
+-- Command (with arg_type):
 T.Command_T_Send (T.Commands.My_Command ((Arg_Field => Value)));
 
--- Data product:
-T.Data_Product_T_Send ((Header => ..., Buffer => ...));
+-- Command (no args):
+T.Command_T_Send (T.Commands.My_Noop_Command);
+
+-- Arrayed connector (index, then value):
+T.Packed_Sensor_Reading_T_Send (Channel_Index, Reading);
 ```
 
 ## Dual-Level Capture Pattern
