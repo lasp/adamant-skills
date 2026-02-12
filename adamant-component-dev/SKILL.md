@@ -149,7 +149,7 @@ parameters:
 # Implementation overrides:
 #   Parameter_Update_T_Modify: call Self.Process_Parameter_Update(Arg)
 #   Update_Parameters_Action: hook called AFTER params applied (emit event, update HW)
-#   Validate_Parameters(Self, Param_Name : Param_Type.U) -> Valid/Invalid
+#   Validate_Parameters(Self, Param1 : Type1.U, Param2 : Type2.U, ...) -> Valid/Invalid
 # Access current values: Self.{Param_Name}.{Field} (e.g., Self.Start_Count.Value)
 # Call Self.Update_Parameters periodically (e.g., in Tick) to apply staged params.
 # NAMING: param type package must NOT match param name (collision with base record field).
@@ -321,10 +321,21 @@ Missing any of these causes code generation errors.
 - `Self.Data_Products.Foo (Time, Packed_F32.T'(Value => X))` -- correct
 - `Self.Data_Products.Foo (Time, (Value => X))` -- WRONG if it resolves to .U
 
-**Parameters require TWO overrides in implementation spec:**
-- `overriding function Validate_Parameters (Self : in out Instance; Params : in Param_Type.U) return Parameter_Validation_Status.E;`
+**Parameters require overrides in implementation spec:**
+- `Validate_Parameters`: takes INDIVIDUAL parameter arguments (one per parameter), NOT a combined record:
+  ```ada
+  overriding function Validate_Parameters (
+     Self : in out Instance;
+     Param_A : in Packed_U16.U;   -- one arg per parameter in YAML
+     Param_B : in Packed_U32.U
+  ) return Parameter_Validation_Status.E;
+  ```
+  The template default returns `Valid`. Override only if cross-parameter validation needed.
 - `overriding procedure Invalid_Parameter (Self : in out Instance; ...);`
-- Missing either produces "type must be declared abstract" error
+- `overriding procedure Parameter_Update_T_Modify (Self : in out Instance; Arg : in out Parameter_Update.T);`
+  Call `Self.Process_Parameter_Update(Arg)` in the body.
+- Missing any of these produces "type must be declared abstract" error
+- There is NO combined `Component_Name_Parameters.U` record type. Parameters package only has creation functions.
 
 **Connector YAML:**
 - `get` kind CANNOT have `type` field -- only `return_type` and `kind`
@@ -345,7 +356,7 @@ Missing any of these causes code generation errors.
 - Packed `.T` types inherit serialization fields -- cannot be used as simple record aggregates for default initialization. Store individual scalar fields instead.
 
 **Parameters:**
-- `Validate_Parameters` override takes the UNPACKED type (`.U`) as argument: `Limits : in Param_Type.U`
+- `Validate_Parameters` takes INDIVIDUAL unpacked (`.U`) arguments, one per parameter -- NOT a combined record
 - Parameters REQUIRE `default` in YAML (schema-enforced)
 - `Self.Update_Parameters` must be called explicitly (typically in Tick handler) to apply staged values
 - Negative defaults for `Interfaces.Integer_32` fields break generated code (unary minus visibility issue)
@@ -355,6 +366,17 @@ Missing any of these causes code generation errors.
 - `Interfaces` package is NOT auto-with'd. Add `with: ["Interfaces"]` in component YAML or `with Interfaces;` in handwritten files.
 - Use `use type Interfaces.Unsigned_32;` for arithmetic operators.
 - No `Invalid_Command_Received` event unless you explicitly define it in events.yaml.
+
+**Duplicate connector types get numbered:**
+- Two `Event.T` send connectors become `Event_T_Send` (1st) and `Event_T_Send_2` (2nd)
+- Each gets its own `*_Dropped` handler that MUST be overridden
+- Common pattern: forwarded data on connector 1, component events on connector 2
+- Use `Self.Event_T_Send_If_Connected` for first, `Self.Event_T_Send_2_If_Connected` for second
+
+**Component naming: avoid framework collisions:**
+- The adamant framework has ~55 built-in components (event_filter, command_router, etc.)
+- Your component names must NOT match any framework component name
+- Check `adamant/src/components/` before naming. Name collisions cause "conflicting source files" errors.
 
 **Send connector dropped handlers:**
 - EVERY send connector generates a `*_Send_Dropped` procedure that MUST be overridden (even as `is null`).
