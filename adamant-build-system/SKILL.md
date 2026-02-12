@@ -192,6 +192,31 @@ Generated files in `build/src/` can be overridden by hand-written files in the s
 
 Output directories: `.ads/.adb` -> `build/src/`, `*-implementation*` -> `build/template/`, `.tex` -> `doc/build/tex/`, other -> `build/<ext>/`.
 
+### Exact Generated Files (per YAML model type)
+
+**component.yaml** -> `build/src/component-{name}.ads/.adb` (base class), `build/template/component-{name}-implementation.ads/.adb` (impl stubs)
+
+**events.yaml** -> `build/src/{name}_events.ads/.adb`, `{name}_events-representation.ads/.adb`, `build/html/{name}_events.html`
+
+**commands.yaml** -> `build/src/{name}_commands.ads/.adb`, `build/html/{name}_commands.html`
+
+**data_products.yaml** -> `build/src/{name}_data_products.ads/.adb`, `{name}_data_products-representation.ads/.adb`, `build/html/{name}_data_products.html`
+
+**data_dependencies.yaml** -> `build/src/{name}_data_dependencies.ads/.adb`, `build/html/{name}_data_dependencies.html`
+
+**record.yaml** (e.g. `quaternion.record.yaml`) -> `build/src/`:
+- `quaternion.ads/.adb` -- packed type with T, U, Pack/Unpack, serialization
+- `quaternion-representation.ads/.adb` -- string representation
+- `quaternion-validation.ads/.adb` -- field range validation
+- `quaternion-assertion.ads/.adb` -- test assertions
+- `quaternion-c.ads/.adb` -- C bindings (U_C type, To_C/To_Ada)
+- `quaternion_type_ranges.adb` -- type range extraction binary
+- Also: `build/py/quaternion.py`, `build/m/Quaternion.m`, `build/html/quaternion.html`, `build/tex/quaternion.tex`, `build/pdf/quaternion.pdf`, `build/yaml/quaternion.type_ranges.yaml`
+
+**enums.yaml** -> `build/src/{name}.ads`, `{name}-representation.ads/.adb`, `{name}-assertion.ads/.adb`, `build/py/{name}.py`, `build/html/{name}.html`
+
+**Component-level non-src outputs**: `build/dot/{name}.dot`, `build/svg/{name}.svg`, `build/png/{name}.png`, `build/eps/{name}.eps`
+
 Memory/register map generators uniquely run GNATprove on generated Ada code to validate SPARK compliance before outputting.
 
 ### Generator Database
