@@ -319,7 +319,9 @@ Missing any of these causes code generation errors.
 **Implementation spec with clauses:**
 - Only `with` what's needed: typically `Tick`, `Command`, `Parameter_Update` (for modify connector), and any CUSTOM types used in your private record (e.g. `My_Custom_Type`)
 - The generated base class always has `with` for: `Sys_Time`, `Event`, `Data_Product`, `Fault` (if used), `Basic_Types`. It has `with Interfaces; use Interfaces;` and `use Command_Enums;` ONLY when the component has commands. Components WITHOUT commands must add `with Interfaces;` and `use type Interfaces.Unsigned_32;` themselves if they need arithmetic on Unsigned types.
-- Do NOT add `with` for ANY of these -- they are NOT standalone packages and/or are already visible: `Command_Execution_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces`
+- **CRITICAL**: Do NOT add `with` for ANY of these -- they are NOT standalone packages and/or are already visible: `Command_Execution_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces`. Putting `with Command_Execution_Status;` or `with Command_Response_Status;` at the top of the body is a COMPILATION ERROR.
+- When the component has commands, `use Interfaces;` and `use Command_Enums;` are already in scope from the generated base. No need for `use type Interfaces.Unsigned_16;` etc. in the body. You DO need `use Command_Execution_Status;` in the body (or inside each command function) to use bare `Success`/`Failure`.
+- Any custom enumeration types used in instance record fields must be declared in the public part of the implementation spec (before `type Instance is new ... with private;` if used publicly, or in private declarations)
 
 **Get connectors are NOT overridden:**
 - `Sys_Time_T_Get` is a get connector -- the base class provides it. Do NOT override it.
