@@ -227,6 +227,13 @@ T.Command_T_Send (T.Commands.My_Noop_Command);
 
 -- Arrayed connector (index, then value):
 T.Packed_Sensor_Reading_T_Send (Channel_Index, Reading);
+
+-- Parameter update (3-step: stage, validate, update, then tick):
+Status := T.Stage_Parameter (T.Parameters.Param_Name ((Field => Value)));
+Status := T.Validate_Parameters;  -- Calls component's Validate_Parameters
+Status := T.Update_Parameters;    -- Marks ready_to_update
+T.Tick_T_Send (The_Tick);          -- Component calls Self.Update_Parameters in tick
+-- Parameter_Update_Status type: Parameter_Enums.Parameter_Update_Status.E
 ```
 
 ## Dual-Level Capture Pattern

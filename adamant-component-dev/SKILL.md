@@ -528,6 +528,13 @@ if Is_Dep_Status_Success (Ref_Status) and then Is_Dep_Status_Success (Nav_Status
 - `Natural` needs 31 bits -- does NOT fit `U16` format. Use `Interfaces.Unsigned_16` for U16 fields.
 - Packed `.T` types inherit serialization fields -- cannot be used as simple record aggregates for default initialization. Store individual scalar fields instead.
 
+**Parameters:**
+- `Validate_Parameters` override takes the UNPACKED type (`.U`) as argument: `Limits : in Param_Type.U`
+- Parameters REQUIRE `default` in YAML (schema-enforced)
+- `Self.Update_Parameters` must be called explicitly (typically in Tick handler) to apply staged values
+- Negative defaults for `Interfaces.Integer_32` fields break generated code (unary minus visibility issue)
+- `Parameter_Update_Status` type lives in `Parameter_Enums.Parameter_Update_Status`
+
 **Visibility:**
 - `Interfaces` package is NOT auto-with'd. Add `with: ["Interfaces"]` in component YAML or `with Interfaces;` in handwritten files.
 - Use `use type Interfaces.Unsigned_32;` for arithmetic operators.
