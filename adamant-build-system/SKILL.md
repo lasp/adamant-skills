@@ -242,9 +242,9 @@ Build sessions use SQLite databases in `~/.adamant/tmp/{session_id}/`:
 ### Test Directory Setup
 
 Test directories REQUIRE:
-1. `.all_path` file (empty is fine)
-2. `env.py` with `from environments import test` (provides AUnit paths)
-3. `component_name.tests.yaml` (test definitions)
+1. `env.py` with `from environments import test` (provides AUnit paths)
+2. `component_name.tests.yaml` (test definitions)
+3. **NO `.all_path` file** -- test directories must NOT have `.all_path` (causes duplicate test.adb conflicts across components)
 
 ```python
 # test/env.py -- MINIMUM required content:

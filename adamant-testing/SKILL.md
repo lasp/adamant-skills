@@ -13,12 +13,14 @@ Complete guide to testing Adamant components using auto-generated testers, histo
 component_name/test/
 ├── component_name.tests.yaml                # Test model (required)
 ├── test.adb                                # Standard AUnit runner (generated)
-├── env.py                                  # Build path isolation (generated)
+├── env.py                                  # Build path (required, NOT auto-generated)
 ├── component-component_name-implementation-tester.ads/adb  # Generated tester
 ├── component_name_tests-implementation.ads/adb            # Handwritten tests
 ├── test.do                                 # Build and run
 └── output.txt.do                           # Capture output
 ```
+
+**CRITICAL:** Test directories must NOT contain `.all_path`. Use `env.py` only. Having `.all_path` in test directories causes duplicate `test.adb` conflicts across components.
 
 ## Test Model (.tests.yaml)
 
@@ -200,6 +202,15 @@ T.Event_T_Recv_Sync_History.Clear;
 -- Meta operations
 Natural_Assert.Eq (T.History.Get_Depth, 20);  -- Configured depth
 Boolean_Assert.Eq (T.History.Is_Full, False);
+```
+
+### Visibility in Test Bodies
+
+Command return type: `Command_Enums.Command_Execution_Status.E` (not standalone `Command_Execution_Status`).
+```ada
+with Command_Enums;
+use type Command_Enums.Command_Execution_Status.E;
+-- Then: Assert (Status = Command_Enums.Command_Execution_Status.Success, "...");
 ```
 
 ### Sending Stimuli
