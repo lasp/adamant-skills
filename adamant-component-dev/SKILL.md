@@ -312,6 +312,20 @@ Each feature YAML file requires matching connectors in the component YAML:
 - `data_dependencies.yaml` -> `Data_Product_Fetch.T` / `Data_Product_Return.T` request
 Missing any of these causes code generation errors.
 
+**Init parameter types:**
+- Use standard Ada types for init params: `Positive`, `Natural`, `Boolean`, `Interfaces.Unsigned_32`
+- NOT `Interfaces.IEEE_Float_32` -- use `Short_Float` or `Long_Float` for floats
+- For typed data, use packed record types (e.g., `Packed_F32.T`)
+
+**Data product values must be packed (.T), not unpacked (.U):**
+- `Self.Data_Products.Foo (Time, Packed_F32.T'(Value => X))` -- correct
+- `Self.Data_Products.Foo (Time, (Value => X))` -- WRONG if it resolves to .U
+
+**Parameters require TWO overrides in implementation spec:**
+- `overriding function Validate_Parameters (Self : in out Instance; Params : in Param_Type.U) return Parameter_Validation_Status.E;`
+- `overriding procedure Invalid_Parameter (Self : in out Instance; ...);`
+- Missing either produces "type must be declared abstract" error
+
 **Connector YAML:**
 - `get` kind CANNOT have `type` field -- only `return_type` and `kind`
 - `count` must be a literal integer, not a reference (e.g., `count: 4`, never `count: "Init.N"`)
