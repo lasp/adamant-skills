@@ -239,4 +239,24 @@ Route via indexed `Command_T_Send` connector. Components register commands durin
 
 ## Assembly Validation
 
-The generator validates: connector type matching, component existence, array index bounds, ID conflicts.
+The generator validates:
+- Connector type matching (kind compatibility + data type match)
+- Component existence and unique instance names
+- Array index bounds (1-65535)
+- Global ID uniqueness across all components (commands, events, data products, packets, faults)
+- All connectors connected or explicitly ignored
+- Stack size minimums (2000 bytes)
+- Priority conflicts (unique priorities or priority queue required)
+
+### Automatic ID Assignment
+
+If `set_id_bases` is omitted, the generator finds open ID ranges automatically. If specified, it validates no collisions with other components. Assembly-level `id_bases` set minimum starting IDs per entity type.
+
+### Component Categorization (Computed)
+
+The assembly model classifies each component instance as:
+- `active`/`passive` -- execution model
+- `queued`/`simple` -- has async connectors or not
+- `init`/`commands`/`events`/`data_products`/`parameters`/`faults`/`packets` -- has that feature model
+
+This drives which generated lifecycle methods exist.

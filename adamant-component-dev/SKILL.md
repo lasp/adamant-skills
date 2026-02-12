@@ -193,6 +193,29 @@ byte_image: false                     # Print using element 'Image (default)
 skip_validation: false                # Enable validation (default)
 ```
 
+## Packed Type Validation Rules (Enforced by Model)
+
+- Records must be byte-aligned (total size multiple of 8 bits)
+- Only ONE variable-length field allowed, must be LAST field
+- Variable-length array elements must be byte-aligned
+- Cannot nest variable-length types
+- If ANY field is volatile, ALL fields must be volatile
+- Array components >8 bits must use packed arrays for endianness guarantee
+- Nested packed records must use consistent endianness (big/little/either)
+
+## Connector Kind Compatibility
+
+Connectors wire in pairs by direction:
+```
+send        -> recv_sync | recv_async     (invoker -> invokee)
+request     -> service                     (invoker -> invokee, returns value)
+get         -> return                      (invoker -> invokee, returns value)
+provide     -> modify                      (invokee -> invoker, bidirectional)
+```
+
+Array connector (`count: 0` or `count: N`): one-to-many fan-out with index.
+Mixed async priorities on a single component -> automatic priority queue.
+
 ## Hardware Interface Models
 
 ```yaml
@@ -242,6 +265,8 @@ From record YAML, the generator creates:
 - Python and MATLAB ground classes
 
 See [references/implementation-patterns.md](references/implementation-patterns.md) for Ada implementation idioms (connector usage, thread safety, command handlers, lifecycle hooks, change detection).
+
+See [references/lasel-reference.md](references/lasel-reference.md) for the LASEL command sequence language (used with command_sequencer component).
 
 ## Tester Component Generation
 

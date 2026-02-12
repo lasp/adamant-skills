@@ -173,6 +173,29 @@ stack_margin: 100                     # Stack margin bytes (bareboard only; Linu
 
 Values are accessible in both source code and YAML models. Schema allows additional key-value pairs.
 
+## Build System Internals
+
+### Override Protection
+Generated files in `build/src/` can be overridden by hand-written files in the source directory. The generator checks for existing files before writing -- place a file with the same name in the component directory to override any generated output.
+
+### Generator Database
+Each generated output maps to exactly one generator class. The dispatch in `default.do` routes:
+- Files in `build/` -> `build_via_generator` (dynamically loads generator by output path)
+- Named targets (`all`, `test`, `prove`, etc.) -> specific rule classes
+- `.type_ranges.yaml` -> `build_type_ranges_yaml`
+- `_h.ads`, `_hpp.ads` -> `build_bindings` (C/C++ header to Ada spec)
+
+### Build Path Order
+Later paths take precedence for same-named files. Project paths override framework paths. This enables project-specific customization of framework components.
+
+### Session Database
+Build sessions use SQLite databases in `~/.adamant/tmp/{session_id}/`:
+- **generator_database**: output file -> generator class + input file
+- **source_database**: Ada package name -> source files + model YAML
+- **redo_target_database**: directory -> buildable targets
+
+`redo clear_cache` clears the model cache (SQLite-based, prevents redundant YAML processing).
+
 ## Test Environment Configuration
 
 Test directories can include `env.py` to set environment:
