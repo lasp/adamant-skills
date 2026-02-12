@@ -214,7 +214,9 @@ Command return type: `Command_Enums.Command_Execution_Status.E` (not standalone 
 ```ada
 with Command_Enums;
 use type Command_Enums.Command_Execution_Status.E;
+use type Command_Enums.Command_Response_Status.E;  -- needed for response .Status field comparisons
 -- Then: Assert (Status = Command_Enums.Command_Execution_Status.Success, "...");
+-- Or: Assert (Response.Status = Command_Enums.Command_Response_Status.Success, "...");
 ```
 
 ### Sending Stimuli
