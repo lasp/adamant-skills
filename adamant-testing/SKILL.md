@@ -326,6 +326,18 @@ redo-ifchange build/bin/Linux_Test/test.elf
 build/bin/Linux_Test/test.elf 2>&1 | sed 's,\x1B\[[0-9;]*[a-zA-Z],,g' > $3 | true
 ```
 
+## Common Test Errors (Do NOT Make These)
+
+1. **Wrong stimulus API**: Use `T.Tick_T_Send(...)` NOT `T.Tick_T_Recv_Sync(...)`. The tester SENDS to the component under test. `_Recv_Sync` is what the tester receives FROM the component (event/DP/fault capture).
+
+2. **History `.Value` accessor in comparisons**: `T.Pet_Count_History.Get(N)` returns `Packed_U32.T` directly. Compare with `Packed_U32_Assert.Eq(T.Pet_Count_History.Get(1), (Value => 42))`. Do NOT write `.Get(1).Value` then compare to a packed record -- type mismatch.
+
+3. **Tick.T.Count is Unsigned_32**: When using loop variable casts, use `Interfaces.Unsigned_32(I)` not `Unsigned_16`. Add `with Interfaces;` to the test body if needed.
+
+4. **Missing imports in test body**: Test bodies need explicit `with` for packages used: `with Interfaces;`, `with Basic_Assertions; use Basic_Assertions;`, typed assertion packages like `with Packed_U32.Assertion; use Packed_U32.Assertion;`.
+
+5. **Tester file confusion**: The tester `.ads` is generated (in `build/template/`). The tester `.adb` is hand-written. Copy templates to `test/` ONCE at initial setup. Files in `test/` override generated templates.
+
 ## Testing Best Practices
 
 ### Test Organization
