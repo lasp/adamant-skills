@@ -261,4 +261,20 @@ The assembly model classifies each component instance as:
 
 This drives which generated lifecycle methods exist.
 
+## Common Assembly Pitfalls
+
+- **Active components need `init_base` in assembly YAML** with `Queue_Size`. Use `Instance_Name.Get_Max_Queue_Element_Size` multiplier.
+- **Command_Router requires `Max_Number_Of_Commands` in `init`** -- total command count across all routed components.
+- **Product_Database** (not `Data_Product_Database`) is the built-in DP store component name.
+- **Data dependencies need `map_data_dependencies`** on the component instance:
+```yaml
+    map_data_dependencies:
+      - data_dependency: Dep_Name           # From component's data_dependencies.yaml
+        data_product: "Instance.DP_Name"    # "ComponentInstance.DataProductName"
+        stale_limit_us: 1000000             # 0 = never stale
+```
+- **`with:` packages must exist in build path** -- don't include assembly-specific packages (like `Start_Up`) unless you've created them.
+- **Unconnected `send` connectors are warnings, not errors** -- `_If_Connected` guards handle them at runtime.
+- **Sys_Time_T_Get must be wired for every component** that has a `get` connector for time (most components).
+
 See [references/cosmos-integration.md](references/cosmos-integration.md) for COSMOS (OpenC3) ground system integration: generated config format, protocol files, plugin setup, scripting API, and Adamant-to-COSMOS type mapping.
