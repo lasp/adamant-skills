@@ -46,8 +46,8 @@ redo build/svg/comp.svg                   # Diagram
 description: What this component does
 execution: passive|active|either
 # SPARK: add all.prove.yaml in component dir + pragma SPARK_Mode in Ada files
-with:                                 # Extra Ada "with" dependencies
-  - "Package_Name"
+with:                                 # Extra Ada "with" (ONLY custom packages, NOT connector types)
+  - "My_Custom_Types"                 # Do NOT list Tick, Command, Event, etc. -- auto-deduced
 preamble: |                           # Ada code injected into generated spec
   subtype Custom_Type is Natural range 1 .. 100;
 
@@ -254,6 +254,17 @@ component_name/test/
 ## Related Skills
 - **Formal verification**: See `adamant-build-system` (prove section)
 - **C++ algorithm wrapping**: See `adamant-algorithm-wrapping`
+
+## Pre-Flight Checklist (verify before submitting)
+
+1. [ ] Spec uses `with private` pattern (public opaque, private full record + overrides)
+2. [ ] `Init` override present IFF component YAML has `init:` section
+3. [ ] `Invalid_Command` override present IFF `commands.yaml` exists
+4. [ ] `Command_T_Recv_Sync` override present IFF `commands.yaml` exists
+5. [ ] All `*_Send_Dropped` handlers overridden for every send connector
+6. [ ] NO `with` for auto-provided packages (Interfaces, Event, Data_Product, Sys_Time, etc.)
+7. [ ] NO `build/` directory created
+8. [ ] Empty `.all_path` file present
 
 ## Common Pitfalls
 
