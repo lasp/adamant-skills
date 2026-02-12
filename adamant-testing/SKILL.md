@@ -373,7 +373,7 @@ with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
 
 7. **Command response status type**: In command response assertions, use `Command_Enums.Command_Response_Status.Success/Failure`, NOT `Command_Execution_Status`. The command response record's Status field is `Command_Response_Status.E`.
 
-8. **Typed histories don't auto-clear**: Clearing `T.Data_Product_T_Recv_Sync_History` does NOT clear individual typed histories like `T.Counter_History`. Clear typed histories explicitly if needed between test phases, or account for accumulated entries.
+8. **Typed histories don't auto-clear (MOST COMMON ERROR)**: Clearing `T.Data_Product_T_Recv_Sync_History` does NOT clear individual typed histories like `T.Counter_History`. When checking typed histories after clearing raw histories, use CUMULATIVE counts: if an event fired twice total (once before clear, once after), the typed history count is 2 even though the raw history count is 1. Either use cumulative counts or clear typed histories explicitly: `T.My_Event_History.Clear;`
 
 ## Testing Best Practices
 
