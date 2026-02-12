@@ -268,6 +268,8 @@ See [references/implementation-patterns.md](references/implementation-patterns.m
 
 See [references/lasel-reference.md](references/lasel-reference.md) for the LASEL command sequence language (used with command_sequencer component).
 
+See [references/testing-patterns.md](references/testing-patterns.md) for test setup, History API, async dispatch, assertions, error injection, and parameter testing patterns.
+
 ## Tester Component Generation
 
 `redo templates` generates a reciprocal tester with inverse connectors (sends become recvs). Tester forces all invokee connectors synchronous (no queues in test). White-box access to component internals via tester instance.

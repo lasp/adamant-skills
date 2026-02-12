@@ -178,6 +178,22 @@ Values are accessible in both source code and YAML models. Schema allows additio
 ### Override Protection
 Generated files in `build/src/` can be overridden by hand-written files in the source directory. The generator checks for existing files before writing -- place a file with the same name in the component directory to override any generated output.
 
+### Generated Output Counts (per YAML model type)
+
+| Model Type | Templates | Key Outputs |
+|-----------|-----------|-------------|
+| Component | 22 | Ada source, LaTeX docs |
+| Assembly | 37 | Ada, HTML, Python, MATLAB, XML, COSMOS |
+| Record/Array/Enum | 36 | Ada (pack/unpack/validate/assert/C), Python, MATLAB, LaTeX |
+| Commands/Events/etc | 23 | Ada suites, HTML, LaTeX |
+| Memory/Register Map | 6 | Ada (SPARK-validated), HTML, LaTeX |
+| Tests | 9 | AUnit runner, tester, reciprocal |
+| Configuration | 1 | Ada configuration.ads |
+
+Output directories: `.ads/.adb` -> `build/src/`, `*-implementation*` -> `build/template/`, `.tex` -> `doc/build/tex/`, other -> `build/<ext>/`.
+
+Memory/register map generators uniquely run GNATprove on generated Ada code to validate SPARK compliance before outputting.
+
 ### Generator Database
 Each generated output maps to exactly one generator class. The dispatch in `default.do` routes:
 - Files in `build/` -> `build_via_generator` (dynamically loads generator by output path)
