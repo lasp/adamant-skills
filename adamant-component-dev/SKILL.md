@@ -162,46 +162,22 @@ enums:
         value: 255
 ```
 
-## Packed Type Model
+## Packed Types
 
+Component models reference packed types for data structures. See [adamant-type-system](../adamant-type-system/SKILL.md) for complete type system documentation.
+
+**Quick reference:**
 ```yaml
-# name.record.yaml
-description: Bit-level packed record
-preamble: |
-  subtype My_Range is Interfaces.Unsigned_8 range 0 .. 7;
-fields:
-  - name: Version
-    type: My_Range
-    format: U3           # Format codes: U3/U8/U16/U32 (unsigned),
-  - name: Packet_Type    #   E1/E2 (enum), U8x{{ size }} (byte array, Jinja2)
-    type: My_Enum.E
-    format: E8
-    default: "My_Enum.Default_Value"   # Field default when record instantiated
-    byte_image: true                   # Print as unsigned_8 array (no Ada 'Image)
-    skip_validation: true              # Skip autocode validation
-  - name: Payload
-    type: Byte_Array
-    variable_length: "Header.Length"   # Length determined by another field
-    variable_length_offset: -4         # Apply offset to length calculation
-
-# name.array.yaml
-description: Packed array type
-type: My_Element_Type
-format: U32                           # For primitive types
-length: 10                            # Fixed array length
-byte_image: false                     # Print using element 'Image (default)
-skip_validation: false                # Enable validation (default)
+# In component feature models (commands.yaml, events.yaml, etc.)
+commands:
+  - name: Set_Value
+    arg_type: Packed_U32.T            # Use framework packed type
+events:  
+  - name: Value_Changed
+    param_type: Custom_Record.T       # Use custom packed record
 ```
 
-## Packed Type Validation Rules (Enforced by Model)
-
-- Records must be byte-aligned (total size multiple of 8 bits)
-- Only ONE variable-length field allowed, must be LAST field
-- Variable-length array elements must be byte-aligned
-- Cannot nest variable-length types
-- If ANY field is volatile, ALL fields must be volatile
-- Array components >8 bits must use packed arrays for endianness guarantee
-- Nested packed records must use consistent endianness (big/little/either)
+**Component-specific packed types**: Place `name.record.yaml`, `name.array.yaml`, or `name.enums.yaml` in component directory for component-specific types.
 
 ## Connector Kind Compatibility
 
