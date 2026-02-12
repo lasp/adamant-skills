@@ -367,7 +367,13 @@ with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
 
 4. **Missing imports in test body**: Test bodies need explicit `with` for packages used: `with Interfaces;`, `with Basic_Assertions; use Basic_Assertions;`, typed assertion packages like `with Packed_U32.Assertion; use Packed_U32.Assertion;`.
 
-5. **Tester file confusion**: The tester `.ads` is generated (in `build/template/`). The tester `.adb` is hand-written. Copy templates to `test/` ONCE at initial setup. Files in `test/` override generated templates.
+5. **Tester file confusion**: The tester `.ads` is generated (in `build/template/`). The tester `.adb` is hand-written. Copy templates to `test/` ONCE at initial setup. Files in `test/` override generated templates. You MUST also copy `test.adb` from `build/template/test.adb`.
+
+6. **History name convention**: Typed histories use the event/DP name + `_History`. NOT `_Event_History` or `_Data_Product_History`. Example: event `Telemetry_Enabled` -> `T.Telemetry_Enabled_History`, data product `Downlink_Count` -> `T.Downlink_Count_History`.
+
+7. **Command response status type**: In command response assertions, use `Command_Enums.Command_Response_Status.Success/Failure`, NOT `Command_Execution_Status`. The command response record's Status field is `Command_Response_Status.E`.
+
+8. **Typed histories don't auto-clear**: Clearing `T.Data_Product_T_Recv_Sync_History` does NOT clear individual typed histories like `T.Counter_History`. Clear typed histories explicitly if needed between test phases, or account for accumulated entries.
 
 ## Testing Best Practices
 
