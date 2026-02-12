@@ -235,6 +235,16 @@ Status := T.Update_Parameters;    -- Marks ready_to_update
 T.Tick_T_Send (The_Tick);          -- Component calls Self.Update_Parameters in tick
 -- Parameter_Update_Status type: Parameter_Enums.Parameter_Update_Status.E
 
+-- Command ID access (getter function, not field):
+Cmd_Id := T.Commands.Get_Reset_Counter_Id;  -- NOT T.Commands.Reset_Counter_Id
+
+-- Assertion imports: use Basic_Assertions and typed assertion child packages:
+-- with Basic_Assertions; use Basic_Assertions;  -- for Natural_Assert
+-- with Packed_U32.Assertion; use Packed_U32.Assertion;  -- for typed packed assertions
+
+-- DANGER: `cp build/template/* .` OVERWRITES hand-written files if names match.
+-- Only copy templates ONCE at initial setup, or copy selectively.
+
 -- Request connector: override tester's *_T_Service to return test data:
 -- Default returns uninitialized Data_Product_Return.T (fetch will fail).
 -- In tester .adb, set To_Return.The_Status := Data_Product_Enums.Fetch_Status.Success;
