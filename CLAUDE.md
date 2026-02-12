@@ -4,20 +4,20 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 ## Quick Start
 
-**Start here:** Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills and avoids loading all ~2200 lines into context.
+**Start here:** Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills and avoids loading all ~2260 lines into context.
 
 ## Skill Inventory
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
-| `adamant-skill-selector` | ~90 | **Read first.** Maps tasks to skills. |
-| `adamant-component-dev` | ~520 | Building components: YAML models, generated API, implementation patterns |
-| `adamant-assembly-dev` | ~260 | Wiring assemblies: scheduling, routing, ID assignment, COSMOS integration |
-| `adamant-build-system` | ~280 | Redo commands, code gen pipeline, build paths, cross-compilation |
-| `adamant-framework-components` | ~280 | Catalog of all 55 built-in components by subsystem |
-| `adamant-type-system` | ~400 | YAML type definitions, format codes, generated Ada type hierarchy |
-| `adamant-testing` | ~470 | Test harness generation, History API, async dispatch, error injection |
-| `adamant-algorithm-wrapping` | ~300 | Complete pipeline for wrapping C++ algorithms: C shims, Ada bindings, packed records, component implementation, unit tests |
+| `adamant-skill-selector` | ~117 | **Read first.** Maps tasks to skills. |
+| `adamant-component-dev` | ~379 | Building components: YAML models, generated API, implementation patterns |
+| `adamant-assembly-dev` | ~309 | Wiring assemblies: scheduling, routing, ID assignment, COSMOS integration |
+| `adamant-build-system` | ~292 | Redo commands, code gen pipeline, build paths, cross-compilation |
+| `adamant-framework-components` | ~281 | Catalog of all 55 built-in components by subsystem |
+| `adamant-type-system` | ~405 | YAML type definitions, format codes, generated Ada type hierarchy |
+| `adamant-testing` | ~360 | Test harness generation, History API, async dispatch, error injection |
+| `adamant-algorithm-wrapping` | ~218 | Complete pipeline for wrapping C++ algorithms: C shims, Ada bindings, packed records, component implementation, unit tests |
 
 ## Key Principles
 

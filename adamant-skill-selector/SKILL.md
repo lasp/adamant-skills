@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 7 Adamant skills totaling ~2500 lines. Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 8 Adamant skills totaling ~2260 lines. Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -90,6 +90,9 @@ You have 7 Adamant skills totaling ~2500 lines. Loading all of them wastes conte
 | Full component lifecycle (build+test) | component-dev | testing |
 | SPARK verification | build-system (prove section) | component-dev |
 | Wrap C++ algorithm into Adamant component | algorithm-wrapping | component-dev |
+| Ground system integration (COSMOS) | assembly-dev | build-system |
+| Memory-mapped register interface | type-system | component-dev |
+| Create system architecture from scratch | assembly-dev | framework-components |
 
 ## Naming Conventions (quick reference)
 
@@ -100,15 +103,6 @@ These patterns cause compilation errors if violated:
 - **Preamble enums**: live in the packed type package directly (different from standalone)
 - **Data dependencies**: require `request` connector (`Data_Product_Fetch.T`), NOT `get`
 - **Parameters**: require `modify` connector, NOT `recv_sync`
-
-### Wrapping a C++ algorithm into an Adamant component
-**Load:** `adamant-algorithm-wrapping`
-- C shim creation, Ada binding generation (h2ads), packed record conversion
-- Component YAML patterns for passive wrapper components
-- Data dependency flow, type conversion chain (T -> U -> C.U_C)
-- Unit testing with Python reference values
-
-**Also load:** `adamant-component-dev` (for general component patterns) and `adamant-type-system` (for packed record YAML)
 
 ## When NOT to Use This Selector
 
