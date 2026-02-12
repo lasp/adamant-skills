@@ -326,6 +326,37 @@ redo-ifchange build/bin/Linux_Test/test.elf
 build/bin/Linux_Test/test.elf 2>&1 | sed 's,\x1B\[[0-9;]*[a-zA-Z],,g' > $3 | true
 ```
 
+## Assertion Preference Order
+
+Use this hierarchy (most preferred first):
+
+1. **Packed type assertions** (preferred): `Packed_U32_Assert.Eq(...)`, `Packed_F32_Assert.Eq(...)`, `Event_Assert.Eq(...)` -- type-safe, clear error messages, match framework conventions
+2. **Smart_Assert pattern**: `Smart_Assert.Eq(actual, expected)` -- generic, works with any type that has Image
+3. **Basic_Assertions**: `Natural_Assert.Eq(...)`, `Boolean_Assert.Eq(...)` -- for counts, flags
+4. **AUnit Assert** (fallback): `Assert(condition, "message")` -- only when no typed assertion fits
+
+```ada
+-- PREFERRED: packed type assertion for data product comparison
+Packed_U32_Assert.Eq (T.Counter_History.Get (1), (Value => 42));
+
+-- GOOD: smart assert for custom types
+Smart_Assert.Eq (T.Custom_History.Get (1).Field, Expected_Value);
+
+-- OK: basic assertion for counts
+Natural_Assert.Eq (T.Event_T_Recv_Sync_History.Get_Count, 3);
+
+-- FALLBACK: AUnit assert when nothing else fits
+Assert (Status = Success, "Expected success status");
+```
+
+Import the assertion packages you need:
+```ada
+with Basic_Assertions; use Basic_Assertions;           -- Natural_Assert, Boolean_Assert
+with Packed_U32.Assertion; use Packed_U32.Assertion;   -- Packed_U32_Assert
+with Smart_Assert;                                      -- Smart_Assert.Eq
+with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
+```
+
 ## Common Test Errors (Do NOT Make These)
 
 1. **Wrong stimulus API**: Use `T.Tick_T_Send(...)` NOT `T.Tick_T_Recv_Sync(...)`. The tester SENDS to the component under test. `_Recv_Sync` is what the tester receives FROM the component (event/DP/fault capture).
