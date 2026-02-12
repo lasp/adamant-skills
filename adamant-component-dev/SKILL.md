@@ -317,9 +317,9 @@ Each feature YAML file requires matching connectors in the component YAML:
 Missing any of these causes code generation errors.
 
 **Implementation spec with clauses:**
-- Only `with` what's needed: typically `Tick`, `Command`, `Parameter_Update` (for modify connector)
-- The base class provides visibility for `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Packed_*` types, `Basic_Types`, `Interfaces`, `Unsigned_32`, `Command_Execution_Status`, `Parameter_Validation_Status`, `Command_Response_Status`
-- Do NOT `with Parameter_Validation_Status` -- it's not a standalone package. Use it directly (visible from base).
+- Only `with` what's needed: typically `Tick`, `Command`, `Parameter_Update` (for modify connector), and any CUSTOM types used in your private record (e.g. `My_Custom_Type`)
+- The generated base class already has `with` + `use` for: `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Packed_*` types, `Basic_Types`, `Interfaces`, `Command_Enums`, `Command_Types`, `Data_Product_Types`, `Event_Types`. It also has `use Interfaces;` making `Unsigned_32` etc. directly visible, and `use Command_Enums;` making `Command_Execution_Status` visible.
+- Do NOT add `with` for ANY of these -- they are NOT standalone packages and/or are already visible: `Command_Execution_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces`
 
 **Get connectors are NOT overridden:**
 - `Sys_Time_T_Get` is a get connector -- the base class provides it. Do NOT override it.
