@@ -280,7 +280,7 @@ component_name/test/
 3. [ ] `Invalid_Command` override present IFF `commands.yaml` exists
 4. [ ] `Command_T_Recv_Sync` override present IFF `commands.yaml` exists
 5. [ ] All `*_Send_Dropped` handlers overridden for every send connector
-6. [ ] NO `with` for auto-provided packages (Interfaces, Event, Data_Product, Sys_Time, etc.)
+6. [ ] NO `with` for auto-provided packages (Event, Data_Product, Sys_Time, etc.). NOTE: `Interfaces` is only auto-provided when commands or other features use it -- if your component has no commands but uses Unsigned types in the record, add `with Interfaces; use Interfaces;` in the implementation spec.
 7. [ ] NO `build/` directory created
 8. [ ] Empty `.all_path` file present
 9. [ ] All entity names unique across events, data products, commands, faults, parameters
