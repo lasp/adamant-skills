@@ -323,6 +323,7 @@ Missing any of these causes code generation errors.
 ```ada
 with Tick;        -- Only with connector/custom types you actually use
 with Command;     -- Only if component has commands
+with Interfaces; use Interfaces;  -- REQUIRED if record uses Unsigned types AND component has no commands (commands auto-provide Interfaces; without commands it's NOT visible)
 
 package Component.My_Component.Implementation is
    type Instance is new My_Component.Base_Instance with private;  -- PUBLIC: opaque
