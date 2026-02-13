@@ -239,7 +239,8 @@ Status := T.Stage_Parameter (T.Parameters.Param_Name ((Field => Value)));
 Status := T.Validate_Parameters;  -- Calls component's Validate_Parameters
 Status := T.Update_Parameters;    -- Marks ready_to_update
 T.Tick_T_Send (The_Tick);          -- Component calls Self.Update_Parameters in tick
--- Parameter_Update_Status type: Parameter_Enums.Parameter_Update_Status.E
+-- All three return Parameter_Enums.Parameter_Update_Status.E (Success on all steps)
+-- Need: with Parameter_Enums; use Parameter_Enums; use Parameter_Update_Status;
 
 -- Commands and parameters: ALWAYS use T.Commands and T.Parameters (tester accessors)
 -- NEVER create local Command/Parameter instances -- they lack proper ID bases
