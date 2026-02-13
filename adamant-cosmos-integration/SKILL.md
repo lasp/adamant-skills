@@ -81,7 +81,7 @@ Periodically fetches DPs from Product_Database and packetizes them.
   init_base:
     - "Queue_Size => 3 * Product_Packetizer_Instance.Get_Max_Queue_Element_Size"
   discriminant:
-    - "Packet_List => Assembly_Product_Packets.Packet_List'Access"
+    - "Packet_List => {Assembly_Name}_Product_Packets.Packet_List'Access"
   init:
 ```
 **Connectors:** `Tick_T_Recv_Sync`, `Data_Product_Fetch_T_Request` (to Product_Database), `Packet_T_Send`, `Command_T_Recv_Async`, `Command_Response_T_Send`, `Event_T_Send`, `Data_Product_T_Send`, `Sys_Time_T_Get`
@@ -245,7 +245,7 @@ packets:
 - `period`: Tick count between packet creation (string)
 - `use_timestamp`: Include the DP's timestamp in the packet (boolean, optional)
 
-Add `Assembly_Product_Packets` to the assembly `with:` list.
+Add `{Assembly_Name}_Product_Packets` to the assembly `with:` list. The package name follows the assembly name exactly (e.g., `Station_Assembly_Product_Packets` for assembly named `Station_Assembly`).
 
 ## COSMOS Plugin Structure
 
