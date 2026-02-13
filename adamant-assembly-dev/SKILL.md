@@ -351,7 +351,7 @@ Connect `Parameter_Update_T_Provide` to each component's `Parameter_Update_T_Mod
 `Event_Splitter` -> `Event_Filter` -> `Event_Limiter` -> `Event_Packetizer`. Splitter fans out to filtered path + unfiltered post-mortem log.
 
 ### Fault System
-`Fault_Correction` component maps fault IDs to corrective commands via a response table. Connect all component `Fault_T_Send` to it.
+`Fault_Correction` component maps fault IDs to corrective commands via a response table. Connect all component `Fault_T_Send` to it. **WARNING: Fault.T is NOT Event.T -- never wire Fault_T_Send to Event_T_Recv.** If no Fault_Correction is used, leave fault sends unconnected (use `_Send_If_Connected` in components).
 
 ### Assembly-Generated Constants
 Assemblies auto-generate packages: `Assembly_Commands`, `Assembly_Events`, `Assembly_Data_Products` with `Number_Of_Commands`, `Minimum_Event_Id`, `Maximum_Event_Id`, etc. Use in init.
