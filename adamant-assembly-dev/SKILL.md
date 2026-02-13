@@ -308,6 +308,11 @@ This drives which generated lifecycle methods exist.
 - **Sys_Time_T_Get must be wired for EVERY component that has it** -- including Ticker! Unconnected `get` connectors cause silent task crashes at runtime (assertion failure in the task, no visible error). The assembly generator does NOT validate unconnected `get` connectors.
 - **Do NOT invent connectors on framework components** -- check the component YAML. Event_Text_Logger has ONLY `Event_T_Recv_Async` (no Sys_Time_T_Get, no Tick). Product_Database has `Data_Product_T_Recv_Sync`, `Data_Product_Fetch_T_Service`, `Event_T_Send`, `Sys_Time_T_Get` (and commands if enabled).
 - **Lifecycle order in main.adb**: `Start_Components` BEFORE `Set_Up_Components`. Set_Up registers commands with the router which must be running. Add a 1s delay before Start.
+- **System time provider is `Gps_Time`** (NOT `System_Time` -- that type doesn't exist). Every assembly needs one: `type: Gps_Time`, `name: System_Time_Instance`.
+- **Active components in assembly need `init_base` with `Queue_Size`** and `priority`/`stack_size`/`secondary_stack_size`. Use `5 * Instance.Get_Max_Queue_Element_Size` for queue sizing.
+- **Init params with defaults still need `init:` in assembly YAML** -- the generator requires the `init:` key when the component has ANY init params. Provide explicit values even for params with YAML defaults.
+- **Multiple assemblies: main procedure names must differ** -- `procedure Main` in `main.adb` conflicts across assemblies. Use unique names like `procedure Mini_Main` in `mini_main.adb`.
+- **Event_Splitter `T_Send_Count` must match outputs** -- bump when adding new event consumers (e.g., Event_Processor_Instance).
 
 ### Observation Infrastructure Pattern
 ```yaml
