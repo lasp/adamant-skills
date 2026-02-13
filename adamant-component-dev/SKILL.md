@@ -299,7 +299,7 @@ component_name/test/
 15. [ ] Parameter accessor `Self.<Param_Name>` returns `.U` -- convert to `.T` when passing to events: `My_Type.T (Self.My_Param)`
 16. [ ] Faults use event-like API: `Self.Fault_T_Send_If_Connected (Self.Faults.Name (The_Time))` -- NOT `Self.Name.Set_Status(...)`
 17. [ ] `Invalid_Parameter` override present IFF `parameters.yaml` exists (abstract, MUST override)
-18. [ ] `Packed_U8` does NOT exist -- use `Packed_Byte.T` for 8-bit unsigned values
+18. [ ] `Packed_U8` does NOT exist -- use `Packed_Byte.T` for 8-bit unsigned values. When constructing `Packed_Byte.T` aggregates in the body (e.g., DP sends), add `with Packed_Byte;` to the body context clause -- it is NOT auto-visible.
 19. [ ] `Get_Data_Dependency` + `Invalid_Data_Dependency` overrides present IFF `data_dependencies.yaml` exists (both abstract, MUST override)
 20. [ ] Active components do NOT override Init with Queue_Size -- queue setup is via `init_base` in assembly YAML, NOT a component Init procedure. Only override Init if the component YAML has an `init:` section with parameters.
 21. [ ] NO dynamic allocation (`new`, `access` types) -- Adamant uses Ravenscar profile. Use fixed-size arrays. NO `Final`/destructor overrides (don't exist in Adamant).
