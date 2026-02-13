@@ -275,6 +275,8 @@ component_name/test/
 
 ## Pre-Flight Checklist (verify before submitting)
 
+**FIRST: Create empty `.all_path` file (0 bytes) in the component directory. This is the #1 most-missed item.**
+
 1. [ ] Spec uses `with private` pattern (public opaque, private full record + overrides)
 2. [ ] `Init` override present IFF component YAML has `init:` section
 3. [ ] `Invalid_Command` override present IFF `commands.yaml` exists
