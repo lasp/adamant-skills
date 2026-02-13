@@ -266,7 +266,7 @@ component_name/test/
   - Only has `Init` if component YAML defines `init:` section with parameters
   - Do NOT add `overriding procedure Init` unless YAML has init params
 - **Active**: Message queue for async connectors (routers, command handlers)
-  - `Init` MUST call `Self.Init_Base(Queue_Size)` to allocate the queue
+  - `Init` MUST call `Self.Init_Base(Queue_Size)` to allocate the queue (Queue_Size is in BYTES, not elements)
   - Async handler: `{Type}_T_Recv_Async` (called by auto-generated `Cycle` after dequeue)
   - Overflow handler: `{Type}_T_Recv_Async_Dropped` (called when queue full)
   - Command connectors stay `recv_sync` even on active components

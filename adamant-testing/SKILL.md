@@ -128,6 +128,8 @@ end Component.Example_Component.Implementation.Tester;
 procedure Init_Base (Self : in out Instance; Queue_Size : in Natural) is
 begin
    -- Initialize component heap (for active components)
+   -- CRITICAL: Queue_Size is in BYTES, not elements!
+   -- Use: Self.Tester.Component_Instance.Get_Max_Queue_Element_Size * N for N elements
    Self.Component_Instance.Init_Base (Queue_Size => Queue_Size);
    
    -- Initialize tester histories
