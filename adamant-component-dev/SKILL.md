@@ -231,6 +231,11 @@ send    -> recv_sync | recv_async    request -> service
 get     -> return                    provide -> modify
 ```
 Array connector (`count: 0` or N): one-to-many fan-out with index.
+- Generated index type: `<Type>_T_Send_Index` (e.g., `Packet_T_Send_Index`)
+- Send: `Self.Packet_T_Send_If_Connected(Index, Arg)` where Index is the generated index type
+- Loop: `for I in Packet_T_Send_Index'Range loop` (NOT `0 .. count-1`)
+- Dropped handler: `overriding procedure Packet_T_Send_Dropped(Self : in out Instance; Index : in Packet_T_Send_Index; Arg : in Packet.T)`
+- Check: `Self.Is_Packet_T_Send_Connected(Index)` returns Boolean
 
 
 ## Generated Code API Reference
