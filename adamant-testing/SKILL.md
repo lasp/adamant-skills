@@ -389,7 +389,7 @@ with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
 
 11. **`use type` for operator visibility**: When using `pragma Assert` or direct `=` comparisons on enumeration types (e.g., `Command_Response_Status.E`), you need `use type Command_Enums.Command_Response_Status.E;` in the `with` section. Without it, the `=` operator is not directly visible.
 
-12. **History overflow ("History is full")**: Default history depth is 100. Tests that send many stimuli (e.g., 100+ packets) will overflow event/DP/fault histories. Either: (a) increase depth in tester Init_Base, (b) reduce test stimulus count, or (c) clear histories mid-test. The overflow triggers a runtime error at `history.adb:20`.
+12. **History overflow ("History is full")**: Default history depth is 100. Passive component testers' `Init_Base` takes NO parameters -- history depth is fixed. Each tick sending 2 DPs consumes 2 history slots. 50+ ticks = risk of overflow. Solutions: (a) clear histories mid-test with `T.<History>.Clear`, (b) reduce stimulus count, (c) test milestone logic with fewer iterations. The overflow triggers a runtime error at `history.adb:20`.
 
 13. **Packet.T Header has NO Priority field**: `Packet_Header.T` fields are: `Time` (Sys_Time.T), `Id` (Packet_Id), `Sequence_Count`, `Buffer_Length`. Do NOT access `.Header.Priority` -- it does not exist.
 
