@@ -24,11 +24,18 @@ component_name/test/
 
 **Setup script:** `bash scripts/mk_test_env.sh [test_name_1 test_name_2 ...]` (run from the component directory, creates test/env.py + test/tests.yaml). Relative to this skill directory.
 
-**CRITICAL: Template copy pattern.** After `redo templates`, only copy the TESTER files (not the test body):
+**CRITICAL: Template copy pattern.** After `redo templates`, copy these files:
 ```bash
 cp build/template/component-*-tester.ads build/template/component-*-tester.adb .
+cp build/template/*_tests-implementation.ads .   # MUST use generated spec (avoids name conflicts)
 cp build/template/test.adb .
 # Do NOT copy *_tests-implementation.adb -- it overwrites your real test code with stubs!
+```
+
+**NEVER write null checks on Instance_Access:**
+```ada
+-- WRONG: if Self.Tester /= null then  (operator not visible, also unnecessary)
+-- RIGHT: Self.Tester.Final_Base;       (tester is always valid)
 ```
 
 ## Test Model (.tests.yaml)
