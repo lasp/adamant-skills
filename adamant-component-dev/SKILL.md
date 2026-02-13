@@ -445,6 +445,12 @@ Do NOT make it `function ... return Command_Execution_Status.E` -- that's a diff
 - If you add `Command_Response_T_Send`, you MUST add `Command_Response_T_Send_Dropped`.
 - Forgetting one produces: "type must be declared abstract or X overridden".
 
+**Framework type header fields (do NOT invent fields):**
+- `Packet_Header.T`: Time (Sys_Time.T), Id (Packet_Id/U16), Sequence_Count (U16), Buffer_Length (U16). NO Priority field.
+- `Event_Header.T`: Time (Sys_Time.T), Id (Event_Id/U16), Param_Buffer_Length (U8). NO Severity field. Event severity is an assembly-level concept encoded in ID ranges, not a field.
+- `Command_Header.T`: Source_Id, Id. Check generated code for exact fields.
+- When working with framework types, read the actual `.record.yaml` in `adamant/src/types/` -- do NOT assume fields exist.
+
 **Testing:** See `adamant-testing` skill for full patterns. Key gotcha: test dirs use `env.py` (NOT `.all_path`).
 
 ## Target Hardware Abstraction
