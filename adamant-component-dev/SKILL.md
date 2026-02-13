@@ -292,7 +292,11 @@ Helper script: `bash scripts/mk_all_path.sh /path/to/component/dir` (relative to
 7. [ ] NO `build/` directory created
 8. [ ] Empty `.all_path` file present (0 bytes, marker file -- NO content inside)
 9. [ ] All entity names unique across events, data products, commands, faults, parameters
-10. [ ] `use Command_Execution_Status;` INSIDE package body (not before it)
+10. [ ] `use Command_Execution_Status;` INSIDE package body (NEVER before `package body` line). Pattern:
+    ```ada
+    package body Component.Foo.Implementation is
+       use Command_Execution_Status;  -- HERE, not above package body
+    ```
 11. [ ] `get` connectors use `return_type:` NOT `type:` in YAML
 12. [ ] `request` connectors have both `type:` and `return_type:` in YAML
 13. [ ] Custom record YAML fields have `format:` specified (e.g., `format: F32` for `Short_Float`, `format: U32` for `Unsigned_32`). Missing format = "is NOT a packed type" build error.
