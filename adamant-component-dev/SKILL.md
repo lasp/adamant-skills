@@ -133,9 +133,9 @@ data_dependencies:
 #   overriding procedure Invalid_Data_Dependency (Self : in out Instance;
 #     Id : in Data_Product_Types.Data_Product_Id; Ret : in Data_Product_Return.T);
 # Generated API for each dependency named "Foo":
-#   Status := Self.Get_Foo (Stale_Reference => time, Value => out_var);
-#   -- Returns Data_Product_Enums.Data_Dependency_Status.E
-#   -- Need: use Data_Product_Enums.Data_Dependency_Status; for = operator
+#   Status := Self.Get_Foo (Stale_Reference => time, Timestamp => out_time, Value => out_var);
+#   -- Returns Data_Product_Enums.Data_Dependency_Status.E (Success | Not_Available | Stale | Error)
+#   -- Need: use Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;
 
 # component_name.packets.yaml
 packets:
@@ -293,6 +293,7 @@ component_name/test/
 16. [ ] Faults use event-like API: `Self.Fault_T_Send_If_Connected (Self.Faults.Name (The_Time))` -- NOT `Self.Name.Set_Status(...)`
 17. [ ] `Invalid_Parameter` override present IFF `parameters.yaml` exists (abstract, MUST override)
 18. [ ] `Packed_U8` does NOT exist -- use `Packed_Byte.T` for 8-bit unsigned values
+19. [ ] `Get_Data_Dependency` + `Invalid_Data_Dependency` overrides present IFF `data_dependencies.yaml` exists (both abstract, MUST override)
 
 ## Common Pitfalls
 
