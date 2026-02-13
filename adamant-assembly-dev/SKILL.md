@@ -82,6 +82,10 @@ components:
 ```
 
 ### Connections
+
+**Audit script:** `bash scripts/count_connections.sh <assembly.yaml>` (relative to this skill directory).
+Counts connections per component to verify init_base allocations.
+
 ```yaml
 connections:
   # Point-to-point

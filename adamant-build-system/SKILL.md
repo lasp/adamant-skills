@@ -35,6 +35,9 @@ Empty marker files control what is visible to compilation:
 - `.all_path` -- include for all targets
 - `.Linux_path` / `.Pico_path` / `.<target>_path` -- target-specific
 
+**Validation script:** `bash scripts/check_build_paths.sh <project_root>` (relative to this skill directory).
+Checks all components have `.all_path`, all test dirs have `env.py` (not `.all_path`), and flags missing tests.yaml.
+
 ```
 project/
 ├── .all_path
