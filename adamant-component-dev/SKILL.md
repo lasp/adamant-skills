@@ -317,7 +317,8 @@ Each feature YAML file requires matching connectors in the component YAML:
 - `faults.yaml` -> `Fault.T` send
 - `parameters.yaml` -> `Parameter_Update.T` modify
 - `data_dependencies.yaml` -> `Data_Product_Fetch.T` / `Data_Product_Return.T` request
-Missing any of these causes code generation errors.
+Missing any of these causes code generation errors or missing selectors at compile time.
+**These connectors are NOT auto-generated from feature YAMLs -- you MUST list them explicitly in the component.yaml.**
 
 **Implementation spec with clauses:**
 - Only `with` what's needed: typically `Tick`, `Command`, `Parameter_Update` (for modify connector), and any CUSTOM types used in your private record (e.g. `My_Custom_Type`)
