@@ -24,6 +24,13 @@ component_name/test/
 
 **Setup script:** `bash scripts/mk_test_env.sh [test_name_1 test_name_2 ...]` (run from the component directory, creates test/env.py + test/tests.yaml). Relative to this skill directory.
 
+**CRITICAL: Template copy pattern.** After `redo templates`, only copy the TESTER files (not the test body):
+```bash
+cp build/template/component-*-tester.ads build/template/component-*-tester.adb .
+cp build/template/test.adb .
+# Do NOT copy *_tests-implementation.adb -- it overwrites your real test code with stubs!
+```
+
 ## Test Model (.tests.yaml)
 
 ```yaml
