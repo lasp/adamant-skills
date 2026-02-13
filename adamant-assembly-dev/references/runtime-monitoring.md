@@ -177,6 +177,35 @@ python fast_ccsds_checker.py <binary_file> [--apids 1 2 3]
 - **Critical bypass**: Fault_Correction uses sync to bypass Command_Router queue
 - **Get**: Time service (Sys_Time), data product fetch
 
+## CCSDS Socket: Assembly is TCP CLIENT
+
+CRITICAL: The Ccsds_Socket_Interface is a TCP CLIENT -- it connects TO a ground system server.
+Without a server (COSMOS, socat relay, or custom TCP server), the ground Python tools cannot
+receive CCSDS telemetry. The `socket_event_decoder.py` is ALSO a TCP client.
+
+For development without COSMOS:
+- Primary monitoring: Event_Text_Logger stderr output (always works)
+- Use `tools/event_monitor.sh` and `tools/event_stats.py` to parse stderr
+- For CCSDS ground tools: start COSMOS first, or use `socat` as a TCP relay
+
+## Development Monitoring Tools
+
+### event_monitor.sh
+```bash
+# Run assembly, capture events for N seconds
+docker exec adamant bash -c "timeout 10 ./main.elf 2>&1"
+
+# Filter for errors/faults only
+docker exec adamant bash -c "timeout 10 ./main.elf 2>&1 | grep 'Error\|Fault'"
+```
+
+### event_stats.py
+```bash
+# Parse stderr output, print event statistics
+docker exec adamant bash -c "timeout 10 ./main.elf 2>&1 | python3 tools/event_stats.py"
+```
+Output: total events, rate, unique types, per-component breakdown.
+
 ## Practical: Running the Demo Assembly
 
 ```bash
