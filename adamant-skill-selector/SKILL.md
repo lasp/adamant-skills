@@ -105,6 +105,10 @@ You have 10 Adamant skills totaling ~3800+ lines (with references). Loading all 
 | Memory-mapped register interface | type-system | component-dev |
 | Create system architecture from scratch | assembly-dev | framework-components |
 | Start a new Adamant project | project-setup | build-system |
+| Run/monitor assembly at runtime | assembly-dev (runtime ref) | -- |
+| Debug running assembly (events, queues) | assembly-dev (runtime ref) | -- |
+| Use Python ground tools | assembly-dev (runtime ref) | cosmos-integration |
+| Multi-rate scheduling design | assembly-dev (runtime ref) | framework-components |
 
 ## Naming Conventions (quick reference)
 

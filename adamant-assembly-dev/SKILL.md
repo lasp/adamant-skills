@@ -357,3 +357,5 @@ Connect `Parameter_Update_T_Provide` to each component's `Parameter_Update_T_Mod
 Assemblies auto-generate packages: `Assembly_Commands`, `Assembly_Events`, `Assembly_Data_Products` with `Number_Of_Commands`, `Minimum_Event_Id`, `Maximum_Event_Id`, etc. Use in init.
 
 See [references/cosmos-integration.md](references/cosmos-integration.md) for COSMOS (OpenC3) ground system integration: generated config format, protocol files, plugin setup, scripting API, and Adamant-to-COSMOS type mapping.
+
+See [references/runtime-monitoring.md](references/runtime-monitoring.md) for assembly runtime: lifecycle sequence, multi-rate scheduling, event flow architecture (dual-path), CCSDS pipeline, ground tools (Python event decoder), task watchdog, stack/queue monitoring, and practical run instructions.
