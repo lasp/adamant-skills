@@ -42,6 +42,10 @@ cp build/template/test.adb .
 
 **Test spec (`*_tests-implementation.ads`) MUST come from `redo templates`.** The generated `Base_Instance` (in `build/src/<name>_tests.ads`) already has the `Tester : Instance_Access` field. The `*_tests-implementation.ads` template has `null` record (no extra Tester). If you add your own Tester field, it conflicts. Always use the generated spec.
 
+**tests.yaml MUST be in test/ dir, NOT component dir.** If it's in the wrong dir, `redo templates` generates no templates and tests silently fail to build (no paths generated).
+
+**Named connector histories use the name prefix.** If you define `name: Spi_Data` on a `Packed_U32.T` send, the tester history is `Spi_Data_T_Recv_Sync_History`, NOT `Packed_U32_T_Recv_Sync_History`.
+
 ## Test Model (.tests.yaml)
 
 ```yaml
