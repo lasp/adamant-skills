@@ -298,6 +298,7 @@ component_name/test/
 19. [ ] `Get_Data_Dependency` + `Invalid_Data_Dependency` overrides present IFF `data_dependencies.yaml` exists (both abstract, MUST override)
 20. [ ] Active components do NOT override Init with Queue_Size -- queue setup is via `init_base` in assembly YAML, NOT a component Init procedure. Only override Init if the component YAML has an `init:` section with parameters.
 21. [ ] NO dynamic allocation (`new`, `access` types) -- Adamant uses Ravenscar profile. Use fixed-size arrays. NO `Final`/destructor overrides (don't exist in Adamant).
+22. [ ] Init param values stored in Instance record fields -- Init body copies param values into record fields. The record must HAVE those fields (e.g., `Max_Count : Unsigned_32` to store a `Packed_U16.T` init param after conversion).
 
 ## Common Pitfalls
 
