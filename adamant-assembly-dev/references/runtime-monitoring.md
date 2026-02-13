@@ -30,6 +30,10 @@ Tick_Divider [D1, D2, D3]
 - Tick_Divider divisors: `[5, 10, 1]` from 5Hz base = 1Hz, 0.5Hz, 5Hz
 - Lower array index = higher execution priority
 - Max_Count = product of all divisors (e.g. 50 for [5,10,1])
+- Assembly preamble defines divisor array: `Dividers : aliased Component.Tick_Divider.Divider_Array_Type := [1 => 1, 2 => 10];`
+- Init: `"Dividers => Dividers'Access"`
+- Assembly build cache: must `rm -rf build/` in BOTH assembly dir AND main dir to regenerate
+- Behavioral change: faster tick rates cause faster counter accumulation, may trigger timeouts sooner
 - Single Ticker -> single Tick_Divider is standard pattern
 
 ### Typical Rate Assignment
