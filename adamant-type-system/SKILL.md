@@ -207,6 +207,7 @@ Each type generates supporting packages:
 7. **Consistent endianness**: Nested packed records must use consistent endianness
 8. **Field name shadowing**: Field names must NOT match package names used in the same record's `with` list. In Ada, the field name shadows the package within the record declaration. Example: a field named `sensor_id` with type `Sensor_Id.Sensor_Id_Type.E` will fail -- rename the field to `id` or similar.
 9. **Sub-byte field types**: Fields smaller than 8 bits MUST use `mod` types (e.g., `type Bit_Type is mod 2**1;`) defined in `preamble`. Do NOT use `Interfaces.Unsigned_8` with a sub-byte format code -- Ada cannot pack Unsigned_8 into fewer than 8 bits.
+10. **Enum name vs package name**: Enum names in `.enums.yaml` MUST differ from the parent package name. Example: in `subsystem_id.enums.yaml`, do NOT name the enum `Subsystem_Id` (creates `Subsystem_Id.Subsystem_Id` which fails Ada name resolution). Use a distinct name like `Subsystem_Id_Type` instead.
 
 ### CCSDS Example (Complex Bit Packing)
 ```yaml
