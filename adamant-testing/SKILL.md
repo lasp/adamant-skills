@@ -22,7 +22,9 @@ component_name/test/
 
 **CRITICAL:** Test directories must NOT contain `.all_path`. Use `env.py` only. Having `.all_path` in test directories causes duplicate `test.adb` conflicts across components.
 
-**Setup script:** `bash scripts/mk_test_env.sh [test_name_1 test_name_2 ...]` (run from the component directory, creates test/env.py + test/tests.yaml). Relative to this skill directory.
+**Setup script:** `bash scripts/mk_test_env.sh [test_name_1 test_name_2 ...]` (run from the component directory, creates test/env.py + test/{component_name}.tests.yaml). Relative to this skill directory.
+
+**CRITICAL naming:** The tests.yaml file MUST be named `{component_name}.tests.yaml` (e.g., `sensor_reader.tests.yaml`), NOT just `tests.yaml`. A bare `tests.yaml` causes: `The model file name 'tests.yaml' is invalid. A model type must be provided before the '.yaml' extension.` Similarly, test body must be `{component_name}_tests-implementation.adb`, NOT `tests-implementation.adb`.
 
 **CRITICAL: Template copy pattern.** After `redo templates`, copy these files:
 ```bash
