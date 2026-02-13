@@ -282,7 +282,7 @@ component_name/test/
 5. [ ] All `*_Send_Dropped` handlers overridden for every send connector
 6. [ ] NO `with` for auto-provided packages (Event, Data_Product, Sys_Time, etc.). NOTE: `Interfaces` is only auto-provided when commands or other features use it -- if your component has no commands but uses Unsigned types in the record, add `with Interfaces; use Interfaces;` in the implementation spec.
 7. [ ] NO `build/` directory created
-8. [ ] Empty `.all_path` file present
+8. [ ] Empty `.all_path` file present (0 bytes, marker file -- NO content inside)
 9. [ ] All entity names unique across events, data products, commands, faults, parameters
 10. [ ] `use Command_Execution_Status;` INSIDE package body (not before it)
 11. [ ] `get` connectors use `return_type:` NOT `type:` in YAML
