@@ -435,6 +435,9 @@ with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
 2. **Calculate queue sizes appropriately** - `component.Get_Max_Queue_Element_Size * N`
 3. **Test queue overflow scenarios** - use Expect_*_Dropped
 4. **Batch operations where logical** - send multiple, dispatch once
+5. **Dual Command.T connectors (async+sync)**: When a component has BOTH `recv_async: Command.T` AND `recv_sync: Command.T`, the tester generates `Command_T_Send` (routes to async queue) and `Command_T_Send_2` (routes to sync handler). Use `Command_T_Send_2` for component's own commands (Reset, Enable, etc.) and `Command_T_Send` for the async dispatch queue.
+6. **Async dropped override required**: Active components with `recv_async` MUST override `*_Recv_Async_Dropped` in the implementation spec. This is separate from `*_Send_Dropped` handlers.
+7. **Change detection initial values**: If component shadows default to the same value as first computation (e.g., Last_Soc=100 and first SOC=100), NO DP is sent on first tick. Use a tick that produces a different value to trigger change detection.
 
 ### Data Dependency Testing
 

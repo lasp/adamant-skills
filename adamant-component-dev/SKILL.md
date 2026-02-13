@@ -310,6 +310,7 @@ Helper script: `bash scripts/mk_all_path.sh /path/to/component/dir` (relative to
 21. [ ] NO dynamic allocation (`new`, `access` types) -- Adamant uses Ravenscar profile. Use fixed-size arrays. NO `Final`/destructor overrides (don't exist in Adamant).
 22. [ ] Init param values stored in Instance record fields -- Init body copies param values into record fields. The record must HAVE those fields (e.g., `Max_Count : Unsigned_32` to store a `Packed_U16.T` init param after conversion).
 23. [ ] Do NOT `with Command_Response_Status` -- it is not a standalone package. `Command_Response_Status.E` is available through the generated base class. Only `with/use Command_Execution_Status` is needed in the body.
+24. [ ] Active components with `recv_async` connectors MUST override `{Type}_T_Recv_Async_Dropped` in the spec (separate from `*_Send_Dropped` handlers). This is the queue overflow handler.
 
 ## Common Pitfalls
 
