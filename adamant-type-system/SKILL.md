@@ -74,7 +74,7 @@ format: F32                       # Element format (unless another packed type)
 length: 3                         # Fixed array length
 ```
 
-### Enum Types (*.enums.yaml)
+### Enum Types (*.enums.yaml -- NOTE: plural "enums" not "enum")
 ```yaml
 description: Basic state enumerations used throughout Adamant
 enums:
