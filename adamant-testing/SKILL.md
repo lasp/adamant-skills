@@ -22,6 +22,8 @@ component_name/test/
 
 **CRITICAL:** Test directories must NOT contain `.all_path`. Use `env.py` only. Having `.all_path` in test directories causes duplicate `test.adb` conflicts across components.
 
+**Setup script:** `bash scripts/mk_test_env.sh [test_name_1 test_name_2 ...]` (run from the component directory, creates test/env.py + test/tests.yaml). Relative to this skill directory.
+
 ## Test Model (.tests.yaml)
 
 ```yaml

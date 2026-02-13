@@ -319,6 +319,11 @@ Each feature YAML file requires matching connectors in the component YAML:
 - `data_dependencies.yaml` -> `Data_Product_Fetch.T` / `Data_Product_Return.T` request
 Missing any of these causes code generation errors or missing selectors at compile time.
 **These connectors are NOT auto-generated from feature YAMLs -- you MUST list them explicitly in the component.yaml.**
+Validation script: `bash scripts/check_connectors.sh` (run from component directory).
+
+**Name collision check:**
+~55 framework components exist. Custom component names must not collide.
+Check script: `bash scripts/check_name_collision.sh <component_name>` (relative to this skill directory).
 
 **Implementation spec with clauses:**
 - Only `with` what's needed: typically `Tick`, `Command`, `Parameter_Update` (for modify connector), and any CUSTOM types used in your private record (e.g. `My_Custom_Type`)
