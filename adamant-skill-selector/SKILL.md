@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 9 Adamant skills totaling ~3534 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 10 Adamant skills totaling ~3800+ lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -80,9 +80,13 @@ You have 9 Adamant skills totaling ~3534 lines (with references). Loading all of
 - `adamant-type-system` -- if creating new packed record types not covered in the examples
 
 ### COSMOS ground system integration
-**Load:** `adamant-assembly-dev` (references/cosmos-integration.md)
-- Generated command/telemetry config files
-- Protocol files, plugin structure, scripting API
+**Load:** `adamant-cosmos-integration`
+- CCSDS pipeline architecture (Socket, Depacketizer, Packetizer components)
+- Assembly wiring for command uplink and telemetry downlink
+- Product packets model (YAML), plugin structure, build/install workflow
+- COSMOS CLI operations (plugin load, script run)
+
+**Also load:** `adamant-assembly-dev` (for assembly YAML patterns and validation rules)
 
 ## Common Task Combinations
 
@@ -97,7 +101,7 @@ You have 9 Adamant skills totaling ~3534 lines (with references). Loading all of
 | Full component lifecycle (build+test) | component-dev | testing |
 | SPARK verification | build-system (prove section) | component-dev |
 | Wrap C++ algorithm into Adamant component | algorithm-wrapping | component-dev |
-| Ground system integration (COSMOS) | assembly-dev | build-system |
+| Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | Memory-mapped register interface | type-system | component-dev |
 | Create system architecture from scratch | assembly-dev | framework-components |
 | Start a new Adamant project | project-setup | build-system |
