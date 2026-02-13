@@ -281,6 +281,9 @@ This drives which generated lifecycle methods exist.
 
 ## Common Assembly Pitfalls
 
+- **Custom passive components: NO `init_base` unless active.** Only framework components with arrayed connectors (Rate_Group, Splitter, Command_Router) use `init_base` for connector counts. Custom components' connectors are fixed by their YAML model. Don't add `Event_T_Send_Count` or `Command_T_Send_Count` to custom component init_base.
+- **`set_id_bases` is optional.** If omitted, the generator auto-assigns IDs. Don't use made-up values like `"Auto"` -- either specify numeric IDs or omit entirely.
+- **Don't put `execution:` in assembly component definitions.** Execution model comes from the component's own YAML, not the assembly.
 - **Active components need `init_base` in assembly YAML** with `Queue_Size`. Use `Instance_Name.Get_Max_Queue_Element_Size` multiplier.
 - **Command_Router requires `Max_Number_Of_Commands` in `init`** -- total command count across all routed components.
 - **Product_Database** (not `Data_Product_Database`) is the built-in DP store component name.
