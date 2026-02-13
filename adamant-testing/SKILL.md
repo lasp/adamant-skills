@@ -374,7 +374,7 @@ with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
 
 4. **Missing imports in test body**: Test bodies need explicit `with` for packages used: `with Interfaces;`, `with Basic_Assertions; use Basic_Assertions;`, typed assertion packages like `with Packed_U32.Assertion; use Packed_U32.Assertion;`.
 
-5. **Tester file confusion**: The tester `.ads` is generated (in `build/template/`). The tester `.adb` is hand-written. Copy templates to `test/` ONCE at initial setup. Files in `test/` override generated templates. You MUST also copy `test.adb` from `build/template/test.adb`.
+5. **Tester files MUST come from build/template/**: Run `redo templates` from the test/ directory. This generates ALL tester files in `build/template/`: tester `.ads`, tester `.adb`, `test.adb`, and test implementation stubs. Copy ALL of them to `test/` at initial setup. Do NOT hand-write tester files -- they have complex history packages, overrides, and Init_Base/Final_Base that must match the generated reciprocal component exactly. Hand-written testers are the #1 source of test compilation errors.
 
 6. **History name convention**: Typed histories use the event/DP name + `_History`. NOT `_Event_History` or `_Data_Product_History`. Example: event `Telemetry_Enabled` -> `T.Telemetry_Enabled_History`, data product `Downlink_Count` -> `T.Downlink_Count_History`.
 
@@ -387,6 +387,10 @@ with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
 10. **Change detection initial state**: Components using change detection (comparing current value to a shadow variable) will fire a DP update on the FIRST tick because the initial shadow value (typically 0) differs from the computed value. Account for this extra DP in history counts. Example: if Link_Active starts at shadow=0 and first tick sets it to 1, that's a change -- expect Get_Count=2 after going back to 0, not 1.
 
 11. **`use type` for operator visibility**: When using `pragma Assert` or direct `=` comparisons on enumeration types (e.g., `Command_Response_Status.E`), you need `use type Command_Enums.Command_Response_Status.E;` in the `with` section. Without it, the `=` operator is not directly visible.
+
+12. **History overflow ("History is full")**: Default history depth is 100. Tests that send many stimuli (e.g., 100+ packets) will overflow event/DP/fault histories. Either: (a) increase depth in tester Init_Base, (b) reduce test stimulus count, or (c) clear histories mid-test. The overflow triggers a runtime error at `history.adb:20`.
+
+13. **Packet.T Header has NO Priority field**: `Packet_Header.T` fields are: `Time` (Sys_Time.T), `Id` (Packet_Id), `Sequence_Count`, `Buffer_Length`. Do NOT access `.Header.Priority` -- it does not exist.
 
 ## Testing Best Practices
 

@@ -291,6 +291,8 @@ component_name/test/
 14. [ ] Qualify ambiguous literals: `Parameter_Validation_Status.Valid`, `Command_Execution_Status.Success` (bare `Valid`/`Success` can be invisible or ambiguous)
 15. [ ] Parameter accessor `Self.<Param_Name>` returns `.U` -- convert to `.T` when passing to events: `My_Type.T (Self.My_Param)`
 16. [ ] Faults use event-like API: `Self.Fault_T_Send_If_Connected (Self.Faults.Name (The_Time))` -- NOT `Self.Name.Set_Status(...)`
+17. [ ] `Invalid_Parameter` override present IFF `parameters.yaml` exists (abstract, MUST override)
+18. [ ] `Packed_U8` does NOT exist -- use `Packed_Byte.T` for 8-bit unsigned values
 
 ## Common Pitfalls
 
