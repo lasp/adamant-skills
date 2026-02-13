@@ -294,6 +294,7 @@ component_name/test/
 17. [ ] `Invalid_Parameter` override present IFF `parameters.yaml` exists (abstract, MUST override)
 18. [ ] `Packed_U8` does NOT exist -- use `Packed_Byte.T` for 8-bit unsigned values
 19. [ ] `Get_Data_Dependency` + `Invalid_Data_Dependency` overrides present IFF `data_dependencies.yaml` exists (both abstract, MUST override)
+20. [ ] Active components do NOT override Init with Queue_Size -- queue setup is via `init_base` in assembly YAML, NOT a component Init procedure. Only override Init if the component YAML has an `init:` section with parameters.
 
 ## Common Pitfalls
 
