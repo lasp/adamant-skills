@@ -303,6 +303,43 @@ cd /path/to/cosmos-project
 ./openc3.sh cli load /path/to/plugin.gem
 ```
 
+## Plugin Gem Build
+
+Create a minimal `.gemspec` in the plugin directory:
+```ruby
+spec = Gem::Specification.new do |s|
+  s.name = 'openc3-cosmos-{assembly-name}'
+  s.summary = 'Description'
+  s.version = '0.0.1'
+  s.platform = Gem::Platform::RUBY
+  s.required_ruby_version = '>= 3.0'
+  s.license = 'Nonstandard'
+  s.authors = ['Author']
+  s.email = ['email']
+  s.files = Dir.glob("{targets,lib}/**/*") + %w(plugin.txt)
+end
+```
+
+Build and validate from within the plugin directory using a COSMOS container:
+```bash
+# Build gem
+docker compose -f /path/to/cosmos-project/compose.yaml run --rm \
+  -v "$(pwd):/openc3/local:z" -w /openc3/local \
+  --no-deps openc3-cosmos-cmd-tlm-api gem build *.gemspec
+
+# Validate
+docker compose -f /path/to/cosmos-project/compose.yaml run --rm \
+  -v "$(pwd):/openc3/local:z" -w /openc3/local \
+  -e OPENC3_API_PASSWORD=$OPENC3_API_PASSWORD \
+  --no-deps openc3-cosmos-cmd-tlm-api ruby /openc3/bin/openc3cli validate *.gem
+
+# Load (use --user=root for permission)
+docker compose -f /path/to/cosmos-project/compose.yaml run --rm --user=root \
+  -v "$(pwd):/openc3/local:z" -w /openc3/local \
+  -e OPENC3_API_PASSWORD=$OPENC3_API_PASSWORD \
+  --no-deps openc3-cosmos-cmd-tlm-api ruby /openc3/bin/openc3cli load *.gem
+```
+
 ## COSMOS CLI Operations
 
 ```bash
