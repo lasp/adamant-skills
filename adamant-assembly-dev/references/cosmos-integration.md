@@ -60,20 +60,24 @@ Located in `adamant/gnd/cosmos/`, copied into COSMOS plugin `targets/<TARGET>/li
 
 ## Plugin Configuration (`plugin.txt`)
 
+TCP server interface (COSMOS listens, assembly connects):
 ```
-VARIABLE target_name ASSEMBLY_NAME
-TARGET ASSEMBLY_NAME <%= target_name %>
+Variable target_name Assembly_Name
+Variable crc_parameter_name CRC
+Variable checksum_parameter_name Checksum
+Variable port_w 2003
+Variable port_r 2003
 
-INTERFACE FLIGHT_INT tcpip_client_interface.rb host.docker.internal 7779 7779 10.0 nil LENGTH 32 16 7 1 BIG_ENDIAN 0 nil nil true
-  MAP_TARGET <%= target_name %>
-  PROTOCOL READ_WRITE crc_sync_protocol.rb nil false ERROR -32 32 BIG_ENDIAN
-
-# For serial:
-INTERFACE SERIAL_INT serial_interface.rb /dev/ttyUSB0 115200 NONE 1 10.0 nil LENGTH 32 16 7 1 BIG_ENDIAN 0
-  MAP_TARGET <%= target_name %>
-  PROTOCOL READ crc_sync_protocol.rb nil true ERROR -32 32 BIG_ENDIAN
-  PROTOCOL WRITE cmd_sync_checksum.rb CHECKSUM
+Target Assembly_Name <%= target_name %>
+Interface <%= target_name %>_INT tcpip_server_interface.rb <%= port_w %> <%= port_r %> 10.0 nil Length 32 16 7
+  Map_Target <%= target_name %>
+  Protocol Read crc_protocol.rb <%= crc_parameter_name %> false "ERROR" -16 16
+  Protocol Write cmd_checksum.rb <%= checksum_parameter_name %>
 ```
+
+For serial connections or sync-word protocols, use `crc_sync_protocol.rb` and `cmd_sync_checksum.rb` instead.
+
+**See `adamant-cosmos-integration` skill for complete CCSDS pipeline setup.**
 
 ## Scripting API (commanding and telemetry)
 
