@@ -38,6 +38,10 @@ cp build/template/test.adb .
 -- RIGHT: Self.Tester.Final_Base;       (tester is always valid)
 ```
 
+**History depth is 100.** Keep test iteration counts well below 100 to avoid "History is full" errors. If testing thresholds, use small values (e.g., 10 not 100).
+
+**Test spec (`*_tests-implementation.ads`) MUST come from `redo templates`.** The generated `Base_Instance` (in `build/src/<name>_tests.ads`) already has the `Tester : Instance_Access` field. The `*_tests-implementation.ads` template has `null` record (no extra Tester). If you add your own Tester field, it conflicts. Always use the generated spec.
+
 ## Test Model (.tests.yaml)
 
 ```yaml
