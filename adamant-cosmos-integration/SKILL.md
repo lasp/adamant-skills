@@ -346,3 +346,5 @@ with:
 6. **All Packet_T_Send sources must wire to Ccsds_Packetizer**: Including Depacketizer error packets and Product_Database dump packets.
 7. **Generated COSMOS files are assembly-specific**: Target name = assembly name (uppercase in COSMOS).
 8. **Protocol files come from adamant/gnd/cosmos/**: Copy `crc_protocol.rb`, `cmd_checksum.rb`, etc. to plugin lib/ directory.
+9. **Product_Packetizer needs empty `init:` in assembly YAML**: Even though all init params are optional, the assembly generator requires the `init:` key to exist (can be empty).
+10. **COSMOS config generation**: Run `redo cosmos_config` from `assembly/main/` directory. Produces `build/cosmos/plugin/` with command and telemetry txt files.
