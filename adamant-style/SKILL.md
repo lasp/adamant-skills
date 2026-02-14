@@ -178,6 +178,7 @@ Actual frequency data from 100-component style campaign:
 17. **Record aggregate with `[]`**: Only arrays use `[]`; record aggregates (including `(others => <>)` for record defaults) must use `()`
 18. **Empty `if` block**: Must have `null;` statement -- cannot leave only a comment
 19. **`Short_Float` vs `IEEE_Float_32`**: `Packed_F32.T.Value` is `Short_Float`, not `Interfaces.IEEE_Float_32`
+20. **Unnecessary `with:` in type YAML**: `with: [Interfaces]` generates `with Interfaces; use Interfaces;` in the Ada spec -- only include if preamble types actually reference `Interfaces.Unsigned_*` etc. `mod 2**N` types don't need it.
 16. **Missing space around `**` operator**: `2**16` -> `2 ** 16`
 17. **Assigned-but-never-read variables**: `Status` in parameter tests -- use `pragma Warnings (Off, Var);`
 
