@@ -19,7 +19,7 @@ assembly_name/
 └── views/                                 # Focused diagrams (optional)
 ```
 
-**CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main program MUST be in `main.adb` with `procedure Main` -- the build system discovers source files by filename.
+**CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main procedure file name must be unique across the entire build path. If the project shares build roots with another project that has `main.adb`, use a unique name like `station_main.adb` / `procedure Station_Main`. The build system discovers source files by filename -- collisions are fatal.
 
 ## Assembly Model
 

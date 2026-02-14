@@ -295,6 +295,7 @@ Do NOT invent fields. Key types:
 19. [ ] Faults use event-like API: `Self.Fault_T_Send_If_Connected(Self.Faults.Name(Time))`
 20. [ ] No `with Command_Response_Status` (not standalone — available through base class)
 21. [ ] Component name doesn't collide with ~55 framework components
+22. [ ] Custom type YAML filenames (e.g., `quaternion.record.yaml`) don't collide with framework types -- prefix with project/component name if needed
 
 ## Related Skills
 
