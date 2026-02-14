@@ -213,9 +213,11 @@ See [references/generated-api.md](references/generated-api.md) for full details.
 ## Data Dependencies API
 
 ```ada
-Status := Self.Get_Foo (Value => out_var, Stale_Reference => time, Timestamp => out_time);
+-- Two overloads:
+Status := Self.Get_Foo (Stale_Reference => time, Timestamp => out_time, Value => out_var);
+Status := Self.Get_Foo (Stale_Reference => time, Value => out_var);  -- no timestamp
+-- Stale_Reference is IN (you provide it), Value is OUT, Timestamp is OUT
 -- Returns Data_Product_Enums.Data_Dependency_Status.E (Success | Not_Available | Stale | Error)
--- Need: use Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;
 ```
 
 Overrides (BOTH abstract, MUST implement):
