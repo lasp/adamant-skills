@@ -150,7 +150,7 @@ Actual frequency data from 100-component style campaign:
 
 ### Most Common (fix first)
 1. **Unused `with` in test bodies** (40+ instances): `Tick`, `Interfaces`, `Command`, `Packed_U16/U32` left over from templates or copy-paste
-   - **DANGER: `AUnit.Assertions`** -- GNAT reports "no entities referenced" even when `Assert` is called via `use` clause. Do NOT remove if `Assert` appears in the body. Only remove if the body truly never calls `Assert`.
+   - **`AUnit.Assertions`**: GNAT reports "no entities referenced" even when `Assert` is called via `use` clause. Do NOT remove if bare `Assert(...)` appears in the body. But DO remove if ALL assertion calls are qualified (`Natural_Assert.Eq`, `Packed_U32_Assert.Eq`, `AUnit.Assertions.Assert`, etc.) -- the `use` is truly unused in that case.
 2. **Redundant `use Interfaces`** (20+ instances): Already visible through generated base class for components with commands/init/data deps
 3. **Unused `with` in component bodies** (15+ instances): Redundant with already in spec (`Packed_U32`, `Packed_Byte`, `Command_Types`, `Packet_Types`)
 4. **`(others => ...)` array syntax** (64 instances): Needs `[others => ...]` (Ada 2022)
