@@ -138,24 +138,30 @@ Simple components (no commands, no init params, no data dependencies) do NOT get
 
 ## Common Patterns by Frequency
 
+Actual frequency data from 100-component style campaign:
+
 ### Most Common (fix first)
-1. Missing `---` in YAML files
-2. Trailing whitespace in Ada/YAML
-3. Unused `with` in test bodies (leftover from copy-paste)
-4. Redundant `use Interfaces` (already visible through generated base class)
-5. `(others => ...)` array syntax needs `[others => ...]`
+1. **Unused `with` in test bodies** (40+ instances): `Tick`, `Interfaces`, `AUnit.Assertions`, `Command`, `Packed_U16/U32` left over from templates or copy-paste
+2. **Redundant `use Interfaces`** (20+ instances): Already visible through generated base class for components with commands/init/data deps
+3. **Unused `with` in component bodies** (15+ instances): Redundant with already in spec (`Packed_U32`, `Packed_Byte`, `Command_Types`, `Packet_Types`)
+4. **`(others => ...)` array syntax** (64 instances): Needs `[others => ...]` (Ada 2022)
+5. **Unused `with` in component specs** (10+ instances): `Packed_U32`, `Packed_U16` declared but not referenced
 
 ### Frequent
-6. Missing space before `(` in type conversions
-7. `or` / `and` instead of `or else` / `and then`
-8. Unused variables (especially `Status` in parameter test patterns)
-9. `then` not on its own line in multi-line conditions
+6. **Unused `Count` variable** in test bodies: `Count := T.Dispatch_All` where Count is never read -- either remove Count or call bare `T.Dispatch_All;`
+7. **Missing space before `(`** in type conversions: `Unsigned_32(X)` -> `Unsigned_32 (X)`
+8. **`or` / `and` instead of `or else` / `and then`** for boolean expressions
+9. **`then` not on its own line** in multi-line conditions
+10. **Redundant conversions**: `Natural (I)` where `I` is already Natural, or `Unsigned_16 (X.Value)` where `.Value` is already Unsigned_16
 
 ### Occasional
-10. Bad casing (not matching declaration)
-11. Redundant `with` in body (already in spec)
-12. Type mismatches in assertions (wrong Packed_U16 vs Packed_U32)
-13. Multiple blank lines
+11. **Bad casing** (not matching declaration): e.g., `Heartbeat_Ok` vs declared `Heartbeat_OK`
+12. **Type mismatches in assertions**: Wrong `Packed_U16_Assert` vs `Packed_U32_Assert`
+13. **Multiple blank lines** in sequence
+14. **Duplicate with-clauses** in test bodies (same package withed twice)
+15. **`use Command_Execution_Status.E;`** in test bodies -- has no effect (generated code already provides visibility)
+16. **Missing space around `**` operator**: `2**16` -> `2 ** 16`
+17. **Assigned-but-never-read variables**: `Status` in parameter tests -- use `pragma Warnings (Off, Var);`
 
 ## Style Checklist
 
