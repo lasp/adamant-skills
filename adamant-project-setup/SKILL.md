@@ -68,19 +68,33 @@ Increase buffer sizes if you get `Storage_Error` at runtime.
 
 ### 4. Docker integration
 
-Docker compose override to mount project:
+Each project gets its own `docker/` directory (do NOT put overrides in the adamant repo):
+
+```
+<project_dir>/docker/
+├── docker-compose.yml       # Mounts adamant + project
+└── adamant_env.sh           # start/stop/login helper
+```
+
+Docker compose file:
 ```yaml
 services:
   adamant:
+    image: ghcr.io/lasp/adamant:0.1
+    container_name: <project_name>_container
     volumes:
+      - /path/to/adamant:/home/user/adamant
       - /path/to/<project_dir>:/home/user/<project_name>
+    working_dir: /home/user/<project_name>
+    stdin_open: true
+    tty: true
 ```
 
-Docker image: `ghcr.io/lasp/adamant:0.1` (~1.3GB, includes GNAT, GNATprove, redo, Python toolchain).
+Image: `ghcr.io/lasp/adamant:0.1` (~1.3GB, includes GNAT, GNATprove, redo, Python toolchain).
 
 Start container:
 ```bash
-cd <adamant_dir>
+cd <project_dir>
 bash docker/adamant_env.sh start   # Pull image + start container
 bash docker/adamant_env.sh login   # Interactive shell as 'user'
 bash docker/adamant_env.sh stop    # Stop container
@@ -88,9 +102,8 @@ bash docker/adamant_env.sh stop    # Stop container
 
 Non-interactive command execution:
 ```bash
-docker compose -f $ADAMANT_DIR/docker/docker-compose.yml \
-  -f $ADAMANT_DIR/docker/docker-compose.override.yml \
-  exec adamant bash -c "source /home/user/<project_name>/env/activate && \
+docker exec <project_name>_container bash -c \
+  "source /home/user/<project_name>/env/activate 2>/dev/null && \
   cd /home/user/<project_name> && redo <target>"
 ```
 
