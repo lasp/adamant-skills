@@ -157,7 +157,7 @@ Actual frequency data from 100-component style campaign:
 5. **Unused `with` in component specs** (10+ instances): `Packed_U32`, `Packed_U16` declared but not referenced
 
 ### Frequent
-6. **Unused `Count` variable** in test bodies: `Count := T.Dispatch_All` where Count is never read -- either remove Count or call bare `T.Dispatch_All;`
+6. **Unused `Count` variable** in test bodies: `Count := T.Dispatch_All` where Count is never read -- use `Natural_Assert.Eq(T.Dispatch_All, N)` (framework pattern) or `Ignore := T.Dispatch_All; pragma Unreferenced (Ignore);`. Ada does NOT allow bare function calls (`T.Dispatch_All;` is illegal without `-gnatX`).
 7. **Missing space before `(`** in type conversions: `Unsigned_32(X)` -> `Unsigned_32 (X)`
 8. **`or` / `and` instead of `or else` / `and then`** for boolean expressions
 9. **`then` not on its own line** in multi-line conditions
