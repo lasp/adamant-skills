@@ -149,7 +149,8 @@ Simple components (no commands, no init params, no data dependencies) do NOT get
 Actual frequency data from 100-component style campaign:
 
 ### Most Common (fix first)
-1. **Unused `with` in test bodies** (40+ instances): `Tick`, `Interfaces`, `AUnit.Assertions`, `Command`, `Packed_U16/U32` left over from templates or copy-paste
+1. **Unused `with` in test bodies** (40+ instances): `Tick`, `Interfaces`, `Command`, `Packed_U16/U32` left over from templates or copy-paste
+   - **DANGER: `AUnit.Assertions`** -- GNAT reports "no entities referenced" even when `Assert` is called via `use` clause. Do NOT remove if `Assert` appears in the body. Only remove if the body truly never calls `Assert`.
 2. **Redundant `use Interfaces`** (20+ instances): Already visible through generated base class for components with commands/init/data deps
 3. **Unused `with` in component bodies** (15+ instances): Redundant with already in spec (`Packed_U32`, `Packed_Byte`, `Command_Types`, `Packet_Types`)
 4. **`(others => ...)` array syntax** (64 instances): Needs `[others => ...]` (Ada 2022)
@@ -161,6 +162,11 @@ Actual frequency data from 100-component style campaign:
 8. **`or` / `and` instead of `or else` / `and then`** for boolean expressions
 9. **`then` not on its own line** in multi-line conditions
 10. **Redundant conversions**: `Natural (I)` where `I` is already Natural, or `Unsigned_16 (X.Value)` where `.Value` is already Unsigned_16
+
+### Dangerous Removals (verify before removing)
+- **`with X; use X;` where `use` provides operator visibility**: Removing `with Command_Types;` breaks `=` and `<` on `Command_Id`. Removing `with Packed_U32.Assertion;` breaks `Eq` calls. GNAT may report the `with` as unused but operators/procedures are used via `use`.
+- **`use Command_Execution_Status;`**: If removed, `return Success;` becomes ambiguous with `Connector_Status.Success`. Must qualify or keep the `use`.
+- **Rule**: Before removing ANY `with`, grep the body for types/operators/procedures from that package.
 
 ### Occasional
 11. **Bad casing** (not matching declaration): e.g., `Heartbeat_Ok` vs declared `Heartbeat_OK`
