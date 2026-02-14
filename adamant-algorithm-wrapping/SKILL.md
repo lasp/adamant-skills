@@ -5,43 +5,17 @@ description: Complete pipeline for wrapping C++ algorithms into Adamant passive 
 
 # Adamant Algorithm Wrapping Pipeline
 
-Workflow for wrapping C++ algorithms (e.g., GNC) into Adamant components via C shims.
-
 ```
-C++ Algorithm -> C Shim -> Ada Bindings -> Packed Records -> Component YAML -> Implementation -> Unit Tests
+C++ Algorithm → C Shim → Ada Bindings → Packed Records → Component YAML → Implementation → Tests
 ```
 
-**Repository layout:**
-- C++ algorithms: `fp32-fsw-xmera/algorithms/<name>/`
-- Ada wrapper components: `adamant-xmera-components/src/components/<name>/`
-- Shared packed types: `adamant-xmera-components/src/types/`
+See [references/c-shim-bindings.md](references/c-shim-bindings.md) for C shim and binding generation.
+See [references/implementation-details.md](references/implementation-details.md) for type strategy and patterns.
 
-See [references/c-shim-bindings.md](references/c-shim-bindings.md) for Stages 1-3 (C shim creation, h2ads Ada binding generation, C struct to packed record conversion).
-
-## Input Strategy: Parameters vs Data Dependencies
-
-**Parameters** (modify connector): fixed spacecraft properties, tunable gains, configuration arrays. Changed infrequently, validated on update. If in doubt, ask: "does this change during flight?" No -> parameter.
-- Spacecraft inertia (ALWAYS a parameter, never a data dependency)
-- Control gains, slew properties, threshold values, damping coefficients
-
-**Data Dependencies** (request connector): dynamic telemetry from other components. Fetched each tick, staleness-checked.
-- Attitude state, ephemeris, sensor readings, navigation solutions
-
-**Stateful algorithms** (sunSearch, slew planners): may need a reset/init call with current time before first use. Track configuration state (e.g., `Slews_Configured : Boolean`) and call algorithm reset in `Update_Parameters_Action` when config changes.
-
-**Before creating custom packed types**, check if framework types already exist:
-- `adamant/src/types/packed_arrays/` for vector types: `Packed_F32x3` (3-element float vector), `Packed_F32x9` (3x3 matrix), etc.
-- `adamant/src/types/` for general framework types (Packed_F32, Packed_U32, etc.)
-- `adamant-xmera-components/src/types/` for GNC-specific types: Att_Guid, Nav_Att, Packed_F32x3_Record (wraps F32x3 in a record), etc.
-Reuse existing types whenever possible -- don't recreate what's already there. New types can be created in `adamant-xmera-components/src/types/` for wrapping support.
-
-## Stage 4: Component YAML Model
-
-Wrapper components are typically **passive** with a `recv_sync` tick connector and a `request` connector for data dependencies:
+## Component YAML (Typical Wrapper)
 
 ```yaml
----
-description: Wraps FooAlgorithm to compute X from Y inputs.
+description: Wraps FooAlgorithm
 execution: passive
 init:
   description: Creates algorithm handle.
@@ -49,7 +23,7 @@ connectors:
   - description: Run algorithm on tick.
     type: Tick.T
     kind: recv_sync
-  - description: Fetch data product from database.
+  - description: Fetch data product.
     type: Data_Product_Fetch.T
     return_type: Data_Product_Return.T
     kind: request
@@ -59,186 +33,77 @@ connectors:
   - description: Events.
     type: Event.T
     kind: send
+  - description: System time.
+    return_type: Sys_Time.T
+    kind: get
 ```
 
-Add `Parameter_Update.T` modify connector ONLY if algorithm has runtime-tunable config. Most wrappers are minimal: no events, no parameters, no faults. Real xmera-components typically have only tick + request + data_product + get(time) connectors. Don't over-engineer.
+Add `Parameter_Update.T` modify only if runtime-tunable config needed.
 
-### Data Dependencies
+## Implementation Pattern
 
-Data dependencies fetch inputs from the Product_Database. Must fit in `data_product_buffer_size` (typically 128 bytes).
-
-```yaml
----
-description: Data dependencies for FooComponent.
-data_dependencies:
-  - name: Nav_Attitude
-    type: Nav_Att.T
-    description: Navigation attitude state.
-  - name: Ephemeris
-    type: Ephemeris.T
-    description: Ephemeris data.
-```
-
-## Stage 5: Implementation
-
-### Spec Pattern
 ```ada
+-- Spec
 with Foo_Algorithm_C; use Foo_Algorithm_C;
-
-package Component.Foo_Component.Implementation is
-   type Instance is new Foo_Component.Base_Instance with private;
+package Component.Foo.Implementation is
+   type Instance is new Foo.Base_Instance with private;
    overriding procedure Init (Self : in out Instance);
-   not overriding procedure Destroy (Self : in out Instance);
 private
-   type Instance is new Foo_Component.Base_Instance with record
+   type Instance is new Foo.Base_Instance with record
       Alg : Foo_Algorithm_Access := null;
    end record;
-```
+end;
 
-### Body Pattern
-```ada
-overriding procedure Init (Self : in out Instance) is
-begin
-   Self.Alg := Create;
-end Init;
-
-not overriding procedure Destroy (Self : in out Instance) is
-begin
-   Destroy (Self.Alg);
-end Destroy;
-
+-- Body
 overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T) is
-   use Algorithm_Wrapper_Util;
    use Data_Product_Enums.Data_Dependency_Status;
-   Input_1 : Input_Type.T;
-   Input_1_Status : constant Data_Dependency_Status.E :=
-      Self.Get_Nav_Attitude (Value => Input_1, Stale_Reference => Arg.Time);
+   Input : Input_Type.T;
+   Status : constant Data_Dependency_Status.E :=
+      Self.Get_Nav_Attitude (Value => Input, Stale_Reference => Arg.Time);
 begin
-   Self.Update_Parameters;  -- Only if parameters exist
-   if Is_Dep_Status_Success (Input_1_Status) then
+   if Status = Success then
       declare
          Input_C : constant Input_Type.C.U_C :=
-            Input_Type.C.To_C (Input_Type.Unpack (Input_1));
+            Input_Type.C.To_C (Input_Type.Unpack (Input));
          Output_C : constant Output_Type.C.U_C :=
             Update (Self.Alg, Input_C'Unchecked_Access);
       begin
-         Self.Data_Product_T_Send (Self.Data_Products.Result (
+         Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Result (
             Arg.Time, Output_Type.Pack (Output_Type.C.To_Ada (Output_C))));
       end;
    end if;
-end Tick_T_Recv_Sync;
+end;
 ```
 
-**Type conversion chain:** `Packed.T` (wire) -> `Unpack` -> `.U` (Ada record) -> `.C.To_C` -> `.C.U_C` (C-compatible) and reverse.
+**Type chain:** `.T` → `Unpack` → `.U` → `.C.To_C` → `.C.U_C` (and reverse).
+`.C.U_C` only exists for types with `-c.ads` child package. For custom types, use `access constant Type.T` directly.
 
-### Error Handlers
-Safety-critical wrappers use `pragma Assert (False)` -- silent failure with assertion, NOT events:
-```ada
-overriding procedure Invalid_Data_Dependency
-  (Self : in out Instance; Id : in Data_Product_Types.Data_Product_Id;
-   Ret : in Data_Product_Return.T) is
-   pragma Annotate (GNATSAS, Intentional, "subp always fails", "intentional assertion");
-begin
-   pragma Assert (False);
-end Invalid_Data_Dependency;
-```
-
-### Parameter Handling
-```ada
-overriding procedure Update_Parameters_Action (Self : in out Instance) is
-begin
-   Set_Control_Gain (Self.Alg, Self.Control_Gain.Value);
-end Update_Parameters_Action;
-```
-
-## Stage 6: Unit Testing
-
-### Setup
-```python
-# test/env.py
-from environments import test
-```
-
-Ensure `.all_path` exists in the **component** directory (NOT the test directory).
-
-### Test Pattern
-
-Use **T rename**, work with **`.T` packed types** (not `.U`), and use **`T.System_Time`** for tick timestamps (never `(0, 0)` -- causes staleness issues):
+## Testing Pattern
 
 ```ada
 overriding procedure Test (Self : in out Instance) is
    T : Component.Foo.Implementation.Tester.Instance_Access renames Self.Tester;
 begin
-   -- Set up input data products on the tester
-   T.Nav_Attitude := (Sigma_Bn => [0.1, 0.2, 0.3], ...);
-
-   T.Tick_T_Send ((Time => T.System_Time, Count => 0));
-
+   T.Tick_T_Send ((Time => T.System_Time, Count => 0));  -- NOT (0,0)!
    Natural_Assert.Eq (T.Result_History.Get_Count, 1);
-   declare
-      Output : constant Output_Type.T := T.Result_History.Get (1);
-   begin
-      -- Compare against Python reference test values
-      Float_Assert.Eq (Output.Field, Expected, Epsilon => 0.0001);
-   end;
-end Test;
+end;
 ```
 
-**Array aggregate syntax:** Use `[x, y, z]` directly, NOT `(Value => [x, y, z])`.
-
-## Stage 7: Build Validation
-
-**Zero warnings required** (safety-critical):
-```bash
-cd component_directory/ && redo       # Compile clean
-cd test/ && redo test                  # Tests pass
-```
-
-Verify C++ library linkage: `nm libgncAlgorithms.a | grep <algorithm>`
-
-### Ada Bindings Conventions
-- Opaque handles: use `null record` (not `System.Address`) -- framework convention
-- Pointer types: `type Foo_Access is access all Foo;` with `limited private` in public
-- Suppress style warnings on generated bindings: `pragma Style_Checks (Off);`
-
-## When .C.U_C Exists vs When It Doesn't
-
-The `.C.U_C` type and `To_C`/`To_Ada` conversion functions are generated ONLY for types that have a corresponding `-c.ads` child package. This happens when:
-- The type is in `adamant-xmera-components/src/types/` with explicit C bindings
-- The code generator produces `type_name-c.ads` / `type_name-c.adb` child packages
-
-For **custom YAML records in your own project**, `.C.U_C` does NOT exist. Instead:
-- Define the Ada binding spec (`*_algorithm_c.ads`) with `T` or `U` types directly
-- Use `access constant Type_Name.T` for pointer parameters in C bindings
-- Or define a separate C-compatible Ada record with `Convention => C` and convert manually
-
-**Ada binding spec for custom types (no .C child):**
-```ada
-function Normalize (Self : Foo_Access; Input : access constant Vector3f.T) return Result.T
-  with Import => True, Convention => C, External_Name => "Foo_normalize";
-```
-
-**Ada binding spec for xmera types (with .C child):**
-```ada
-function Update (Self : Foo_Access; Input : access constant Input_Type.C.U_C) return Output_Type.C.U_C
-  with Import => True, Convention => C, External_Name => "Foo_update";
-```
+Use `T.System_Time` for ticks (avoids staleness). Array aggregates: `[x, y, z]` directly.
 
 ## Common Pitfalls
 
-- **Type precision mismatch:** C `float` -> `Short_Float` (F32), C `double` -> `Long_Float` (F64). Never swap.
-- **C struct duplication:** Always use Adamant packed records for C structs, never standalone Ada packages.
-- **Missing constant validation:** `#define` constants must be validated at elaboration via `pragma Assert` against imported C getter functions.
-- **Tick timestamp `(0, 0)`:** Causes data dependency staleness failures. Use `T.System_Time`.
-- **`get` connector uses `return_type`, NOT `type`:** `kind: get` connectors ONLY have `return_type`. Using `type` causes code generation failure.
-- **Send_Dropped overrides:** EVERY send connector requires a `*_Send_Dropped` override (even `is null`). Check Event_T_Send, Data_Product_T_Send, Fault_T_Send, Command_Response_T_Send.
-- **Missing `.all_path`:** In component dir (not test dir). Causes template generation failures.
-- **Library not in CMakeLists.txt:** Algorithm must be added to fp32-fsw-xmera build to link.
+- C `float` → `Short_Float` (F32), C `double` → `Long_Float` (F64). Never swap.
+- Tick timestamp `(0, 0)` causes data dependency staleness failures
+- `get` connector uses `return_type:` only, NOT `type:`
+- Every send connector needs `*_Send_Dropped` override
+- Check existing framework packed types before creating new ones
+- Zero warnings required for safety-critical code
+- Verify C++ library linkage: `nm libAlgorithms.a | grep <name>`
 
-## Reference Implementations
+## Build
 
-- `adamant-xmera-components/src/components/attitude_tracking_error/` (Eigen vectors, data deps)
-- `adamant-xmera-components/src/components/rate_control/` (parameters + algorithm)
-- `adamant-xmera-components/src/components/sunline_ephem/` (basic wrapper pattern)
-- `fp32-fsw-xmera/algorithms/sunSearch/` (shared types header DRY pattern)
-- `fp32-fsw-xmera/algorithms/attTrackingError/` (Eigen conversion pattern)
+```bash
+redo all          # Compile component
+cd test/ && redo test   # Run tests
+```
