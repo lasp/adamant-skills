@@ -211,8 +211,11 @@ with Basic_Assertions; use Basic_Assertions;        -- Natural_Assert, Boolean_A
 with Packed_F32.Assertion; use Packed_F32.Assertion; -- Typed assertions
 with Command_Enums;                                 -- For command response checks
 with Data_Product_Enums;                            -- For data dependency status
+with My_Custom_Type;                                -- Custom project types used in params/DPs
 use type Command_Enums.Command_Response_Status.E;   -- For = operator
 ```
+
+**Rule:** If you reference ANY type in a test body (creating values, comparing history entries), you MUST have a `with` for its package. This includes custom project types from `src/types/`.
 
 ## Common Errors (with Explanations)
 

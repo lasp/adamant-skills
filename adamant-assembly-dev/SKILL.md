@@ -11,11 +11,15 @@ An assembly instantiates components, defines connections, assigns task prioritie
 
 ```
 assembly_name/
-├── .all_path                              # Build path marker
+├── .all_path                              # Build path marker (REQUIRED)
 ├── assembly_name.assembly.yaml            # Assembly model (REQUIRED)
-├── main/main.adb                          # Handwritten main program
+├── main/
+│   ├── .all_path                          # Build path marker (REQUIRED here too)
+│   └── main.adb                           # MUST be named main.adb
 └── views/                                 # Focused diagrams (optional)
 ```
+
+**CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main program MUST be in `main.adb` with `procedure Main` -- the build system discovers source files by filename.
 
 ## Assembly Model
 
@@ -72,6 +76,11 @@ connections:
     from_connector: Sys_Time_T_Get
     to_component: System_Time_Instance
     to_connector: Sys_Time_T_Return
+  # Ignore (suppress warnings for intentionally unconnected sends)
+  - from_component: My_Rate_Group
+    from_connector: Pet_T_Send
+    to_component: ignore
+    to_connector: ignore
 ```
 
 Audit connections: `bash scripts/count_connections.sh <assembly.yaml>`
@@ -123,7 +132,9 @@ Assembly build cache: must `rm -rf build/` in BOTH assembly dir AND main dir to 
 - **`Product_Database`** (NOT `Data_Product_Database`) is the built-in DP store.
 - **`Command_Router` needs** `Command_Response_T_To_Forward_Send_Count >= 1`, MUST be connected.
 - **Init params with defaults** still need `init:` in assembly YAML.
-- **`with:` packages** must exist in build path — unknown packages silently fail.
+- **`with:` packages** must exist in build path — unknown packages silently fail. Include auto-generated packages (`{Assembly}_Event_To_Text`, `{Assembly}_Data_Products`, etc.) when referenced in discriminants or init params. Include custom type packages used in init params (e.g., `Sensor_Id`).
+- **Ignoring unconnected send connectors**: Use `to_component: ignore` / `to_connector: ignore` to suppress warnings for intentionally unconnected sends (e.g., `Pet_T_Send` when no watchdog).
+- **Generic component connectors** use generic parameter names, NOT instantiated type names. Splitter with `T => Event.T` has connectors `T_Recv_Sync` and `T_Send`, not `Event_T_Recv_Sync`.
 - **Fault.T is NOT Event.T** — never wire `Fault_T_Send` to `Event_T_Recv`. Leave unconnected if no `Fault_Correction`.
 
 ## Multi-Rate Scheduling
