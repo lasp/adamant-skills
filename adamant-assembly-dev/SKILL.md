@@ -117,7 +117,7 @@ redo all                                # Build
 redo run                                # Build and run (from main/)
 ```
 
-Assembly build cache: must `rm -rf build/` in BOTH assembly dir AND main dir to regenerate.
+Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to regenerate.
 
 ## Key Pitfalls (with Explanations)
 

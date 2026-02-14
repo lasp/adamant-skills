@@ -34,7 +34,7 @@ cp build/template/component-*-tester.ads build/template/component-*-tester.adb .
 cp build/template/*_tests-implementation.ads .   # ONLY spec, NOT .adb (overwrites tests!)
 cp build/template/test.adb .
 redo test                                   # Build and run
-rm -rf build && redo coverage               # Coverage (MUST clean first)
+redo clean && redo coverage                  # Coverage (MUST clean first)
 ```
 
 **Adding tests:** Add to tests.yaml → `redo templates` → copy ONLY the `*_tests-implementation.ads` → add implementation in `.adb` → `redo test`.
@@ -248,7 +248,7 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 24. **Removing `with` clauses:** `use X;` makes operators and subprograms directly visible -- removing `with X;` breaks those even if GNAT says the `with` is unused. Grep body for types/operators from the package before removing.
 25. **Declare-but-never-assign pattern:** `Count : Natural;` then `Natural_Assert.Eq (Count, N)` is a real bug -- `Count` is uninitialized. Use history/DP queries: `T.Event_T_Recv_Sync_History.Get_Count`
 26. **Missing test bodies:** If test spec declares `overriding procedure Test_Foo` but body is empty, GNAT emits "missing body" error. Every declared test procedure needs a body, even if minimal.
-27. **Stale ALI files hide tester changes:** If you update a tester .ads file (e.g., add Dispatch_All), you MUST `rm -rf build` in the test dir before recompiling. Stale .ali files cause "no selector" errors even when the source is correct.
+27. **Stale ALI files hide tester changes:** If you update a tester .ads file (e.g., add Dispatch_All) and get "no selector" errors even when the source looks correct, run `redo clean` in the test dir before recompiling. Do NOT manually `rm -rf build` -- use redo's own clean commands (`redo clean` or `redo clean_all`).
 28. **Tester connector names:** To send TO the component, use `T.Packet_T_Send(...)` (tester sends), NOT `T.Packet_T_Recv_Sync(...)` (that's the component's receive handler name).
 29. **Command names come from YAML:** Always check `*.commands.yaml` for exact names. `Reset_Counts` vs `Reset_Count` matters. Use `T.Commands.<Exact_Name>`.
 30. **Redundant `with Parent;` before child spec:** `with Foo_Tests;` before `package Foo_Tests.Implementation is` triggers "unnecessary with of ancestor" -- the child already sees the parent.
@@ -279,7 +279,7 @@ T.Expect_Data_Product_T_Send_Dropped := False;  -- Reset
 See [references/coverage-guide.md](references/coverage-guide.md) for full guide.
 
 ```bash
-rm -rf build && redo coverage            # MUST clean first
+redo clean && redo coverage               # MUST clean first
 # Focus on component-*-implementation.adb (YOUR code)
 # Ignore framework/generated files in coverage.txt
 ```
@@ -295,7 +295,7 @@ rm -rf build && redo coverage            # MUST clean first
 
 ### Coverage Improvement Workflow
 
-1. Run `rm -rf build && redo coverage`
+1. Run `redo clean && redo coverage`
 2. Read `build/coverage/coverage.txt`, find `component-*-implementation.adb` section
 3. Map missing line numbers to source: `cat -n component-*-implementation.adb`
 4. Identify pattern: untested branch, unexercised connector, data dependency path
