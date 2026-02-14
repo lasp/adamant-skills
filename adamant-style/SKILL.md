@@ -324,12 +324,11 @@ redo style
 cat build/style/style.log
 ```
 
-Acceptable warnings (template artifacts only):
-- `unit "Component.X.Implementation.Tester" is not referenced in spec`
-- `with clause might be moved to body` (on test spec)
-- `unnecessary with of ancestor` (on test spec)
-
-Everything else must be fixed.
+ALL style warnings are fixable. Common test spec warnings and fixes:
+- `unit "Component.X.Implementation.Tester" is not referenced in spec` -- move the `with` to the body
+- `with clause might be moved to body` -- move the `with` to the body
+- `unnecessary with of ancestor` -- child packages auto-see parents, remove the `with`
+- Redundant `with/use Interfaces` in YAML `preamble:` -- generated base already adds it when component has commands/init
 
 ## Related Skills
 
