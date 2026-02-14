@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 10 Adamant skills totaling ~3800+ lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 11 Adamant skills totaling ~4000+ lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -95,11 +95,22 @@ You have 10 Adamant skills totaling ~3800+ lines (with references). Loading all 
 
 **Also load:** `adamant-assembly-dev` (for assembly YAML patterns and validation rules)
 
+### Code style checking and compliance
+**Load:** `adamant-style`
+- Ada style rules (gnat warnings, whitespace, short-circuit operators, casing)
+- YAML lint rules (document start, indentation)
+- Python style (env.py format)
+- Component YAML `with:` section rules
+- Framework template artifact warnings (which to ignore vs fix)
+- Pre-commit checklist
+
+**Always load alongside other skills** when writing any Adamant code. Style rules apply to components, tests, types, and assemblies.
+
 ## Common Task Combinations
 
 | Task | Primary Skill | Secondary |
 |------|--------------|-----------|
-| New component from scratch | component-dev | type-system |
+| New component from scratch | component-dev | type-system, style |
 | Add tests to existing component | testing | component-dev |
 | Measure/improve test coverage | testing (coverage guide) | component-dev |
 | Wire components into assembly | assembly-dev | framework-components |
