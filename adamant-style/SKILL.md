@@ -115,11 +115,12 @@ from environments import test  # noqa: F401
 
 ## Framework Template Artifacts (Cannot Fix)
 
-These warnings come from generated template files and are expected:
+These warnings come from generated template/type files and are expected:
 
 - **`with Tester` not referenced in spec** -- test spec withs tester but only body uses it
 - **`unnecessary with of ancestor`** -- child package spec withs parent redundantly
 - **`with clause might be moved to body`** -- same as above
+- **`unit "Interfaces" is not referenced`** in generated type specs -- code generator includes `with Interfaces` for all packed types even when not needed
 
 These are produced by `redo templates` and would be overwritten if you modify them.
 

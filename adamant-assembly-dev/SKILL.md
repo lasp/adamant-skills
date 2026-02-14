@@ -242,8 +242,13 @@ filters:
 
 Filter types: `component_name`, `component_type`, `component_execution`, `connector_name`, `connector_type`, `connector_kind`, etc.
 
+## Style
+
+Run `redo style` on the assembly directory and `main/` before committing. Assembly YAML `with:` sections ARE correct (unlike component YAML where it's preamble-only). See [adamant-style](../adamant-style/SKILL.md) for full rules.
+
 ## Related Skills
 
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)
 - **Build system**: [adamant-build-system](../adamant-build-system/SKILL.md)
+- **Style**: [adamant-style](../adamant-style/SKILL.md)
 - **COSMOS integration**: [adamant-cosmos-integration](../adamant-cosmos-integration/SKILL.md)

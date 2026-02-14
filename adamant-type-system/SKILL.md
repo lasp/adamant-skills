@@ -225,6 +225,11 @@ src/types/
 
 Each type directory needs its own `.all_path`. File names must be unique across entire build path.
 
+## Style
+
+Type YAML files must start with `---`. Generated Ada files may produce style warnings (e.g., `with Interfaces` unreferenced) -- these are framework artifacts and cannot be fixed. See [adamant-style](../adamant-style/SKILL.md).
+
 ## Related Skills
 
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md) — using types in components
+- **Style**: [adamant-style](../adamant-style/SKILL.md)
