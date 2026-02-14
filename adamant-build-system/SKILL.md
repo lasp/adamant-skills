@@ -57,7 +57,8 @@ redo build/svg/name.svg              # Architecture/type diagram
 redo build/html/name.html            # HTML documentation
 
 # Maintenance
-redo clean              # Remove build/
+redo clean              # Remove build/ in current directory
+redo clean_all          # Recursive clean (all subdirectories)
 redo clear_cache        # Clear model cache (SQLite in ~/.adamant/tmp/)
 ```
 
