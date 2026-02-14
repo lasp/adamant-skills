@@ -206,7 +206,7 @@ T.Tick_T_Send ((Time => (100, 0), Count => 0));
 Test bodies need explicit `with` for any types referenced directly:
 ```ada
 with Tick;                                          -- If creating Tick.T values
-with Interfaces; use Interfaces;                    -- For Unsigned_32 casts
+with Interfaces; use Interfaces;                    -- For Unsigned_32 casts (ONLY if base class lacks it)
 with Basic_Assertions; use Basic_Assertions;        -- Natural_Assert, Boolean_Assert
 with Packed_F32.Assertion; use Packed_F32.Assertion; -- Typed assertions
 with Command_Enums;                                 -- For command response checks
@@ -238,6 +238,10 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 15. **Instance record names like `Queue` conflict** with generated base class -- use prefixed names
 16. **Unused `Status` variable** in parameter tests -- use `pragma Unreferenced (Status);` or check it
 17. **Test spec `with Tester`** and **`unnecessary with of ancestor`** warnings -- generated template artifacts, cannot fix without modifying templates (would be overwritten by `redo templates`)
+18. **Use `[]` for array aggregates** -- `[others => 0]` not `(others => 0)`. Record aggregates stay `()`
+19. **`use Command_Execution_Status.E;`** is useless -- the `use type` in generated code already provides operator visibility
+20. **`Dispatch_All` result must be captured or discarded** -- if you don't check the count, call bare `T.Dispatch_All;` without `Count :=`
+21. **`then` on its own line** for multi-line if/elsif conditions (Ada style `-gnatyi`)
 
 ## Invalid Command Testing
 
