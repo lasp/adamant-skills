@@ -9,9 +9,6 @@ description: Complete pipeline for wrapping C++ algorithms into Adamant passive 
 C++ Algorithm → C Shim → Ada Bindings → Packed Records → Component YAML → Implementation → Tests
 ```
 
-See [references/c-shim-bindings.md](references/c-shim-bindings.md) for C shim and binding generation.
-See [references/implementation-details.md](references/implementation-details.md) for type strategy and patterns.
-
 ## Component YAML (Typical Wrapper)
 
 ```yaml
@@ -39,6 +36,73 @@ connectors:
 ```
 
 Add `Parameter_Update.T` modify only if runtime-tunable config needed.
+
+## C Shim Pattern
+
+### File Structure
+- `<algorithm>Algorithm_c.h` — C shim header (MUST be pure C, no C++ keywords)
+- `<algorithm>Algorithm_c.cpp` — C shim implementation
+- `<algorithm>Types.h` — Shared types header (DRY: both C++ and C shim include this)
+
+### Opaque Handle Pattern
+```c
+typedef struct FooAlgorithm FooAlgorithm;
+FooAlgorithm* FooAlgorithm_create(void);
+void FooAlgorithm_destroy(FooAlgorithm* self);
+OutputPayload FooAlgorithm_update(FooAlgorithm* self, const InputPayload* input);
+```
+
+### POD Conversion (Eigen types)
+```c
+typedef struct { float data[3]; } Vector3f_c;
+```
+
+### Constant Validation
+Export getters for `#define` constants (never `static inline`):
+```c
+uint32_t FooAlgorithm_getMaxCount(void);
+```
+
+## Ada Bindings (h2ads)
+
+```bash
+h2ads --compiler gcc -I <algorithms_dir> -b <algo_dir> <algo>Algorithm_c.h
+```
+
+### Transformation Rules
+1. **Package rename:** `Foo_Algorithm_C_H` → `Foo_Algorithm_C`
+2. **Opaque handle:** Make `limited private` with `null record` in private section
+3. **Function rename:** `Foo_Algorithm_Create` → `Create`
+4. **Payload types:** Replace h2ads-generated structs with Adamant `.C.U_C` types
+
+### Constant Validation in Ada
+```ada
+NUM_SLEWS : constant := 3;
+function Get_Num_Slews return Unsigned_32
+  with Import => True, Convention => C, External_Name => "FooAlgorithm_getNumSlews";
+pragma Assert (Unsigned_32 (NUM_SLEWS) = Get_Num_Slews);
+```
+
+## Type Mapping (C → Ada YAML)
+
+| C Type | Ada Type | Format |
+|--------|----------|--------|
+| `float` | `Short_Float` | `F32` |
+| `double` | `Long_Float` | `F64` |
+| `uint32_t` | `Interfaces.Unsigned_32` | `U32` |
+| `int32_t` | `Interfaces.Integer_32` | `I32` |
+| `float[3]` | `Packed_F32x3.T` | (none — array types have no format) |
+
+Field names: Pascal_Case with underscores. `sigma_BN` → `Sigma_Bn`, `timeTag` → `Time_Tag`.
+
+## Type Conversion Chain
+
+```
+Packed.T (wire) → Unpack → .U (Ada record) → .C.To_C → .C.U_C (C-compatible)
+```
+Reverse: `.C.To_Ada → Pack → .T`
+
+`.C.U_C` only exists for types with explicit `-c.ads` child package. For custom YAML records, use `access constant Type.T` in binding specs.
 
 ## Implementation Pattern
 
@@ -75,8 +139,11 @@ begin
 end;
 ```
 
-**Type chain:** `.T` → `Unpack` → `.U` → `.C.To_C` → `.C.U_C` (and reverse).
-`.C.U_C` only exists for types with `-c.ads` child package. For custom types, use `access constant Type.T` directly.
+## Input Strategy: Parameters vs Data Dependencies
+
+- **Parameters** (modify connector): fixed properties, tunable gains, config. Changed infrequently.
+- **Data Dependencies** (request connector): dynamic telemetry from other components. Fetched each tick, staleness-checked.
+- **Stateful algorithms**: track config state, call algorithm reset in `Update_Parameters_Action`.
 
 ## Testing Pattern
 
@@ -97,13 +164,13 @@ Use `T.System_Time` for ticks (avoids staleness). Array aggregates: `[x, y, z]` 
 - Tick timestamp `(0, 0)` causes data dependency staleness failures
 - `get` connector uses `return_type:` only, NOT `type:`
 - Every send connector needs `*_Send_Dropped` override
-- Check existing framework packed types before creating new ones
+- Check existing framework packed types (`Packed_F32x3`, etc.) before creating new ones
 - Zero warnings required for safety-critical code
 - Verify C++ library linkage: `nm libAlgorithms.a | grep <name>`
 
 ## Build
 
 ```bash
-redo all          # Compile component
+redo all                # Compile component
 cd test/ && redo test   # Run tests
 ```
