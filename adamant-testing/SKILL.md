@@ -252,6 +252,7 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 28. **Tester connector names:** To send TO the component, use `T.Packet_T_Send(...)` (tester sends), NOT `T.Packet_T_Recv_Sync(...)` (that's the component's receive handler name).
 29. **Command names come from YAML:** Always check `*.commands.yaml` for exact names. `Reset_Counts` vs `Reset_Count` matters. Use `T.Commands.<Exact_Name>`.
 30. **Redundant `with Parent;` before child spec:** `with Foo_Tests;` before `package Foo_Tests.Implementation is` triggers "unnecessary with of ancestor" -- the child already sees the parent.
+31. **Dispatch_All returns Natural:** `Dispatch_All` is a function, not a procedure. Ada does not allow discarding function return values. Use `Natural_Assert.Eq(T.Dispatch_All, N)` (framework pattern) or `Ignore := T.Dispatch_All; pragma Unreferenced (Ignore);` with `Ignore : Natural;` declared locally.
 
 ## Invalid Command Testing
 
