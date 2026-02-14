@@ -30,6 +30,13 @@ You have 10 Adamant skills totaling ~3800+ lines (with references). Loading all 
 
 **Also load:** `adamant-component-dev` (for the generated API signatures your tests call)
 
+### Measuring or improving test coverage
+**Load:** `adamant-testing` (see `references/coverage-guide.md`)
+- `redo coverage` workflow, clean build requirement
+- `impl_coverage.sh` script for filtering to implementation .adb
+- Structural ceiling analysis, common uncovered patterns and fixes
+- Adding tests to existing components (YAML + template regeneration)
+
 ### Defining custom types (records, arrays, enums)
 **Load:** `adamant-type-system`
 - YAML field types and format codes
@@ -94,6 +101,7 @@ You have 10 Adamant skills totaling ~3800+ lines (with references). Loading all 
 |------|--------------|-----------|
 | New component from scratch | component-dev | type-system |
 | Add tests to existing component | testing | component-dev |
+| Measure/improve test coverage | testing (coverage guide) | component-dev |
 | Wire components into assembly | assembly-dev | framework-components |
 | Debug build failure | build-system | -- |
 | Define new packed types | type-system | -- |
