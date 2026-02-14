@@ -296,6 +296,11 @@ Do NOT invent fields. Key types:
 20. [ ] No `with Command_Response_Status` (not standalone — available through base class)
 21. [ ] Component name doesn't collide with ~55 framework components
 22. [ ] Custom type YAML filenames (e.g., `quaternion.record.yaml`) don't collide with framework types -- prefix with project/component name if needed
+23. [ ] Use `or else` / `and then` (short-circuit) for ALL boolean expressions (Ada style requirement)
+24. [ ] No trailing whitespace in Ada or YAML files
+25. [ ] All YAML files start with `---` document start marker
+26. [ ] Only `with` packages you actually reference -- unused `with` is a style warning
+27. [ ] Verify with `redo style` before committing
 
 ## Related Skills
 

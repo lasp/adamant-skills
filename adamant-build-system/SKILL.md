@@ -47,6 +47,8 @@ redo run                # Build and run (from main/ dir)
 # Test & Verify
 redo test               # Unit tests (from test/ dir)
 redo test_all           # Recursive tests (all subdirectories)
+redo style              # Style check (Ada warnings, YAML lint, Python flake8, codespell)
+redo style_all          # Recursive style check (all subdirectories)
 redo prove              # SPARK proof (needs all.prove.yaml)
 redo coverage           # Coverage (rm -rf build first!)
 

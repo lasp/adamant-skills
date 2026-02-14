@@ -217,6 +217,8 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 
 **Rule:** If you reference ANY type in a test body (creating values, comparing history entries), you MUST have a `with` for its package. This includes custom project types from `src/types/`.
 
+**Style rule:** Only `with` what you actually use. Remove `with Tick;` if you inline the aggregate. Remove `with Smart_Assert;` if you use `Basic_Assertions` instead. `redo style` flags all unused imports.
+
 ## Common Errors (with Explanations)
 
 1. **Wrong stimulus API:** Use `T.*_T_Send` to stimulate, NOT `T.*_T_Recv_Sync` (that's capture)
@@ -233,7 +235,9 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 12. **Change detection initial state:** First tick fires extra DP because shadow differs from computed value
 13. **Packet.T Header has NO Priority field** — only Time, Id, Sequence_Count, Buffer_Length
 14. **Named Event.T send connectors crash** on non-component event IDs — remove `Dispatch_Event` from tester override
-15. **Instance record names like `Queue` conflict** with generated base class — use prefixed names
+15. **Instance record names like `Queue` conflict** with generated base class -- use prefixed names
+16. **Unused `Status` variable** in parameter tests -- use `pragma Unreferenced (Status);` or check it
+17. **Test spec `with Tester`** warning -- the generated spec withs the tester but only the body references it; this is a known framework artifact, ignore it
 
 ## Invalid Command Testing
 
