@@ -117,3 +117,4 @@ redo run                                    # Build and run (from main/)
 
 - **Build system**: [adamant-build-system](../adamant-build-system/SKILL.md)
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)
+- **Style**: [adamant-style](../adamant-style/SKILL.md) — run `redo style_all` to validate entire project
