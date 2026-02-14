@@ -301,7 +301,7 @@ Do NOT invent fields. Key types:
 24. [ ] No trailing whitespace in Ada or YAML files
 25. [ ] All YAML files start with `---` document start marker
 26. [ ] Only `with` packages you actually reference -- unused `with` is a style warning
-27. [ ] Verify with `redo style` before committing
+27. [ ] Verify with `redo style` -- all warnings must be resolved
 28. [ ] Use `[]` for array aggregates: `[others => 0]` not `(others => 0)` (Ada 2022 syntax)
 29. [ ] Space before `(` in type conversions: `Unsigned_32 (X)` not `Unsigned_32(X)`
 30. [ ] `then` on its own line for multi-line if conditions

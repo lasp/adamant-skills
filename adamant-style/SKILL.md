@@ -5,7 +5,7 @@ description: Adamant code style rules enforced by redo style. Use when writing o
 
 # Adamant Style Guide
 
-`redo style` enforces Ada compiler warnings, YAML lint, Python flake8, and codespell. All code must pass before committing.
+`redo style` enforces Ada compiler warnings, YAML lint, Python flake8, and codespell. All code must pass.
 
 ## Running Style Checks
 
@@ -157,7 +157,7 @@ Simple components (no commands, no init params, no data dependencies) do NOT get
 12. Type mismatches in assertions (wrong Packed_U16 vs Packed_U32)
 13. Multiple blank lines
 
-## Pre-Commit Checklist
+## Style Checklist
 
 ```bash
 # From component directory:
@@ -172,7 +172,7 @@ Acceptable warnings (template artifacts only):
 - `with clause might be moved to body` (on test spec)
 - `unnecessary with of ancestor` (on test spec)
 
-Everything else must be fixed before committing.
+Everything else must be fixed.
 
 ## Related Skills
 

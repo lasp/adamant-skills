@@ -102,7 +102,7 @@ You have 11 Adamant skills totaling ~4000+ lines (with references). Loading all 
 - Python style (env.py format)
 - Component YAML `with:` section rules
 - Framework template artifact warnings (which to ignore vs fix)
-- Pre-commit checklist
+- Style checklist
 
 **Always load alongside other skills** when writing any Adamant code. Style rules apply to components, tests, types, and assemblies.
 
