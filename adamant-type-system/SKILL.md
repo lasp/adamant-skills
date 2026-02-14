@@ -149,7 +149,7 @@ volatile: True           # Hardware-mapped register
 2. Only ONE variable-length field, must be LAST
 3. Every field MUST have `format:` — missing = build error
 4. `Natural` needs 31 bits — does NOT fit U16. Use `Unsigned_16` instead.
-5. Field names must NOT shadow package names in `with` list
+5. Field names must NOT shadow package names in `with` list or match their own type name (e.g., field `Fault_Flags` of type `Fault_Flags.T` is invalid -- rename to `Faults`)
 6. Enum names must differ from parent package name
 7. Do NOT use `Boolean` as packed field — use `Unsigned_8`/U8 with 0/1
 8. Sub-byte fields MUST use `mod` types defined in preamble

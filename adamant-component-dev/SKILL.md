@@ -84,7 +84,7 @@ commands:
 events:
   - name: Value_Changed
     description: The value was changed
-    param_type: Packed_U32.T          # Omit for no-param events
+    param_type: Packed_U32.T          # Omit for no-param events. MUST be packed type (not raw enums)
 
 # data_products.yaml — requires Data_Product.T send connector
 data_products:
