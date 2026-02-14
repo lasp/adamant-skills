@@ -48,6 +48,45 @@ cp build/template/test.adb .
 
 **Named connector histories use the name prefix.** If you define `name: Spi_Data` on a `Packed_U32.T` send, the tester history is `Spi_Data_T_Recv_Sync_History`, NOT `Packed_U32_T_Recv_Sync_History`.
 
+## Adding Tests to an Existing Component
+
+When adding new test procedures to a component that already has tests:
+
+1. **Add entries to `test/{component_name}.tests.yaml`:**
+   ```yaml
+   tests:
+     - name: Test_Existing_Test    # keep existing
+     - name: Test_New_Branch       # add new
+       description: Cover the uncovered error path
+   ```
+
+2. **Regenerate templates** (from test/ directory):
+   ```bash
+   redo templates
+   ```
+
+3. **Copy ONLY the test spec** (NOT the .adb -- that would overwrite your tests):
+   ```bash
+   cp build/template/{component_name}_tests-implementation.ads .
+   ```
+   This updates the spec with the new `overriding procedure Test_New_Branch` declaration.
+
+4. **Add implementation** in `{component_name}_tests-implementation.adb`:
+   ```ada
+   overriding procedure Test_New_Branch (Self : in out Instance) is
+      T : Component.Name.Implementation.Tester.Instance_Access renames Self.Tester;
+   begin
+      -- test code
+   end Test_New_Branch;
+   ```
+
+5. **Build and run:**
+   ```bash
+   redo test       # or: rm -rf build && redo coverage
+   ```
+
+**CRITICAL:** If you skip step 3, compilation fails with `"Test_New_Branch" is not overriding` because the generated base class (in `build/src/`) doesn't know about the new procedure until `redo templates` runs, and the local spec doesn't declare it until you copy the updated template.
+
 ## Test Model (.tests.yaml)
 
 ```yaml
