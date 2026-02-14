@@ -174,6 +174,10 @@ Actual frequency data from 100-component style campaign:
 13. **Multiple blank lines** in sequence
 14. **Duplicate with-clauses** in test bodies (same package withed twice)
 15. **`use Command_Execution_Status.E;`** in test bodies -- has no effect (generated code already provides visibility)
+16. **`Dispatch_All` on passive components**: Passive components have no queue, no `Dispatch_All` -- remove the calls
+17. **Record aggregate with `[]`**: Only arrays use `[]`; record aggregates (including `(others => <>)` for record defaults) must use `()`
+18. **Empty `if` block**: Must have `null;` statement -- cannot leave only a comment
+19. **`Short_Float` vs `IEEE_Float_32`**: `Packed_F32.T.Value` is `Short_Float`, not `Interfaces.IEEE_Float_32`
 16. **Missing space around `**` operator**: `2**16` -> `2 ** 16`
 17. **Assigned-but-never-read variables**: `Status` in parameter tests -- use `pragma Warnings (Off, Var);`
 

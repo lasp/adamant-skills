@@ -128,3 +128,4 @@ Details & full wiring examples: [references/plugin-setup-and-wiring.md](referenc
 
 - **Assembly**: [adamant-assembly-dev](../adamant-assembly-dev/SKILL.md)
 - **Framework components**: [adamant-framework-components](../adamant-framework-components/SKILL.md)
+- **Style**: [adamant-style](../adamant-style/SKILL.md) -- run `redo style` on assembly dirs after adding CCSDS components
