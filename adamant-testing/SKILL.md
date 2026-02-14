@@ -85,7 +85,7 @@ begin
 end Test_Name;
 ```
 
-**Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`.
+**Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`. Both Init and Set_Up are optional -- only call them if YAML declares `init:` or component overrides Set_Up. For per-test init params, defer Init/Set_Up to each test body (see [test-corpus.md](references/test-corpus.md) pattern 1h).
 
 ## Sending Stimuli
 
@@ -102,6 +102,7 @@ T.Tick_T_Send (The_Tick);  -- component applies in tick handler
 ```
 
 **ALWAYS use `T.Commands` / `T.Parameters`** — never create local instances (wrong ID bases).
+For custom packed types on connectors: construct unpacked (.U) then `Pack`: `T.Cmd_T_Send (My_Type.Pack (unpacked_val));`
 
 ## History Verification
 
@@ -266,6 +267,34 @@ Command_Response_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get (1), (
    Command_Id => T.Commands.Get_Set_Value_Id, Status => Length_Error));
 ```
 
+## Deferred Init (Per-Test Initialization)
+
+When tests need different init params, defer Init/Set_Up to each test body:
+```ada
+overriding procedure Set_Up_Test (Self : in out Instance) is
+begin
+   Self.Tester.Init_Base;
+   Self.Tester.Connect;
+   -- NO Init or Set_Up here
+end Set_Up_Test;
+
+overriding procedure Test_With_4_Channels (Self : in out Instance) is
+   T : ... renames Self.Tester;
+begin
+   T.Component_Instance.Init (Max_Channels => 4);
+   T.Component_Instance.Set_Up;
+   -- test body
+end Test_With_4_Channels;
+```
+
+## Multiple Command Connectors
+
+Named command connectors generate `_Send`, `_Send_2`, etc.:
+```ada
+T.Command_T_Send (cmd);     -- First command connector
+T.Command_T_Send_2 (cmd2);  -- Second command connector (named in YAML)
+```
+
 ## Error Injection
 
 ```ada
@@ -308,6 +337,10 @@ redo clean && redo coverage               # MUST clean first
 - **Untested branch:** Add test with input triggering the uncovered if/elsif/else
 - **Active async path at 0%:** Must send AND `Dispatch_All` — just sending queues without processing
 - **Data dependency path at 0%:** Override tester's `*_T_Service` to return success with test data
+
+## References
+
+- **Test corpus**: [references/test-corpus.md](references/test-corpus.md) -- all patterns with real examples
 
 ## Related Skills
 
