@@ -1,0 +1,25 @@
+# Reference: Array Type Examples
+
+# --- Simple float vector ---
+# packed_f32x3.array.yaml
+---
+description: Packed 3 element vector of 32-bit floats.
+type: Short_Float
+format: F32
+length: 3
+
+# --- Double-precision vector ---
+# packed_f64x3.array.yaml
+# ---
+# description: Packed 3 element vector of 64-bit floats.
+# type: Long_Float
+# format: F64
+# length: 3
+
+# --- Byte buffer ---
+# my_buffer.array.yaml
+# ---
+# description: 64-byte data buffer
+# type: Interfaces.Unsigned_8
+# format: U8
+# length: 64

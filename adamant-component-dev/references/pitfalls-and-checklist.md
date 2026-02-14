@@ -26,6 +26,14 @@ Use `Packed_Byte.T` for 8-bit values. Add `with Packed_Byte;` in body when const
 ### No Event.T send for forwarding
 Tester's Dispatch_Event calls `Local_Event_Id_Type'Val(Evnt.Header.Id)` on ALL received Event.T, crashing on non-component event IDs. Use Packet.T for routing instead.
 
+## Command_Execution_Status vs Command_Response_Status
+
+Two different enums in `Command_Enums`:
+- `Command_Execution_Status.E` — returned by `Execute_*` command handlers (Success/Failure)
+- `Command_Response_Status.E` — in `Command_Response.T.Status` field (Success/Failure/Dropped)
+
+When testing commands, comparing `Cmd_Response.Status` requires `use type Command_Enums.Command_Response_Status.E;` — NOT `Command_Execution_Status.E`. These are different types. Using the wrong `use type` gives: "operator for type E is not directly visible".
+
 ## Command Handler Details
 
 - Function names match YAML `name:` EXACTLY (no `_Execute` suffix)

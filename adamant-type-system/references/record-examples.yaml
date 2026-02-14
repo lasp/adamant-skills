@@ -1,0 +1,81 @@
+# Reference: Record Type Examples
+# These are real-world patterns from adamant_bot_station
+
+# --- Simple record with floats and integer ---
+# attitude_command.record.yaml
+---
+description: "Attitude rate command for 3-axis control"
+with:
+  - Interfaces
+fields:
+  - name: Roll_Rate
+    type: Short_Float
+    format: F32
+    description: "Roll rate command in rad/sec"
+  - name: Pitch_Rate
+    type: Short_Float
+    format: F32
+  - name: Yaw_Rate
+    type: Short_Float
+    format: F32
+  - name: Mode
+    type: Interfaces.Unsigned_8
+    format: U8
+# Total: 32+32+32+8 = 104 bits = 13 bytes ✓
+
+# --- Record with enum field ---
+# sensor_reading.record.yaml
+# ---
+# with:
+#   - Interfaces
+#   - Sensor_Id
+# fields:
+#   - name: id
+#     type: Sensor_Id.Sensor_Id_Type.E
+#     format: E8
+#     default: "Sensor_Id.Sensor_Id_Type.Temperature_1"
+#   - name: value
+#     type: Interfaces.Unsigned_16
+#     format: U16
+#     default: "0"
+#   - name: timestamp_ms
+#     type: Interfaces.Unsigned_32
+#     format: U32
+#     default: "0"
+
+# --- Sub-byte bitfield record ---
+# fault_flags.record.yaml
+# ---
+# preamble: |
+#   subtype Single_Bit_Type is Interfaces.Unsigned_8 range 0 .. 1;
+#   subtype Four_Bit_Type is Interfaces.Unsigned_8 range 0 .. 15;
+# with:
+#   - Interfaces
+# fields:
+#   - name: Over_Temp
+#     type: Single_Bit_Type
+#     format: U1
+#   - name: Over_Pressure
+#     type: Single_Bit_Type
+#     format: U1
+#   - name: Under_Pressure
+#     type: Single_Bit_Type
+#     format: U1
+#   - name: Valve_Stuck
+#     type: Single_Bit_Type
+#     format: U1
+#   - name: Reserved
+#     type: Four_Bit_Type
+#     format: U4
+# Total: 1+1+1+1+4 = 8 bits = 1 byte ✓
+
+# --- Record using nested packed types (no format!) ---
+# thruster_command.record.yaml
+# ---
+# fields:
+#   - name: Thruster_Id
+#     type: Packed_Byte.T
+#   - name: Thrust_Magnitude
+#     type: Packed_F32.T
+#   - name: Duration_Ms
+#     type: Packed_U16.T

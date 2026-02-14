@@ -1,0 +1,51 @@
+# Reference: Enum Type Examples
+
+# --- Enum with explicit values ---
+# valve_state_enums.enums.yaml
+---
+enums:
+  - name: Valve_State_Type
+    literals:
+      - name: Closed
+        value: 0
+      - name: Opening
+        value: 1
+      - name: Open
+        value: 2
+      - name: Closing
+        value: 3
+
+# --- Enum with auto-numbered values (no value: field) ---
+# subsystem_id.enums.yaml
+# ---
+# description: Identifies spacecraft subsystems
+# enums:
+#   - name: Subsystem_Id_Type
+#     literals:
+#       - name: Guidance
+#       - name: Navigation
+#       - name: Control
+#       - name: Thermal
+#       - name: Power
+#       - name: Communication
+#       - name: Payload
+# Values auto-assigned: Guidance=0, Navigation=1, ...
+
+# --- Multiple enums in one file ---
+# system_enums.enums.yaml
+# ---
+# enums:
+#   - name: System_Mode_Type
+#     literals:
+#       - name: Safe
+#         value: 0
+#       - name: Standby
+#         value: 1
+#       - name: Science
+#         value: 2
+#   - name: Power_State_Type
+#     literals:
+#       - name: Off
+#         value: 0
+#       - name: On
+#         value: 1
