@@ -63,10 +63,18 @@ Style logs written to `build/style/style.log` per directory.
 
 ### Array Aggregates (Ada 2022)
 - **Use `[]` not `()`** for array aggregates (`-gnatwj`)
+- **Record aggregates MUST use `()`** -- only arrays use `[]`
   ```ada
-  -- WRONG: Buffer := (others => 0);
-  -- RIGHT: Buffer := [others => 0];
-  -- NOTE:  Record aggregates still use ()
+  -- Array aggregate:
+  Buffer := [others => 0];          -- RIGHT (array)
+  Buffer := (others => 0);          -- WRONG (obsolescent)
+
+  -- Record aggregate:
+  Rec := (Field_A => 1, Field_B => 2);  -- RIGHT (record)
+
+  -- Nested array-of-records:
+  Arr := [others => (others => <>)];    -- RIGHT: outer [] (array), inner () (record)
+  Arr := [others => [others => <>]];    -- WRONG: inner is a record, must use ()
   ```
 
 ### With-Clauses
