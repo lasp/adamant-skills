@@ -14,7 +14,8 @@ description: GPS time stamp
 preamble: |
   subtype Three_Bit_Type is Interfaces.Unsigned_8 range 0 .. 7;
 with:
-  - Interfaces
+  - Interfaces    # Only if preamble/fields reference Interfaces.* types
+  # mod 2**N types do NOT need Interfaces -- e.g., "type Nibble is mod 2**4;"
 fields:
   - name: Seconds
     type: Interfaces.Unsigned_32
