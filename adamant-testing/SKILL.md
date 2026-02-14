@@ -177,11 +177,17 @@ with Command_Enums; use type Command_Enums.Command_Response_Status.E;
 
 The tester generates named fields for each data dependency. Set them directly:
 ```ada
+-- CRITICAL: Use non-zero timestamps! (0,0) causes staleness failures.
+Test_Time : constant Sys_Time.T := (100, 0);
+
+-- In Set_Up_Test:
+T.System_Time := Test_Time;
+T.Data_Dependency_Timestamp_Override := Test_Time;
+
 -- Set mock values (field names match data_dependencies.yaml names)
 T.Setpoint := (Value => 50.0);          -- Packed_F32.T
 T.Process_Value := (Value => 45.0);     -- Packed_F32.T
-T.System_Time := (100, 0);              -- Sys_Time.T for staleness ref
-T.Tick_T_Send ((Time => (100, 0), Count => 0));
+T.Tick_T_Send ((Time => Test_Time, Count => 0));  -- Match timestamps!
 -- Component calls Self.Get_Setpoint(...) which reads T.Setpoint
 
 -- Test stale data (override timestamp returned by tester)
