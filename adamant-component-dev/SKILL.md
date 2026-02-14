@@ -305,7 +305,7 @@ Do NOT invent fields. Key types:
 28. [ ] Use `[]` for array aggregates: `[others => 0]` not `(others => 0)` (Ada 2022 syntax). Record aggregates MUST use `()`. Nested array-of-records: `[others => (others => <>)]`
 29. [ ] Space before `(` in type conversions: `Unsigned_32 (X)` not `Unsigned_32(X)`
 30. [ ] `then` on its own line for multi-line if conditions
-31. [ ] Don't add `with Interfaces; use Interfaces;` to impl spec if base class already provides it (components with commands/init/data deps get it automatically)
+31. [ ] Don't add `with Interfaces; use Interfaces;` to impl spec if base class already provides it (components with commands/init/data deps get it automatically). Note: some generated component specs have REDUNDANT `use Interfaces;` that triggers `-gnatwr` -- this is unfixable (code gen artifact, not your code).
 32. [ ] No `pragma Unreferenced` unless variable is genuinely needed but intentionally unused
 33. [ ] See `adamant-style` skill for full style reference
 34. [ ] `Packed_F32.T.Value` is `Short_Float` (Ada 32-bit float), NOT `Interfaces.IEEE_Float_32` -- use `Short_Float` for F32 record fields and arithmetic
