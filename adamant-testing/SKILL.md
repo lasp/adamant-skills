@@ -237,7 +237,7 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 14. **Named Event.T send connectors crash** on non-component event IDs — remove `Dispatch_Event` from tester override
 15. **Instance record names like `Queue` conflict** with generated base class -- use prefixed names
 16. **Unused `Status` variable** in parameter tests -- use `pragma Unreferenced (Status);` or check it
-17. **Test spec `with Tester`** warning -- the generated spec withs the tester but only the body references it; this is a known framework artifact, ignore it
+17. **Test spec `with Tester`** and **`unnecessary with of ancestor`** warnings -- generated template artifacts, cannot fix without modifying templates (would be overwritten by `redo templates`)
 
 ## Invalid Command Testing
 
