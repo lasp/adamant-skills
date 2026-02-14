@@ -236,72 +236,10 @@ command_registration_delay: 250
 
 ## Compiler & Linker Flags
 
-### Base Ada Flags (all targets, from `a_adamant.gpr`)
-```
--gnatf        Full errors
--gnatwa       Enable all warnings
--gnatwl       Elaboration pragma warnings
--gnatw.o      Modified but unreferenced out parameters
--gnatwt       Deleted conditional code
--gnatw.X      Disable No_Exception_Propagation warnings
--gnat2022     Enable Ada 2022 features
-```
-
-### Style Flags (enabled by `redo style` / `CHECK_STYLE=True`)
-```
--gnaty3aABbdDefhiklL12nOprStux
-  3   = 3-space indentation          a = attribute casing
-  A   = array 'Length must use index  B = and/or only for bitwise
-  b   = no trailing blanks            d = no DOS line endings
-  D   = mixed case identifiers        e = labels on end statements
-  f   = no form feeds                 h = no horizontal tabs
-  i   = if-then layout                k = lowercase keywords
-  l   = RM layout                     L12 = max nesting 12
-  n   = Standard casing per RM        O = overriding markers required
-  p   = pragma casing                 r = reference casing matches decl
-  S   = no statements on then/else    t = token spacing
-  u   = unnecessary blank lines       x = no unnecessary parens
-```
-
-### Linux Debug Flags (`a_linux_debug_base.gpr`)
-```
--O0           No optimization
--g            Debug info
--fstack-check Dynamic stack checking
--gnato        Numeric overflow checking
--gnata        Assertions enabled
--gnatVa       ALL validity checking
--gnatec=...initialize_scalars.adc   Detect uninitialized variables
-```
-
-### Linux Debug (with Ravenscar, `linux_debug.gpr`)
-Adds: `-gnatec=...ravenscar.adc` (Ravenscar profile enforcement)
-
-### Linux Test (`linux_test.gpr`)
-Same as Linux Debug base but WITHOUT Ravenscar, links with AUnit.
-
-### Bareboard Base Flags (`a_bareboard_base.gpr`)
-```
--fno-delete-null-pointer-checks   Allow access to address 0x0
--g3 -ggdb                         Full debug info
--ffunction-sections -fdata-sections  Dead code elimination prep
--gnatec=...ravenscar.adc          Ravenscar always enforced
--gnatec=...sequential_elaboration.adc
-```
-Linker: `-Wl,--gc-sections -Wl,--print-memory-usage -Wl,--defsym=__stack_size=5000`
-Binder: `-D10k` (10KB default secondary stack)
-
-### Bareboard Production (`a_bareboard_production.gpr`)
-Adds: `-O2 -gnatn` (optimization + back-end inlining)
-
-### Bareboard Debug (`a_bareboard_debug.gpr`)
-Adds: `-O0 -gnato -gnata -gnatVa` (no optimization, full checking)
-
-### C/C++ Flags
-```
-C:   -Wall -Wextra -pedantic -std=gnu99
-C++: -Wall -Wextra -pedantic -std=c++0x
-```
+Key flags (from `a_adamant.gpr`): `-gnat2022 -gnatwa -gnatf` (Ada 2022, all warnings, full errors).
+Style: `-gnaty3aABbdDefhiklL12nOprStux` (see adamant-style skill for full flag reference).
+Linux_Test: no Ravenscar, links AUnit. Bareboard: Ravenscar enforced, dead code elimination.
+Full flag details: [references/build-commands.md](references/build-commands.md)
 
 ## SPARK Prove Configuration
 
@@ -348,52 +286,17 @@ redo build/bin/Pico/main.elf
 - **SFP** (Small Footprint) — reduced runtime
 - **ZFP** (Zero Footprint) — bare metal, no runtime
 
-## Project Structure
+## Common Build Errors
 
-```
-project/
-├── config/
-│   └── project.configuration.yaml   # Project configuration
-├── env/
-│   ├── activate                     # Sources adamant/env/activate with project root
-│   └── requirements.txt             # Extra Python dependencies
-├── docker/
-│   └── adamant_env.sh               # Container management (start/login/stop)
-├── src/
-│   └── components/                  # Component source directories
-│       └── my_component/
-│           ├── .all_path            # Include in all builds
-│           ├── my_component.component.yaml
-│           ├── component-my_component-implementation.ads
-│           ├── component-my_component-implementation.adb
-│           └── test/                # Unit tests (uses env.py, NOT .all_path)
-│               ├── env.py
-│               └── test.adb
-└── assembly/
-    └── main.assembly.yaml
-```
+| Error | Fix |
+|-------|-----|
+| `No target test.elf` | Missing `test.adb` in test directory |
+| `duplicate file name` | Filenames must be globally unique across all `.path` dirs |
+| Model cache stale | `redo clear_cache` then rebuild |
+| `redo coverage` shows 0% | `redo clean` first (needs fresh gcov-instrumented build) |
+| Ravenscar violations in tests | Use `env.py` (selects Linux_Test target, not Linux) |
 
-## Common Build Errors and Fixes
-
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `Storage_Error` at runtime | Buffer too small | Increase buffer size in configuration YAML |
-| `No target test.elf can be built` | Missing `test.adb` in test directory | Create `test.adb` with AUnit runner |
-| `duplicate file name` | Same filename in multiple `.path` directories | Rename one; filenames must be globally unique |
-| `No valid git repository found` | BUILD_ROOTS can't be auto-detected | Set `BUILD_ROOTS` or `BUILD_PATH` explicitly |
-| Model cache stale / weird gen errors | SQLite cache out of date | `redo clear_cache` then rebuild |
-| `redo coverage` shows 0% | Built with wrong target | `redo clean` first, then `redo coverage` (needs fresh build with gcov flags) |
-| Style warnings as errors | `CHECK_STYLE=True` active | Fix style issues per GNAT style guide; see `build/style/style.log` |
-| Ravenscar violations | Linux_Test needed, not Linux | Use test/ directory with `env.py` (auto-selects Linux_Test target) |
-| `command_registration` queue overflow | Registration delay too short | Increase `command_registration_delay` in config YAML |
-| Alire dependency errors | First container login | Run `alr build --release` or re-source `env/activate` |
-
-## Internals
-
-Details: [references/internals-and-generation.md](references/internals-and-generation.md)
-Build commands: [references/build-commands.md](references/build-commands.md)
-
-Session database uses SQLite in `$ADAMANT_TMP_DIR` (created per-session via `mktemp`). `redo clear_cache` clears the model cache.
+More errors and project structure: [references/build-commands.md](references/build-commands.md)
 
 ## Related Skills
 
