@@ -248,6 +248,10 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 24. **Removing `with` clauses:** `use X;` makes operators and subprograms directly visible -- removing `with X;` breaks those even if GNAT says the `with` is unused. Grep body for types/operators from the package before removing.
 25. **Declare-but-never-assign pattern:** `Count : Natural;` then `Natural_Assert.Eq (Count, N)` is a real bug -- `Count` is uninitialized. Use history/DP queries: `T.Event_T_Recv_Sync_History.Get_Count`
 26. **Missing test bodies:** If test spec declares `overriding procedure Test_Foo` but body is empty, GNAT emits "missing body" error. Every declared test procedure needs a body, even if minimal.
+27. **Stale ALI files hide tester changes:** If you update a tester .ads file (e.g., add Dispatch_All), you MUST `rm -rf build` in the test dir before recompiling. Stale .ali files cause "no selector" errors even when the source is correct.
+28. **Tester connector names:** To send TO the component, use `T.Packet_T_Send(...)` (tester sends), NOT `T.Packet_T_Recv_Sync(...)` (that's the component's receive handler name).
+29. **Command names come from YAML:** Always check `*.commands.yaml` for exact names. `Reset_Counts` vs `Reset_Count` matters. Use `T.Commands.<Exact_Name>`.
+30. **Redundant `with Parent;` before child spec:** `with Foo_Tests;` before `package Foo_Tests.Implementation is` triggers "unnecessary with of ancestor" -- the child already sees the parent.
 
 ## Invalid Command Testing
 
