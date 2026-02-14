@@ -173,7 +173,7 @@ Use `T.System_Time` for ticks (avoids staleness). Array aggregates: `[x, y, z]` 
 ```bash
 redo all                # Compile component
 cd test/ && redo test   # Run tests
-redo style              # Style check before committing
+redo style              # Style check before finalizing
 ```
 
 See [adamant-style](../adamant-style/SKILL.md) for full style rules (array syntax, short-circuit operators, with-clause hygiene).

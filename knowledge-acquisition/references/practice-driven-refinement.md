@@ -48,12 +48,9 @@ Warning: use clause has no effect
 
 After each fix, update the relevant skill with the correct pattern. Do NOT batch -- update as you go so the lesson is precise and fresh.
 
-### 5. Commit After Each Component
+### 5. Save Lessons After Each Component
 
-```bash
-git add -A && git commit -m "Skill: document <pattern> from building <component>"
-git push origin main
-```
+Update the relevant skill files with any new patterns or corrections discovered during this build.
 
 ### 6. Escalate Complexity
 
@@ -78,7 +75,7 @@ For each compilation error or unexpected behavior:
 ## Anti-Patterns
 
 - **Don't look at framework source first**: the whole point is to test the skills
-- **Don't skip the commit**: the git history tracks skill evolution
+- **Don't skip the skill update**: lessons must be captured immediately
 - **Don't build trivial components**: each build should exercise something new
 - **Don't ignore warnings**: they often reveal incorrect assumptions about Ada visibility
 - **Don't batch lessons**: update skills immediately while context is fresh
