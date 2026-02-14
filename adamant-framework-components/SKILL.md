@@ -280,3 +280,11 @@ Quick-lookup catalog of all 55 built-in Adamant components organized by subsyste
 
 Components marked (either) can be active or passive - choose based on assembly needs.
 Generic components require type instantiation at compile time.
+
+## Name Collision Risk
+
+Component names must be unique across the entire build path (framework + project). These framework names are commonly reused by accident:
+
+`attitude_estimator`, `command_sequencer`, `event_filter`, `fault_correction`, `limiter`, `logger`, `mode_manager`, `orbit_propagator`, `parameters`, `pid_controller`, `power_manager`, `splitter`, `telemetry_formatter`, `telemetry_manager`
+
+**Prevention**: Prefix project components with a project-specific name (e.g., `station_attitude_estimator`, `station_pid_controller`).
