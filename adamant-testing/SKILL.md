@@ -171,21 +171,37 @@ with Command_Enums; use type Command_Enums.Command_Response_Status.E;
 
 ## Data Dependency Testing
 
-Override tester fields to mock data dependencies:
+The tester generates named fields for each data dependency. Set them directly:
 ```ada
--- Set mock data
-T.Sensor_Reading := (Value => 1.0, Quality => Good);
-T.System_Time := (100, 0);
+-- Set mock values (field names match data_dependencies.yaml names)
+T.Setpoint := (Value => 50.0);          -- Packed_F32.T
+T.Process_Value := (Value => 45.0);     -- Packed_F32.T
+T.System_Time := (100, 0);              -- Sys_Time.T for staleness ref
 T.Tick_T_Send ((Time => (100, 0), Count => 0));
--- Verify algorithm processes data...
+-- Component calls Self.Get_Setpoint(...) which reads T.Setpoint
 
--- Test stale data
+-- Test stale data (override timestamp returned by tester)
 T.Data_Dependency_Timestamp_Override := (50, 0);  -- Old timestamp
 T.Tick_T_Send ((Time => (100, 0), Count => 0));
 
--- Test missing data
+-- Test missing data (override return status)
 T.Data_Dependency_Return_Status_Override := Id_Out_Of_Range;
 T.Tick_T_Send ((Time => (100, 0), Count => 0));
+```
+
+**Implementation needs:** `with Data_Product_Enums; use Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;` in the component body for status checks.
+
+## Test Body With-Clauses
+
+Test bodies need explicit `with` for any types referenced directly:
+```ada
+with Tick;                                          -- If creating Tick.T values
+with Interfaces; use Interfaces;                    -- For Unsigned_32 casts
+with Basic_Assertions; use Basic_Assertions;        -- Natural_Assert, Boolean_Assert
+with Packed_F32.Assertion; use Packed_F32.Assertion; -- Typed assertions
+with Command_Enums;                                 -- For command response checks
+with Data_Product_Enums;                            -- For data dependency status
+use type Command_Enums.Command_Response_Status.E;   -- For = operator
 ```
 
 ## Common Errors (with Explanations)
