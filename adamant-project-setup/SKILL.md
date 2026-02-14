@@ -84,6 +84,8 @@ cd <adamant_dir>
 bash docker/adamant_env.sh start   # Pull image + start container
 bash docker/adamant_env.sh login   # Interactive shell as 'user'
 bash docker/adamant_env.sh stop    # Stop container
+# NOTE: adamant_env.sh only works from the adamant repo itself (PROJECT_NAME
+# is derived from parent dir). For custom projects, use docker compose directly.
 ```
 
 Non-interactive command execution:
