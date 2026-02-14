@@ -302,7 +302,7 @@ Do NOT invent fields. Key types:
 25. [ ] All YAML files start with `---` document start marker
 26. [ ] Only `with` packages you actually reference -- unused `with` is a style warning
 27. [ ] Verify with `redo style` -- all warnings must be resolved
-28. [ ] Use `[]` for array aggregates: `[others => 0]` not `(others => 0)` (Ada 2022 syntax)
+28. [ ] Use `[]` for array aggregates: `[others => 0]` not `(others => 0)` (Ada 2022 syntax). Record aggregates MUST use `()`. Nested array-of-records: `[others => (others => <>)]`
 29. [ ] Space before `(` in type conversions: `Unsigned_32 (X)` not `Unsigned_32(X)`
 30. [ ] `then` on its own line for multi-line if conditions
 31. [ ] Don't add `with Interfaces; use Interfaces;` to impl spec if base class already provides it (components with commands/init/data deps get it automatically)

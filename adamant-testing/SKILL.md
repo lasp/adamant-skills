@@ -243,6 +243,10 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 20. **`Dispatch_All` result must be captured or discarded** -- if you don't check the count, call bare `T.Dispatch_All;` without `Count :=`
 21. **`then` on its own line** for multi-line if/elsif conditions (Ada style `-gnatyi`)
 
+22. **`AUnit.Assertions` removal caution:** GNAT reports "no entities referenced" even when bare `Assert(...)` is called via `use` clause. Only remove if ALL assertions use qualified names (`Natural_Assert.Eq`, `Packed_U32_Assert.Eq`). Grep for bare `Assert (` before removing.
+23. **`Dispatch_All` only exists on active component testers** -- passive components process synchronously, no queue, no `Dispatch_All`. Calling it on a passive tester is a compile error.
+24. **Removing `with` clauses:** `use X;` makes operators and subprograms directly visible -- removing `with X;` breaks those even if GNAT says the `with` is unused. Grep body for types/operators from the package before removing.
+
 ## Invalid Command Testing
 
 ```ada
