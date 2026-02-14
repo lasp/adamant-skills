@@ -462,4 +462,13 @@ with AUnit.Assertions; use AUnit.Assertions;           -- Assert (fallback)
 - **Resource exhaustion** - memory, table space
 - **Timing edge cases** - stale data, timeout conditions
 
+### Coverage Notes
+
+- Run `redo coverage` from test/ dir; uses gcovr with Linux_Coverage target
+- Coverage TOTAL includes generated type packages (quaternion.adb, angular_rate.adb, etc.) which inflate the denominator
+- Generated type packages are 0% covered when tests don't exercise every conversion function -- this is NORMAL
+- Focus on component implementation .adb coverage, not aggregate TOTAL
+- gcovr path issues can cause 0% on components that definitely have coverage (watchdog_kicker, telemetry_collector) -- rebuild from clean if this happens
+- 85%+ aggregate is good; framework/type code drags it down
+
 The Adamant testing framework provides comprehensive white-box testing through reciprocal components, history capture, and sophisticated mocking capabilities. Master these patterns for robust component verification.
