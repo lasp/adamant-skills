@@ -252,10 +252,21 @@ Call `Self.Update_Parameters` explicitly (e.g., in Tick handler).
 
 Exception: If your component has no commands but needs Unsigned types, add `with Interfaces; use Interfaces;`.
 
+## Framework Type Fields
+
+Do NOT invent fields. Key types:
+- `Packet.Header.Id` is `Packet_Types.Packet_Id` (Natural subtype, NOT Unsigned_16). Need `with Packet_Types; use type Packet_Types.Packet_Id;` for operators. Cast to `Unsigned_16` for packed params.
+- `Command.Header.Id` is `Command_Types.Command_Id` (distinct type). Need `with Command_Types; use Command_Types;`
+- `Packet_Header.T`: Time, Id, Sequence_Count (mod 2**14), Buffer_Length (Natural). NO Priority.
+- `Event_Header.T`: Time, Id (U16), Param_Buffer_Length (U8). NO Severity.
+
+**General rule:** Framework distinct types need `use type` for operator visibility (=, /=, <, etc.).
+
 ## Connector Count (Array Connectors)
 
 `count: 0` or N = one-to-many fan-out with index:
 - Generated index type: `<Type>_T_Send_Index`
+- **Indices are 1-based** (`Connector_Index_Type'First = 1`). Map from 0-based with offset.
 - Send: `Self.Packet_T_Send_If_Connected(Index, Arg)`
 - Loop: `for I in Packet_T_Send_Index'Range loop`
 - Dropped: takes extra `Index` parameter

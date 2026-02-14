@@ -135,9 +135,13 @@ Natural_Assert.Eq (T.Dispatch_All, 2);  -- Must capture return value
 Natural_Assert.Eq (T.Output_History.Get_Count, 2);
 
 -- Queue overflow testing
-T.Expect_Async_Data_Send_Dropped := True;
-T.Async_Data_Send (overflow_data);
-Natural_Assert.Eq (T.Async_Data_Send_Dropped_Count, 1);
+-- Use small Queue_Size in Init_Base (e.g., 100 bytes) for overflow tests
+-- CRITICAL: Expect_*_Dropped auto-resets to False after each drop
+for I in 1 .. N loop
+   T.Expect_Async_Data_Send_Dropped := True;  -- Must set before EVERY send
+   T.Async_Data_Send (overflow_data);
+end loop;
+Natural_Assert.Gt (T.Async_Data_Send_Dropped_Count, 0);
 ```
 
 ## Command Response Verification
