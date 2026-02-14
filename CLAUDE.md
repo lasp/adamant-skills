@@ -12,7 +12,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 |-------|-------|---------|
 | `adamant-skill-selector` | 146 | **Read first.** Maps tasks to skills. |
 | `adamant-component-dev` | 318+514 ref | Components: YAML models, generated API, implementation patterns |
-| `adamant-testing` | 307+276 ref | Test harness, History API, assertions, coverage |
+| `adamant-testing` | 314+276 ref | Test harness, History API, assertions, coverage |
 | `adamant-framework-components` | 281 | Catalog of all 55 built-in components |
 | `adamant-assembly-dev` | 254+425 ref | Assemblies: scheduling, routing, ID assignment, runtime |
 | `adamant-type-system` | 235+50 ref | YAML type definitions, format codes, Ada type hierarchy |
@@ -37,7 +37,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 - Algorithm wrapping: C shim pattern validated; custom vs xmera type handling clarified
 - Assembly integration: 100-component station + mini-assembly both link and run
 - COSMOS integration: Plugin validated and loaded into OpenC3 6.10.4
-- Style: 100-component style campaign -- 20 common error patterns documented with actual frequency data; sub-agent validation produced 0 style errors on cold start
+- Style: 100-component style campaign -- 20 style patterns + 30 testing patterns documented; 4 full style_all runs (221 dirs each) with progressive fixes; sub-agent validation produced 0 style errors on cold start
 - Best practice: spawn component + tests together for highest test accuracy
 
 ## Non-Adamant Skills
