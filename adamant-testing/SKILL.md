@@ -54,7 +54,7 @@ tests:
 from environments import test  # noqa: F401
 ```
 
-## Tester Architecture (Brief)
+## Tester Architecture
 
 Testers are **reciprocal components** with inverted connectors:
 - Component sends → tester receives (captures in histories)
@@ -84,6 +84,8 @@ begin
    Natural_Assert.Eq (T.Event_T_Recv_Sync_History.Get_Count, 1);
 end Test_Name;
 ```
+
+**Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`.
 
 ## Sending Stimuli
 
@@ -118,6 +120,40 @@ T.Event_T_Recv_Sync_History.Clear;
 
 **Named connectors:** `name: Spi_Data` on send → `Spi_Data_T_Recv_Sync_History` in tester.
 
+**CRITICAL:** Clearing raw history does NOT clear typed histories. Use cumulative counts or clear typed histories explicitly: `T.My_Event_History.Clear;`
+
+## Active Component Testing (Async Dispatch)
+
+```ada
+-- Send to async connectors (queued, not processed yet)
+T.Async_Data_Send (data1);
+T.Async_Data_Send (data2);
+Natural_Assert.Eq (T.Output_History.Get_Count, 0);  -- Nothing yet
+
+-- Dispatch processes the queue (FUNCTION returning Natural)
+Natural_Assert.Eq (T.Dispatch_All, 2);  -- Must capture return value
+Natural_Assert.Eq (T.Output_History.Get_Count, 2);
+
+-- Queue overflow testing
+T.Expect_Async_Data_Send_Dropped := True;
+T.Async_Data_Send (overflow_data);
+Natural_Assert.Eq (T.Async_Data_Send_Dropped_Count, 1);
+```
+
+## Command Response Verification
+
+```ada
+Natural_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get_Count, 1);
+Command_Response_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get (1), (
+   Source_Id => 0,
+   Registration_Id => expected_reg_id,
+   Command_Id => T.Commands.Get_Set_Value_Id,  -- Use ID getter
+   Status => Success));
+```
+
+Use `Command_Enums.Command_Response_Status.E` for response status (NOT `Command_Execution_Status`).
+Need `use type Command_Enums.Command_Response_Status.E;` for `=` operator visibility.
+
 ## Assertion Hierarchy (Most → Least Preferred)
 
 1. **Packed type assertions:** `Packed_U32_Assert.Eq(...)` — type-safe, clear errors
@@ -133,30 +169,97 @@ with Packed_U32.Assertion; use Packed_U32.Assertion;
 with Command_Enums; use type Command_Enums.Command_Response_Status.E;
 ```
 
-## Visibility in Tests
+## Data Dependency Testing
 
-- Command response: `Command_Enums.Command_Response_Status.E` (not standalone)
-- Command ID: `T.Commands.Get_Reset_Counter_Id` (getter function, not field)
-- `use type` needed for `=` on enums: `use type Command_Enums.Command_Response_Status.E;`
+Override tester fields to mock data dependencies:
+```ada
+-- Set mock data
+T.Sensor_Reading := (Value => 1.0, Quality => Good);
+T.System_Time := (100, 0);
+T.Tick_T_Send ((Time => (100, 0), Count => 0));
+-- Verify algorithm processes data...
 
-## Common Errors (One-Liners)
+-- Test stale data
+T.Data_Dependency_Timestamp_Override := (50, 0);  -- Old timestamp
+T.Tick_T_Send ((Time => (100, 0), Count => 0));
 
-Details: [references/common-errors-detail.md](references/common-errors-detail.md)
+-- Test missing data
+T.Data_Dependency_Return_Status_Override := Id_Out_Of_Range;
+T.Tick_T_Send ((Time => (100, 0), Count => 0));
+```
 
-1. Use `T.*_T_Send` to stimulate, NOT `T.*_T_Recv_Sync` (that's capture)
-2. History `.Get(N)` returns packed `.T` directly — use typed assertions
-3. Init params → `Component_Instance.Init(...)`, NOT `Init_Base`
-4. Typed histories don't auto-clear when raw history is cleared
-5. History depth is 100 — clear mid-test to avoid overflow
-6. `Dispatch_All` is a FUNCTION returning Natural — capture the return
-7. Copy tester files from `build/template/`, never hand-write them
-8. `*_tests-implementation.ads` MUST come from template (has correct base)
-9. History naming: `{entity_name}_History` (not `_Event_History`)
-10. No `Packed_U8` — use `Packed_Byte.T`
+## Common Errors (with Explanations)
+
+1. **Wrong stimulus API:** Use `T.*_T_Send` to stimulate, NOT `T.*_T_Recv_Sync` (that's capture)
+2. **History .Get returns packed .T:** Compare with typed assertions like `Packed_U32_Assert.Eq`
+3. **Init params → `Component_Instance.Init`**, NOT `Init_Base` (Init_Base takes only Queue_Size)
+4. **Typed histories don't auto-clear** when raw history is cleared — most common mistake
+5. **History depth is 100** — clear mid-test to avoid overflow (each tick sending 2 DPs = 2 slots)
+6. **`Dispatch_All` is a FUNCTION** returning Natural — must capture: `Count := T.Dispatch_All;`
+7. **Copy tester files from `build/template/`**, never hand-write them
+8. **`*_tests-implementation.ads` MUST come from template** (has correct base class)
+9. **History naming:** `{entity_name}_History` (not `_Event_History` or `_Data_Product_History`)
+10. **No `Packed_U8`** — use `Packed_Byte.T`
+11. **Tick.T.Count is Unsigned_32** — use `Interfaces.Unsigned_32(I)` for loop casts
+12. **Change detection initial state:** First tick fires extra DP because shadow differs from computed value
+13. **Packet.T Header has NO Priority field** — only Time, Id, Sequence_Count, Buffer_Length
+14. **Named Event.T send connectors crash** on non-component event IDs — remove `Dispatch_Event` from tester override
+15. **Instance record names like `Queue` conflict** with generated base class — use prefixed names
+
+## Invalid Command Testing
+
+```ada
+Invalid_Cmd : Command.T := T.Commands.Set_Value ((Value => 0));
+Invalid_Cmd.Header.Arg_Buffer_Length := 0;  -- Wrong length
+T.Command_T_Send (Invalid_Cmd);
+-- Verify Length_Error response
+Command_Response_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get (1), (
+   Source_Id => 0, Registration_Id => expected_reg_id,
+   Command_Id => T.Commands.Get_Set_Value_Id, Status => Length_Error));
+```
+
+## Error Injection
+
+```ada
+-- For any send connector, tester provides Expect_*_Dropped
+T.Expect_Data_Product_T_Send_Dropped := True;
+-- Component tries to send → tester captures drop instead of asserting failure
+T.Expect_Data_Product_T_Send_Dropped := False;  -- Reset
+```
 
 ## Coverage
 
-See [references/coverage-guide.md](references/coverage-guide.md). Key: `rm -rf build` before `redo coverage`. Focus on `component-*-implementation.adb`, not aggregate total (~80-85% ceiling due to null handlers).
+See [references/coverage-guide.md](references/coverage-guide.md) for full guide.
+
+```bash
+rm -rf build && redo coverage            # MUST clean first
+# Focus on component-*-implementation.adb (YOUR code)
+# Ignore framework/generated files in coverage.txt
+```
+
+**Structural ceiling (~80-85%):** `Send_Dropped` null handlers, `Invalid_Command`, and `Recv_Async_Dropped` are structurally uncoverable because the tester always connects all connectors and always produces valid command arguments.
+
+| Component Type | Realistic Target |
+|---|---|
+| Simple passive (no commands) | 95-100% |
+| Passive with commands | 80-90% |
+| Active (async recv) | 75-85% |
+| Active with commands | 70-80% |
+
+### Coverage Improvement Workflow
+
+1. Run `rm -rf build && redo coverage`
+2. Read `build/coverage/coverage.txt`, find `component-*-implementation.adb` section
+3. Map missing line numbers to source: `cat -n component-*-implementation.adb`
+4. Identify pattern: untested branch, unexercised connector, data dependency path
+5. Add test to `tests.yaml` → `redo templates` → copy spec → implement → verify
+
+### Common Uncovered Patterns
+
+- **Untested connector:** Add test that sends via that connector
+- **Untested branch:** Add test with input triggering the uncovered if/elsif/else
+- **Active async path at 0%:** Must send AND `Dispatch_All` — just sending queues without processing
+- **Data dependency path at 0%:** Override tester's `*_T_Service` to return success with test data
 
 ## Related Skills
 
