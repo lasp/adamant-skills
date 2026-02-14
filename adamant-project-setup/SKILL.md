@@ -48,7 +48,7 @@ export ADAMANT_CONFIGURATION_YAML=$PROJECT_DIR/config/project.configuration.yaml
 export PROJECT_ENVIRONMENT_SET="yes"
 ```
 
-**CRITICAL**: `. $ADAMANT_DIR/env/activate $PROJECT_DIR` — the project dir argument adds it to BUILD_ROOTS. Without it, custom types are invisible.
+**CRITICAL**: `. $ADAMANT_DIR/env/activate $PROJECT_DIR` — the project dir argument adds it to BUILD_ROOTS. Without it, custom types are invisible to the build system.
 
 ### 3. Create configuration
 ```yaml
@@ -66,7 +66,9 @@ command_registration_delay: 250
 
 Increase buffer sizes if you get `Storage_Error` at runtime.
 
-### 4. Docker compose override (if using containers)
+### 4. Docker integration
+
+Docker compose override to mount project:
 ```yaml
 services:
   adamant:
@@ -74,12 +76,25 @@ services:
       - /path/to/<project_dir>:/home/user/<project_name>
 ```
 
-Build from host:
+Docker image: `ghcr.io/lasp/adamant:0.1` (~1.3GB, includes GNAT, GNATprove, redo, Python toolchain).
+
+Start container:
+```bash
+cd <adamant_dir>
+bash docker/adamant_env.sh start   # Pull image + start container
+bash docker/adamant_env.sh login   # Interactive shell as 'user'
+bash docker/adamant_env.sh stop    # Stop container
+```
+
+Non-interactive command execution:
 ```bash
 docker compose -f $ADAMANT_DIR/docker/docker-compose.yml \
   -f $ADAMANT_DIR/docker/docker-compose.override.yml \
-  exec adamant bash -c "source /home/user/<project_name>/env/activate && cd /home/user/<project_name> && redo <target>"
+  exec adamant bash -c "source /home/user/<project_name>/env/activate && \
+  cd /home/user/<project_name> && redo <target>"
 ```
+
+**CRITICAL**: Source the PROJECT's `env/activate` (NOT adamant's). This sets BUILD_ROOTS to include BOTH adamant AND the project, so custom types are discoverable.
 
 ## Build Commands
 
@@ -95,3 +110,10 @@ redo run                                    # Build and run (from main/)
 - Never manually create `build/` directories
 - Using adamant's activate WITHOUT the project dir arg = custom types invisible
 - HTML gen may fail on some framework components — build ELF directly to bypass
+- File names must be unique across entire build path (adamant + project)
+- `.do` files must be copies, not symlinks
+
+## Related Skills
+
+- **Build system**: [adamant-build-system](../adamant-build-system/SKILL.md)
+- **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)
