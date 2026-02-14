@@ -177,3 +177,76 @@ overriding function Data_Product_Fetch_T_Service (Self : in out Instance;
 ```
 
 Returns value immediately rather than sending response via separate connector.
+
+## Data Dependency Pattern
+
+When a component needs data from another component's data products at runtime:
+
+### YAML Setup
+```yaml
+# component.data_dependencies.yaml
+data_dependencies:
+  - name: Gyro_Rate
+    description: Gyroscope angular rate
+    type: My_Angular_Rate.T    # Must match the ACTUAL type, not a similarly-named framework type
+```
+
+Requires in component.yaml:
+```yaml
+connectors:
+  - kind: request
+    type: Data_Product_Fetch.T
+    return_type: Data_Product_Return.T
+  - kind: get
+    return_type: Sys_Time.T
+```
+
+### Generated API (two overloads)
+```ada
+-- Full form (with timestamp output):
+function Get_Gyro_Rate (Self : in out Base_Instance;
+   Stale_Reference : in Sys_Time.T;       -- IN: you provide reference time
+   Timestamp : out Sys_Time.T;            -- OUT: when data was produced
+   Value : out My_Angular_Rate.T)         -- OUT: the fetched value
+   return Data_Product_Enums.Data_Dependency_Status.E;
+
+-- Short form (no timestamp):
+function Get_Gyro_Rate (Self : in out Base_Instance;
+   Stale_Reference : in Sys_Time.T;       -- IN: you provide reference time
+   Value : out My_Angular_Rate.T)         -- OUT: the fetched value
+   return Data_Product_Enums.Data_Dependency_Status.E;
+```
+
+### Usage in Body
+```ada
+The_Time : constant Sys_Time.T := Self.Sys_Time_T_Get;
+Data : My_Angular_Rate.T;
+Status : Data_Product_Enums.Data_Dependency_Status.E;
+...
+Status := Self.Get_Gyro_Rate (Stale_Reference => The_Time, Value => Data);
+if Status = Data_Product_Enums.Data_Dependency_Status.Success then
+   -- Use Data
+end if;
+```
+
+### Required Overrides
+```ada
+-- Delegation to fetch connector (usually in impl spec):
+overriding function Get_Data_Dependency (Self : in out Instance;
+   Id : in Data_Product_Types.Data_Product_Id) return Data_Product_Return.T
+   is (Self.Data_Product_Fetch_T_Request ((Id => Id)));
+
+-- Error handler (in impl body):
+overriding procedure Invalid_Data_Dependency (Self : in out Instance;
+   Id : in Data_Product_Types.Data_Product_Id;
+   Ret : in Data_Product_Return.T) is
+begin
+   null;  -- Or log/handle the error
+end Invalid_Data_Dependency;
+```
+
+### Common Mistakes
+- Using a framework type name instead of your project's local type
+- Treating Stale_Reference as OUT (it's IN -- you provide the reference time)
+- Missing Get_Data_Dependency override in the impl spec
+- Missing Invalid_Data_Dependency override in the impl body
