@@ -246,6 +246,8 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 22. **`AUnit.Assertions` removal caution:** GNAT reports "no entities referenced" even when bare `Assert(...)` is called via `use` clause. Only remove if ALL assertions use qualified names (`Natural_Assert.Eq`, `Packed_U32_Assert.Eq`). Grep for bare `Assert (` before removing.
 23. **`Dispatch_All` only exists on active component testers** -- passive components process synchronously, no queue, no `Dispatch_All`. Calling it on a passive tester is a compile error.
 24. **Removing `with` clauses:** `use X;` makes operators and subprograms directly visible -- removing `with X;` breaks those even if GNAT says the `with` is unused. Grep body for types/operators from the package before removing.
+25. **Declare-but-never-assign pattern:** `Count : Natural;` then `Natural_Assert.Eq (Count, N)` is a real bug -- `Count` is uninitialized. Use history/DP queries: `T.Event_T_Recv_Sync_History.Get_Count`
+26. **Missing test bodies:** If test spec declares `overriding procedure Test_Foo` but body is empty, GNAT emits "missing body" error. Every declared test procedure needs a body, even if minimal.
 
 ## Invalid Command Testing
 
