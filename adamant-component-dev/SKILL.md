@@ -40,10 +40,11 @@ redo test                                 # Run tests
 ```yaml
 description: What this component does
 execution: passive|active|either
-with:
-  - "Custom_Types"                 # ONLY custom packages (NOT connector types)
+with:                              # ONLY for preamble code visibility
+  - "Interfaces"                   # Only include if preamble uses the package
 preamble: |
-  subtype Custom_Type is Natural range 1 .. 100;
+  use Interfaces;
+  subtype Custom_Type is Unsigned_8 range 1 .. 100;
 connectors:
   - description: Purpose
     kind: recv_sync|recv_async|send|get|provide|service|modify|request|return
