@@ -125,6 +125,14 @@ These are produced by `redo templates` and would be overwritten if you modify th
 
 When a component's YAML has `with:`, the generated spec includes that `with` even if only the body references it. Fix: remove from YAML `with:` and add to handwritten body instead.
 
+### `use Interfaces` Redundancy Rule
+
+The generated base class includes `with Interfaces; use Interfaces;` when the component model has commands, init params, data dependencies, or other features using Interfaces types. For these components, do NOT add `with Interfaces; use Interfaces;` in the implementation spec -- it's already visible through the base class.
+
+Simple components (no commands, no init params, no data dependencies) do NOT get `use Interfaces` in their base class. If they use Unsigned types in the implementation spec, they DO need `with Interfaces; use Interfaces;`.
+
+**Rule of thumb:** Components with commands, init, or data dependencies get `use Interfaces` from the base class (redundant in impl spec). Simple tick-driven components do not (need it in impl spec). When in doubt, run `redo style` -- it warns about redundancy.
+
 ## Common Patterns by Frequency
 
 ### Most Common (fix first)
