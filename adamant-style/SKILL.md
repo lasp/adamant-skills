@@ -78,7 +78,9 @@ Style logs written to `build/style/style.log` per directory.
 ### Variables
 - **No unused variables** (`-gnatwu`): Use `pragma Unreferenced (Var);` if needed
 - **No useless assignments** (`-gnatwm`): Don't assign if value is never read
+- **Assigned-but-never-read**: `pragma Unreferenced` does NOT suppress this. Use `pragma Warnings (Off, Var);` or rename variable to `Ignore_*`
 - **Declare constants when possible** (`-gnatwk`): If variable is never modified, use `constant`
+- **Redundant with in body** (`-gnatwr`): The body inherits the spec's context clauses. Don't repeat `with Foo;` in the body if the spec already has it
 
 ## Component YAML `with:` Section
 
