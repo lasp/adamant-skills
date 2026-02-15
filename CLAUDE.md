@@ -46,7 +46,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 
 ## Critical Build Rules
 
-- **NEVER `redo clean` on the adamant framework directory.** Wipes .redo state. Fix: `redo clean_all` on BOTH adamant and project dirs, then rebuild.
+- **`redo clean` is always safe** on any directory (framework or project). Redo only rebuilds what changed. If redo state corrupts (STORAGE_ERROR), run `redo clean_all` on BOTH adamant and project dirs.
 - **NEVER `rm -rf build`.** Use `redo clean` or `redo clean_all`.
 - **`redo coverage` requires `redo clean` first** (stale .gcda contamination).
 - **`source project/env/activate`** (not `adamant/env/activate`) -- sets BUILD_ROOTS correctly.
