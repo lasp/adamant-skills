@@ -314,14 +314,17 @@ redo clean && redo coverage               # MUST clean first
 # Ignore framework/generated files in coverage.txt
 ```
 
-**Structural ceiling (~80-85%):** `Send_Dropped` null handlers, `Invalid_Command`, and `Recv_Async_Dropped` are structurally uncoverable because the tester always connects all connectors and always produces valid command arguments.
+**No structural ceiling.** All paths are coverable with proper testing:
+- **Invalid_Command:** Corrupt `Cmd.Header.Arg_Buffer_Length := 22;` on a valid command
+- **Send_Dropped:** Skip connector `Attach_*` or use `Expect_*_Dropped` flag
+- **Recv_Async_Dropped:** Overflow queue (small `Init_Base Queue_Size`, send N+1)
 
-| Component Type | Realistic Target |
+| Component Type | Target |
 |---|---|
 | Simple passive (no commands) | 95-100% |
-| Passive with commands | 80-90% |
-| Active (async recv) | 75-85% |
-| Active with commands | 70-80% |
+| Passive with commands | 90-100% |
+| Active (async recv) | 90-100% |
+| Active with commands | 85-100% |
 
 ### Coverage Improvement Workflow
 
