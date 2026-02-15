@@ -42,7 +42,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 ## Validation Results
 
 - **Style:** 221/221 directories, 0 failures
-- **Coverage:** 81%+ aggregate across 100+ components
+- **Coverage:** 89%+ aggregate across 100+ components
 - **Invalid_Command tests:** 63/63 components passing
 - **Cold-start:** Fresh agents produce compiling components with 0-2 errors
 - **Component lifecycle:** New component from YAML to passing tests validated 19+ times
@@ -51,6 +51,6 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 ## Critical Build Rules
 
 - **`redo clean` is always safe** on any directory (framework or project). If redo state corrupts (STORAGE_ERROR), run `redo clean_all` on BOTH adamant and project dirs.
-- **NEVER `rm -rf build`.** Use `redo clean` or `redo clean_all`.
+- **NEVER manually delete build directories** (`rm -rf build`, `rm -rf */build`, etc.). Use `redo clean` or `redo clean_all`. Bulk-deleting build dirs corrupts redo state and may require container recreation to recover.
 - **`redo coverage` requires `redo clean` first** (stale .gcda contamination).
 - **`source project/env/activate`** (not `adamant/env/activate`) -- sets BUILD_ROOTS correctly.

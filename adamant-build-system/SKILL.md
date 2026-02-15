@@ -61,6 +61,8 @@ source $ADAMANT_DIR/env/activate /path/to/project
 source $ADAMANT_DIR/env/activate "/path/to/project1:/path/to/project2"
 ```
 
+**In Docker containers, prefer `adamant_env.sh login`** over raw `docker exec` with inline `source`. The base image's `.bashrc` may have already activated the adamant environment, blocking the project's activate via the `ADAMANT_ENVIRONMENT_SET` guard. Login handles this correctly. See `adamant-project-setup` for details.
+
 Activation does: set BUILD_ROOTS, create Python venv, install requirements, set GPR_PROJECT_PATH, configure Alire dependencies, set PYTHONPATH for code generators.
 
 Validation: `bash scripts/check_build_paths.sh <project_root>`
@@ -111,9 +113,11 @@ redo path              # Display build path info
 redo yaml_sloc         # Count YAML source lines of code
 ```
 
-`redo clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed. If redo state gets corrupted (STORAGE_ERROR, "No rule to build"), run `redo clean_all` on BOTH the adamant dir AND the project dir, then rebuild. If `redo clean_all` doesn't fix it, re-clone the adamant repository.
+`redo clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed. If redo state gets corrupted (STORAGE_ERROR, "No rule to build"), run `redo clean_all` on BOTH the adamant dir AND the project dir, then rebuild. If that doesn't work, try `adamant_env.sh remove` followed by `start` + `login` to get a fresh container, then `redo clean_all` on both roots. Re-cloning the adamant repository is a last resort -- it destroys any local modifications.
 
-**NEVER `rm -rf .redo` or `rm -rf build`.** Manually deleting redo's state files permanently breaks source file tracking. Redo will then try to BUILD source files (.ads/.adb) instead of recognizing them. Only `redo clean` / `redo clean_all` properly reset the build state.
+**NEVER manually delete build directories or redo state.** This includes `rm -rf build`, `rm -rf .redo`, `rm -rf */build`, `rm -rf */test/build`, or any variant. Redo tracks dependencies through files in `build/` and `.redo/` -- deleting them corrupts the dependency graph. Redo will then try to BUILD source files (.ads/.adb) instead of recognizing them as sources. Recovery requires `redo clean_all` on BOTH adamant and project directories, and if that fails, re-cloning the adamant repository. Always use `redo clean` or `redo clean_all` -- they properly reset state without corruption.
+
+**Bulk cleaning is especially dangerous.** Running `rm -rf` across many component `build/` dirs (e.g., `find . -name build -exec rm -rf {} +`) destroys cached artifacts that redo needs for incremental builds. Even `redo clean_all` may not fully recover from this -- the safest recovery is `adamant_env.sh remove`, then `start` + `login`, then `redo clean_all` on both roots and rebuild.
 
 ### Inspect
 ```bash

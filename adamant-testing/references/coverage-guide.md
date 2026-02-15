@@ -4,6 +4,8 @@ Systematic approach to measuring and improving component implementation coverage
 
 ## Running Coverage
 
+**WARNING:** Always use `redo clean` before `redo coverage`. Never use `rm -rf build` or bulk-delete build directories -- this corrupts redo's dependency tracking. See the build system skill for recovery steps.
+
 ```bash
 # From component test/ directory:
 cd src/components/component_name/test

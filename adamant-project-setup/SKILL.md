@@ -228,15 +228,33 @@ The helper script auto-detects project name from its parent directory.
 
 The script supports both `docker` and `podman` -- falls back to podman if docker is not found.
 
-#### Non-interactive command execution
+#### Interactive Development (Preferred)
+
+**Always prefer `adamant_env.sh login` for interactive work.** The login shell sources the correct activate script via `.bashrc`, ensuring BUILD_ROOTS is set correctly with both adamant and the project.
 
 ```bash
-docker exec <project_name>_container bash -c \
+cd <project_dir>
+bash docker/adamant_env.sh login
+# Inside container:
+cd src/components && redo style_all
+cd src/components && redo test_all
+```
+
+#### Non-interactive command execution
+
+For scripted/automated commands, use `docker exec` with the project's activate:
+
+```bash
+docker exec -u user <project_name>_container bash -c \
   "source /home/user/<project_name>/env/activate 2>/dev/null && \
   cd /home/user/<project_name> && redo <target>"
 ```
 
-**CRITICAL**: Source the PROJECT's `env/activate` (NOT adamant's). This ensures BUILD_ROOTS includes both adamant AND the project.
+**Why login is preferred over raw `docker exec`:**
+- The base adamant image's `.bashrc` sources `adamant/env/activate`, which sets `ADAMANT_ENVIRONMENT_SET`. This guard variable prevents the project's activate from re-running adamant's activate with the project as an extra build root.
+- A custom Dockerfile that overrides `.bashrc` to source the project's activate instead solves this. The `adamant_env.sh start` script also handles first-time activation.
+- Raw `docker exec` with `source project/env/activate` works IF the environment hasn't been previously activated in that shell session. But login shells may have already sourced `.bashrc`.
+- **Bottom line:** `adamant_env.sh login` handles all edge cases. Use it.
 
 ### 5. Set Up .gitignore
 
