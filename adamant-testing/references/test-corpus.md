@@ -1019,3 +1019,4 @@ with Tick;
 11. Do NOT use .Value field access when typed assertion exists (less informative errors)
 12. Do NOT mix `Self.Tester.*` and undeclared `T.*` -- either use full path or declare the rename
 13. Do NOT use low command IDs (0, 1, 2...) for raw Command.T in tests -- they collide with registered local command IDs (Reset_Counts_Id => 0, etc.). Use high IDs (100+) to avoid accidentally triggering command handlers.
+14. Do NOT leave `Dispatch_Event` calls in tester overrides for Event.T connectors that carry forwarded/external events. When a component has a non-component Event.T send connector (e.g., `Filtered_Event_T_Send`), the generated tester calls `Self.Dispatch_Event(Arg)` on it. Forwarded events have arbitrary IDs outside the local enum range, causing `CONSTRAINT_ERROR`. Fix: edit tester .adb to remove the `Dispatch_Event` call, keep only `Self.Filtered_Event_T_Recv_Sync_History.Push(Arg);`.
