@@ -304,38 +304,62 @@ T.Expect_Data_Product_T_Send_Dropped := True;
 T.Expect_Data_Product_T_Send_Dropped := False;  -- Reset
 ```
 
-## Send_Dropped Testing
+## Send_Dropped Handlers and Coverage
 
-Every send connector generates a `*_Send_Dropped` handler that the component must override. These fire when the component sends but the connector is not attached. Most components declare these as `is null;` in the spec.
+Every send connector generates a `*_Send_Dropped` handler that the component must override. These fire when `Send` returns `Message_Dropped` status -- NOT when a connector is unattached.
 
-### Pattern: Re-Init Without Connect
+### How Send_Dropped Actually Works
 
-The cleanest way to test Send_Dropped paths is to re-initialize the component without calling `Connect`. All `*_Send_If_Connected` calls then hit the dropped path because no connectors are attached.
-
+The generated base class has this pattern:
 ```ada
-procedure Test_Send_Dropped (Self : in out Instance) is
-   T : ... renames Self.Tester;
+procedure Sample_T_Send (Self : in out Base_Instance; Arg : in Packed_F32.T; ...) is
+   Ret : Connector_Status;
 begin
-   -- Re-init WITHOUT Connect -- connectors stay unattached
-   T.Init_Base;
-   -- Do NOT call T.Connect
-   T.Component_Instance.Init (...);  -- if component has init
-   T.Component_Instance.Set_Up;      -- if component has set_up
+   Ret := Sample_T_Send_Connector.Call (Self.Connector_Sample_T_Send, Arg, ...);
+   case Ret is
+      when Success => null;
+      when Message_Dropped => Sample_T_Send_Dropped (Base_Instance'Class (Self), Arg);
+   end case;
+end Sample_T_Send;
 
-   -- Exercise the component -- all sends hit dropped handlers
-   T.Tick_T_Send ((Time => (0, 0), Count => 1));
-   -- No assertions needed for "is null" handlers --
-   -- coverage confirms the dropped path was reached
-end Test_Send_Dropped;
+procedure Sample_T_Send_If_Connected (...) is
+begin
+   if Self.Is_Sample_T_Send_Connected then
+      Self.Sample_T_Send (Arg, ...);    -- Only calls Send if connected
+   end if;
+end Sample_T_Send_If_Connected;
 ```
 
-### When Send_Dropped Handlers Are `is null`
+Key points:
+- `Send_If_Connected` skips entirely when not connected -- does NOT call `Send_Dropped`
+- `Send_Dropped` only fires when the connector IS attached but the receiver rejects (queue full)
+- **Sync connectors always return `Success`** -- `Message_Dropped` never fires for sync sends
+- Only **async connectors** can return `Message_Dropped` (queue overflow)
 
-If a component declares `overriding procedure Event_T_Send_Dropped (...) is null;`, there are no executable lines to cover. The `is null;` declaration has zero coverage impact. **Do not write tests for `is null` Send_Dropped handlers** -- they contribute nothing to coverage.
+### Coverage Implications
 
-### When Send_Dropped Handlers Have Logic
+- **`is null;` in spec:** Zero coverage impact. gcov doesn't count these.
+- **`begin null; end` in body:** gcov counts these as uncovered lines, but they are **uncoverable for sync connectors**. Add a TODO comment acknowledging the gap:
+  ```ada
+  -- TODO: Send_Dropped handlers (impl lines N-M) are uncoverable.
+  -- Sync connectors always return Success, so Message_Dropped never fires.
+  ```
+- **Active components with async recv:** Can overflow the tester's queue to trigger Recv_Async_Dropped, but that's a different handler (on the tester, not the component).
 
-Some components log events or increment counters in their Send_Dropped handlers. For these, test with the re-init-without-connect pattern and verify expected side effects (events, data products, fault raises).
+### Testing Send_Dropped on Async Send Connectors
+
+For components that SEND to async connectors (rare -- most send to sync), use the tester's `Expect_*_Dropped` mechanism. This requires hand-editing the tester spec/body to add a boolean flag. See `command_router` tests in the framework for the pattern:
+
+```ada
+-- In tester .ads (hand-written):
+Expect_Command_T_Send_Dropped : Boolean := False;
+Command_T_Send_Dropped_Count : Natural := 0;
+
+-- In test body:
+T.Expect_Command_T_Send_Dropped := True;
+-- ... trigger component to send ...
+Natural_Assert.Eq (T.Command_T_Send_Dropped_Count, 1);
+```
 
 ## Coverage
 

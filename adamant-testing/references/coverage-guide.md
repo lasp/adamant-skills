@@ -76,18 +76,14 @@ event_dispatcher                        57     36    63%  42,49-50,...
 These patterns require tester modifications but are fully coverable (no structural ceiling):
 
 ### Send_Dropped Handlers
-```ada
-overriding procedure Event_T_Send_Dropped (Self : in out Instance; Arg : in Event.T) is
-begin
-   null;  -- Called when send connector not attached or target rejects
-end Event_T_Send_Dropped;
-```
-These fire when the component tries to send but the connector isn't attached. The tester connects all connectors by default, so they don't fire in normal tests. To cover them:
 
-1. **Skip connector attachment:** Comment out the `Attach_*` line in tester's `Connect` procedure for one test, then send data that triggers the component to send on that connector.
-2. **Use `Expect_*_Dropped` flag:** Some framework testers add a boolean flag (e.g., `Expect_Event_T_Send_Dropped`) and override the connector status to simulate rejection. This requires hand-editing the tester spec/body.
+Send_Dropped fires when `Send` returns `Message_Dropped` -- NOT when a connector is unattached. `Send_If_Connected` skips entirely when not connected (does not call `Send_Dropped`).
 
-The adamant_example components DO test Send_Dropped paths. See `parameter_manager` tests for the pattern.
+**Sync connectors always return `Success`** -- `Message_Dropped` never fires for sync sends. Most bot_station components only have sync send connectors, making their `begin null; end` Send_Dropped handlers structurally uncoverable. Add a TODO comment acknowledging the gap.
+
+**Async send connectors** can trigger Send_Dropped via queue overflow. The framework's `command_router` tests demonstrate this pattern using `Expect_*_Dropped` flags on the hand-written tester.
+
+**`is null;` vs `begin null; end`:** Handlers declared `is null;` in the spec have zero gcov lines. Handlers with `begin null; end` in the body show as uncovered lines. Both are functionally equivalent for components with sync sends.
 
 ### Invalid_Command Handler
 ```ada
