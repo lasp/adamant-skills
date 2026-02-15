@@ -234,7 +234,7 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 10. **No `Packed_U8`** — use `Packed_Byte.T`
 11. **Tick.T.Count is Unsigned_32** — use `Interfaces.Unsigned_32(I)` for loop casts
 12. **Change detection initial state:** First tick fires extra DP because shadow differs from computed value
-13. **Packet.T Header has NO Priority field** — only Time, Id, Sequence_Count, Buffer_Length
+13. **Packet.T structure**: `(Header => (Time => ..., Id => ..., Sequence_Count => ..., Buffer_Length => N), Buffer => [others => 0])`. The payload field is `Buffer`, NOT `Data`. Header has NO Priority field
 14. **Named Event.T send connectors crash** on non-component event IDs. When a component has multiple Event.T send connectors (e.g., `Filtered_Event_T_Send` for forwarding), the generated tester calls `Self.Dispatch_Event(Arg)` on ALL Event.T receive handlers. Forwarded events with arbitrary IDs cause `CONSTRAINT_ERROR: range check failed` in `Dispatch_Event` because the ID doesn't map to a local event enum. **Fix:** Edit the tester .adb to remove the `Dispatch_Event` call from the non-component Event.T handler, keeping only the history push.
 15. **Instance record names like `Queue` conflict** with generated base class -- use prefixed names
 16. **Unused `Status` variable** in parameter tests -- use `pragma Unreferenced (Status);` or check it
