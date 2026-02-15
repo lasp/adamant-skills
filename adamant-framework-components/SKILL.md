@@ -60,6 +60,7 @@ Quick-lookup catalog of all 55 built-in Adamant components organized by subsyste
 **command_router** (active)
 - Purpose: Route commands by ID to destination components
 - Use: Central command distribution hub for assembly
+- Init: `Max_Number_Of_Commands` (required). Self-loopback: Command_Response_T_To_Forward_Send -> own Command_Response_T_Recv_Async
 
 **command_sequencer** (active)
 - Purpose: Execute LASEL sequences with multiple engines
@@ -100,10 +101,12 @@ Quick-lookup catalog of all 55 built-in Adamant components organized by subsyste
 **event_packetizer** (passive)
 - Purpose: Collect events into packets with timeout
 - Use: Efficient event downlink batching
+- Init: `Num_Internal_Packets`, `Partial_Packet_Timeout` (both required). NO init_base
 
 **event_text_logger** (active)
 - Purpose: Print events as text using assembly-specific conversion
 - Use: Human-readable event logging for debugging
+- Discriminant: `Event_To_Text` (required, assembly-generated access type). NO Sys_Time_T_Get connector
 
 ## System Monitoring (5 components)
 
@@ -200,6 +203,7 @@ Quick-lookup catalog of all 55 built-in Adamant components organized by subsyste
 **product_database** (passive)
 - Purpose: Fast ID-indexed database for latest data products
 - Use: Central telemetry database with direct indexing
+- Init: `Minimum_Data_Product_Id`, `Maximum_Data_Product_Id` (both required)
 
 **product_packetizer** (passive)
 - Purpose: Request data products and packetize at rates

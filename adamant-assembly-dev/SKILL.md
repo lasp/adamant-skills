@@ -304,6 +304,22 @@ Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to rege
 | Missing router self-loop | `Command_Response_T_To_Forward_Send` not connected | Wire back to router's `Command_Response_T_Recv_Async` |
 | Stack too small | Stack size < 2000 bytes | Minimum is 2000; use 50000 for typical components |
 
+## Framework Component Init Requirements
+
+Common framework components and their REQUIRED configuration in assembly YAML:
+
+| Component | init | discriminant | init_base | Notes |
+|-----------|------|--------------|-----------|-------|
+| command_router | `Max_Number_Of_Commands => N` | -- | Queue_Size | Self-loopback required (from_index: 1) |
+| event_packetizer | `Num_Internal_Packets => N`, `Partial_Packet_Timeout => T` | -- | -- | NO init_base |
+| event_text_logger | -- | `Event_To_Text => Assembly_Event_To_Text.Event_To_Text'Access` | Queue_Size | NO Sys_Time_T_Get |
+| product_database | `Minimum_Data_Product_Id => M`, `Maximum_Data_Product_Id => N` | -- | -- | IDs from assembly-generated package |
+| product_packetizer | `init: []` (empty) | `Packet_List => Assembly_Product_Packets.Packet_List'Access` | -- | Empty init required even when all params optional |
+| ticker | -- | -- | -- | Wire Sys_Time_T_Get (easy to forget) |
+| rate_group | -- | -- | Queue_Size | Arrayed Tick_T_Send: count MUST match connections |
+| tick_divider | -- | `Divider_List => Dividers'Access` | -- | Preamble defines Divider_Array_Type |
+| splitter (generic) | -- | -- | -- | Use `T_Recv_Sync` not `Event_T_Recv_Sync` |
+
 ## Assembly-Generated Packages
 
 Auto-generated from the assembly model:
@@ -323,6 +339,9 @@ Auto-generated from the assembly model:
 - **`Command_Router` needs** `Command_Response_T_To_Forward_Send_Count >= 1`.
 - **`with:` packages** must exist in build path — unknown packages silently fail.
 - **`Ccsds_Socket_Interface`** is a TCP CLIENT — connects TO a ground server.
+- **ALL Event_T_Send** connectors must wire to Event_Splitter (or directly to Event_Packetizer). Missing = lost events.
+- **ALL Data_Product_T_Send** connectors must wire to Product_Database. Missing = lost telemetry.
+- **Arrayed connector indices** must be sequential starting from 1. `Tick_T_Send_Count => 3` needs exactly indices 1, 2, 3.
 
 ## Running an Assembly
 
