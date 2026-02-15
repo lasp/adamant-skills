@@ -107,6 +107,19 @@ begin
    null;  -- Queue overflow already handled by framework
 end Packet_T_Recv_Async_Dropped;
 ```
+To cover, overflow the async queue. From `parameter_manager` Test_Full_Queue:
+```ada
+-- Init with small queue (3 commands fit):
+T.Init_Base (Queue_Size => T.Component_Instance.Get_Max_Queue_Element_Size * 3);
+-- Fill queue:
+T.Command_T_Send (Cmd);
+T.Command_T_Send (Cmd);
+T.Command_T_Send (Cmd);
+-- Overflow triggers Recv_Async_Dropped:
+T.Expect_Command_T_Send_Dropped := True;
+T.Command_T_Send (Cmd);
+Natural_Assert.Eq (T.Command_Dropped_History.Get_Count, 1);
+```
 
 ### Coverage Target by Component Type
 
