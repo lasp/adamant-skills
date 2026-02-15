@@ -111,7 +111,9 @@ redo path              # Display build path info
 redo yaml_sloc         # Count YAML source lines of code
 ```
 
-`redo clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed. If redo state gets corrupted (STORAGE_ERROR, "No rule to build"), run `redo clean_all` on BOTH the adamant dir AND the project dir, then rebuild.
+`redo clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed. If redo state gets corrupted (STORAGE_ERROR, "No rule to build"), run `redo clean_all` on BOTH the adamant dir AND the project dir, then rebuild. If `redo clean_all` doesn't fix it, re-clone the adamant repository.
+
+**NEVER `rm -rf .redo` or `rm -rf build`.** Manually deleting redo's state files permanently breaks source file tracking. Redo will then try to BUILD source files (.ads/.adb) instead of recognizing them. Only `redo clean` / `redo clean_all` properly reset the build state.
 
 ### Inspect
 ```bash
