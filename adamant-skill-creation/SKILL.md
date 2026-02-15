@@ -200,6 +200,44 @@ Reference from the skill-selector:
 - **Stale**: Skill references framework behavior that has changed
 - **Bloated**: SKILL.md exceeds 400 lines (split to references)
 
+## Consistency Checks
+
+Run these checks periodically across all skills:
+
+### Structural
+```bash
+# Orphaned references (files not mentioned in SKILL.md)
+for d in adamant-*/; do
+  for ref in "$d/references/"*.md; do
+    bn=$(basename "$ref")
+    grep -q "$bn" "$d/SKILL.md" || echo "ORPHAN: $d$bn"
+  done
+done
+
+# Missing cross-references
+for d in adamant-*/; do
+  grep -q '../adamant-' "$d/SKILL.md" || echo "NO CROSS-REFS: $d"
+done
+
+# Project-specific contamination
+grep -rn '<project_name>\|<component_prefix>' --include="*.md" adamant-*/
+```
+
+### Content
+- **Description fields**: All should have "Use when..." trigger phrases
+- **Em dashes**: Use `--` not unicode em dashes
+- **Error sections**: All code-producing skills need Common Errors
+- **References sections**: All skills with references/ dir need a References section listing files
+- **CLAUDE.md**: Update line counts and skill count after changes
+- **Contradictions**: Cross-check rules stated in multiple skills (especially connector patterns, init sequences, style rules)
+
+### Style Alignment
+- Code examples in all skills must follow adamant-style rules
+- Record aggregates use `()`, arrays use `[]`
+- `and then` / `or else` (not `and` / `or`)
+- No trailing whitespace
+- YAML files start with `---`
+
 ## Adding to Skill Selector
 
 After creating a new skill, add it to `adamant-skill-selector/SKILL.md`:
@@ -207,6 +245,44 @@ After creating a new skill, add it to `adamant-skill-selector/SKILL.md`:
 1. Add a routing entry in the Task Routing Table
 2. Add to "Also load if needed" lists where appropriate
 3. Update the skill count in the header
+
+## Typical Development Workflow
+
+Based on 14 skills developed over 20+ sessions:
+
+### Phase 1: Knowledge Acquisition
+1. Study the framework source (use `knowledge-acquisition` skill for systematic approach)
+2. Build several components/assemblies by hand to understand patterns
+3. Document what you learn in scratch notes
+
+### Phase 2: Initial Skill Draft
+1. Create SKILL.md with core procedures and checklists
+2. Keep it under 200 lines initially -- add detail after validation
+3. Include at least 2-3 code examples (YAML + Ada)
+4. Write the Common Errors section from known pitfalls
+
+### Phase 3: Cold-Start Validation
+1. Spawn sub-agent with ONLY the new skill
+2. Task: build a specific component from scratch
+3. Count errors. Feed EVERY error back into the skill
+4. Repeat until zero errors (typically 3-5 rounds for a new skill)
+
+### Phase 4: Reference Expansion
+1. After core SKILL.md is validated, extract detailed patterns to references/
+2. Add real code examples from working components (anonymized -- no project names)
+3. Target: SKILL.md ~300 lines, references as large as needed
+
+### Phase 5: Cross-Skill Integration
+1. Add cross-references to/from related skills
+2. Update skill-selector routing table
+3. Update CLAUDE.md with new skill entry
+4. Check for contradictions with existing skills
+
+### Phase 6: Ongoing Maintenance
+1. Every cold-start exercise that finds errors triggers a skill update
+2. Periodic consistency checks (see above)
+3. Style alignment after style rule changes
+4. Reference updates when framework behavior changes
 
 ## Common Skill Anti-Patterns
 
