@@ -109,7 +109,7 @@ See [references/plugin-setup-and-wiring.md](references/plugin-setup-and-wiring.m
   init_base:
     - "Queue_Size => 8192"
   init:
-    - "Addr => \"127.0.0.1\""          # "host.docker.internal" inside Docker
+    - "Addr => \"host.docker.internal\""  # Use "127.0.0.1" if NOT in Docker
     - "Port => 2003"
   subtasks:
     - name: Listener

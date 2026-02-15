@@ -47,7 +47,7 @@ Connectors: `Packet_T_Recv_Sync`, `Ccsds_Space_Packet_T_Send`. Has NO Sys_Time_T
   init_base:
     - "Queue_Size => 3 * Product_Packetizer_Instance.Get_Max_Queue_Element_Size"
   discriminant:
-    - "Packet_List => Assembly_Product_Packets.Packet_List'Access"
+    - "packet_List => Assembly_Product_Packets.Packet_List'Access"
 ```
 
 ## Full Connection Wiring
