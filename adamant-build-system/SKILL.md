@@ -106,6 +106,9 @@ redo build/html/name.html   # HTML documentation
 redo clean            # Remove build/ in current directory
 redo clean_all        # Recursive clean (all subdirectories)
 redo clear_cache      # Clear model cache (SQLite in $ADAMANT_TMP_DIR)
+redo run               # Build and execute main.elf (from main/ dir only)
+redo path              # Display build path info
+redo yaml_sloc         # Count YAML source lines of code
 ```
 
 `redo clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed. If redo state gets corrupted (STORAGE_ERROR, "No rule to build"), run `redo clean_all` on BOTH the adamant dir AND the project dir, then rebuild.
