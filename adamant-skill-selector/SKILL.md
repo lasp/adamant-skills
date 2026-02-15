@@ -34,7 +34,7 @@ You have 11 Adamant skills totaling ~4000+ lines (with references). Loading all 
 **Load:** `adamant-testing` (see `references/coverage-guide.md`)
 - `redo coverage` workflow, clean build requirement
 - `impl_coverage.sh` script for filtering to implementation .adb
-- Structural ceiling analysis, common uncovered patterns and fixes
+- Full path coverage techniques (Invalid_Command, Send_Dropped, Recv_Async_Dropped)
 - Adding tests to existing components (YAML + template regeneration)
 
 ### Defining custom types (records, arrays, enums)
