@@ -14,6 +14,13 @@ EVERY send connector generates a `*_Send_Dropped` procedure that MUST be overrid
 ### Active component testing
 Active components have async receive connectors with queues. In tests, `T.Packet_T_Send(...)` enqueues but does NOT process. You MUST call `T.Dispatch_All` to process queued messages. Without it, async handlers never execute and coverage is 0%. Passive components process synchronously -- no `Dispatch_All` needed (and calling it is a compile error).
 
+### Testing Send_Dropped and Invalid_Command
+These are NOT structural ceiling -- they ARE testable:
+- **Invalid_Command**: Create valid command via `T.Commands.X(...)`, then set `Cmd.Header.Arg_Buffer_Length := 22;` to corrupt it. Framework calls `Invalid_Command`.
+- **Send_Dropped**: Skip `Attach_*` in tester's `Connect` for one connector, then trigger the component to send on it. Or add `Expect_*_Dropped` boolean flag to tester.
+- **Recv_Async_Dropped**: Overflow the async queue by sending more messages than `Queue_Size` can hold.
+See adamant_example/parameter_manager for all three patterns.
+
 ### gcov limitation with active components
 Some active components produce 0% coverage even with passing tests due to GNAT Ada task cleanup not flushing gcov data. The .gcda files are never written because the Ada task's finalization prevents clean process exit. This is a known GNAT/gcov limitation -- not a test quality issue.
 
