@@ -98,6 +98,12 @@ T.Command_T_Send (Cmd);
 Natural_Assert.Eq (T.Invalid_Command_Received_History.Get_Count, 1);
 ```
 
+For commands with custom record/enum arg types, use `(others => <>)` as a safe default aggregate -- the arg value doesn't matter since we're corrupting the length:
+```ada
+Cmd : Command.T := T.Commands.Set_Route ((others => <>));
+Cmd.Header.Arg_Buffer_Length := 22;
+```
+
 The adamant_example `parameter_manager` tests demonstrate this pattern.
 
 ### Recv_Async_Dropped Handler
