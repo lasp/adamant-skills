@@ -1018,3 +1018,4 @@ with Tick;
 10. Do NOT forget to Dispatch_All for active components (sends queue but don't process)
 11. Do NOT use .Value field access when typed assertion exists (less informative errors)
 12. Do NOT mix `Self.Tester.*` and undeclared `T.*` -- either use full path or declare the rename
+13. Do NOT use low command IDs (0, 1, 2...) for raw Command.T in tests -- they collide with registered local command IDs (Reset_Counts_Id => 0, etc.). Use high IDs (100+) to avoid accidentally triggering command handlers.

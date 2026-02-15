@@ -1,0 +1,18 @@
+---
+description: Configuration for My Project.
+
+# REQUIRED — Core Type Sizing
+data_product_buffer_size: 32
+command_buffer_size: 128
+event_buffer_size: 32
+parameter_buffer_size: 32
+fault_buffer_size: 8
+ccsds_packet_buffer_size: 512
+packet_buffer_size: 480
+
+# REQUIRED — Other
+stack_margin: 1000
+command_registration_delay: 250
+
+# OPTIONAL — Project-Specific Variables
+# my_custom_var: 42

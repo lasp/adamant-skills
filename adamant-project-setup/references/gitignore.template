@@ -1,0 +1,19 @@
+# Build artifacts
+**/build/
+
+# Python
+*.pyc
+__pycache__/
+
+# Alire
+/alire/
+/config/
+!/config/README.md
+!/config/*.configuration.yaml
+
+# OS/editor
+.DS_Store
+*.swp
+*.tmp
+~$*
+.tmp
