@@ -17,88 +17,24 @@ C++ Algorithm → C Shim (.h/.cpp) → Ada Bindings (.ads) → Packed Records �
 - `msgPayloadDef/<Type>MsgF32Payload.h` — Shared POD structs (included by both C++ algo and C shim)
 
 ### Opaque Handle Pattern
-Every wrapped algorithm uses an opaque forward-declared struct as its handle:
+Every wrapped algorithm uses an opaque forward-declared struct as its handle. The header declares `typedef struct FooAlgorithm FooAlgorithm;` with lifecycle (`create`/`destroy`), core `update`, and setter/getter functions inside `extern "C"` guards.
 
-```c
-// Header (.h)
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct FooAlgorithm FooAlgorithm;
-
-// Lifecycle
-FooAlgorithm* FooAlgorithm_create(void);
-void FooAlgorithm_destroy(FooAlgorithm* self);
-
-// Core update
-OutputPayload FooAlgorithm_update(FooAlgorithm* self, const InputPayload* input);
-
-// Setters/getters for tunable parameters
-void FooAlgorithm_setGainP(FooAlgorithm* self, float p);
-float FooAlgorithm_getGainP(FooAlgorithm* self);
-
-// Reset (for stateful algorithms)
-void FooAlgorithm_reset(FooAlgorithm* self, uint64_t callTime);
-
-#ifdef __cplusplus
-}
-#endif
-```
+> Full template: [references/code-templates.md §1 — Opaque Handle Pattern](references/code-templates.md#opaque-handle-pattern-header)
 
 ### C Shim Implementation
-```cpp
-// Implementation (.cpp)
-#include "fooAlgorithm_c.h"
-#include "fooAlgorithm.h"  // C++ class header
-#include <Eigen/Core>
+The `.cpp` file includes both the C header and C++ class header. Each function casts via `reinterpret_cast<::FooAlgorithm*>(self)` and delegates to the C++ method.
 
-FooAlgorithm* FooAlgorithm_create(void) {
-    return reinterpret_cast<FooAlgorithm*>(new ::FooAlgorithm());
-}
-
-void FooAlgorithm_destroy(FooAlgorithm* self) {
-    delete reinterpret_cast<::FooAlgorithm*>(self);
-}
-
-OutputPayload FooAlgorithm_update(FooAlgorithm* self, const InputPayload* input) {
-    return reinterpret_cast<::FooAlgorithm*>(self)->update(*input);
-}
-```
+> Full template: [references/code-templates.md §1 — C Shim Implementation](references/code-templates.md#c-shim-implementation)
 
 ### POD Conversion for Eigen Types
-Eigen types cannot cross the C boundary. Use flat POD structs:
+Eigen types cannot cross the C boundary. Use flat POD structs (e.g., `struct { float data[3]; } Vector3f_c`) and convert at the boundary in the `.cpp` shim.
 
-```c
-typedef struct { float data[3]; } Vector3f_c;
-
-// In .cpp, convert at boundary:
-void FooAlgorithm_setVector(FooAlgorithm* self, Vector3f_c vec) {
-    Eigen::Vector3f v;
-    v << vec.data[0], vec.data[1], vec.data[2];
-    reinterpret_cast<::FooAlgorithm*>(self)->setVector(v);
-}
-
-Vector3f_c FooAlgorithm_getVector(FooAlgorithm* self) {
-    Eigen::Vector3f v = reinterpret_cast<::FooAlgorithm*>(self)->getVector();
-    Vector3f_c out;
-    out.data[0] = v[0]; out.data[1] = v[1]; out.data[2] = v[2];
-    return out;
-}
-```
+> Full template: [references/code-templates.md §1 — POD Conversion](references/code-templates.md#pod-conversion-for-eigen-types)
 
 ### Shared Payload Structs
 Payload structs live in `msgPayloadDef/` and are pure C POD. Both C++ algorithm internals and C shim include them directly. These map 1:1 to Adamant YAML record types.
 
-```c
-// msgPayloadDef/AttGuidMsgF32Payload.h
-typedef struct {
-    float sigma_BR[3];
-    float omega_BR_B[3];
-    float omega_RN_B[3];
-    float domega_RN_B[3];
-} AttGuidMsgF32Payload;
-```
+> Full template: [references/code-templates.md §1 — Shared Payload Struct](references/code-templates.md#shared-payload-struct-example)
 
 ### Constant Export Pattern
 Export `#define` or `constexpr` constants via getter functions (never `static inline`):
@@ -116,69 +52,18 @@ The generated spec requires manual cleanup:
 
 ### Transformation Rules (h2ads → hand-written)
 1. **Package rename:** `Foo_Algorithm_C_H` → `Foo_Algorithm_C`
-2. **Opaque handle → limited private:**
-   ```ada
-   type Foo_Algorithm is limited private;
-   type Foo_Algorithm_Access is access all Foo_Algorithm;
-   -- ...
-   private
-      type Foo_Algorithm is null record;
-   ```
+2. **Opaque handle → limited private:** `type Foo_Algorithm is limited private;` with `null record` in private part
 3. **Function rename:** Strip algorithm prefix. `Foo_Algorithm_Create` → `Create`
 4. **Payload types:** Replace h2ads-generated C structs with Adamant `.C.U_C` types
 5. **Access parameters:** Use `Type.C.U_C_Access` for pointer args (already defined by Adamant type system)
 6. **Style/warning suppression:** Add pragmas at top and bottom
 
-### Complete Ada Binding Spec Template
-```ada
-pragma Ada_2012;
-pragma Style_Checks (Off);
-pragma Warnings     (Off, "-gnatwu");
-
-with Interfaces.C; use Interfaces; use Interfaces.C;
-with Input_Type.C;
-with Output_Type.C;
-
-package Foo_Algorithm_C is
-
-   type Foo_Algorithm is limited private;
-   type Foo_Algorithm_Access is access all Foo_Algorithm;
-
-   function Create return Foo_Algorithm_Access
-     with Import => True, Convention => C,
-          External_Name => "FooAlgorithm_create";
-
-   procedure Destroy (Self : Foo_Algorithm_Access)
-     with Import => True, Convention => C,
-          External_Name => "FooAlgorithm_destroy";
-
-   function Update
-     (Self     : Foo_Algorithm_Access;
-      Input_In : Input_Type.C.U_C_Access)
-     return Output_Type.C.U_C
-     with Import => True, Convention => C,
-          External_Name => "FooAlgorithm_update";
-
-   procedure Set_Gain_P (Self : Foo_Algorithm_Access; P : Short_Float)
-     with Import => True, Convention => C,
-          External_Name => "FooAlgorithm_setGainP";
-
-private
-   type Foo_Algorithm is null record;
-end Foo_Algorithm_C;
-
-pragma Style_Checks (On);
-pragma Warnings     (On, "-gnatwu");
-```
+> Full template: [references/code-templates.md §2 — Complete Ada Binding Spec](references/code-templates.md#complete-ada-binding-spec)
 
 ### Constant Validation in Ada
-Validate C-side constants match Ada-side definitions at elaboration:
-```ada
-NUM_SLEWS : constant := 3;
-function Get_Num_Slews return Unsigned_32
-  with Import => True, Convention => C, External_Name => "FooAlgorithm_getNumSlews";
-pragma Assert (Unsigned_32 (NUM_SLEWS) = Get_Num_Slews);
-```
+Validate C-side constants match Ada-side definitions at elaboration using `pragma Assert` on imported getter functions.
+
+> Full template: [references/code-templates.md §2 — Constant Validation](references/code-templates.md#constant-validation)
 
 ## 3. Type Mapping
 
@@ -233,92 +118,29 @@ fields:
 ## 4. Component YAML Model
 
 ### Basic Wrapper (no parameters)
-```yaml
-description: Wraps FooAlgorithm for attitude guidance computation.
-execution: passive
-init:
-  description: Creates algorithm handle and sets initial config.
-connectors:
-  - description: Run algorithm on tick.
-    type: Tick.T
-    kind: recv_sync
-  - description: Fetch data product.
-    type: Data_Product_Fetch.T
-    return_type: Data_Product_Return.T
-    kind: request
-  - description: Data product output.
-    type: Data_Product.T
-    kind: send
-```
+`execution: passive` with connectors: `recv_sync` (Tick.T), `request` (Data_Product_Fetch.T → Data_Product_Return.T), `send` (Data_Product.T).
 
-### With Runtime-Tunable Parameters
-Add a `modify` connector and parameters YAML:
-```yaml
-connectors:
-  # ... same as above, plus:
-  - description: The parameter update connector.
-    type: Parameter_Update.T
-    kind: modify
-```
+### Optional Connectors
+- **Parameters**: Add `modify` connector (Parameter_Update.T) + parameters YAML
+- **Events**: Add `send` connector (Event.T)
+- **System Time**: Add `get` connector with `return_type: Sys_Time.T` (NOT `type:`)
 
-### With Events
-```yaml
-connectors:
-  # ... plus:
-  - description: Events.
-    type: Event.T
-    kind: send
-```
-
-### With System Time
-```yaml
-connectors:
-  # ... plus:
-  - description: System time.
-    return_type: Sys_Time.T
-    kind: get
-```
 Note: `get` connectors use `return_type:` only, NOT `type:`.
 
 ### Data Dependencies YAML
-```yaml
-description: Data dependencies for Foo component.
-data_dependencies:
-  - name: Attitude_Reference
-    type: Att_Ref.T
-    description: Reference attitude for tracking
-  - name: Navigation_Attitude
-    type: Nav_Att.T
-    description: Current navigation attitude estimate
-```
+List `data_dependencies:` with `name`, `type` (e.g., `Att_Ref.T`), and `description`.
 
 ### Parameters YAML
-```yaml
-description: Parameters for the Rate Control component
-parameters:
-  - name: Derivative_Gain_P
-    description: "[N*m*s] Rate error feedback gain"
-    type: Packed_F32.T
-    default: "(Value => 0.0)"
-  - name: Spacecraft_Inertia
-    description: "[kg m^2] Spacecraft inertia (3x3 row-major)"
-    type: Packed_F32x9.T
-    default: "[others => 0.0]"
-```
+List `parameters:` with `name`, `type` (e.g., `Packed_F32.T`), `default` (Ada aggregate syntax), and `description`.
 
 ## 5. Memory Management
 
 ### Create/Destroy Lifecycle
 All wrapped algorithms use heap allocation via C shim:
-
 ```ada
--- In Init:
-Self.Alg := Create;  -- Calls C++ new via shim
-
--- In Destroy (must be called at teardown):
-Destroy (Self.Alg);  -- Calls C++ delete via shim
+Self.Alg := Create;   -- In Init: calls C++ new via shim
+Destroy (Self.Alg);   -- In Destroy: calls C++ delete via shim
 ```
-
 The component record holds `Alg : Foo_Algorithm_Access := null;` (pointer, initialized to null).
 
 ### Stack vs Heap
@@ -340,94 +162,24 @@ Adamant has no destructor mechanism. Components with C++ handles MUST:
 
 ## 6. Implementation Pattern
 
-### Spec
-```ada
-with Foo_Algorithm_C; use Foo_Algorithm_C;
+The implementation spec declares `Instance` extending `Base_Instance` with a private `Alg` handle, overriding `Init`, `Tick_T_Recv_Sync`, `Get_Data_Dependency`, and `Invalid_Data_Dependency`. A `not overriding procedure Destroy` handles C++ cleanup.
 
-package Component.Foo.Implementation is
-   type Instance is new Foo.Base_Instance with private;
-   overriding procedure Init (Self : in out Instance);
-   not overriding procedure Destroy (Self : in out Instance);
-private
-   type Instance is new Foo.Base_Instance with record
-      Alg : Foo_Algorithm_Access := null;
-   end record;
-   overriding procedure Set_Up (Self : in out Instance) is null;
-   overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T);
-   overriding procedure Data_Product_T_Send_Dropped (Self : in out Instance; Arg : in Data_Product.T) is null;
-   overriding function Get_Data_Dependency (Self : in out Instance; Id : in Data_Product_Types.Data_Product_Id)
-     return Data_Product_Return.T is (Self.Data_Product_Fetch_T_Request ((Id => Id)));
-   overriding procedure Invalid_Data_Dependency
-     (Self : in out Instance; Id : in Data_Product_Types.Data_Product_Id; Ret : in Data_Product_Return.T);
-end Component.Foo.Implementation;
-```
+> Full spec template: [references/code-templates.md §6 — Spec](references/code-templates.md#spec)
 
 ### Body — Basic Wrapper
-```ada
-with Input_Type.C;
-with Output_Type.C;
-with Algorithm_Wrapper_Util;
+`Init` calls `Create`, `Tick_T_Recv_Sync` fetches dependencies, converts to C types via `To_C`, calls `Update`, converts back via `To_Ada`, and sends the data product. `Invalid_Data_Dependency` asserts False.
 
-package body Component.Foo.Implementation is
+> Full body template: [references/code-templates.md §6 — Body — Basic Wrapper](references/code-templates.md#body--basic-wrapper)
 
-   overriding procedure Init (Self : in out Instance) is
-   begin
-      Self.Alg := Create;
-   end Init;
+### Body — With Parameters
+Add `Parameter_Update_T_Modify` (delegates to `Process_Parameter_Update`) and `Update_Parameters_Action` (pushes parameter values to C++ via setters). Call `Self.Update_Parameters` at the top of `Tick_T_Recv_Sync`.
 
-   not overriding procedure Destroy (Self : in out Instance) is
-   begin
-      Destroy (Self.Alg);
-   end Destroy;
-
-   overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T) is
-      use Data_Product_Enums.Data_Dependency_Status;
-      use Algorithm_Wrapper_Util;
-      Input_Dep : Input_Type.T;
-      Status : constant Data_Dependency_Status.E :=
-         Self.Get_My_Input (Value => Input_Dep, Stale_Reference => Arg.Time);
-   begin
-      if Is_Dep_Status_Success (Status) then
-         declare
-            Input_C : aliased Input_Type.C.U_C := Input_Type.C.To_C (Input_Type.Unpack (Input_Dep));
-            Output_C : constant Output_Type.C.U_C := Update (Self.Alg, Input_C'Unchecked_Access);
-         begin
-            Self.Data_Product_T_Send (Self.Data_Products.Result (
-               Arg.Time, Output_Type.Pack (Output_Type.C.To_Ada (Output_C))));
-         end;
-      end if;
-   end Tick_T_Recv_Sync;
-
-   overriding procedure Invalid_Data_Dependency (...) is
-      pragma Annotate (GNATSAS, Intentional, "subp always fails", "intentional assertion");
-   begin
-      pragma Assert (False);
-   end Invalid_Data_Dependency;
-
-end Component.Foo.Implementation;
-```
-
-### Body — With Parameters (Rate Control Pattern)
-```ada
-overriding procedure Parameter_Update_T_Modify (Self : in out Instance; Arg : in out Parameter_Update.T) is
-begin
-   Self.Process_Parameter_Update (Arg);
-end Parameter_Update_T_Modify;
-
-overriding procedure Update_Parameters_Action (Self : in out Instance) is
-begin
-   Set_Gain_P (Self.Alg, Self.Gain_P.Value);
-   -- Push all parameter values to C++ algorithm state
-end Update_Parameters_Action;
-```
-Call `Self.Update_Parameters` at the top of `Tick_T_Recv_Sync` to apply staged params before each update cycle.
+> Full template: [references/code-templates.md §6 — Body — With Parameters](references/code-templates.md#body--with-parameters-rate-control-pattern)
 
 ### Algorithm_Wrapper_Util
-Shared utility for data dependency status checking:
-```ada
-function Is_Dep_Status_Success (Status : Data_Product_Enums.Data_Dependency_Status.E) return Boolean;
--- Returns True for Success, False for Not_Available/Stale, asserts False for Error
-```
+Shared utility: `Is_Dep_Status_Success` returns True for Success, False for Not_Available/Stale, asserts False for Error.
+
+> Full template: [references/code-templates.md §6 — Algorithm_Wrapper_Util](references/code-templates.md#algorithm_wrapper_util)
 
 ## 7. Input Strategy: Parameters vs Data Dependencies
 
@@ -462,14 +214,7 @@ end Invalid_Data_Dependency;
 ```
 
 ### Invalid Parameter Handler (for parameterized components)
-Same pattern:
-```ada
-overriding procedure Invalid_Parameter (...) is
-   pragma Annotate (GNATSAS, Intentional, "subp always fails", "intentional assertion");
-begin
-   pragma Assert (False);
-end Invalid_Parameter;
-```
+Same pattern as above with `Invalid_Parameter`.
 
 ### C++ Exception Safety
 C++ algorithms MUST NOT throw exceptions across the FFI boundary. The C shim layer is the firewall. If the C++ algorithm can throw, catch in the `.cpp` shim and return an error code or sentinel value. Ada has no mechanism to catch C++ exceptions.
@@ -497,11 +242,8 @@ The C shim `.cpp` files are compiled as part of this library. The shared payload
 ### Ada Side (adamant-xmera-components)
 Adamant uses `redo` build system. The Ada binding `.ads` files live alongside the component. The pre-built C++ static library is linked at the `redo` ELF step:
 ```bash
-# Compile Ada component
-redo all
-
-# Run tests (links against C++ library)
-cd test/ && redo test
+redo all           # Compile Ada component
+cd test/ && redo test  # Run tests (links against C++ library)
 ```
 
 ### Verifying Linkage
@@ -524,39 +266,14 @@ component_dir/
 ```
 
 ### Test Lifecycle
-```ada
-overriding procedure Set_Up_Test (Self : in out Instance) is
-begin
-   Self.Tester.Init_Base;
-   Self.Tester.Connect;
-   Self.Tester.Component_Instance.Init;  -- Creates C++ handle
-   Self.Tester.Component_Instance.Set_Up;
-end Set_Up_Test;
+`Set_Up_Test` calls `Init_Base`, `Connect`, `Init`, `Set_Up`. `Tear_Down_Test` calls `Destroy` then `Final_Base`.
 
-overriding procedure Tear_Down_Test (Self : in out Instance) is
-begin
-   Self.Tester.Component_Instance.Destroy;  -- Frees C++ handle
-   Self.Tester.Final_Base;
-end Tear_Down_Test;
-```
+> Full template: [references/code-templates.md §10 — Test Lifecycle](references/code-templates.md#test-lifecycle)
 
 ### Writing Test Cases
-```ada
-overriding procedure Test (Self : in out Instance) is
-   T : Component.Foo.Implementation.Tester.Instance_Access renames Self.Tester;
-begin
-   -- Set data dependencies (tester provides these):
-   T.My_Input := (Sigma_Bn => [0.25, -0.45, 0.75], ...);
+Set data dependencies on tester fields, tick the component via `Tick_T_Send`, then verify output via history connectors with epsilon-tolerant assertions.
 
-   -- Tick the component:
-   T.Tick_T_Send ((Time => T.System_Time, Count => 0));
-
-   -- Verify output data products:
-   Natural_Assert.Eq (T.Data_Product_T_Recv_Sync_History.Get_Count, 1);
-   Natural_Assert.Eq (T.Result_History.Get_Count, 1);
-   Result_Assert.Eq (T.Result_History.Get (1), Expected_Value, Epsilon => 0.001);
-end Test;
-```
+> Full template: [references/code-templates.md §10 — Writing Test Cases](references/code-templates.md#writing-test-cases)
 
 ### Key Testing Rules
 - Use `T.System_Time` for tick timestamps — `(0, 0)` causes staleness failures
@@ -566,13 +283,9 @@ end Test;
 - Data dependency values are set directly on the tester record fields
 
 ### Verifying Parameter Updates
-```ada
--- Set parameter, then tick:
-T.Parameters := (Gain_P => (Value => 1.5), Inertia => [...]);
-T.Parameter_Update_T_Send ((Operation => Set, Status => Success));
-T.Tick_T_Send ((Time => T.System_Time, Count => 0));
--- Verify output reflects new parameter values
-```
+Set parameters on tester, send `Parameter_Update_T`, tick, and verify output reflects new values.
+
+> Full template: [references/code-templates.md §10 — Verifying Parameter Updates](references/code-templates.md#verifying-parameter-updates)
 
 ## 11. Common Pitfalls
 
