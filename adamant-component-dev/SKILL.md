@@ -246,7 +246,7 @@ Call `Self.Update_Parameters` explicitly (e.g., in Tick handler).
 ## Execution Model
 
 - **Passive**: Synchronous processing. Only has Init if YAML defines `init:` section.
-- **Active**: Message queue. Init MUST call `Self.Init_Base(Queue_Size)` (bytes) -- actually, queue setup is via `init_base` in assembly YAML, NOT a component Init procedure. Has `{Type}_T_Recv_Async` handlers and `{Type}_T_Recv_Async_Dropped` overflow handlers.
+- **Active**: Has message queue. Queue size is set via `init_base` in **assembly YAML** (not component Init). Has `{Type}_T_Recv_Async` handlers and `{Type}_T_Recv_Async_Dropped` overflow handlers.
 - Command connectors stay `recv_sync` even on active components.
 
 ## Auto-Provided Packages (Do NOT `with` these)
