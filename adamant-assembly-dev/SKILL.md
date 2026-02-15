@@ -293,7 +293,7 @@ Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to rege
 | Error | Cause | Fix |
 |-------|-------|-----|
 | Count mismatch | `Tick_T_Send_Count => 3` but 4 connections wired | Match count to actual connection count |
-| Missing Sys_Time | Component has `Sys_Time_T_Get` but no connection | Wire every `Sys_Time_T_Get` → time provider |
+| Missing Sys_Time | Component has `Sys_Time_T_Get` but no connection | Wire EVERY `Sys_Time_T_Get` → time provider. Unwired = silent crash, zero ticks |
 | Duplicate instance name | Two components with same `name` | Use unique names |
 | Wrong connector name on generic | Using `Event_T_Recv_Sync` on Splitter | Use `T_Recv_Sync` (generic param name) |
 | Fault_T to Event_T | Wiring `Fault_T_Send` to `Event_T_Recv` | These are different types — leave unconnected or wire to `Fault_Correction` |

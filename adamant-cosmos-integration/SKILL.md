@@ -240,7 +240,8 @@ Target Station_Assembly <%= station_assembly_target_name %>
 # TCP server interface — COSMOS listens, Adamant connects as client
 Interface <%= station_assembly_target_name %>_INT tcpip_server_interface.rb <%= port_w %> <%= port_r %> 10.0 nil Length 32 16 7
   Map_Target <%= station_assembly_target_name %>
-  Protocol Read crc_sync_protocol.rb <%= crc_parameter_name %> false "ERROR" -16 16
+  # TCP: crc_protocol.rb (no sync word). Serial: crc_sync_protocol.rb (strips sync word)
+  Protocol Read crc_protocol.rb <%= crc_parameter_name %> false "ERROR" -16 16
   Protocol Write cmd_checksum.rb <%= checksum_parameter_name %>
 
 # Optional router for forwarding to external tools
