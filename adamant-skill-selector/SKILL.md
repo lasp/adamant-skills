@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 13 Adamant skills totaling ~9800 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 14 Adamant skills totaling ~10200 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -138,6 +138,13 @@ These patterns cause compilation errors if violated:
 - **Preamble enums**: live in the packed type package directly (different from standalone)
 - **Data dependencies**: require `request` connector (`Data_Product_Fetch.T`), NOT `get`
 - **Parameters**: require `modify` connector, NOT `recv_sync`
+
+### Creating or improving Adamant skills
+**Load:** `adamant-skill-creation`
+- Skill structure, writing rules, validation methodology
+- Cold-start testing, convergence tracking
+- Separating project-specific from generic content
+- Maintaining skill health and preventing anti-patterns
 
 ## Project-Specific Skills
 
