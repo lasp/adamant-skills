@@ -6,13 +6,13 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (13 skills, ~8500+ lines with refs)
+## Skill Inventory (13 skills, ~9400 lines with refs)
 
 | Skill | SKILL.md | Refs | Purpose |
 |-------|----------|------|---------|
 | `adamant-skill-selector` | 146 | -- | **Read first.** Maps tasks to skills. |
-| `adamant-component-dev` | 320 | 608 | Components: YAML models, generated API, implementation patterns |
-| `adamant-testing` | 351 | 1366 | Test harness, History API, assertions, coverage guide |
+| `adamant-component-dev` | 320 | 960 | Components: YAML models, generated API, implementation patterns, template analysis |
+| `adamant-testing` | 351 | 1769 | Test harness, History API, assertions, coverage guide, advanced patterns |
 | `adamant-framework-components` | 289 | -- | Catalog of all 55 built-in components |
 | `adamant-assembly-dev` | 346 | 749 | Assemblies: scheduling, routing, ID assignment, runtime |
 | `adamant-type-system` | 354 | 207 | YAML type definitions, format codes, Ada type hierarchy |
@@ -24,7 +24,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `high-assurance-design` | 206 | 98 | Design-by-invariant, non-goals, formal verification |
 | `knowledge-acquisition` | 212 | 81 | Systematic codebase study with sub-agents |
 
-**Totals:** ~3887 SKILL.md lines + ~4677 reference lines = ~8564 lines
+**Totals:** ~3888 SKILL.md lines + ~5509 reference lines = ~9397 lines
 
 ## Key Principles
 

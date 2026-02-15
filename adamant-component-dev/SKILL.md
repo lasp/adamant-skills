@@ -279,6 +279,7 @@ Do NOT invent fields. Key types:
 
 1. [ ] Spec uses `with private` / private full record pattern
 2. [ ] `Init` override present IFF YAML has `init:` section
+3. [ ] `Set_Up` override (optional) -- called AFTER `Start_Components` in assembly. Use for post-init registration (e.g., command registration). Defined as `is null` in Core_Instance.
 3. [ ] `Invalid_Command` (procedure, 4 params) present IFF `commands.yaml` exists
 4. [ ] `Command_T_Recv_Sync` present IFF `commands.yaml` exists
 5. [ ] ALL `*_Send_Dropped` handlers overridden for every send connector
