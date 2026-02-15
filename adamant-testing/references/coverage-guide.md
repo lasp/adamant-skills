@@ -24,19 +24,33 @@ Coverage compiles with `-fprofile-arcs -ftest-coverage`, runs the test binary, t
 
 ## Reading Coverage Reports
 
-The coverage.txt file lists ALL source files compiled into the test binary. Most are framework code. Focus on:
+The `build/coverage/coverage.txt` file lists ALL source files compiled into the test binary with line counts and missing line numbers. Example:
 
 ```
-component-component_name-implementation.adb    <-- YOUR code (this is what matters)
-component-component_name-implementation.ads    <-- spec (usually 100%)
+File                                       Lines     Exec  Cover   Missing
+------------------------------------------------------------------------------
+component-heater_controller-implementation.adb
+                                              73       71    97%   119-120
+component-heater_controller-implementation.ads
+                                               6        3    50%   60-62
+build/src/component-heater_controller.adb
+                                             162      116    71%   32,34-35,...
 ```
 
-Ignore these (framework/generated, inflates denominator):
-- `build/src/component-*_reciprocal.*` -- generated tester reciprocal
-- `build/src/*_tests.*` -- generated test framework
-- `build/obj/*/b__test.adb` -- binder generated
+**Focus on these two files** (your handwritten code):
+- `component-*-implementation.adb` -- the implementation body (primary coverage target)
+- `component-*-implementation.ads` -- the implementation spec
+
+**The `Missing` column is the key output.** It tells you exactly which lines are uncovered. Map them to source with `cat -n component-*-implementation.adb` (from the component dir, not test/).
+
+**`is null` handlers in .ads inflate the miss count.** Lines like `overriding procedure Event_T_Send_Dropped (...) is null;` get counted by gcov but have no executable code. A spec showing 50% due to `is null` declarations is actually fine -- there is nothing to test.
+
+**Ignore everything else** in the report (framework/generated code):
+- `build/src/component-*.adb` -- generated base class
+- `build/src/*_commands.adb`, `*_events.adb`, `*_data_products.adb` -- generated suites
+- `test/build/src/*_reciprocal.*` -- generated tester
+- `test/build/obj/*/b__test.adb` -- binder generated
 - `test/component-*-tester.*` -- tester template
-- Framework type packages (quaternion.adb, packed_u32.adb, etc.)
 
 ### gcovr Line Wrapping
 

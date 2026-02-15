@@ -342,16 +342,62 @@ Some components log events or increment counters in their Send_Dropped handlers.
 See [references/coverage-guide.md](references/coverage-guide.md) for full guide.
 
 ```bash
+# From the component's test/ directory:
 redo clean && redo coverage               # MUST clean first -- never rm -rf build
-# Focus on component-*-implementation.adb (YOUR code)
-# Ignore framework/generated files in coverage.txt
 ```
 
-Project-level coverage script: `tools/impl_coverage.sh` (filters to implementation .adb files only). Run from the project root.
+### Reading coverage.txt
 
-**No structural ceiling.** All paths are coverable with proper testing:
+Coverage output is at `build/coverage/coverage.txt`. It lists ALL compiled files with line counts and missing line numbers. Example:
+
+```
+File                                       Lines     Exec  Cover   Missing
+------------------------------------------------------------------------------
+component-heater_controller-implementation.adb
+                                              73       71    97%   119-120
+component-heater_controller-implementation.ads
+                                               6        3    50%   60-62
+build/src/component-heater_controller.adb
+                                             162      116    71%   32,34-35,...
+```
+
+**Focus on these two files only** (YOUR handwritten code):
+- `component-*-implementation.adb` -- the implementation body (main coverage target)
+- `component-*-implementation.ads` -- the implementation spec
+
+**Ignore everything else** in the report:
+- `build/src/component-*.adb` -- generated base class (framework code)
+- `build/src/*_commands.adb`, `*_events.adb`, `*_data_products.adb` -- generated suites
+- `test/build/src/*_reciprocal.*` -- generated tester
+- `test/build/obj/*/b__test.adb` -- binder generated
+- `test/component-*-tester.*` -- tester template
+- `test/*_tests-implementation.*` -- your test code (100% expected)
+
+### Using Missing Lines to Guide Tests
+
+The `Missing` column shows exact line numbers. Map them to source:
+
+```bash
+cat -n component-*-implementation.adb    # From the component directory (NOT test/)
+```
+
+Cross-reference missing lines with the source to identify the uncovered pattern:
+- **Untested case branch** (e.g., lines 119-120 = `when Forced_On =>`) -- add test exercising that mode
+- **Untested if/elsif/else** -- add test with input triggering the uncovered branch
+- **`is null` Send_Dropped in .ads** (e.g., lines 60-62) -- these are `is null;` declarations that gcov counts as lines but have no executable code. **Ignore these** -- they cannot be "covered" and do not affect implementation coverage
+
+### Project-Level Coverage Script
+
+`tools/impl_coverage.sh` filters coverage.txt to show only implementation .adb files. Run from project root:
+
+```bash
+bash tools/impl_coverage.sh                    # All components
+bash tools/impl_coverage.sh component_name     # Specific component
+```
+
+**No structural ceiling.** All executable paths are coverable with proper testing:
 - **Invalid_Command:** Corrupt `Cmd.Header.Arg_Buffer_Length := 22;` on a valid command
-- **Send_Dropped:** Skip connector `Attach_*` or use `Expect_*_Dropped` flag
+- **Send_Dropped (with logic):** Re-init without Connect (see Send_Dropped Testing above)
 - **Recv_Async_Dropped:** Overflow queue (small `Init_Base Queue_Size`, send N+1)
 
 | Component Type | Target |
@@ -363,18 +409,20 @@ Project-level coverage script: `tools/impl_coverage.sh` (filters to implementati
 
 ### Coverage Improvement Workflow
 
-1. Run `redo clean && redo coverage`
-2. Read `build/coverage/coverage.txt`, find `component-*-implementation.adb` section
-3. Map missing line numbers to source: `cat -n component-*-implementation.adb`
-4. Identify pattern: untested branch, unexercised connector, data dependency path
-5. Add test to `tests.yaml` → `redo templates` → copy spec → implement → verify
+1. Run `redo clean && redo coverage` (from test/ dir)
+2. Read `build/coverage/coverage.txt`
+3. Find `component-*-implementation.adb` entry, note missing lines
+4. Map missing lines to source: `cat -n component-*-implementation.adb` (from component dir)
+5. Identify pattern: untested branch, unexercised connector, data dependency path
+6. Add test to `tests.yaml` -> `redo templates` -> copy ONLY the `*_tests-implementation.ads` -> implement in `.adb` -> `redo clean && redo coverage`
 
 ### Common Uncovered Patterns
 
-- **Untested connector:** Add test that sends via that connector
-- **Untested branch:** Add test with input triggering the uncovered if/elsif/else
+- **Untested case/if branch:** Add test with input triggering the uncovered branch
+- **Untested connector handler:** Add test that sends via that connector
 - **Active async path at 0%:** Must send AND `Dispatch_All` -- just sending queues without processing
 - **Data dependency path at 0%:** Override tester's `*_T_Service` to return success with test data
+- **`is null` in .ads at <100%:** Ignore -- gcov artifacts, not executable code
 
 ## References
 
