@@ -214,8 +214,8 @@ Output: total events, rate, unique types, per-component breakdown.
 
 ```bash
 # In Docker:
-source /home/user/adamant/env/activate /home/user/adamant_demo
-cd /home/user/adamant_demo/src/assembly/station_assembly/main
+source /home/user/adamant/env/activate /home/user/<project_dir>
+cd /home/user/<project_dir>/src/assembly/station_assembly/main
 
 # Build
 redo build/bin/Linux/main.elf
@@ -230,6 +230,6 @@ tail -f events.log
 # Ground tool monitoring (if CCSDS socket configured)
 cd /home/user/adamant/gnd/bin
 python socket_event_decoder.py 127.0.0.1 2003 1 \
-    /home/user/adamant_demo/src/assembly/station_assembly/main/build/src/station_assembly_events.py \
+    /home/user/<project_dir>/src/assembly/station_assembly/main/build/src/station_assembly_events.py \
     events.log
 ```

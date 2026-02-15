@@ -7,7 +7,7 @@
 #   bash check_build_paths.sh <project_root>
 #
 # Example:
-#   bash check_build_paths.sh /home/user/adamant_demo
+#   bash check_build_paths.sh /home/user/<project_dir>
 
 PROJECT_ROOT="$1"
 if [ -z "$PROJECT_ROOT" ] || [ ! -d "$PROJECT_ROOT" ]; then
