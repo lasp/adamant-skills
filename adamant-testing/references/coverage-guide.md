@@ -4,15 +4,9 @@ Systematic approach to measuring and improving component implementation coverage
 
 ## Running Coverage
 
-**WARNING:** Always use `redo clean` before `redo coverage`. Never use `rm -rf build` or bulk-delete build directories -- this corrupts redo's dependency tracking. See the build system skill for recovery steps.
-
 ```bash
 # From component test/ directory:
 cd src/components/component_name/test
-
-# CRITICAL: Clean build artifacts first. Stale .gcda from non-coverage
-# builds corrupt results (shows wrong coverage numbers).
-redo clean
 redo coverage
 
 # Output:
@@ -216,7 +210,7 @@ end Critical_Event_T_Recv_Sync;
 
 1. **Run coverage with clean build:**
    ```bash
-   redo clean && redo coverage
+   redo coverage
    ```
 
 2. **Read coverage.txt, find implementation .adb section**
@@ -245,7 +239,7 @@ end Critical_Event_T_Recv_Sync;
 
 8. **Verify:**
    ```bash
-   redo clean && redo coverage
+   redo coverage
    ```
 
 ## gcovr Known Issues

@@ -34,7 +34,7 @@ cp build/template/component-*-tester.ads build/template/component-*-tester.adb .
 cp build/template/*_tests-implementation.ads .   # ONLY spec, NOT .adb (overwrites tests!)
 cp build/template/test.adb .
 redo test                                   # Build and run
-redo clean && redo coverage                  # Coverage (MUST clean first)
+redo coverage                                # Coverage analysis via gcov
 ```
 
 **Adding tests:** Add to tests.yaml → `redo templates` → copy ONLY the `*_tests-implementation.ads` → add implementation in `.adb` → `redo test`.
@@ -343,7 +343,7 @@ See [references/coverage-guide.md](references/coverage-guide.md) for full guide.
 
 ```bash
 # From the component's test/ directory:
-redo clean && redo coverage               # MUST clean first -- never rm -rf build
+redo coverage
 ```
 
 ### Reading coverage.txt
@@ -409,12 +409,12 @@ bash tools/impl_coverage.sh component_name     # Specific component
 
 ### Coverage Improvement Workflow
 
-1. Run `redo clean && redo coverage` (from test/ dir)
+1. Run `redo coverage` (from test/ dir)
 2. Read `build/coverage/coverage.txt`
 3. Find `component-*-implementation.adb` entry, note missing lines
 4. Map missing lines to source: `cat -n component-*-implementation.adb` (from component dir)
 5. Identify pattern: untested branch, unexercised connector, data dependency path
-6. Add test to `tests.yaml` -> `redo templates` -> copy ONLY the `*_tests-implementation.ads` -> implement in `.adb` -> `redo clean && redo coverage`
+6. Add test to `tests.yaml` -> `redo templates` -> copy ONLY the `*_tests-implementation.ads` -> implement in `.adb` -> `redo coverage`
 
 ### Common Uncovered Patterns
 

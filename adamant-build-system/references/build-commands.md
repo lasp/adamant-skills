@@ -59,7 +59,7 @@ redo test_all
 ## Coverage
 
 ```bash
-# IMPORTANT: Must clean first! Coverage needs fresh build with gcov flags
+# Coverage analysis via gcov
 cd src/components/my_component/test
 redo clean
 redo coverage

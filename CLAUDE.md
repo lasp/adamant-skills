@@ -52,5 +52,5 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 
 - **`redo clean` is always safe** on any directory (framework or project). If redo state corrupts (STORAGE_ERROR), run `redo clean_all` on BOTH adamant and project dirs.
 - **NEVER manually delete build directories** (`rm -rf build`, `rm -rf */build`, etc.). Use `redo clean` or `redo clean_all`. Bulk-deleting build dirs corrupts redo state and may require container recreation to recover.
-- **`redo coverage` requires `redo clean` first** (stale .gcda contamination).
+- **`redo coverage`** runs from the component's `test/` directory. No `redo clean` needed.
 - **`source project/env/activate`** (not `adamant/env/activate`) -- sets BUILD_ROOTS correctly.

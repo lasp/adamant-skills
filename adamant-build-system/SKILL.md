@@ -84,7 +84,7 @@ redo targets          # Show available build targets and their descriptions
 ```bash
 redo test             # Run unit test (from test/ dir, needs test.adb → test.elf)
 redo test_all         # Recursive: run all tests in subdirectories
-redo coverage         # Coverage analysis via gcov (redo clean first!)
+redo coverage         # Coverage analysis via gcov
 redo coverage_all     # Recursive coverage for all subdirectories
 redo style            # Style check: Ada warnings + flake8 + yamllint + codespell
 redo style_all        # Recursive style check
