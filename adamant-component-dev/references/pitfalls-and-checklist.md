@@ -11,6 +11,12 @@ Missing produces "type must be declared abstract" error. It's a PROCEDURE (not f
 ### Send_Dropped handlers
 EVERY send connector generates a `*_Send_Dropped` procedure that MUST be overridden (even as `is null`). Forgetting one produces: "type must be declared abstract or X overridden".
 
+### Active component testing
+Active components have async receive connectors with queues. In tests, `T.Packet_T_Send(...)` enqueues but does NOT process. You MUST call `T.Dispatch_All` to process queued messages. Without it, async handlers never execute and coverage is 0%. Passive components process synchronously -- no `Dispatch_All` needed (and calling it is a compile error).
+
+### gcov limitation with active components
+Some active components produce 0% coverage even with passing tests due to GNAT Ada task cleanup not flushing gcov data. The .gcda files are never written because the Ada task's finalization prevents clean process exit. This is a known GNAT/gcov limitation -- not a test quality issue.
+
 ### .all_path file
 0 bytes marker file. NO content inside. Helper: `bash scripts/mk_all_path.sh /path/to/component/dir`.
 
