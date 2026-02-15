@@ -61,9 +61,9 @@ attitude_controller                     23     23   100%
 event_dispatcher                        57     36    63%  42,49-50,...
 ```
 
-## Structural Coverage Ceiling
+## Coverage Patterns for Full Path Coverage
 
-Most components have 10-20% structurally uncoverable code. These patterns create a practical ceiling of ~80-85%:
+These patterns require tester modifications but are fully coverable (no structural ceiling):
 
 ### Send_Dropped Handlers
 ```ada
