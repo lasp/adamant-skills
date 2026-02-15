@@ -120,3 +120,87 @@ For time-bounded projects:
 3. Set a hard deadline; do not move it
 4. Phase the work (prototype -> extraction -> hardening)
 5. Ship something real, even if small
+
+## Security Architecture
+
+### Attack Surface Minimization
+
+- Separate read-path from write-path into distinct binaries
+- Read-path binary has no dependency on the high-integrity core (minimal TCB)
+- Write-path carries the validation + crypto pipeline
+- Each binary has independent health checks
+
+### Input Validation Pipeline
+
+All untrusted input passes through a validation pipeline that produces typed evidence:
+
+```
+Raw_Input -> Validate -> Valid_Input (new type, only constructable via validation)
+                |
+                -> Reject (with structured error, never expose internals)
+```
+
+The `Valid_Input` type cannot be forged -- its constructor is the validation function. Downstream code receives only validated types. This is "parse, don't validate" in practice.
+
+### Rate Limiting and Abuse Prevention
+
+Defense in depth, not reliance on a single mechanism:
+
+1. Per-IP token bucket (STM-based for lock-free concurrent access)
+2. Optional proof-of-work (SHA256 leading zero bits) as computational cost barrier
+3. Structured logging for forensic analysis (not analytics)
+4. No user accounts, no sessions, no cookies -- each reduces attack surface
+
+### Cryptographic Discipline
+
+- Use verified crypto libraries (e.g., SPARKNaCl with proofs, not hand-rolled)
+- Key material passed at startup via environment, never stored in code or config files
+- HMAC for integrity/authentication; hash for content-addressed identifiers
+- Constant-time comparison for all secret-dependent operations
+
+## Dependency Strategy
+
+### Minimal Trusted Dependencies
+
+Each dependency is an attack vector and a maintenance burden.
+
+1. Prefer formal/proven libraries over popular ones
+2. Pin versions exactly; audit updates before accepting
+3. Separate build-time tools from runtime dependencies
+4. Vendor or fork critical dependencies if upstream is unreliable
+
+### License Hygiene
+
+- Track every dependency's license in a dedicated LICENSES/ directory
+- SPDX identifiers in file headers
+- Third-party attribution maintained as part of the build, not an afterthought
+- Choose project license deliberately (AGPL for network services, MIT/BSD for libraries)
+
+## Assurance Models
+
+### DO-278A / DO-178C Alignment
+
+For projects that reference (but don't certify against) aerospace standards:
+
+- **Design Assurance Level (DAL)** determines rigor: A (catastrophic) through E (no effect)
+- Map project components to DALs based on failure consequences
+- Higher DAL = more coverage, more formal methods, more independent review
+- Even without certification, the framework provides disciplined requirements traceability
+
+### Assurance Case Structure
+
+Document why the system is trustworthy, not just how it works:
+
+1. **Claim**: what property holds (e.g., "all stored URLs are canonical")
+2. **Evidence**: how it's demonstrated (formal proof, property test, code review)
+3. **Argument**: why the evidence supports the claim (proof chain, test coverage)
+4. **Assumptions**: what must be true for the argument to hold (environment, threat model)
+
+## Common Anti-Patterns
+
+1. **"We'll harden later"** -- security/correctness is architectural, not a final pass
+2. **Scope creep via "small additions"** -- each addition that conflicts with non-goals is rejected
+3. **Testing only the happy path** -- generators for INVALID inputs (malformed URLs, private IPs, credential injection) find real bugs
+4. **Assuming thread safety** -- prove it or enforce single-threaded execution at the boundary
+5. **Configuration as feature** -- every config option is an untested code path; prefer opinionated defaults
+6. **Mixing trust levels** -- high-integrity code importing low-integrity libraries defeats the purpose
