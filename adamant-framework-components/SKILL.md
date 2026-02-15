@@ -293,6 +293,9 @@ Component names must be unique across the entire build path (framework + project
 
 **Prevention**: Prefix project components with a project-specific name (e.g., `myproject_attitude_estimator`, `myproject_pid_controller`).
 
+## References
+- [references/component-audit.md](references/component-audit.md) -- Framework component accuracy audit (100% verified)
+
 ## Related Skills
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)
 - **Assembly**: [adamant-assembly-dev](../adamant-assembly-dev/SKILL.md)

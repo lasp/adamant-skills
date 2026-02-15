@@ -303,6 +303,12 @@ redo build/bin/Pico/main.elf
 
 More errors and project structure: [references/build-commands.md](references/build-commands.md)
 
+## References
+- [references/build-commands.md](references/build-commands.md) -- All redo targets and build commands
+- [references/build-system-audit.md](references/build-system-audit.md) -- Undocumented targets and audit findings
+- [references/internals-and-generation.md](references/internals-and-generation.md) -- Code generation internals, template database, generator architecture
+- [references/spark-prove-guide.md](references/spark-prove-guide.md) -- Complete SPARK prove setup, configuration, and contract patterns
+
 ## Related Skills
 
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)

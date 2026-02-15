@@ -357,6 +357,12 @@ redo build/bin/Linux/main.elf
 
 Run `redo style` on the assembly directory and `main/` before finalizing. Assembly YAML `with:` sections ARE correct (unlike component YAML where it's preamble-only). See [adamant-style](../adamant-style/SKILL.md).
 
+## References
+- [references/assembly-yaml-examples.md](references/assembly-yaml-examples.md) -- Full YAML examples for assemblies
+- [references/cosmos-integration.md](references/cosmos-integration.md) -- Assembly-level COSMOS wiring patterns
+- [references/production-patterns.md](references/production-patterns.md) -- Production assembly patterns and best practices
+- [references/runtime-monitoring.md](references/runtime-monitoring.md) -- Running, monitoring, and debugging assemblies
+
 ## Related Skills
 
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)

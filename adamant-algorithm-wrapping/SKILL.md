@@ -324,3 +324,9 @@ See [adamant-style](../adamant-style/SKILL.md) for full style rules.
 | `stepper_motor_controller` | StepperMotor | Yes | commands → step outputs |
 
 See [references/real-examples.md](references/real-examples.md) for full annotated code from these components.
+
+## References
+- [references/code-templates.md](references/code-templates.md) -- YAML, Ada, and CMake templates for each pipeline stage
+- [references/c-shim-bindings.md](references/c-shim-bindings.md) -- C shim patterns and Ada binding generation details
+- [references/implementation-details.md](references/implementation-details.md) -- Deep implementation patterns and edge cases
+- [references/real-examples.md](references/real-examples.md) -- Annotated code from xmera-components

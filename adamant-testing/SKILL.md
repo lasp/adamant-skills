@@ -343,7 +343,11 @@ redo clean && redo coverage               # MUST clean first
 
 ## References
 
-- **Test corpus**: [references/test-corpus.md](references/test-corpus.md) -- all patterns with real examples
+- [references/test-corpus.md](references/test-corpus.md) -- All test patterns with real code examples
+- [references/adamant-example-patterns.md](references/adamant-example-patterns.md) -- Advanced patterns from adamant_example project
+- [references/common-errors-detail.md](references/common-errors-detail.md) -- Extended error documentation with solutions
+- [references/testing-patterns-detail.md](references/testing-patterns-detail.md) -- Detailed testing pattern analysis
+- [references/coverage-guide.md](references/coverage-guide.md) -- Coverage analysis setup and interpretation
 
 ## Related Skills
 
