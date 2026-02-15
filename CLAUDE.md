@@ -15,7 +15,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-testing` | 356 | 1870 | Test harness, History API, assertions, coverage, advanced patterns |
 | `adamant-framework-components` | 300 | 170 | Catalog of all 55 built-in components + audit |
 | `adamant-assembly-dev` | 371 | 750 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
-| `adamant-type-system` | 354 | 210 | YAML type definitions, format codes, Ada type hierarchy |
+| `adamant-type-system` | 354 | 180 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-style` | 342 | 660 | Ada/YAML/Python style rules enforced by `redo style` |
 | `adamant-algorithm-wrapping` | 334 | 560 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
 | `adamant-build-system` | 316 | 900 | Redo commands, code gen, build paths, SPARK prove |
@@ -25,7 +25,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `high-assurance-design` | 206 | -- | Design-by-invariant, non-goals, formal verification |
 | `knowledge-acquisition` | 212 | -- | Systematic codebase study with sub-agents |
 
-**Totals:** ~4200 SKILL.md lines + ~6500 reference lines = ~10700 lines
+**Totals:** ~3900 SKILL.md lines + ~7000 reference lines = ~10800 lines
 
 ## Key Principles
 
