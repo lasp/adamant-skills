@@ -108,7 +108,7 @@ redo clean_all        # Recursive clean (all subdirectories)
 redo clear_cache      # Clear model cache (SQLite in $ADAMANT_TMP_DIR)
 ```
 
-**NEVER run `redo clean` on the adamant framework directory itself.** This wipes `.redo/` state for all source files. After that, builds fail with "No rule to build" errors on framework source files (e.g., `serializer.adb`). The fix requires recreating the Docker container from scratch. Only clean PROJECT directories.
+**NEVER run `redo clean` on the adamant framework directory itself.** This wipes `.redo/` state for all source files. After that, builds fail with "No rule to build" errors or STORAGE_ERROR. **Fix:** run `redo clean_all` on BOTH the adamant dir AND the project dir, then rebuild. If that fails, re-clone adamant and recreate the Docker container. Only clean PROJECT directories in normal workflow.
 
 ### Inspect
 ```bash
