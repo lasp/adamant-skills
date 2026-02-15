@@ -1004,7 +1004,42 @@ with Tick;
 
 ---
 
-## 19. Anti-Patterns (What NOT to Do)
+## 19. Coverage-Specific Test Patterns
+
+### 19a. Trigger Invalid_Command (covers Invalid_Command handler)
+```ada
+-- Create valid command then corrupt the arg length:
+Cmd : Command.T := T.Commands.Reset_Stats;
+Cmd.Header.Arg_Buffer_Length := 22;
+T.Command_T_Send (Cmd);
+-- For active components, dispatch:
+-- Natural_Assert.Eq (T.Dispatch_All, 1);
+Natural_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get_Count, 1);
+```
+Framework's `Execute_Command` detects length mismatch, calls `Invalid_Command`, sends error response. Works for ANY command -- just corrupt `Arg_Buffer_Length` to any non-matching value.
+
+### 19b. Trigger Send_Dropped (covers Send_Dropped handlers)
+Skip the connector attachment in the tester's `Connect` procedure:
+```ada
+-- In tester .adb, comment out one Attach:
+-- Self.Component_Instance.Attach_Event_T_Send (To_Component => Self'Unchecked_Access, Hook => Self.Event_T_Recv_Sync_Access);
+-- Then trigger the component to send on that connector.
+-- The Send_If_Connected check sees no connection and calls Send_Dropped.
+```
+Alternative: add `Expect_Event_T_Send_Dropped : Boolean := False;` to tester spec and use the framework's connector status mechanism.
+
+### 19c. Trigger Recv_Async_Dropped (covers async dropped handler)
+Overflow the async queue by sending more messages than `Queue_Size` allows:
+```ada
+-- Init with tiny queue:
+T.Init_Base (Queue_Size => T.Component_Instance.Get_Max_Queue_Element_Size * 2);
+-- Send 3 messages to overflow:
+T.Packet_T_Send (Pkt);
+T.Packet_T_Send (Pkt);
+T.Packet_T_Send (Pkt);  -- This one triggers Recv_Async_Dropped
+```
+
+## 20. Anti-Patterns (What NOT to Do)
 
 1. Do NOT create commands manually -- always use `T.Commands.<Name>` for the component's own commands
 2. Do NOT call `T.Dispatch_All` on passive component testers (compile error)
