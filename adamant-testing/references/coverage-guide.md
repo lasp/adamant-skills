@@ -10,7 +10,7 @@ cd src/components/component_name/test
 
 # CRITICAL: Clean build artifacts first. Stale .gcda from non-coverage
 # builds corrupt results (shows wrong coverage numbers).
-rm -rf build
+redo clean
 redo coverage
 
 # Output:
@@ -161,7 +161,7 @@ end Critical_Event_T_Recv_Sync;
 
 1. **Run coverage with clean build:**
    ```bash
-   rm -rf build && redo coverage
+   redo clean && redo coverage
    ```
 
 2. **Read coverage.txt, find implementation .adb section**
@@ -190,10 +190,10 @@ end Critical_Event_T_Recv_Sync;
 
 8. **Verify:**
    ```bash
-   rm -rf build && redo coverage
+   redo clean && redo coverage
    ```
 
 ## gcovr Known Issues
 
 - **gcovr 8.6 path bug:** Some components get `SanityCheckError: Output file ... doesn't exist`. The gcov output path is mangled. No workaround other than upgrading gcovr.
-- **Active component 0% coverage:** Some active components show 0% on ALL files including test code. This means the coverage-instrumented binary didn't execute properly. Clean rebuild usually fixes it.
+- **Active component 0% coverage:** Some active components (telemetry_collector, watchdog_kicker) show 0% on ALL files including test code despite all tests passing. This is a GNAT/gcov limitation: Ada tasks in active components may prevent clean process exit, so gcov data (.gcda files) is never flushed to disk. The .gcno (notes) files exist but no .gcda (data) files are produced. Running the binary manually (not via `redo coverage`) sometimes produces .gcda files, but with stamp mismatches. No workaround exists for the redo pipeline -- this is a structural limitation.
