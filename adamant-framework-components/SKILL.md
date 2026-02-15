@@ -291,4 +291,4 @@ Component names must be unique across the entire build path (framework + project
 
 `attitude_estimator`, `command_sequencer`, `event_filter`, `fault_correction`, `limiter`, `logger`, `mode_manager`, `orbit_propagator`, `parameters`, `pid_controller`, `power_manager`, `splitter`, `telemetry_formatter`, `telemetry_manager`
 
-**Prevention**: Prefix project components with a project-specific name (e.g., `station_attitude_estimator`, `station_pid_controller`).
+**Prevention**: Prefix project components with a project-specific name (e.g., `myproject_attitude_estimator`, `myproject_pid_controller`).

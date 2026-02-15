@@ -230,23 +230,23 @@ openc3-cosmos-assembly-name/
 ### plugin.txt Configuration
 
 ```ruby
-Variable station_assembly_target_name Station_Assembly
+Variable assembly_target_name My_Assembly
 Variable crc_parameter_name CRC
 Variable checksum_parameter_name Checksum
 Variable port_w 2003
 Variable port_r 2003
 
-Target Station_Assembly <%= station_assembly_target_name %>
+Target My_Assembly <%= assembly_target_name %>
 # TCP server interface — COSMOS listens, Adamant connects as client
-Interface <%= station_assembly_target_name %>_INT tcpip_server_interface.rb <%= port_w %> <%= port_r %> 10.0 nil Length 32 16 7
-  Map_Target <%= station_assembly_target_name %>
+Interface <%= assembly_target_name %>_INT tcpip_server_interface.rb <%= port_w %> <%= port_r %> 10.0 nil Length 32 16 7
+  Map_Target <%= assembly_target_name %>
   # TCP: crc_protocol.rb (no sync word). Serial: crc_sync_protocol.rb (strips sync word)
   Protocol Read crc_protocol.rb <%= crc_parameter_name %> false "ERROR" -16 16
   Protocol Write cmd_checksum.rb <%= checksum_parameter_name %>
 
 # Optional router for forwarding to external tools
-Router <%= station_assembly_target_name %>_Router tcpip_server_interface.rb 7779 7779 10.0 nil Length 32 16 7
-  Map_Target <%= station_assembly_target_name %>
+Router <%= assembly_target_name %>_Router tcpip_server_interface.rb 7779 7779 10.0 nil Length 32 16 7
+  Map_Target <%= assembly_target_name %>
 ```
 
 **Interface parameters:** `tcpip_server_interface.rb <write_port> <read_port> <timeout> <protocol> Length <bit_offset> <bit_size> <length_value_offset>`

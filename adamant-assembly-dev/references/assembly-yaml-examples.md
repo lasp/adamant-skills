@@ -92,7 +92,7 @@ connections:
 
 ## Multi-Rate with Tick_Divider
 
-From `station_assembly` — 2 rate groups from 5Hz base:
+From an example assembly — 2 rate groups from 5Hz base:
 
 ```yaml
 preamble: |

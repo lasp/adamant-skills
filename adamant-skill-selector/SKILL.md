@@ -139,6 +139,19 @@ These patterns cause compilation errors if violated:
 - **Data dependencies**: require `request` connector (`Data_Product_Fetch.T`), NOT `get`
 - **Parameters**: require `modify` connector, NOT `recv_sync`
 
+## Project-Specific Skills
+
+Generic Adamant skills must contain NO project-specific content (no project names, component names, assembly names, or paths). If a project needs specialized guidance beyond generic Adamant patterns, create a **project-specific skill** in the project's own repo (e.g., `<project>/skills/` or `<project>/docs/agent-skill.md`).
+
+Examples of project-specific content:
+- Component naming conventions (e.g., `station_` prefix)
+- Assembly topology and wiring specifics
+- Custom type libraries unique to the project
+- Build/deployment recipes specific to the project's Docker setup
+- COSMOS plugin configuration for the project's telemetry
+
+Generic Adamant skills provide the *how*. Project skills provide the *what* and *where*.
+
 ## When NOT to Use This Selector
 
 - **General Ada/SPARK questions**: These skills are Adamant-specific. Generic Ada knowledge is already in the model.

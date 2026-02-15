@@ -19,7 +19,7 @@ assembly_name/
 └── views/                                 # Focused diagrams (optional)
 ```
 
-**CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main procedure file name must be unique across the entire build path. If the project shares build roots with another project that has `main.adb`, use a unique name like `station_main.adb` / `procedure Station_Main`. The build system discovers source files by filename — collisions are fatal.
+**CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main procedure file name must be unique across the entire build path. If the project shares build roots with another project that has `main.adb`, use a unique name like `project_main.adb` / `procedure Project_Main`. The build system discovers source files by filename — collisions are fatal.
 
 ## Assembly YAML Field-by-Field Reference
 
@@ -229,7 +229,7 @@ Build: `redo build/svg/assembly.svg` (full) or `redo views/build/svg/<view_name>
 
 ## Multi-Assembly Projects
 
-A project can have multiple independent assemblies sharing the same component library. Example: `adamant_bot_station` has `station_assembly` (full CCSDS ground system) and `mini_assembly` (minimal standalone).
+A project can have multiple independent assemblies sharing the same component library. Example: a project might have `primary_assembly` (full CCSDS ground system) and `mini_assembly` (minimal standalone).
 
 ### How They Coexist
 
@@ -242,7 +242,7 @@ A project can have multiple independent assemblies sharing the same component li
 ### Main Procedure Naming
 
 If both assemblies have `main/main.adb`, filename collision occurs. Solutions:
-1. Use unique names: `station_main.adb` with `procedure Station_Main`
+1. Use unique names: `project_main.adb` with `procedure Project_Main`
 2. Keep only one `main.adb` and exclude the other from build path
 
 ### Subassemblies

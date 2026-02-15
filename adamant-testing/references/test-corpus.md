@@ -1,6 +1,6 @@
 # Adamant Test Pattern Corpus
 
-Comprehensive reference of test patterns extracted from bot_station components.
+Comprehensive reference of test patterns extracted from project components.
 Each pattern shows correct code from real components with explanations of why.
 
 ---
@@ -32,7 +32,7 @@ begin
 end Set_Up_Test;
 ```
 
-Source: uptime_counter, station_mode_manager, heartbeat_monitor. Most
+Source: uptime_counter, mode_manager, heartbeat_monitor. Most
 components have Set_Up even without init params (registers commands, etc.).
 
 ### 1c. Passive component with init params
@@ -111,7 +111,7 @@ Also set initial data dependency values:
 Self.Tester.Setpoint := (Value => 0.0);
 Self.Tester.Process_Value := (Value => 0.0);
 ```
-Source: station_pid_controller.
+Source: pid_controller.
 
 ### 1h. Deferred init (per-test initialization)
 
@@ -246,7 +246,7 @@ Natural_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get_Count, 1);
 Natural_Assert.Eq (T.Gains_Updated_History.Get_Count, 1);
 ```
 
-Source: station_pid_controller. Argument is a record aggregate matching
+Source: pid_controller. Argument is a record aggregate matching
 the command's argument type from the commands YAML.
 
 ### 4c. Command with packed type argument
@@ -288,7 +288,7 @@ T.Command_T_Send (T.Commands.Enter_Science_Mode);
 Natural_Assert.Ge (T.Mode_Transition_Success_History.Get_Count, 2);
 ```
 
-Source: station_mode_manager. History accumulates -- use cumulative indices.
+Source: mode_manager. History accumulates -- use cumulative indices.
 
 ### 4g. Dual command connectors (async + sync)
 
@@ -313,7 +313,7 @@ T.Command_T_Send (T.Commands.Enter_Maneuver_Mode);
 Natural_Assert.Ge (T.Mode_Transition_Rejected_History.Get_Count, 2);
 ```
 
-Source: station_mode_manager. Test both valid and invalid transitions to
+Source: mode_manager. Test both valid and invalid transitions to
 cover the state machine's rejection paths.
 
 ### 4i. Invalid command (wrong arg length)
@@ -343,7 +343,7 @@ Status := T.Update_Parameters;
 pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
 ```
 
-Source: station_pid_controller. All three steps required. Declare Status as
+Source: pid_controller. All three steps required. Declare Status as
 `Parameter_Enums.Parameter_Update_Status.E`. Requires:
 ```ada
 with Parameter_Enums; use type Parameter_Enums.Parameter_Update_Status.E;
@@ -374,7 +374,7 @@ T.Tick_T_Send (The_Tick);
 Packed_F32_Assert.Eq (T.Output_History.Get (1), (Value => 5.0));
 ```
 
-Source: station_pid_controller.
+Source: pid_controller.
 
 ---
 
@@ -409,7 +409,7 @@ T.Tick_T_Send (The_Tick);
 Packed_F32_Assert.Eq (T.Output_History.Get (1), (Value => 3.0));
 ```
 
-Source: station_pid_controller. Set all dependency fields before ticking.
+Source: pid_controller. Set all dependency fields before ticking.
 
 ### 6c. Simulating fetch failure
 
@@ -453,7 +453,7 @@ Natural_Assert.Eq (T.Output_History.Get_Count, 1);
 Packed_F32_Assert.Eq (T.Output_History.Get (1), (Value => 3.0));
 ```
 
-Source: station_pid_controller. Typed histories are named `{dp_name}_History`.
+Source: pid_controller. Typed histories are named `{dp_name}_History`.
 Values are 1-indexed. Use the matching assertion package for the DP type.
 
 ### 7c. Multiple DPs per tick
@@ -508,7 +508,7 @@ without using typed assertions. Useful with AUnit Assert.
 Natural_Assert.Ge (T.Data_Product_T_Recv_Sync_History.Get_Count, 1);
 ```
 
-Source: health_aggregator, station_mode_manager. When exact count depends
+Source: health_aggregator, mode_manager. When exact count depends
 on framework internals (initial DPs, registration events), use Ge instead
 of Eq.
 
@@ -560,7 +560,7 @@ Natural_Assert.Eq (T.Output_Saturated_History.Get_Count, 0);
 Natural_Assert.Eq (T.Event_T_Recv_Sync_History.Get_Count, 0);
 ```
 
-Source: station_pid_controller, heartbeat_monitor. Explicitly verify that
+Source: pid_controller, heartbeat_monitor. Explicitly verify that
 error/warning events did NOT fire in nominal paths.
 
 ---
@@ -627,7 +627,7 @@ T.Integral_History.Clear;
 T.Error_History.Clear;
 ```
 
-Source: station_pid_controller. Clear both raw AND typed histories when
+Source: pid_controller. Clear both raw AND typed histories when
 starting a new test phase. Raw clear does NOT clear typed.
 
 ### 10b. Periodic clear to avoid depth overflow (100 max)
@@ -754,7 +754,7 @@ The_Tick : constant Tick.T := (Time => (0, 0), Count => 1);
 The_Tick : constant Tick.T := ((0, 0), 1);
 ```
 
-Source: station_pid_controller, command_queue. Better when reused.
+Source: pid_controller, command_queue. Better when reused.
 Requires `with Tick;`.
 
 ### 13c. Tick with matching data dependency time
@@ -853,7 +853,7 @@ T.Command_T_Send (T.Commands.Enter_Science_Mode);
 Natural_Assert.Ge (T.Mode_Transition_Rejected_History.Get_Count, 1);
 ```
 
-Source: station_mode_manager. Test all valid transitions AND all invalid
+Source: mode_manager. Test all valid transitions AND all invalid
 ones to cover the state machine completely.
 
 ---
@@ -906,7 +906,7 @@ Packed_F32_Assert.Eq (T.Output_History.Get (1), (Value => 3.0));
 Packed_Byte_Assert.Eq (T.Heartbeat_State_History.Get (1), (Value => 0));
 ```
 
-Source: uptime_counter, station_pid_controller, heartbeat_monitor.
+Source: uptime_counter, pid_controller, heartbeat_monitor.
 Type-safe, clear error messages.
 
 ### 17b. AUnit Assert (acceptable alternative)
