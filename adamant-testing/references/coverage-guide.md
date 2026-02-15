@@ -65,14 +65,19 @@ event_dispatcher                        57     36    63%  42,49-50,...
 
 Most components have 10-20% structurally uncoverable code. These patterns create a practical ceiling of ~80-85%:
 
-### Send_Dropped Handlers (null bodies)
+### Send_Dropped Handlers
 ```ada
 overriding procedure Event_T_Send_Dropped (Self : in out Instance; Arg : in Event.T) is
 begin
-   null;  -- Only called when send connector not attached
+   null;  -- Called when send connector not attached or target rejects
 end Event_T_Send_Dropped;
 ```
-These only execute if the send connector is disconnected, which the tester always connects. Cannot be covered without modifying tester wiring.
+These fire when the component tries to send but the connector isn't attached. The tester connects all connectors by default, so they don't fire in normal tests. To cover them:
+
+1. **Skip connector attachment:** Comment out the `Attach_*` line in tester's `Connect` procedure for one test, then send data that triggers the component to send on that connector.
+2. **Use `Expect_*_Dropped` flag:** Some framework testers add a boolean flag (e.g., `Expect_Event_T_Send_Dropped`) and override the connector status to simulate rejection. This requires hand-editing the tester spec/body.
+
+The adamant_example components DO test Send_Dropped paths. See `parameter_manager` tests for the pattern.
 
 ### Invalid_Command Handler
 ```ada
@@ -82,7 +87,18 @@ begin
    null;  -- Framework calls this for malformed commands
 end Invalid_Command;
 ```
-Framework's Execute_Command calls this when command argument deserialization fails. Difficult to trigger from tester because `T.Commands.*` always produces valid arguments.
+Triggered when `Execute_Command` detects argument deserialization failure. To cover:
+
+```ada
+-- Create valid command then corrupt it:
+Cmd : Command.T := T.Commands.My_Command ((Value => 42));
+Cmd.Header.Arg_Buffer_Length := 22;  -- Wrong length triggers Invalid_Command
+T.Command_T_Send (Cmd);
+-- Framework calls Invalid_Command, then sends Length_Error response
+Natural_Assert.Eq (T.Invalid_Command_Received_History.Get_Count, 1);
+```
+
+The adamant_example `parameter_manager` tests demonstrate this pattern.
 
 ### Recv_Async_Dropped Handler
 ```ada
@@ -94,12 +110,16 @@ end Packet_T_Recv_Async_Dropped;
 
 ### Coverage Target by Component Type
 
-| Component Type | Realistic Target | Notes |
+All paths are coverable with proper testing techniques:
+
+| Component Type | Target | Technique for Full Coverage |
 |---|---|---|
-| Simple passive (no commands) | 95-100% | Only Send_Dropped uncovered |
-| Passive with commands | 80-90% | + Invalid_Command |
-| Active (async recv) | 75-85% | + Recv_Async_Dropped |
-| Active with commands | 70-80% | All three structural gaps |
+| Simple passive (no commands) | 95-100% | Skip connector attachment for Send_Dropped |
+| Passive with commands | 90-100% | + Corrupt command for Invalid_Command |
+| Active (async recv) | 90-100% | + Overflow queue for Recv_Async_Dropped |
+| Active with commands | 85-100% | All three techniques combined |
+
+**There is no structural ceiling** -- the adamant_example tests cover Send_Dropped, Invalid_Command, and Recv_Async_Dropped. These require tester modifications but ARE testable.
 
 ## Common Uncovered Patterns and Fixes
 
