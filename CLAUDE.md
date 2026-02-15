@@ -6,41 +6,38 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (11 skills, ~3900+ lines with refs)
+## Skill Inventory (13 skills, ~8700 lines with refs)
 
-| Skill | Lines | Purpose |
-|-------|-------|---------|
-| `adamant-skill-selector` | 146 | **Read first.** Maps tasks to skills. |
-| `adamant-component-dev` | 318+514 ref | Components: YAML models, generated API, implementation patterns |
-| `adamant-testing` | 314+276 ref | Test harness, History API, assertions, coverage |
-| `adamant-framework-components` | 281 | Catalog of all 55 built-in components |
-| `adamant-assembly-dev` | 254+425 ref | Assemblies: scheduling, routing, ID assignment, runtime |
-| `adamant-type-system` | 235+50 ref | YAML type definitions, format codes, Ada type hierarchy |
-| `adamant-style` | 206 | Ada/YAML/Python style rules enforced by `redo style` |
-| `adamant-algorithm-wrapping` | 179+74 ref | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
-| `adamant-build-system` | 151+35 ref | Redo commands, code gen pipeline, build paths |
-| `adamant-cosmos-integration` | 131+179 ref | CCSDS pipeline, COSMOS plugin build/load |
-| `adamant-project-setup` | 120 | New project scaffolding, env/activate, Docker, config |
+| Skill | SKILL.md | Refs | Purpose |
+|-------|----------|------|---------|
+| `adamant-skill-selector` | 146 | -- | **Read first.** Maps tasks to skills. |
+| `adamant-component-dev` | 320 | 601 | Components: YAML models, generated API, implementation patterns |
+| `adamant-testing` | 348 | 1298 | Test harness, History API, assertions, coverage guide |
+| `adamant-framework-components` | 289 | -- | Catalog of all 55 built-in components |
+| `adamant-assembly-dev` | 346 | 749 | Assemblies: scheduling, routing, ID assignment, runtime |
+| `adamant-type-system` | 354 | 207 | YAML type definitions, format codes, Ada type hierarchy |
+| `adamant-style` | 341 | 662 | Ada/YAML/Python style rules enforced by `redo style` |
+| `adamant-algorithm-wrapping` | 326 | 559 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
+| `adamant-build-system` | 305 | 322 | Redo commands, code gen pipeline, build paths |
+| `adamant-cosmos-integration` | 326 | 182 | CCSDS pipeline, COSMOS plugin build/load |
+| `adamant-project-setup` | 363 | 63 | New project scaffolding, env/activate, Docker, config |
+| `high-assurance-design` | 206 | 98 | Design-by-invariant, non-goals, formal verification |
+| `knowledge-acquisition` | 212 | 81 | Systematic codebase study with sub-agents |
+
+**Totals:** 3882 SKILL.md lines + 4822 reference lines = 8704 lines
 
 ## Key Principles
 
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
-- **Compiler-validated.** 30+ rounds of build-test-fix cycles across 100+ demo components + unit tests. Components compile clean on first try when skills are followed.
-- **Selector-driven.** Load 1-2 skills per task, not all 11.
+- **Compiler-validated.** 30+ rounds of build-test-fix cycles across 100+ components + unit tests. Components compile clean on first try when skills are followed.
+- **Selector-driven.** Load 1-2 skills per task, not all 13.
 - **Three-tier prompt strategy:** This file (CLAUDE.md) -> skill-selector -> deep skills. Agents read CLAUDE.md to orient, skill-selector to route, then exactly the needed deep skills.
-- **Style-aware.** The `adamant-style` skill is referenced from all other skills. Load it alongside any code-producing skill.
+- **~300 line SKILL.md target.** Dense patterns in SKILL.md, detailed examples in references/.
+- **No commits/push instructions.** Skills are agent-level -- orchestrators handle git operations.
 
-## Validation Status
+## Validation Results
 
-- Component generation: ~95% first-try compile rate (PID controller with data deps, commands, params, events, faults: 1 error on cold start)
-- Testing: 5/5 first-try for thruster_interface, 6/6 for PID controller
-- Algorithm wrapping: C shim pattern validated; custom vs xmera type handling clarified
-- Assembly integration: 100-component station + mini-assembly both link and run
-- COSMOS integration: Plugin validated and loaded into OpenC3 6.10.4
-- Style: 100-component style campaign -- 20 style patterns + 30 testing patterns documented; 4 full style_all runs (221 dirs each) with progressive fixes; sub-agent validation produced 0 style errors on cold start
-- Best practice: spawn component + tests together for highest test accuracy
-
-## Non-Adamant Skills
-
-- `high-assurance-design` -- Design-by-invariant, non-goals, proof strategies
-- `knowledge-acquisition` -- Systematic codebase study and skill creation methodology
+- **Style:** 221/221 directories, 0 failures (5 full runs)
+- **Coverage:** 79% aggregate (3175/3986 impl lines) across 100 components
+- **Cold-start:** Fresh Sonnet agents produce compiling components with 0-2 errors
+- **Component lifecycle:** New component from YAML to passing tests validated 19+ times
