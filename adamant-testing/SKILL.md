@@ -1,6 +1,6 @@
 ---
 name: adamant-testing
-description: Comprehensive testing patterns and infrastructure for Adamant embedded software framework components
+description: Comprehensive testing patterns and infrastructure for Adamant embedded software framework components. Use when writing unit tests, creating test harnesses, using the History API, testing commands/parameters/faults/data products, or debugging test failures.
 ---
 
 # Adamant Testing Framework
@@ -101,7 +101,7 @@ Status := T.Update_Parameters;
 T.Tick_T_Send (The_Tick);  -- component applies in tick handler
 ```
 
-**ALWAYS use `T.Commands` / `T.Parameters`** — never create local instances (wrong ID bases).
+**ALWAYS use `T.Commands` / `T.Parameters`** -- never create local instances (wrong ID bases).
 For custom packed types on connectors: construct unpacked (.U) then `Pack`: `T.Cmd_T_Send (My_Type.Pack (unpacked_val));`
 
 ## History Verification
@@ -161,12 +161,12 @@ Need `use type Command_Enums.Command_Response_Status.E;` for `=` operator visibi
 
 ## Assertion Hierarchy (Most → Least Preferred)
 
-1. **Packed type assertions:** `Packed_U32_Assert.Eq(...)` — type-safe, clear errors
-2. **Basic_Assertions:** `Natural_Assert.Eq(...)`, `Boolean_Assert.Eq(...)` — counts, flags
-3. **pragma Assert:** `pragma Assert (condition);` — simple checks
-4. **AUnit Assert:** `Assert(condition, "message")` — fallback
+1. **Packed type assertions:** `Packed_U32_Assert.Eq(...)` -- type-safe, clear errors
+2. **Basic_Assertions:** `Natural_Assert.Eq(...)`, `Boolean_Assert.Eq(...)` -- counts, flags
+3. **pragma Assert:** `pragma Assert (condition);` -- simple checks
+4. **AUnit Assert:** `Assert(condition, "message")` -- fallback
 
-Do NOT call `Smart_Assert.Eq(...)` directly — requires generic instantiation first.
+Do NOT call `Smart_Assert.Eq(...)` directly -- requires generic instantiation first.
 
 ```ada
 with Basic_Assertions; use Basic_Assertions;
@@ -225,14 +225,14 @@ use type Command_Enums.Command_Response_Status.E;   -- For = operator
 1. **Wrong stimulus API:** Use `T.*_T_Send` to stimulate, NOT `T.*_T_Recv_Sync` (that's capture)
 2. **History .Get returns packed .T:** Compare with typed assertions like `Packed_U32_Assert.Eq`
 3. **Init params → `Component_Instance.Init`**, NOT `Init_Base` (Init_Base takes only Queue_Size)
-4. **Typed histories don't auto-clear** when raw history is cleared — most common mistake
-5. **History depth is 100** — clear mid-test to avoid overflow (each tick sending 2 DPs = 2 slots)
-6. **`Dispatch_All` is a FUNCTION** returning Natural — must capture: `Count := T.Dispatch_All;`
+4. **Typed histories don't auto-clear** when raw history is cleared -- most common mistake
+5. **History depth is 100** -- clear mid-test to avoid overflow (each tick sending 2 DPs = 2 slots)
+6. **`Dispatch_All` is a FUNCTION** returning Natural -- must capture: `Count := T.Dispatch_All;`
 7. **Copy tester files from `build/template/`**, never hand-write them
 8. **`*_tests-implementation.ads` MUST come from template** (has correct base class)
 9. **History naming:** `{entity_name}_History` (not `_Event_History` or `_Data_Product_History`)
-10. **No `Packed_U8`** — use `Packed_Byte.T`
-11. **Tick.T.Count is Unsigned_32** — use `Interfaces.Unsigned_32(I)` for loop casts
+10. **No `Packed_U8`** -- use `Packed_Byte.T`
+11. **Tick.T.Count is Unsigned_32** -- use `Interfaces.Unsigned_32(I)` for loop casts
 12. **Change detection initial state:** First tick fires extra DP because shadow differs from computed value
 13. **Packet.T structure**: `(Header => (Time => ..., Id => ..., Sequence_Count => ..., Buffer_Length => N), Buffer => [others => 0])`. The payload field is `Buffer`, NOT `Data`. Header has NO Priority field
 14. **Named Event.T send connectors crash** on non-component event IDs. When a component has multiple Event.T send connectors (e.g., `Filtered_Event_T_Send` for forwarding), the generated tester calls `Self.Dispatch_Event(Arg)` on ALL Event.T receive handlers. Forwarded events with arbitrary IDs cause `CONSTRAINT_ERROR: range check failed` in `Dispatch_Event` because the ID doesn't map to a local event enum. **Fix:** Edit the tester .adb to remove the `Dispatch_Event` call from the non-component Event.T handler, keeping only the history push.
@@ -338,7 +338,7 @@ redo clean && redo coverage               # MUST clean first
 
 - **Untested connector:** Add test that sends via that connector
 - **Untested branch:** Add test with input triggering the uncovered if/elsif/else
-- **Active async path at 0%:** Must send AND `Dispatch_All` — just sending queues without processing
+- **Active async path at 0%:** Must send AND `Dispatch_All` -- just sending queues without processing
 - **Data dependency path at 0%:** Override tester's `*_T_Service` to return success with test data
 
 ## References

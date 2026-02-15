@@ -122,10 +122,10 @@ Both work. `mod` types do NOT need `with: [Interfaces]`. `subtype ... is Interfa
 ## Packed Type Bit Layout Rules
 
 - Fields are packed **contiguously** in declaration order, MSB first (big-endian `.T`)
-- Total bit count MUST be byte-aligned (divisible by 8) — pad with reserved fields if needed
+- Total bit count MUST be byte-aligned (divisible by 8) -- pad with reserved fields if needed
 - Generator produces `.T` (big-endian), `.T_Le` (little-endian), and `.U` (unpacked)
 - Nested packed types (e.g., `Packed_F32.T` as a field) inherit the parent's bit position
-- No implicit padding — you must add explicit padding fields for alignment
+- No implicit padding -- you must add explicit padding fields for alignment
 
 ### Padding Example
 ```yaml
@@ -220,7 +220,7 @@ For enums: `My_Enums.Assertion.Status_Type_Assert_Eq (Expected, Actual);`
 - `Short_Float`, `Long_Float`, `Natural`, `Integer` (built-in Ada types)
 - Types defined in the same preamble
 
-**Common mistake**: Adding `with: [Interfaces]` when preamble only uses `mod` types — harmless but generates unused `with Interfaces;` warning.
+**Common mistake**: Adding `with: [Interfaces]` when preamble only uses `mod` types -- harmless but generates unused `with Interfaces;` warning.
 
 ## Variable-Length Fields
 
@@ -246,7 +246,7 @@ Float: `Packed_F32.T`, `Packed_F64.T`
 Special: `Packed_Boolean.T`, `Packed_Natural.T`
 Arrays: `Packed_F32x3.T`, `Packed_F64x3.T`
 
-**No Packed_U8** — use `Packed_Byte.T`.
+**No Packed_U8** -- use `Packed_Byte.T`.
 
 ## Special Field Attributes
 
@@ -259,14 +259,14 @@ byte_image: True         # Print as byte array instead of typed Image
 
 1. Records must be byte-aligned (total bits % 8 == 0)
 2. Only ONE variable-length field, must be LAST
-3. Every primitive field MUST have `format:` — missing = build error
-4. Packed type fields (`.T`) must NOT have `format:` — the size comes from the type
-5. `Natural` needs 31 bits — does NOT fit U16. Use `Unsigned_16` instead
+3. Every primitive field MUST have `format:` -- missing = build error
+4. Packed type fields (`.T`) must NOT have `format:` -- the size comes from the type
+5. `Natural` needs 31 bits -- does NOT fit U16. Use `Unsigned_16` instead
 6. Field names must NOT shadow package names in `with` list or match their own type name
 7. Enum names must differ from parent package name
-8. Do NOT use `Boolean` as packed field — use `mod 2**1`/U1 or enum E1
+8. Do NOT use `Boolean` as packed field -- use `mod 2**1`/U1 or enum E1
 9. Sub-byte fields MUST use `mod` or `subtype range` types defined in preamble
-10. Enum literal `value:` is optional — auto-increments from 0 if omitted
+10. Enum literal `value:` is optional -- auto-increments from 0 if omitted
 
 ## Common Type Errors and Fixes
 
@@ -346,9 +346,9 @@ Each type directory needs its own `.all_path`. File names must be unique across 
 
 ## Style
 
-Type YAML files must start with `---`. Generated Ada files may produce style warnings (e.g., `with Interfaces` unreferenced) — these are framework artifacts. See [adamant-style](../adamant-style/SKILL.md).
+Type YAML files must start with `---`. Generated Ada files may produce style warnings (e.g., `with Interfaces` unreferenced) -- all warnings are fixable. See [adamant-style](../adamant-style/SKILL.md).
 
 ## Related Skills
 
-- **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md) — using types in components
+- **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md) -- using types in components
 - **Style**: [adamant-style](../adamant-style/SKILL.md)

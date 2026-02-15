@@ -647,13 +647,13 @@ redo style
 # 2. Review output
 cat build/style/style.log
 
-# 3. Filter out template artifacts
-grep -v "not referenced in spec" build/style/style.log | \
-grep -v "might be moved to body" | \
-grep -v "unnecessary with of ancestor"
+# 3. ALL warnings are fixable -- fix them all
+# "not referenced in spec" -> move to body
+# "might be moved to body" -> move declaration to body
+# "unnecessary with of ancestor" -> remove the with clause
 
-# 4. Fix remaining warnings
-# 5. Re-run until clean (or only template artifacts remain)
+# 4. Fix all warnings
+# 5. Re-run until clean (zero warnings)
 redo style
 
 # 6. Recursive check from project root

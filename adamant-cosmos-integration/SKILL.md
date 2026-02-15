@@ -1,6 +1,6 @@
 ---
 name: adamant-cosmos-integration
-description: COSMOS (OpenC3) ground system integration for Adamant assemblies -- CCSDS pipeline, plugin generation, and ground operations
+description: COSMOS (OpenC3) ground system integration for Adamant assemblies -- CCSDS pipeline, plugin generation, and ground operations. Use when setting up telemetry/command ground systems, generating COSMOS plugins, or configuring TCP/serial interfaces.
 ---
 
 # Adamant COSMOS (OpenC3) Integration
@@ -34,7 +34,7 @@ Downlink: Components -> Event/Product_Packetizer -> Ccsds_Packetizer -> Socket -
 | Sequence_Count    | 14    | 18     | Incrementing counter                  |
 | Packet_Length      | 16    | 32     | (data bytes + secondary header) - 1  |
 
-**Secondary Header (64 bits) — Telemetry only:**
+**Secondary Header (64 bits) -- Telemetry only:**
 
 | Field       | Bits | Description                       |
 |-------------|------|-----------------------------------|
@@ -72,17 +72,17 @@ Downlink: Components -> Event/Product_Packetizer -> Ccsds_Packetizer -> Socket -
 |-----------|-----------|---------|
 | Ccsds_Socket_Interface | active | TCP client to COSMOS (NOT server) |
 | Ccsds_Command_Depacketizer | passive | CCSDS → Adamant commands (validates size, XOR-8 checksum) |
-| Ccsds_Packetizer | passive | Adamant packets → CCSDS (NO Sys_Time_T_Get — reads from headers) |
+| Ccsds_Packetizer | passive | Adamant packets → CCSDS (NO Sys_Time_T_Get -- reads from headers) |
 | Event_Packetizer | passive | Batch events into packets |
 | Product_Packetizer | passive* | Fetch DPs, packetize for downlink |
 
-*Product_Packetizer has async command connector — needs `init_base` with `Queue_Size`.
+*Product_Packetizer has async command connector -- needs `init_base` with `Queue_Size`.
 
 ## Key Wiring Rules
 
 - Depacketizer `Command_T_Send` → Router's `Command_T_To_Route_Recv_Async` (NOT indexed array)
 - ALL `Packet_T_Send` sources must wire to `Ccsds_Packetizer`
-- `Ccsds_Packetizer` has NO `Sys_Time_T_Get` — it reads timestamps from packet headers
+- `Ccsds_Packetizer` has NO `Sys_Time_T_Get` -- it reads timestamps from packet headers
 - Wire `Sys_Time_T_Get` for Socket, Depacketizer, Event_Packetizer, Product_Packetizer
 - Product_Packetizer `Data_Product_Fetch_T_Request` → `Product_Database.Data_Product_Fetch_T_Service`
 - Depacketizer `Command_Response_T_Send` → Router `Command_Response_T_Recv_Async`
@@ -120,7 +120,7 @@ See [references/plugin-setup-and-wiring.md](references/plugin-setup-and-wiring.m
 
 **Port must match** `plugin.txt` `port_w`/`port_r` variables. Default: 2003.
 
-**Socket is a TCP CLIENT** — COSMOS runs the server via `tcpip_server_interface.rb`.
+**Socket is a TCP CLIENT** -- COSMOS runs the server via `tcpip_server_interface.rb`.
 
 ## Product Packets Model
 
@@ -237,7 +237,7 @@ Variable port_w 2003
 Variable port_r 2003
 
 Target My_Assembly <%= assembly_target_name %>
-# TCP server interface — COSMOS listens, Adamant connects as client
+# TCP server interface -- COSMOS listens, Adamant connects as client
 Interface <%= assembly_target_name %>_INT tcpip_server_interface.rb <%= port_w %> <%= port_r %> 10.0 nil Length 32 16 7
   Map_Target <%= assembly_target_name %>
   # TCP: crc_protocol.rb (no sync word). Serial: crc_sync_protocol.rb (strips sync word)
@@ -307,14 +307,14 @@ raw   = tlm_raw("TARGET PKT ITEM")          # Raw binary
 
 ## Key Gotchas
 
-1. Socket is a TCP CLIENT — COSMOS server must be running first
+1. Socket is a TCP CLIENT -- COSMOS server must be running first
 2. Socket address: `"127.0.0.1"` same host, `"host.docker.internal"` in Docker
 3. Product_Packetizer needs `init_base` with `Queue_Size` (has async command connector)
 4. Event_Packetizer `Packet_Id_Base` must avoid collision with auto-assigned product packet IDs
 5. Protocol files from `adamant/gnd/cosmos/` → plugin `lib/` directory
 6. Update `Command_T_Send_Count`, `Tick_T_Send_Count`, `T_Send_Count` when adding CCSDS components
 7. For dev without COSMOS: use Event_Text_Logger stderr output as primary monitor
-8. The Ccsds_Packetizer does NOT have a `Sys_Time_T_Get` connector — it reads time from packet headers
+8. The Ccsds_Packetizer does NOT have a `Sys_Time_T_Get` connector -- it reads time from packet headers
 9. Command names in COSMOS are `Component_Instance-Command_Name` (hyphen separated)
 10. Telemetry packets are identified by APID; commands are identified by `Adamant_Command_Id`
 

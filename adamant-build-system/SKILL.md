@@ -18,11 +18,11 @@ Redo-based: YAML models → Python/Jinja2 code generation → Ada compilation, w
 ## Build Path System
 
 Empty marker files control directory inclusion in the build path:
-- `.all_path` — included for ALL targets
-- `.Linux_path` — included only when TARGET contains "Linux"
-- `.Pico_path` — included only for Pico targets
-- `.bb_path` — bare board targets only
-- `.32bit_path` / `.64bit_path` — architecture-specific
+- `.all_path` -- included for ALL targets
+- `.Linux_path` -- included only when TARGET contains "Linux"
+- `.Pico_path` -- included only for Pico targets
+- `.bb_path` -- bare board targets only
+- `.32bit_path` / `.64bit_path` -- architecture-specific
 
 The build system recursively searches each BUILD_ROOT for these marker files. A directory is included if it contains `.all_path` OR `.<TARGET>_path` matching the current target. Test directories use `env.py` instead of `.all_path`.
 
@@ -121,10 +121,10 @@ redo what_predefined  # List predefined (universal) targets
 
 ### Style Check Details
 `redo style` performs four checks:
-1. **Ada style** — Recompiles all `.o` files with `CHECK_STYLE=True`, enforcing GNAT style switches (`-gnaty3aABbdDefhiklL12nOprStux`)
-2. **Python flake8** — Checks `*.py` in current dir and `build/py/` (ignores E121,E123,E126,E226,E24,E704,W503,W504,E402,E501)
-3. **YAML lint** — Validates YAML files after resolving Jinja2 templates via configuration
-4. **Codespell** — Spell-checks all source files (uses `redo/codespell/ignore_list.txt`)
+1. **Ada style** -- Recompiles all `.o` files with `CHECK_STYLE=True`, enforcing GNAT style switches (`-gnaty3aABbdDefhiklL12nOprStux`)
+2. **Python flake8** -- Checks `*.py` in current dir and `build/py/` (ignores E121,E123,E126,E226,E24,E704,W503,W504,E402,E501)
+3. **YAML lint** -- Validates YAML files after resolving Jinja2 templates via configuration
+4. **Codespell** -- Spell-checks all source files (uses `redo/codespell/ignore_list.txt`)
 
 Results written to `build/style/style.log`.
 
@@ -135,10 +135,10 @@ YAML Model → Schema Validation (PyKwalify) → Python Model Object → Jinja2 
 ```
 
 ### Directory Structure
-- `gen/schemas/` — PyKwalify YAML validation schemas
-- `gen/models/` — Python model classes that ingest validated YAML
-- `gen/generators/` — Generator entry points (orchestrate model→template)
-- `gen/templates/` — Jinja2 templates organized by output type
+- `gen/schemas/` -- PyKwalify YAML validation schemas
+- `gen/models/` -- Python model classes that ingest validated YAML
+- `gen/generators/` -- Generator entry points (orchestrate model→template)
+- `gen/templates/` -- Jinja2 templates organized by output type
 
 ### Generators
 | Generator | Purpose |
@@ -207,7 +207,7 @@ The `*.configuration.yaml` file provides project-wide constants. Referenced via 
 ---
 description: "Project description string"
 
-# Core type buffer sizes (bytes) — size to fit largest instance in system
+# Core type buffer sizes (bytes) -- size to fit largest instance in system
 data_product_buffer_size: 32      # Data product serialization buffer
 command_buffer_size: 255          # Command argument buffer
 event_buffer_size: 32             # Event parameter buffer
@@ -287,9 +287,9 @@ redo build/bin/Pico/main.elf
 ```
 
 ### Ada Runtime Modes
-- **Full** (Jorvik) — default, full tasking
-- **SFP** (Small Footprint) — reduced runtime
-- **ZFP** (Zero Footprint) — bare metal, no runtime
+- **Full** (Jorvik) -- default, full tasking
+- **SFP** (Small Footprint) -- reduced runtime
+- **ZFP** (Zero Footprint) -- bare metal, no runtime
 
 ## Common Build Errors
 

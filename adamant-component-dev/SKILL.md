@@ -1,6 +1,6 @@
 ---
 name: adamant-component-dev
-description: Patterns and workflows for developing components in the Adamant embedded software framework
+description: Patterns and workflows for developing components in the Adamant embedded software framework. Use when creating component YAML models, writing implementation specs/bodies, defining connectors, commands, events, data products, parameters, or faults.
 ---
 
 # Adamant Component Development
@@ -75,35 +75,35 @@ subtasks:
 ## Feature Model Formats
 
 ```yaml
-# commands.yaml — requires Command.T recv_sync + Command_Response.T send connectors
+# commands.yaml -- requires Command.T recv_sync + Command_Response.T send connectors
 commands:
   - name: Set_Value
     description: Set the value
     arg_type: Packed_U32.T            # Omit for no-arg commands
 
-# events.yaml — requires Event.T send connector
+# events.yaml -- requires Event.T send connector
 events:
   - name: Value_Changed
     description: The value was changed
     param_type: Packed_U32.T          # Omit for no-param events. MUST be packed type (not raw enums)
 
-# data_products.yaml — requires Data_Product.T send connector
+# data_products.yaml -- requires Data_Product.T send connector
 data_products:
   - name: Current_Value
     type: Packed_U32.T
 
-# data_dependencies.yaml — requires Data_Product_Fetch.T/Return.T request + Sys_Time.T get
+# data_dependencies.yaml -- requires Data_Product_Fetch.T/Return.T request + Sys_Time.T get
 data_dependencies:
   - name: Sensor_Reading
     type: Sensor_Data.T
 
-# parameters.yaml — requires Parameter_Update.T modify connector
+# parameters.yaml -- requires Parameter_Update.T modify connector
 parameters:
   - name: Start_Count
     type: Packed_U16.T
     default: "(Value => 0)"           # REQUIRED
 
-# faults.yaml — requires Fault.T send connector
+# faults.yaml -- requires Fault.T send connector
 faults:
   - name: Bad_Value_Fault
     param_type: Packed_U32.T          # Optional
@@ -122,7 +122,7 @@ enums:
         value: 0
 ```
 
-**Feature connectors are NOT auto-generated** — you MUST list them in component.yaml.
+**Feature connectors are NOT auto-generated** -- you MUST list them in component.yaml.
 
 ## Required Connectors for Feature Models
 
@@ -246,7 +246,7 @@ Call `Self.Update_Parameters` explicitly (e.g., in Tick handler).
 ## Execution Model
 
 - **Passive**: Synchronous processing. Only has Init if YAML defines `init:` section.
-- **Active**: Message queue. Init MUST call `Self.Init_Base(Queue_Size)` (bytes) — actually, queue setup is via `init_base` in assembly YAML, NOT a component Init procedure. Has `{Type}_T_Recv_Async` handlers and `{Type}_T_Recv_Async_Dropped` overflow handlers.
+- **Active**: Message queue. Init MUST call `Self.Init_Base(Queue_Size)` (bytes) -- actually, queue setup is via `init_base` in assembly YAML, NOT a component Init procedure. Has `{Type}_T_Recv_Async` handlers and `{Type}_T_Recv_Async_Dropped` overflow handlers.
 - Command connectors stay `recv_sync` even on active components.
 
 ## Auto-Provided Packages (Do NOT `with` these)
@@ -291,13 +291,13 @@ Do NOT invent fields. Key types:
 11. [ ] `get` connectors: `return_type:` only. `request`: both `type:` and `return_type:`
 12. [ ] Custom record fields have `format:` specified (see adamant-type-system)
 13. [ ] Qualify ambiguous literals: `Command_Execution_Status.Success`
-14. [ ] No `Packed_U8` — use `Packed_Byte.T`
+14. [ ] No `Packed_U8` -- use `Packed_Byte.T`
 15. [ ] No dynamic allocation (Ravenscar profile)
 16. [ ] Active + recv_async: override `{Type}_T_Recv_Async_Dropped`
 17. [ ] Parameter overrides: `Invalid_Parameter`, `Validate_Parameters`, `Update_Parameters_Action`
 18. [ ] Data dependency overrides: `Get_Data_Dependency`, `Invalid_Data_Dependency`
 19. [ ] Faults use event-like API: `Self.Fault_T_Send_If_Connected(Self.Faults.Name(Time))`
-20. [ ] No `with Command_Response_Status` (not standalone — available through base class)
+20. [ ] No `with Command_Response_Status` (not standalone -- available through base class)
 21. [ ] Component name doesn't collide with ~55 framework components
 22. [ ] Custom type YAML filenames (e.g., `quaternion.record.yaml`) don't collide with framework types -- prefix with project/component name if needed
 23. [ ] Use `or else` / `and then` (short-circuit) for ALL boolean expressions (Ada style requirement)

@@ -1,4 +1,4 @@
-# Code Templates — Algorithm Wrapping
+# Code Templates -- Algorithm Wrapping
 
 Full code templates referenced from [SKILL.md](../SKILL.md). Each section corresponds to a SKILL.md section number.
 
@@ -164,7 +164,7 @@ private
 end Component.Foo.Implementation;
 ```
 
-### Body — Basic Wrapper
+### Body -- Basic Wrapper
 ```ada
 with Input_Type.C;
 with Output_Type.C;
@@ -209,7 +209,7 @@ package body Component.Foo.Implementation is
 end Component.Foo.Implementation;
 ```
 
-### Body — With Parameters (Rate Control Pattern)
+### Body -- With Parameters (Rate Control Pattern)
 ```ada
 overriding procedure Parameter_Update_T_Modify (Self : in out Instance; Arg : in out Parameter_Update.T) is
 begin

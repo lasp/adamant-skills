@@ -4,7 +4,7 @@ Concrete examples from real assemblies for quick reference.
 
 ## Minimal Assembly (No CCSDS, No Commands)
 
-From `mini_assembly` — smallest viable assembly:
+From `mini_assembly` -- smallest viable assembly:
 
 ```yaml
 description: Minimal assembly demonstrating basic component wiring
@@ -66,13 +66,13 @@ components:
       - "Send_Event_On_Missing => False"
 
 connections:
-  # Ticker -> Rate Group (async — rate group is active)
+  # Ticker -> Rate Group (async -- rate group is active)
   - from_component: Ticker_Instance
     from_connector: Tick_T_Send
     to_component: Rate_Group_Instance
     to_connector: Tick_T_Recv_Async
 
-  # Rate Group -> components (sync — components are passive, run on RG task)
+  # Rate Group -> components (sync -- components are passive, run on RG task)
   - from_component: Rate_Group_Instance
     from_connector: Tick_T_Send
     from_index: 1
@@ -92,7 +92,7 @@ connections:
 
 ## Multi-Rate with Tick_Divider
 
-From an example assembly — 2 rate groups from 5Hz base:
+From an example assembly -- 2 rate groups from 5Hz base:
 
 ```yaml
 preamble: |
@@ -275,7 +275,7 @@ connections:
 
 ## Prepreamble (Elaboration Control)
 
-From `linux_example` — force elaboration order:
+From `linux_example` -- force elaboration order:
 ```yaml
 prepreamble: |
   pragma Unreferenced (Start_Up);

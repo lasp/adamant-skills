@@ -1,6 +1,6 @@
 ---
 name: adamant-assembly-dev
-description: Patterns and workflows for creating assemblies and system architectures in the Adamant framework
+description: Patterns and workflows for creating assemblies and system architectures in the Adamant framework. Use when defining assembly YAML, wiring components, configuring rate groups, command routing, event forwarding, or building multi-assembly projects.
 ---
 
 # Adamant Assembly Development
@@ -19,7 +19,7 @@ assembly_name/
 └── views/                                 # Focused diagrams (optional)
 ```
 
-**CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main procedure file name must be unique across the entire build path. If the project shares build roots with another project that has `main.adb`, use a unique name like `project_main.adb` / `procedure Project_Main`. The build system discovers source files by filename — collisions are fatal.
+**CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main procedure file name must be unique across the entire build path. If the project shares build roots with another project that has `main.adb`, use a unique name like `project_main.adb` / `procedure Project_Main`. The build system discovers source files by filename -- collisions are fatal.
 
 ## Assembly YAML Field-by-Field Reference
 
@@ -276,7 +276,7 @@ begin
 end Main;
 ```
 
-**CRITICAL**: `Start_Components` BEFORE `Set_Up_Components`. Use `delay until` (Ravenscar — no `delay 0.1`).
+**CRITICAL**: `Start_Components` BEFORE `Set_Up_Components`. Use `delay until` (Ravenscar -- no `delay 0.1`).
 
 ## Build Commands
 
@@ -296,7 +296,7 @@ Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to rege
 | Missing Sys_Time | Component has `Sys_Time_T_Get` but no connection | Wire EVERY `Sys_Time_T_Get` → time provider. Unwired = silent crash, zero ticks |
 | Duplicate instance name | Two components with same `name` | Use unique names |
 | Wrong connector name on generic | Using `Event_T_Recv_Sync` on Splitter | Use `T_Recv_Sync` (generic param name) |
-| Fault_T to Event_T | Wiring `Fault_T_Send` to `Event_T_Recv` | These are different types — leave unconnected or wire to `Fault_Correction` |
+| Fault_T to Event_T | Wiring `Fault_T_Send` to `Event_T_Recv` | These are different types -- leave unconnected or wire to `Fault_Correction` |
 | No `with` for generated pkg | `Station_Assembly_Commands` not in `with:` | Add to `with:` list |
 | `execution:` on non-either | Setting `execution: active` when component isn't `either` | Remove `execution:` field |
 | `init_base` on simple passive | Adding `init_base` to a passive component without queues | Only use `init_base` for components with arrayed connectors or queues |
@@ -323,22 +323,22 @@ Common framework components and their REQUIRED configuration in assembly YAML:
 ## Assembly-Generated Packages
 
 Auto-generated from the assembly model:
-- `{Assembly}_Commands` — `Number_Of_Commands`
-- `{Assembly}_Events` — `Minimum_Event_Id`, `Maximum_Event_Id`
-- `{Assembly}_Data_Products` — `Minimum_Data_Product_Id`, `Maximum_Data_Product_Id`
-- `{Assembly}_Product_Packets` — `Packet_List` (for Product_Packetizer discriminant)
-- `{Assembly}_Event_To_Text` — `Event_To_Text` function (for Event_Text_Logger)
-- `{Assembly}_Components` — component list for monitors
+- `{Assembly}_Commands` -- `Number_Of_Commands`
+- `{Assembly}_Events` -- `Minimum_Event_Id`, `Maximum_Event_Id`
+- `{Assembly}_Data_Products` -- `Minimum_Data_Product_Id`, `Maximum_Data_Product_Id`
+- `{Assembly}_Product_Packets` -- `Packet_List` (for Product_Packetizer discriminant)
+- `{Assembly}_Event_To_Text` -- `Event_To_Text` function (for Event_Text_Logger)
+- `{Assembly}_Components` -- component list for monitors
 
 ## Key Pitfalls
 
-- **`set_id_bases` is optional** — omit for auto-assignment. Don't use `"Auto"` as a value.
+- **`set_id_bases` is optional** -- omit for auto-assignment. Don't use `"Auto"` as a value.
 - **`Rate_Group` `Tick_T_Send_Count`** must EXACTLY match connected component count.
 - **System time provider** is `Gps_Time` (NOT `System_Time`). Instance name is conventional.
 - **`Product_Database`** (NOT `Data_Product_Database`) is the built-in DP store.
 - **`Command_Router` needs** `Command_Response_T_To_Forward_Send_Count >= 1`.
-- **`with:` packages** must exist in build path — unknown packages silently fail.
-- **`Ccsds_Socket_Interface`** is a TCP CLIENT — connects TO a ground server.
+- **`with:` packages** must exist in build path -- unknown packages silently fail.
+- **`Ccsds_Socket_Interface`** is a TCP CLIENT -- connects TO a ground server.
 - **ALL Event_T_Send** connectors must wire to Event_Splitter (or directly to Event_Packetizer). Missing = lost events.
 - **ALL Data_Product_T_Send** connectors must wire to Product_Database. Missing = lost telemetry.
 - **Arrayed connector indices** must be sequential starting from 1. `Tick_T_Send_Count => 3` needs exactly indices 1, 2, 3.

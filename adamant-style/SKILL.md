@@ -1,6 +1,6 @@
 ---
 name: adamant-style
-description: Adamant code style rules enforced by redo style. Use when writing or reviewing Ada, YAML, or Python in any Adamant project.
+description: Adamant code style rules enforced by redo style. Use when writing or reviewing Ada, YAML, or Python in any Adamant project, fixing style warnings, or aligning generated code with project conventions.
 ---
 
 # Adamant Style Guide

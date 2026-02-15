@@ -2,7 +2,7 @@
 
 Annotated code from actual wrapped algorithms in `adamant-xmera-components`.
 
-## Attitude Tracking Error — Basic Wrapper (No Parameters)
+## Attitude Tracking Error -- Basic Wrapper (No Parameters)
 
 ### C Shim Header (fp32-fsw-xmera)
 ```c
@@ -68,7 +68,7 @@ connectors:
   - { description: Data product output, type: Data_Product.T, kind: send }
 ```
 
-### Implementation Body — Key Patterns
+### Implementation Body -- Key Patterns
 ```ada
 -- Init: create handle + set initial config
 overriding procedure Init (Self : in out Instance) is
@@ -136,12 +136,12 @@ end Test;
 
 ---
 
-## Rate Control — Wrapper with Parameters
+## Rate Control -- Wrapper with Parameters
 
 ### Additional Patterns
 This component adds `Parameter_Update.T` modify connector for runtime-tunable gains.
 
-### Ada Binding — Setter Functions
+### Ada Binding -- Setter Functions
 ```ada
 procedure Set_Spacecraft_Inertia
   (Self : Rate_Control_Algorithm_Access;
@@ -181,7 +181,7 @@ end;
 
 ---
 
-## Ephem Nav Converter — Simple Single-Input Wrapper
+## Ephem Nav Converter -- Simple Single-Input Wrapper
 
 Simplest pattern: one input dependency, one output, no parameters.
 
@@ -195,7 +195,7 @@ NavTransMsgF32Payload EphemNavConverterAlgorithm_update(
 
 ---
 
-## Algorithm_Wrapper_Util — Shared Utility
+## Algorithm_Wrapper_Util -- Shared Utility
 
 Used by ALL wrapper components for consistent data dependency error handling:
 

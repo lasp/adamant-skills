@@ -292,3 +292,8 @@ Component names must be unique across the entire build path (framework + project
 `attitude_estimator`, `command_sequencer`, `event_filter`, `fault_correction`, `limiter`, `logger`, `mode_manager`, `orbit_propagator`, `parameters`, `pid_controller`, `power_manager`, `splitter`, `telemetry_formatter`, `telemetry_manager`
 
 **Prevention**: Prefix project components with a project-specific name (e.g., `myproject_attitude_estimator`, `myproject_pid_controller`).
+
+## Related Skills
+- **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)
+- **Assembly**: [adamant-assembly-dev](../adamant-assembly-dev/SKILL.md)
+- **Build system**: [adamant-build-system](../adamant-build-system/SKILL.md)

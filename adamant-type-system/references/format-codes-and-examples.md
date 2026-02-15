@@ -37,13 +37,13 @@ fields:
 
 ## Framework Type Domains
 
-- `src/types/basic_types/` — Enable_Disable_Type, On_Off_Type
-- `src/types/ccsds/` — Packet headers, space packets
-- `src/types/command/` — Command, Command_Header, Command_Response
-- `src/types/data_product/` — Data_Product, Data_Product_Header
-- `src/types/sys_time/` — Sys_Time, Delta_Time
-- `src/types/memory/` — Virtual_Memory_Region variants
-- `src/types/packed_types/` — Packed_U16, Packed_U32, Packed_F32, etc.
+- `src/types/basic_types/` -- Enable_Disable_Type, On_Off_Type
+- `src/types/ccsds/` -- Packet headers, space packets
+- `src/types/command/` -- Command, Command_Header, Command_Response
+- `src/types/data_product/` -- Data_Product, Data_Product_Header
+- `src/types/sys_time/` -- Sys_Time, Delta_Time
+- `src/types/memory/` -- Virtual_Memory_Region variants
+- `src/types/packed_types/` -- Packed_U16, Packed_U32, Packed_F32, etc.
 
 ## Multi-Target Code Generation
 

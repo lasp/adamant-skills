@@ -1,4 +1,4 @@
-# C Shim and Ada Binding Generation — Extended Reference
+# C Shim and Ada Binding Generation -- Extended Reference
 
 Core C shim pattern, h2ads workflow, and type mapping are in SKILL.md. This file has additional details.
 

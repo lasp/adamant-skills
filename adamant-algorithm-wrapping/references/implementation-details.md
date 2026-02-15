@@ -1,11 +1,11 @@
-# Algorithm Wrapping — Implementation Details
+# Algorithm Wrapping -- Implementation Details
 
 Core implementation pattern and input strategy are in SKILL.md. This file has additional patterns.
 
 ## Existing Types (Check Before Creating)
 
-- `adamant/src/types/packed_arrays/` — `Packed_F32x3`, `Packed_F32x9`, etc.
-- `adamant/src/types/` — `Packed_F32`, `Packed_U32`, etc.
+- `adamant/src/types/packed_arrays/` -- `Packed_F32x3`, `Packed_F32x9`, etc.
+- `adamant/src/types/` -- `Packed_F32`, `Packed_U32`, etc.
 - Project-specific types directory for domain-specific records
 
 ## Error Handlers (Safety-Critical)

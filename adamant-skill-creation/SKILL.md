@@ -216,3 +216,7 @@ After creating a new skill, add it to `adamant-skill-selector/SKILL.md`:
 4. **Missing error section**: If cold-start agents hit it, document it
 5. **Stale examples**: Examples that don't compile are worse than no examples
 6. **Project contamination**: Any project name in a generic skill is a bug
+
+## Related Skills
+- **Skill selector**: [adamant-skill-selector](../adamant-skill-selector/SKILL.md)
+- **Knowledge acquisition**: [knowledge-acquisition](../knowledge-acquisition/SKILL.md)

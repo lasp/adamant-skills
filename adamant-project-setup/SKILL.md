@@ -1,6 +1,6 @@
 ---
 name: adamant-project-setup
-description: Setting up new Adamant projects with build system, environment, configuration, and Docker integration
+description: Setting up new Adamant projects with build system, environment, configuration, and Docker integration. Use when starting a new Adamant project from scratch, configuring Docker environments, or setting up build roots and activation scripts.
 ---
 
 # Adamant Project Setup
@@ -46,7 +46,7 @@ Must be copies, not symlinks (redo resolves rules relative to working directory)
 
 ### 2. Create env/activate
 
-Template — replace `PROJECT` with your project's short name (e.g., `DEMO`, `EXAMPLE`):
+Template -- replace `PROJECT` with your project's short name (e.g., `DEMO`, `EXAMPLE`):
 
 ```bash
 #!/bin/bash
@@ -75,7 +75,7 @@ echo "Setting up Project environment."
 export ADAMANT_CONFIGURATION_YAML=$PROJECT_DIR/config/project.configuration.yaml
 
 # Activate the Adamant environment WITH this project as an extra build root.
-# The argument ($PROJECT_DIR) is CRITICAL — it adds the project to BUILD_ROOTS
+# The argument ($PROJECT_DIR) is CRITICAL -- it adds the project to BUILD_ROOTS
 # so the build system can discover custom types, components, and assemblies.
 . $ADAMANT_DIR/env/activate $PROJECT_DIR
 
@@ -95,7 +95,7 @@ echo "Done."
 
 The build system uses BUILD_ROOTS to locate `.all_path` markers and discover all source directories. **Without your project in BUILD_ROOTS, custom types/components are invisible.**
 
-You can also set BUILD_ROOTS manually before sourcing activate to override — the script respects pre-set values.
+You can also set BUILD_ROOTS manually before sourcing activate to override -- the script respects pre-set values.
 
 #### Key Environment Variables Set by activate
 
@@ -119,7 +119,7 @@ File: `config/project.configuration.yaml`
 description: Configuration for My Project.
 
 #############################################################################
-# REQUIRED — Adamant Core Type Sizing
+# REQUIRED -- Adamant Core Type Sizing
 #############################################################################
 
 # Size of serialization buffer in data product type (bytes).
@@ -149,7 +149,7 @@ ccsds_packet_buffer_size: 512
 packet_buffer_size: 480
 
 #############################################################################
-# REQUIRED — Other Core Settings
+# REQUIRED -- Other Core Settings
 #############################################################################
 
 # Stack margin (bytes). Used by Stack Monitor for "usable" stack calculation.
@@ -163,7 +163,7 @@ stack_margin: 1000
 command_registration_delay: 250
 
 #############################################################################
-# OPTIONAL — Project-Specific Variables
+# OPTIONAL -- Project-Specific Variables
 #############################################################################
 # Define custom key-value pairs usable in YAML (Jinja: {{ var_name }})
 # or Ada (with Configuration package).
@@ -175,7 +175,7 @@ command_registration_delay: 250
 **Sizing guidance:**
 - `Storage_Error` at runtime → increase the relevant buffer size
 - Start with conservative defaults (above), increase as needed
-- Buffer sizes affect RAM usage on embedded targets — don't over-allocate
+- Buffer sizes affect RAM usage on embedded targets -- don't over-allocate
 
 ### 4. Docker Setup
 
@@ -226,7 +226,7 @@ The helper script auto-detects project name from its parent directory.
 3. Sets BUILD_ROOTS, GPR paths, etc.
 4. Touches `~/.initialized` so subsequent starts skip this
 
-The script supports both `docker` and `podman` — falls back to podman if docker is not found.
+The script supports both `docker` and `podman` -- falls back to podman if docker is not found.
 
 #### Non-interactive command execution
 
@@ -271,7 +271,7 @@ __pycache__/
 GNAT-*
 ```
 
-The critical pattern is `**/build/` — redo creates `build/` subdirectories in every source directory during compilation.
+The critical pattern is `**/build/` -- redo creates `build/` subdirectories in every source directory during compilation.
 
 ### 6. Directory Rules: .all_path and env.py
 
@@ -287,7 +287,7 @@ The build system scans BUILD_ROOTS for `.all_path` files to build its source fil
 
 #### env.py (Python Path Configuration)
 
-Each build root can have Python configuration activated via `set_python_path.sh`. Python files in later paths override earlier ones — adamant is always first, so project-specific Python always wins.
+Each build root can have Python configuration activated via `set_python_path.sh`. Python files in later paths override earlier ones -- adamant is always first, so project-specific Python always wins.
 
 ## Build Commands
 
@@ -303,11 +303,11 @@ redo style_all                              # Check style across project
 
 When you run `redo all` or build a target for the first time:
 
-1. **Environment check** — redo verifies BUILD_ROOTS and ADAMANT_CONFIGURATION_YAML are set
-2. **Code generation** — YAML model files are processed through Jinja templates to generate Ada specs/bodies. Configuration values from your YAML are substituted (e.g., `{{ data_product_buffer_size }}` → `32`)
-3. **Dependency resolution** — redo scans `.all_path` directories across all BUILD_ROOTS, building a dependency graph
-4. **Compilation** — gprbuild compiles Ada sources using GPR files from `redo/targets/gpr/`
-5. **Linking** — produces ELF binary in `build/bin/<Target>/`
+1. **Environment check** -- redo verifies BUILD_ROOTS and ADAMANT_CONFIGURATION_YAML are set
+2. **Code generation** -- YAML model files are processed through Jinja templates to generate Ada specs/bodies. Configuration values from your YAML are substituted (e.g., `{{ data_product_buffer_size }}` → `32`)
+3. **Dependency resolution** -- redo scans `.all_path` directories across all BUILD_ROOTS, building a dependency graph
+4. **Compilation** -- gprbuild compiles Ada sources using GPR files from `redo/targets/gpr/`
+5. **Linking** -- produces ELF binary in `build/bin/<Target>/`
 
 **Expected first-build behavior:**
 - Takes several minutes (compiling all of adamant framework)
@@ -339,7 +339,7 @@ The order matters: later paths override earlier ones for Python configuration. A
 | `Storage_Error` at runtime | Buffer too small for data being serialized | Increase relevant `*_buffer_size` in configuration YAML |
 | Custom types not found during build | Project dir not in BUILD_ROOTS | Ensure env/activate passes `$PROJECT_DIR` to adamant's activate |
 | `file not found` for generated Ada | Missing `.all_path` in source directory | Add empty `.all_path` file |
-| Duplicate file name error | Two files with same name across BUILD_ROOTS | Rename — file names must be unique across entire build path |
+| Duplicate file name error | Two files with same name across BUILD_ROOTS | Rename -- file names must be unique across entire build path |
 | Permission denied in container | SELinux bind mount permissions | adamant/env/activate auto-fixes with `chown`; or run `sudo chown -R user:user /home/user/<project>` |
 | Command registrations dropped at init | `command_registration_delay` too low or Command Router queue too small | Increase `command_registration_delay` or enlarge queue |
 | `alr` build fails on first start | Network issue or alire cache corrupted | `rm -rf alire/` and re-run `alr build` |
@@ -360,4 +360,4 @@ The order matters: later paths override earlier ones for Python configuration. A
 
 - **Build system**: [adamant-build-system](../adamant-build-system/SKILL.md)
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)
-- **Style**: [adamant-style](../adamant-style/SKILL.md) — run `redo style_all` to validate entire project
+- **Style**: [adamant-style](../adamant-style/SKILL.md) -- run `redo style_all` to validate entire project

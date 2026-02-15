@@ -1,6 +1,6 @@
 ---
 name: adamant-algorithm-wrapping
-description: Complete pipeline for wrapping C++ algorithms into Adamant passive components with C shims, Ada bindings, and unit tests
+description: Complete pipeline for wrapping C++ algorithms into Adamant passive components with C shims, Ada bindings, and unit tests. Use when integrating external C/C++ code, creating FFI boundaries, or building Adamant components around existing algorithm libraries.
 ---
 
 # Adamant Algorithm Wrapping Pipeline
@@ -12,29 +12,29 @@ C++ Algorithm → C Shim (.h/.cpp) → Ada Bindings (.ads) → Packed Records �
 ## 1. C Shim Pattern
 
 ### File Structure
-- `<algo>Algorithm_c.h` — Pure C header (no C++ keywords)
-- `<algo>Algorithm_c.cpp` — C shim implementation (uses `reinterpret_cast`)
-- `msgPayloadDef/<Type>MsgF32Payload.h` — Shared POD structs (included by both C++ algo and C shim)
+- `<algo>Algorithm_c.h` -- Pure C header (no C++ keywords)
+- `<algo>Algorithm_c.cpp` -- C shim implementation (uses `reinterpret_cast`)
+- `msgPayloadDef/<Type>MsgF32Payload.h` -- Shared POD structs (included by both C++ algo and C shim)
 
 ### Opaque Handle Pattern
 Every wrapped algorithm uses an opaque forward-declared struct as its handle. The header declares `typedef struct FooAlgorithm FooAlgorithm;` with lifecycle (`create`/`destroy`), core `update`, and setter/getter functions inside `extern "C"` guards.
 
-> Full template: [references/code-templates.md §1 — Opaque Handle Pattern](references/code-templates.md#opaque-handle-pattern-header)
+> Full template: [references/code-templates.md §1 -- Opaque Handle Pattern](references/code-templates.md#opaque-handle-pattern-header)
 
 ### C Shim Implementation
 The `.cpp` file includes both the C header and C++ class header. Each function casts via `reinterpret_cast<::FooAlgorithm*>(self)` and delegates to the C++ method.
 
-> Full template: [references/code-templates.md §1 — C Shim Implementation](references/code-templates.md#c-shim-implementation)
+> Full template: [references/code-templates.md §1 -- C Shim Implementation](references/code-templates.md#c-shim-implementation)
 
 ### POD Conversion for Eigen Types
 Eigen types cannot cross the C boundary. Use flat POD structs (e.g., `struct { float data[3]; } Vector3f_c`) and convert at the boundary in the `.cpp` shim.
 
-> Full template: [references/code-templates.md §1 — POD Conversion](references/code-templates.md#pod-conversion-for-eigen-types)
+> Full template: [references/code-templates.md §1 -- POD Conversion](references/code-templates.md#pod-conversion-for-eigen-types)
 
 ### Shared Payload Structs
 Payload structs live in `msgPayloadDef/` and are pure C POD. Both C++ algorithm internals and C shim include them directly. These map 1:1 to Adamant YAML record types.
 
-> Full template: [references/code-templates.md §1 — Shared Payload Struct](references/code-templates.md#shared-payload-struct-example)
+> Full template: [references/code-templates.md §1 -- Shared Payload Struct](references/code-templates.md#shared-payload-struct-example)
 
 ### Constant Export Pattern
 Export `#define` or `constexpr` constants via getter functions (never `static inline`):
@@ -58,12 +58,12 @@ The generated spec requires manual cleanup:
 5. **Access parameters:** Use `Type.C.U_C_Access` for pointer args (already defined by Adamant type system)
 6. **Style/warning suppression:** Add pragmas at top and bottom
 
-> Full template: [references/code-templates.md §2 — Complete Ada Binding Spec](references/code-templates.md#complete-ada-binding-spec)
+> Full template: [references/code-templates.md §2 -- Complete Ada Binding Spec](references/code-templates.md#complete-ada-binding-spec)
 
 ### Constant Validation in Ada
 Validate C-side constants match Ada-side definitions at elaboration using `pragma Assert` on imported getter functions.
 
-> Full template: [references/code-templates.md §2 — Constant Validation](references/code-templates.md#constant-validation)
+> Full template: [references/code-templates.md §2 -- Constant Validation](references/code-templates.md#constant-validation)
 
 ## 3. Type Mapping
 
@@ -78,13 +78,13 @@ Validate C-side constants match Ada-side definitions at elaboration using `pragm
 | `uint32_t` | `Interfaces.Unsigned_32` | `U32` | |
 | `int32_t` | `Interfaces.Integer_32` | `I32` | |
 | `uint64_t` | `Interfaces.Unsigned_64` | `U64` | Time stamps |
-| `float[3]` | `Packed_F32x3.T` | — | Vectors (3D) |
-| `float[4]` | `Packed_F32x4.T` | — | Quaternions |
-| `float[9]` | `Packed_F32x9.T` | — | 3×3 matrices (row-major) |
-| `Eigen::Vector3f` | `Packed_F32x3.T` | — | Via `Vector3f_c` POD shim |
-| `Eigen::Matrix3f` | `Packed_F32x9.T` | — | Via flat `float[9]` POD |
-| `bool` | `Interfaces.C.unsigned_char` | — | C `_Bool` maps oddly; use int |
-| Payload struct | Custom `.record.yaml` | — | 1:1 field mapping |
+| `float[3]` | `Packed_F32x3.T` | -- | Vectors (3D) |
+| `float[4]` | `Packed_F32x4.T` | -- | Quaternions |
+| `float[9]` | `Packed_F32x9.T` | -- | 3×3 matrices (row-major) |
+| `Eigen::Vector3f` | `Packed_F32x3.T` | -- | Via `Vector3f_c` POD shim |
+| `Eigen::Matrix3f` | `Packed_F32x9.T` | -- | Via flat `float[9]` POD |
+| `bool` | `Interfaces.C.unsigned_char` | -- | C `_Bool` maps oddly; use int |
+| Payload struct | Custom `.record.yaml` | -- | 1:1 field mapping |
 
 ### Type Conversion Chain
 ```
@@ -111,9 +111,9 @@ fields:
 ```
 
 ### Check Existing Types First
-- `adamant/src/types/packed_arrays/` — `Packed_F32x3`, `Packed_F32x9`, etc.
-- `adamant/src/types/` — `Packed_F32`, `Packed_U32`, etc.
-- Project `src/types/` — Domain-specific records (`att_guid.record.yaml`, `nav_att.record.yaml`, etc.)
+- `adamant/src/types/packed_arrays/` -- `Packed_F32x3`, `Packed_F32x9`, etc.
+- `adamant/src/types/` -- `Packed_F32`, `Packed_U32`, etc.
+- Project `src/types/` -- Domain-specific records (`att_guid.record.yaml`, `nav_att.record.yaml`, etc.)
 
 ## 4. Component YAML Model
 
@@ -164,22 +164,22 @@ Adamant has no destructor mechanism. Components with C++ handles MUST:
 
 The implementation spec declares `Instance` extending `Base_Instance` with a private `Alg` handle, overriding `Init`, `Tick_T_Recv_Sync`, `Get_Data_Dependency`, and `Invalid_Data_Dependency`. A `not overriding procedure Destroy` handles C++ cleanup.
 
-> Full spec template: [references/code-templates.md §6 — Spec](references/code-templates.md#spec)
+> Full spec template: [references/code-templates.md §6 -- Spec](references/code-templates.md#spec)
 
-### Body — Basic Wrapper
+### Body -- Basic Wrapper
 `Init` calls `Create`, `Tick_T_Recv_Sync` fetches dependencies, converts to C types via `To_C`, calls `Update`, converts back via `To_Ada`, and sends the data product. `Invalid_Data_Dependency` asserts False.
 
-> Full body template: [references/code-templates.md §6 — Body — Basic Wrapper](references/code-templates.md#body--basic-wrapper)
+> Full body template: [references/code-templates.md §6 -- Body -- Basic Wrapper](references/code-templates.md#body--basic-wrapper)
 
-### Body — With Parameters
+### Body -- With Parameters
 Add `Parameter_Update_T_Modify` (delegates to `Process_Parameter_Update`) and `Update_Parameters_Action` (pushes parameter values to C++ via setters). Call `Self.Update_Parameters` at the top of `Tick_T_Recv_Sync`.
 
-> Full template: [references/code-templates.md §6 — Body — With Parameters](references/code-templates.md#body--with-parameters-rate-control-pattern)
+> Full template: [references/code-templates.md §6 -- Body -- With Parameters](references/code-templates.md#body--with-parameters-rate-control-pattern)
 
 ### Algorithm_Wrapper_Util
 Shared utility: `Is_Dep_Status_Success` returns True for Success, False for Not_Available/Stale, asserts False for Error.
 
-> Full template: [references/code-templates.md §6 — Algorithm_Wrapper_Util](references/code-templates.md#algorithm_wrapper_util)
+> Full template: [references/code-templates.md §6 -- Algorithm_Wrapper_Util](references/code-templates.md#algorithm_wrapper_util)
 
 ## 7. Input Strategy: Parameters vs Data Dependencies
 
@@ -204,7 +204,7 @@ end if;
 ```
 
 ### Invalid Data Dependency Handler
-Every wrapper MUST implement this — asserts False since invalid IDs indicate a configuration bug:
+Every wrapper MUST implement this -- asserts False since invalid IDs indicate a configuration bug:
 ```ada
 overriding procedure Invalid_Data_Dependency (...) is
    pragma Annotate (GNATSAS, Intentional, "subp always fails", "intentional assertion");
@@ -268,15 +268,15 @@ component_dir/
 ### Test Lifecycle
 `Set_Up_Test` calls `Init_Base`, `Connect`, `Init`, `Set_Up`. `Tear_Down_Test` calls `Destroy` then `Final_Base`.
 
-> Full template: [references/code-templates.md §10 — Test Lifecycle](references/code-templates.md#test-lifecycle)
+> Full template: [references/code-templates.md §10 -- Test Lifecycle](references/code-templates.md#test-lifecycle)
 
 ### Writing Test Cases
 Set data dependencies on tester fields, tick the component via `Tick_T_Send`, then verify output via history connectors with epsilon-tolerant assertions.
 
-> Full template: [references/code-templates.md §10 — Writing Test Cases](references/code-templates.md#writing-test-cases)
+> Full template: [references/code-templates.md §10 -- Writing Test Cases](references/code-templates.md#writing-test-cases)
 
 ### Key Testing Rules
-- Use `T.System_Time` for tick timestamps — `(0, 0)` causes staleness failures
+- Use `T.System_Time` for tick timestamps -- `(0, 0)` causes staleness failures
 - Use `Epsilon` for floating-point comparisons across FFI
 - Array aggregates use bracket syntax: `[x, y, z]`
 - The tester auto-generates history connectors for each data product
@@ -285,7 +285,7 @@ Set data dependencies on tester fields, tick the component via `Tick_T_Send`, th
 ### Verifying Parameter Updates
 Set parameters on tester, send `Parameter_Update_T`, tick, and verify output reflects new values.
 
-> Full template: [references/code-templates.md §10 — Verifying Parameter Updates](references/code-templates.md#verifying-parameter-updates)
+> Full template: [references/code-templates.md §10 -- Verifying Parameter Updates](references/code-templates.md#verifying-parameter-updates)
 
 ## 11. Common Pitfalls
 
@@ -317,7 +317,7 @@ See [adamant-style](../adamant-style/SKILL.md) for full style rules.
 |---|---|---|---|
 | `attitude_tracking_error` | AttTrackingError | No (sigma_R0R set in Init) | att_ref, nav_att → att_guid |
 | `rate_control` | RateControl | Yes (gain_P, inertia) | att_guid → torque_cmd |
-| `inertial_3d` | Inertial3D | No | — → att_ref |
+| `inertial_3d` | Inertial3D | No | -- → att_ref |
 | `ephem_nav_converter` | EphemNavConverter | No | ephemeris → nav_trans |
 | `sun_search` | SunSearch | Yes | nav_att, css → sun_heading |
 | `average_mimu_data` | AverageMimuData | Yes | mimu_data → averaged output |
