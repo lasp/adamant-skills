@@ -332,23 +332,34 @@ end Sample_T_Send_If_Connected;
 
 Key points:
 - `Send_If_Connected` skips entirely when not connected -- does NOT call `Send_Dropped`
-- `Send_Dropped` only fires when the connector IS attached but the receiver rejects (queue full)
-- **Sync connectors always return `Success`** -- `Message_Dropped` never fires for sync sends
-- Only **async connectors** can return `Message_Dropped` (queue overflow)
+- `Send_Dropped` only fires when the connector IS attached but the receiver returns `Message_Dropped`
 
-### Coverage Implications
+### Testing Send_Dropped on Sync Send Connectors
 
-- **`is null;` in spec:** Zero coverage impact. gcov doesn't count these.
-- **`begin null; end` in body:** gcov counts these as uncovered lines, but they are **uncoverable for sync connectors**. Add a TODO comment acknowledging the gap:
-  ```ada
-  -- TODO: Send_Dropped handlers (impl lines N-M) are uncoverable.
-  -- Sync connectors always return Success, so Message_Dropped never fires.
-  ```
-- **Active components with async recv:** Can overflow the tester's queue to trigger Recv_Async_Dropped, but that's a different handler (on the tester, not the component).
+The generated reciprocal tester has a `Connector_*_Recv_Sync_Status` field for each sync receive connector. It defaults to `Success` but can be set to `Message_Dropped` to trigger the component's Send_Dropped handler:
+
+```ada
+with Connector_Types;
+
+-- Set connector status to Message_Dropped before triggering sends:
+T.Connector_Sample_T_Recv_Sync_Status := Connector_Types.Message_Dropped;
+T.Connector_Event_T_Recv_Sync_Status := Connector_Types.Message_Dropped;
+T.Connector_Data_Product_T_Recv_Sync_Status := Connector_Types.Message_Dropped;
+
+-- Trigger component to send (e.g., tick)
+T.Tick_T_Send ((Time => (0, 0), Count => 1));
+
+-- Restore for subsequent tests
+T.Connector_Sample_T_Recv_Sync_Status := Connector_Types.Success;
+T.Connector_Event_T_Recv_Sync_Status := Connector_Types.Success;
+T.Connector_Data_Product_T_Recv_Sync_Status := Connector_Types.Success;
+```
+
+The field names follow the pattern `Connector_<Type>_Recv_Sync_Status` where `<Type>` matches the send connector name from the component YAML. Check the generated reciprocal `.ads` file (`build/src/component-*_reciprocal.ads`) for exact field names.
 
 ### Testing Send_Dropped on Async Send Connectors
 
-For components that SEND to async connectors (rare -- most send to sync), use the tester's `Expect_*_Dropped` mechanism. This requires hand-editing the tester spec/body to add a boolean flag. See `command_router` tests in the framework for the pattern:
+For components that send to async connectors (e.g., command_router), use the tester's `Expect_*_Dropped` mechanism. This requires hand-editing the tester spec/body. See `command_router` tests in the framework:
 
 ```ada
 -- In tester .ads (hand-written):
@@ -360,6 +371,11 @@ T.Expect_Command_T_Send_Dropped := True;
 -- ... trigger component to send ...
 Natural_Assert.Eq (T.Command_T_Send_Dropped_Count, 1);
 ```
+
+### Coverage Notes
+
+- **`is null;` in spec:** Zero coverage impact. gcov doesn't count these.
+- **`begin null; end` in body:** These ARE coverable using the `Connector_*_Recv_Sync_Status` pattern above.
 
 ## Coverage
 
@@ -421,6 +437,7 @@ bash tools/impl_coverage.sh component_name     # Specific component
 
 **No structural ceiling.** All executable paths are coverable with proper testing:
 - **Invalid_Command:** Corrupt `Cmd.Header.Arg_Buffer_Length := 22;` on a valid command
+- **Send_Dropped (sync sends):** Set `T.Connector_*_Recv_Sync_Status := Connector_Types.Message_Dropped;`
 - **Send_Dropped (async sends):** Use `Expect_*_Dropped` tester flag (see Send_Dropped section above)
 - **Recv_Async_Dropped:** Overflow queue (small `Init_Base Queue_Size`, send N+1)
 

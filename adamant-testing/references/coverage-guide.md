@@ -79,11 +79,16 @@ These patterns require tester modifications but are fully coverable (no structur
 
 Send_Dropped fires when `Send` returns `Message_Dropped` -- NOT when a connector is unattached. `Send_If_Connected` skips entirely when not connected (does not call `Send_Dropped`).
 
-**Sync connectors always return `Success`** -- `Message_Dropped` never fires for sync sends. Most components only have sync send connectors, making their `begin null; end` Send_Dropped handlers structurally uncoverable. Add a TODO comment acknowledging the gap.
+**Testing Send_Dropped on sync connectors:** The generated reciprocal tester has `Connector_*_Recv_Sync_Status` fields (default `Success`). Set to `Connector_Types.Message_Dropped` before triggering sends to cover Send_Dropped handlers:
+```ada
+T.Connector_Event_T_Recv_Sync_Status := Connector_Types.Message_Dropped;
+T.Tick_T_Send ((Time => (0, 0), Count => 1));  -- Triggers Send_Dropped
+T.Connector_Event_T_Recv_Sync_Status := Connector_Types.Success;  -- Restore
+```
 
-**Async send connectors** can trigger Send_Dropped via queue overflow. The framework's `command_router` tests demonstrate this pattern using `Expect_*_Dropped` flags on the hand-written tester.
+**Testing Send_Dropped on async connectors:** Use `Expect_*_Dropped` flags on the hand-written tester (see `command_router` tests in framework).
 
-**`is null;` vs `begin null; end`:** Handlers declared `is null;` in the spec have zero gcov lines. Handlers with `begin null; end` in the body show as uncovered lines. Both are functionally equivalent for components with sync sends.
+**`is null;` vs `begin null; end`:** Handlers declared `is null;` in the spec have zero gcov lines. Handlers with `begin null; end` in the body show as uncovered but ARE coverable using the `Connector_*_Status` pattern above.
 
 ### Invalid_Command Handler
 ```ada
