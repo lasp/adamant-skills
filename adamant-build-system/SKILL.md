@@ -115,13 +115,9 @@ redo yaml_sloc         # Count YAML source lines of code
 
 `redo clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed.
 
-**WARNING: `redo clean_all` on the adamant framework directory can permanently break the build system.** It destroys redo's metadata that distinguishes source files from build targets. The symptom is: `default.do: No rule to build 'src/core/connector/in_return_connector.adb'`. Container restart and re-cleaning do NOT fix this. Recovery requires `adamant_env.sh remove` + `start` (fresh Docker volumes). Only run `redo clean_all` on the PROJECT directory, never on the adamant framework itself.
+**`redo clean_all` is safe on ANY directory, including the adamant framework.** If redo state corrupts (symptom: `No rule to build 'src/core/connector/in_return_connector.adb'`), run `redo clean_all` on BOTH adamant and the project, then rebuild. The usual cause of corruption is concurrent redo processes (e.g. multiple sub-agents building simultaneously). If clean_all doesn't fix it, recover with `adamant_env.sh remove` + `start` (fresh Docker volumes).
 
-If redo state gets corrupted on the project side (STORAGE_ERROR, "No rule to build" for generated files), run `redo clean_all` on the project dir only, then rebuild. If that doesn't work, try `adamant_env.sh remove` followed by `start` + `login` to get a fresh container.
-
-**NEVER manually delete build directories or redo state.** This includes `rm -rf build`, `rm -rf .redo`, `rm -rf */build`, `rm -rf */test/build`, or any variant. Redo tracks dependencies through files in `build/` and `.redo/` -- deleting them corrupts the dependency graph. Redo will then try to BUILD source files (.ads/.adb) instead of recognizing them as sources. Recovery requires `redo clean_all` on BOTH adamant and project directories, and if that fails, re-cloning the adamant repository. Always use `redo clean` or `redo clean_all` -- they properly reset state without corruption.
-
-**Bulk cleaning is especially dangerous.** Running `rm -rf` across many component `build/` dirs (e.g., `find . -name build -exec rm -rf {} +`) destroys cached artifacts that redo needs for incremental builds. Even `redo clean_all` may not fully recover from this -- the safest recovery is `adamant_env.sh remove`, then `start` + `login`, then `redo clean_all` on both roots and rebuild.
+**NEVER manually delete build directories or redo state.** This includes `rm -rf build`, `rm -rf .redo`, `rm -rf */build`, `rm -rf */test/build`, or any variant. Always use `redo clean` or `redo clean_all` -- they properly reset state. Do NOT re-clone the adamant repository (destructive, wipes local state).
 
 ### Inspect
 ```bash
