@@ -6,327 +6,324 @@ description: Complete pipeline for wrapping C++ algorithms into Adamant passive 
 # Adamant Algorithm Wrapping Pipeline
 
 ```
-C++ Algorithm → C Shim (.h/.cpp) → Ada Bindings (.ads) → Packed Records → Component YAML → Implementation → Tests
+C++ Algorithm -> C Shim (.h/.cpp) -> Ada Bindings (.ads) -> Packed Records -> Component YAML -> Implementation -> Tests
 ```
 
-## 1. C Shim Pattern
+Seven deterministic steps. Each step has one correct output given the inputs. Follow in order.
 
-### File Structure
-- `<algo>Algorithm_c.h` -- Pure C header (no C++ keywords)
-- `<algo>Algorithm_c.cpp` -- C shim implementation (uses `reinterpret_cast`)
-- `msgPayloadDef/<Type>MsgF32Payload.h` -- Shared POD structs (included by both C++ algo and C shim)
+## Step 1: Create C Shim
 
-### Opaque Handle Pattern
-Every wrapped algorithm uses an opaque forward-declared struct as its handle. The header declares `typedef struct FooAlgorithm FooAlgorithm;` with lifecycle (`create`/`destroy`), core `update`, and setter/getter functions inside `extern "C"` guards.
+**Input:** C++ algorithm class (`FooAlgorithm` in `fooAlgorithm.h/.cpp`)
+**Output:** `fooAlgorithm_c.h` + `fooAlgorithm_c.cpp` (+ optional `fooTypes.h`)
 
-> Full template: [references/code-templates.md §1 -- Opaque Handle Pattern](references/code-templates.md#opaque-handle-pattern-header)
+### Check for shared types FIRST
 
-### C Shim Implementation
-The `.cpp` file includes both the C header and C++ class header. Each function casts via `reinterpret_cast<::FooAlgorithm*>(self)` and delegates to the C++ method.
+If the C++ algorithm defines structs or `#define` constants in its public API, create a shared `*Types.h` header to avoid duplication between C++ and C shim. See [references/c-shim-patterns.md](references/c-shim-patterns.md#shared-types-header).
 
-> Full template: [references/code-templates.md §1 -- C Shim Implementation](references/code-templates.md#c-shim-implementation)
+### File structure
 
-### POD Conversion for Eigen Types
-Eigen types cannot cross the C boundary. Use flat POD structs (e.g., `struct { float data[3]; } Vector3f_c`) and convert at the boundary in the `.cpp` shim.
+- `fooAlgorithm_c.h` -- pure C header (no C++ keywords), `extern "C"` guarded
+- `fooAlgorithm_c.cpp` -- implementation using `reinterpret_cast`
+- `fooTypes.h` -- shared POD structs/constants (optional, when DRY needed)
 
-> Full template: [references/code-templates.md §1 -- POD Conversion](references/code-templates.md#pod-conversion-for-eigen-types)
+### Mandatory API functions
 
-### Shared Payload Structs
-Payload structs live in `msgPayloadDef/` and are pure C POD. Both C++ algorithm internals and C shim include them directly. These map 1:1 to Adamant YAML record types.
-
-> Full template: [references/code-templates.md §1 -- Shared Payload Struct](references/code-templates.md#shared-payload-struct-example)
-
-### Constant Export Pattern
-Export `#define` or `constexpr` constants via getter functions (never `static inline`):
 ```c
-uint32_t FooAlgorithm_getMaxCount(void);
+FooAlgorithm* FooAlgorithm_create(void);
+void FooAlgorithm_destroy(FooAlgorithm* self);
+OutputPayload FooAlgorithm_update(FooAlgorithm* self, const InputPayload* input);
 ```
 
-## 2. Ada Binding Spec
+Add `_reset`, `_setX`, `_getX` as needed. For `#define` constants, add getter functions for Ada elaboration-time validation.
 
-### h2ads Workflow
+### Rules
+
+- Headers MUST be pure C (no C++ keywords, templates, classes)
+- `const` correctness on all input-only parameters
+- Opaque handle: `typedef struct FooAlgorithm FooAlgorithm;`
+- Eigen types: convert to POD (`Vector3f_c { float data[3]; }`) at the boundary
+- Message payloads from `msgPayloadDef/`: pass through directly (already POD)
+- Naming: `ClassName_methodName` (PascalCase class, camelCase method)
+- No exception catching in shim layer
+- Use `new`/`delete`, not `malloc`/`free`
+
+> Full templates and examples: [references/c-shim-patterns.md](references/c-shim-patterns.md)
+
+## Step 2: Create Ada Bindings
+
+**Input:** C shim header (`fooAlgorithm_c.h`)
+**Output:** `foo_algorithm_c.ads` in component directory
+
+### h2ads workflow
+
 ```bash
-h2ads --compiler gcc -I <algorithms_dir> -b <algo_dir> <algo>Algorithm_c.h
+cd /home/user/adamant_bot_station/src/components/<component_name>
+h2ads --compiler gcc \
+  -I /home/user/fp32-fsw-xmera/algorithms \
+  -b /home/user/fp32-fsw-xmera/algorithms/<algorithm_name> \
+  /home/user/fp32-fsw-xmera/algorithms/<algorithm_name>/<algo>Algorithm_c.h
 ```
-The generated spec requires manual cleanup:
 
-### Transformation Rules (h2ads → hand-written)
-1. **Package rename:** `Foo_Algorithm_C_H` → `Foo_Algorithm_C`
-2. **Opaque handle → limited private:** `type Foo_Algorithm is limited private;` with `null record` in private part
-3. **Function rename:** Strip algorithm prefix. `Foo_Algorithm_Create` → `Create`
-4. **Payload types:** Replace h2ads-generated C structs with Adamant `.C.U_C` types
-5. **Access parameters:** Use `Type.C.U_C_Access` for pointer args (already defined by Adamant type system)
-6. **Style/warning suppression:** Add pragmas at top and bottom
+Delete ALL generated files except `<algo>_algorithm_c_h.ads`. Then transform:
 
-> Full template: [references/code-templates.md §2 -- Complete Ada Binding Spec](references/code-templates.md#complete-ada-binding-spec)
+### Transformation checklist
 
-### Constant Validation in Ada
-Validate C-side constants match Ada-side definitions at elaboration using `pragma Assert` on imported getter functions.
+1. Remove `_H` suffix from package name and filename
+2. Make opaque type `limited private`, move `null record` to private section
+3. Create named access type: `type Foo_Algorithm_Access is access all Foo_Algorithm;`
+4. Remove type name prefix from functions: `Foo_Algorithm_Create` -> `Create`
+5. Replace `access Type` with `Type_Access` throughout
+6. DELETE all h2ads-generated C struct types (see Step 3 for packed records)
+7. Replace payload package references with Adamant types (`.C.U_C`)
+8. Add `pragma Assert` for any `#define` constant validation
+9. Format with aligned `=>` operators and Doxygen-style `--*` comments
+10. Delete ALL `*_h.ads` files when done
 
-> Full template: [references/code-templates.md §2 -- Constant Validation](references/code-templates.md#constant-validation)
+### Type mapping (h2ads -> Adamant)
 
-## 3. Type Mapping
+| h2ads type | Adamant type | With clause |
+|------------|-------------|-------------|
+| `Nav_Att_Msg_F32_Payload_H.Nav_Att_Msg_F32_Payload` | `Nav_Att.C.U_C` | `with Nav_Att.C;` |
+| `access constant <Payload>` | `<Payload>.C.U_C_Access` | same |
+| `Vector3f_C` (POD helper) | `Packed_F32x3_Record.C.U_C` | `with Packed_F32x3_Record.C;` |
+| Algorithm-specific structs | Create packed record (Step 3) | `with <Type>.C;` |
 
-### C/C++ → Ada Type Table
+> Full transformation rules and complete example: [references/ada-binding-transforms.md](references/ada-binding-transforms.md)
 
-| C/C++ Type | Ada Type | YAML Format | Notes |
-|---|---|---|---|
-| `float` | `Short_Float` | `F32` | Most algorithm values |
-| `double` | `Long_Float` | `F64` | Rare in F32 algorithms |
-| `uint8_t` | `Interfaces.Unsigned_8` | `U8` | |
-| `uint16_t` | `Interfaces.Unsigned_16` | `U16` | |
-| `uint32_t` | `Interfaces.Unsigned_32` | `U32` | |
-| `int32_t` | `Interfaces.Integer_32` | `I32` | |
-| `uint64_t` | `Interfaces.Unsigned_64` | `U64` | Time stamps |
-| `float[3]` | `Packed_F32x3.T` | -- | Vectors (3D) |
-| `float[4]` | `Packed_F32x4.T` | -- | Quaternions |
-| `float[9]` | `Packed_F32x9.T` | -- | 3×3 matrices (row-major) |
-| `Eigen::Vector3f` | `Packed_F32x3.T` | -- | Via `Vector3f_c` POD shim |
-| `Eigen::Matrix3f` | `Packed_F32x9.T` | -- | Via flat `float[9]` POD |
-| `bool` | `Interfaces.C.unsigned_char` | -- | C `_Bool` maps oddly; use int |
-| Payload struct | Custom `.record.yaml` | -- | 1:1 field mapping |
+## Step 3: Create Packed Record Types
 
-### Type Conversion Chain
-```
-Packed.T (wire format) → Unpack → .U (Ada record) → .C.To_C → .C.U_C (C-compatible)
-```
-Reverse: `.C.To_Ada → Pack → .T`
+**Input:** C struct definitions from shim headers or shared types
+**Output:** YAML files in `src/types/`
 
-`.C.U_C` and `.C.U_C_Access` only exist for types with an explicit `-c.ads` child package (auto-generated from YAML records). For custom YAML records, use `access constant Type.T` in binding specs only if no `.C` package exists.
+Before creating: check if type already exists (`ls src/types/*.record.yaml | grep -i <name>`).
 
-### Field Naming Convention
-C `camelCase` → Ada `Pascal_Case` with underscores. `sigma_BN` → `Sigma_Bn`, `timeTag` → `Time_Tag`, `omega_RN_B` → `Omega_Rn_B`.
+### C-to-Adamant type mapping
 
-### YAML Record from C Struct
+| C type | Adamant type | Format |
+|--------|-------------|--------|
+| `float` | `Short_Float` | `F32` |
+| `double` | `Long_Float` | `F64` |
+| `uint32_t` | `Interfaces.Unsigned_32` | `U32` |
+| `int32_t` | `Interfaces.Integer_32` | `I32` |
+| `float x[3]` | `Packed_F32x3.T` | (none) |
+| `float x[9]` | `Packed_F32x9.T` | (none) |
+
+NEVER use `Natural` for C unsigned types. Scalar primitives MUST have `format:`. Array types do NOT.
+
+### Field naming: C camelCase -> Ada Pascal_Case
+
+- `sigma_BN` -> `Sigma_Bn` (multi-letter -> first-cap only)
+- `omega_BN_B` -> `Omega_Bn_B` (single letter stays uppercase)
+- `r_BN_N` -> `R_Bn_N`
+
+Include original C struct as YAML comment. See [references/packed-record-patterns.md](references/packed-record-patterns.md).
+
+## Step 4: Create Component YAML Files
+
+**Input:** Algorithm interface analysis
+**Output:** `.component.yaml`, `.data_dependencies.yaml`, `.data_products.yaml`, optionally `.parameters.yaml`
+
+### Decision: Parameters vs Data Dependencies
+
+**Parameters** (`.parameters.yaml`): configuration that changes infrequently (gains, inertia, calibration). Updated via ground command.
+**Data Dependencies** (`.data_dependencies.yaml`): dynamic state changing every cycle (attitude, position, sensor readings). Fetched from data product database.
+
+### component.yaml template
+
 ```yaml
-# /* typedef struct { float timeTag; float r_BN_N[3]; } NavTransPayload; */
-fields:
-  - name: Time_Tag
-    type: Short_Float
-    format: F32
-    description: "[s] Time tag"
-  - name: R_Bn_N
-    type: Packed_F32x3.T
-    description: "[m] Position vector in inertial frame"
+---
+description: <Brief description>
+execution: passive
+init:
+  description: Initializes the <algorithm> algorithm.
+connectors:
+  - description: Run the algorithm up to the current time.
+    type: Tick.T
+    kind: recv_sync
+  - description: Fetch a data product item from the database.
+    type: Data_Product_Fetch.T
+    return_type: Data_Product_Return.T
+    kind: request
+  - description: The data product invoker connector
+    type: Data_Product.T
+    kind: send
 ```
 
-### Check Existing Types First
-- `adamant/src/types/packed_arrays/` -- `Packed_F32x3`, `Packed_F32x9`, etc.
-- `adamant/src/types/` -- `Packed_F32`, `Packed_U32`, etc.
-- Project `src/types/` -- Domain-specific records (`att_guid.record.yaml`, `nav_att.record.yaml`, etc.)
+If component has parameters, add: `- { description: Parameter update, type: Parameter_Update.T, kind: modify }`
 
-## 4. Component YAML Model
+### data_dependencies.yaml
 
-### Basic Wrapper (no parameters)
-`execution: passive` with connectors: `recv_sync` (Tick.T), `request` (Data_Product_Fetch.T → Data_Product_Return.T), `send` (Data_Product.T).
-
-### Optional Connectors
-- **Parameters**: Add `modify` connector (Parameter_Update.T) + parameters YAML
-- **Events**: Add `send` connector (Event.T)
-- **System Time**: Add `get` connector with `return_type: Sys_Time.T` (NOT `type:`)
-
-Note: `get` connectors use `return_type:` only, NOT `type:`.
-
-### Data Dependencies YAML
-List `data_dependencies:` with `name`, `type` (e.g., `Att_Ref.T`), and `description`.
-
-### Parameters YAML
-List `parameters:` with `name`, `type` (e.g., `Packed_F32.T`), `default` (Ada aggregate syntax), and `description`.
-
-## 5. Memory Management
-
-### Create/Destroy Lifecycle
-All wrapped algorithms use heap allocation via C shim:
-```ada
-Self.Alg := Create;   -- In Init: calls C++ new via shim
-Destroy (Self.Alg);   -- In Destroy: calls C++ delete via shim
-```
-The component record holds `Alg : Foo_Algorithm_Access := null;` (pointer, initialized to null).
-
-### Stack vs Heap
-- **Algorithm instance**: Always **heap** (C++ `new`/`delete` via shim). Adamant components can't stack-allocate C++ objects.
-- **Input/output payloads**: Always **stack**. Declared as local variables in `Tick_T_Recv_Sync`, converted via `To_C`/`To_Ada` in place.
-- **Access parameters**: Use `'Unchecked_Access` on stack-local `aliased` variables to pass pointers to C functions. These pointers are valid only for the duration of the call.
-
-```ada
--- Stack-allocated, passed by pointer to C:
-Ref_C : aliased Att_Ref.C.U_C := Att_Ref.C.To_C (Att_Ref.Unpack (Ref));
-Result := Update (Self.Alg, Ref_C'Unchecked_Access);
+```yaml
+---
+description: Data dependencies for <Component>
+data_dependencies:
+  - name: <Input_Name>
+    type: <Type>.T
+    description: <what it represents>
 ```
 
-### Destroy is NOT Automatic
-Adamant has no destructor mechanism. Components with C++ handles MUST:
-1. Declare a `not overriding procedure Destroy` in the spec
-2. Call it in test `Tear_Down_Test`
-3. Call it in assembly shutdown (if applicable)
+### data_products.yaml
 
-## 6. Implementation Pattern
-
-The implementation spec declares `Instance` extending `Base_Instance` with a private `Alg` handle, overriding `Init`, `Tick_T_Recv_Sync`, `Get_Data_Dependency`, and `Invalid_Data_Dependency`. A `not overriding procedure Destroy` handles C++ cleanup.
-
-> Full spec template: [references/code-templates.md §6 -- Spec](references/code-templates.md#spec)
-
-### Body -- Basic Wrapper
-`Init` calls `Create`, `Tick_T_Recv_Sync` fetches dependencies, converts to C types via `To_C`, calls `Update`, converts back via `To_Ada`, and sends the data product. `Invalid_Data_Dependency` asserts False.
-
-> Full body template: [references/code-templates.md §6 -- Body -- Basic Wrapper](references/code-templates.md#body--basic-wrapper)
-
-### Body -- With Parameters
-Add `Parameter_Update_T_Modify` (delegates to `Process_Parameter_Update`) and `Update_Parameters_Action` (pushes parameter values to C++ via setters). Call `Self.Update_Parameters` at the top of `Tick_T_Recv_Sync`.
-
-> Full template: [references/code-templates.md §6 -- Body -- With Parameters](references/code-templates.md#body--with-parameters-rate-control-pattern)
-
-### Algorithm_Wrapper_Util
-Shared utility: `Is_Dep_Status_Success` returns True for Success, False for Not_Available/Stale, asserts False for Error.
-
-> Full template: [references/code-templates.md §6 -- Algorithm_Wrapper_Util](references/code-templates.md#algorithm_wrapper_util)
-
-## 7. Input Strategy: Parameters vs Data Dependencies
-
-| Mechanism | Connector | Use For | Staleness |
-|---|---|---|---|
-| **Parameters** | `modify` (Parameter_Update.T) | Fixed config, tunable gains | N/A |
-| **Data Dependencies** | `request` (Data_Product_Fetch.T) | Dynamic telemetry from other components | Checked each tick |
-| **Direct input** | `recv_sync` (custom type) | If algorithm IS the data source | N/A |
-
-- **Stateful algorithms**: Track config state, call `Algorithm_Reset` in `Update_Parameters_Action` if parameters change algorithm mode.
-- **Multiple dependencies**: Check ALL statuses before calling algorithm. Use `and then` (short-circuit) for combining.
-
-## 8. Error Handling Across FFI Boundary
-
-### Data Dependency Failures
-```ada
-if Is_Dep_Status_Success (Status_A) and then Is_Dep_Status_Success (Status_B) then
-   -- Call algorithm
-else
-   null;  -- Skip this tick; algorithm runs on next successful fetch
-end if;
+```yaml
+---
+description: Data products for <Component>
+data_products:
+  - name: <Output_Name>
+    type: <Type>.T
+    description: <what it represents>
 ```
 
-### Invalid Data Dependency Handler
-Every wrapper MUST implement this -- asserts False since invalid IDs indicate a configuration bug:
+> Full templates with parameters: [references/component-yaml-templates.md](references/component-yaml-templates.md)
+
+## Step 5: Generate Templates and Implement
+
+```bash
+cd src/components/<component_name>
+redo templates
+cp build/template/*.ad[sb] .
+```
+
+### Implementation spec (.ads) modifications
+
+1. Add `with <Algorithm>_C; use <Algorithm>_C;`
+2. Add `not overriding procedure Destroy (Self : in out Instance);`
+3. Set instance record: `Alg : <Algorithm>_Access := null;`
+
+### Implementation body (.adb) pattern
+
 ```ada
-overriding procedure Invalid_Data_Dependency (...) is
-   pragma Annotate (GNATSAS, Intentional, "subp always fails", "intentional assertion");
+with <Type_1>.C;
+with Algorithm_Wrapper_Util;
+
+package body Component.<Name>.Implementation is
+
+   overriding procedure Init (Self : in out Instance) is
+   begin
+      Self.Alg := Create;
+   end Init;
+
+   not overriding procedure Destroy (Self : in out Instance) is
+   begin
+      Destroy (Self.Alg);
+   end Destroy;
+
+   overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T) is
+      use Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;
+      use Algorithm_Wrapper_Util;
+      Dep_1 : Type_1.T;
+      Dep_1_Status : constant Data_Dependency_Status.E :=
+         Self.Get_Dep_Name (Value => Dep_1, Stale_Reference => Arg.Time);
+   begin
+      Self.Update_Parameters;  -- ONLY if component has parameters
+      if Is_Dep_Status_Success (Dep_1_Status) then
+         declare
+            Dep_1_C : aliased Type_1.C.U_C := Type_1.C.To_C (Type_1.Unpack (Dep_1));
+            Output : constant Out_Type.C.U_C := Algorithm_C.Update (
+               Self.Alg, Input => Dep_1_C'Unchecked_Access);
+         begin
+            Self.Data_Product_T_Send (Self.Data_Products.Output_Name (
+               Arg.Time, Out_Type.Pack (Out_Type.C.To_Ada (Output))));
+         end;
+      end if;
+   end Tick_T_Recv_Sync;
+
+end Component.<Name>.Implementation;
+```
+
+### Type conversion chain
+
+- **Input:** `Ada .T` -> `Unpack` -> `Ada .U` -> `To_C` -> `C.U_C` -> pass `'Unchecked_Access`
+- **Output:** `C.U_C` -> `To_Ada` -> `Ada .U` -> `Pack` -> `Ada .T`
+
+### If component has parameters
+
+Implement `Update_Parameters_Action` to apply parameters to the C algorithm:
+```ada
+overriding procedure Update_Parameters_Action (Self : in out Instance) is
 begin
-   pragma Assert (False);
-end Invalid_Data_Dependency;
+   Set_Gain (Self.Alg, Self.Gain_Param.Value);
+end Update_Parameters_Action;
 ```
 
-### Invalid Parameter Handler (for parameterized components)
-Same pattern as above with `Invalid_Parameter`.
+> Full implementation patterns: [references/implementation-patterns.md](references/implementation-patterns.md)
 
-### C++ Exception Safety
-C++ algorithms MUST NOT throw exceptions across the FFI boundary. The C shim layer is the firewall. If the C++ algorithm can throw, catch in the `.cpp` shim and return an error code or sentinel value. Ada has no mechanism to catch C++ exceptions.
-
-### Send Dropped Handlers
-Every `send` connector requires a `*_Send_Dropped` override (typically `is null` for wrappers).
-
-## 9. Build Integration
-
-### C++ Side (fp32-fsw-xmera)
-C++ algorithms are built separately via CMake into a static library (`libAlgorithms.a`):
-```cmake
-# algorithms/attTrackingError/CMakeLists.txt
-set(module "fp32.attTrackingErrorF32")
-xmera_add_swig_module("${module}")
-target_sources("${module}" PRIVATE
-  attTrackingError.cpp
-  attTrackingErrorAlgorithm.cpp
-)
-target_link_libraries("${module}" PRIVATE Eigen3::Eigen)
-```
-
-The C shim `.cpp` files are compiled as part of this library. The shared payload headers in `msgPayloadDef/` are included by both sides.
-
-### Ada Side (adamant-xmera-components)
-Adamant uses `redo` build system. The Ada binding `.ads` files live alongside the component. The pre-built C++ static library is linked at the `redo` ELF step:
-```bash
-redo all           # Compile Ada component
-cd test/ && redo test  # Run tests (links against C++ library)
-```
-
-### Verifying Linkage
-```bash
-nm libAlgorithms.a | grep FooAlgorithm_create
-# Should show T (text/code) symbol
-```
-
-If symbols are missing, the C shim wasn't compiled into the library, or `extern "C"` was forgotten.
-
-## 10. Testing Wrapped Components
-
-### Test Structure
-```
-component_dir/
-  test/
-    test.adb                          -- Test driver (auto-generated)
-    foo_tests-implementation.adb      -- Test cases
-    component-foo-implementation-tester.adb  -- Tester glue (auto-generated)
-```
-
-### Test Lifecycle
-`Set_Up_Test` calls `Init_Base`, `Connect`, `Init`, `Set_Up`. `Tear_Down_Test` calls `Destroy` then `Final_Base`.
-
-> Full template: [references/code-templates.md §10 -- Test Lifecycle](references/code-templates.md#test-lifecycle)
-
-### Writing Test Cases
-Set data dependencies on tester fields, tick the component via `Tick_T_Send`, then verify output via history connectors with epsilon-tolerant assertions.
-
-> Full template: [references/code-templates.md §10 -- Writing Test Cases](references/code-templates.md#writing-test-cases)
-
-### Key Testing Rules
-- Use `T.System_Time` for tick timestamps -- `(0, 0)` causes staleness failures
-- Use `Epsilon` for floating-point comparisons across FFI
-- Array aggregates use bracket syntax: `[x, y, z]`
-- The tester auto-generates history connectors for each data product
-- Data dependency values are set directly on the tester record fields
-
-### Verifying Parameter Updates
-Set parameters on tester, send `Parameter_Update_T`, tick, and verify output reflects new values.
-
-> Full template: [references/code-templates.md §10 -- Verifying Parameter Updates](references/code-templates.md#verifying-parameter-updates)
-
-## 11. Common Pitfalls
-
-- C `float` → `Short_Float` (F32), C `double` → `Long_Float` (F64). **Never swap.**
-- Tick timestamp `(0, 0)` causes data dependency staleness failures
-- `get` connector uses `return_type:` only, NOT `type:`
-- Every `send` connector needs `*_Send_Dropped` override
-- Check existing packed types before creating new ones
-- Zero warnings required for safety-critical code
-- Verify C++ library linkage: `nm libAlgorithms.a | grep <name>`
-- Always call `Destroy` in `Tear_Down_Test` or you leak C++ heap memory
-- `extern "C"` forgotten in shim header → linker errors (mangled names)
-- Payload struct field order must match exactly between C and YAML record
-- `pragma Assert (False)` handlers need `GNATSAS` annotation to suppress analysis warnings
-
-## 12. Build & Style
+## Step 6: Build and Verify
 
 ```bash
-redo all                # Compile component
-cd test/ && redo test   # Run tests
-redo style              # Style check before finalizing
+cd src/components/<component_name>
+redo
 ```
 
-See [adamant-style](../adamant-style/SKILL.md) for full style rules.
+MUST compile with ZERO warnings and ZERO errors. Fix all `-gnatwu`, `-gnatwk` warnings.
 
-## 13. Real Examples (xmera-components)
+## Step 7: Create Unit Tests
 
-| Component | Algorithm | Has Params | Dependencies |
-|---|---|---|---|
-| `attitude_tracking_error` | AttTrackingError | No (sigma_R0R set in Init) | att_ref, nav_att → att_guid |
-| `rate_control` | RateControl | Yes (gain_P, inertia) | att_guid → torque_cmd |
-| `inertial_3d` | Inertial3D | No | -- → att_ref |
-| `ephem_nav_converter` | EphemNavConverter | No | ephemeris → nav_trans |
-| `sun_search` | SunSearch | Yes | nav_att, css → sun_heading |
-| `average_mimu_data` | AverageMimuData | Yes | mimu_data → averaged output |
-| `stepper_motor_controller` | StepperMotor | Yes | commands → step outputs |
+```bash
+cd src/components/<component_name>/test
+# Create env.py, tests.yaml, then:
+redo templates
+cp build/template/*.ad[sb] .
+```
 
-See [references/real-examples.md](references/real-examples.md) for full annotated code from these components.
+### Test pattern
 
-## References
-- [references/code-templates.md](references/code-templates.md) -- YAML, Ada, and CMake templates for each pipeline stage
-- [references/c-shim-bindings.md](references/c-shim-bindings.md) -- C shim patterns and Ada binding generation details
-- [references/implementation-details.md](references/implementation-details.md) -- Deep implementation patterns and edge cases
-- [references/real-examples.md](references/real-examples.md) -- Annotated code from xmera-components
+```ada
+overriding procedure Test (Self : in out Instance) is
+   T : Component.<Name>.Implementation.Tester.Instance_Access renames Self.Tester;
+   type Test_Vector is record
+      Input : Type_1.T;
+      Expected : Out_Type.T;
+   end record;
+   Cases : constant array (1 .. N) of Test_Vector := [...];
+begin
+   for I in Cases'Range loop
+      T.<Dep_Name> := Cases (I).Input;
+      T.Tick_T_Send ((Time => T.System_Time, Count => 0));
+      Natural_Assert.Eq (T.<Output>_History.Get_Count, I);
+      declare
+         Output : constant Out_Type.T := T.<Output>_History.Get (I);
+      begin
+         <Type>_Assert.Eq (Output.<Field>, Cases (I).Expected.<Field>, Epsilon => 0.0001);
+      end;
+   end loop;
+end Test;
+```
+
+### Critical test rules
+
+- ALWAYS use `T.System_Time` for Tick timestamp (NOT `(0, 0)`)
+- Work with `.T` (packed) types, NOT `.U` (unpacked)
+- Array aggregates: `[x, y, z]` NOT `(Value => [x, y, z])`
+- Use T rename pattern: `T : ... renames Self.Tester;`
+- Call `Destroy` before re-initializing for multiple configurations
+- Select 3-5 representative cases from Python tests for integration validation
+
+> Full test templates and troubleshooting: [references/unit-test-patterns.md](references/unit-test-patterns.md)
+
+## Containing Shims in Project Repository
+
+When wrapping xmera algorithms for a project (e.g., adamant_bot_station), keep shims and wrapper components inside the project repo to avoid modifying the upstream xmera repos:
+
+```
+adamant_bot_station/
+  src/
+    components/<component_name>/         # Adamant wrapper component
+      <component_name>_algorithm_c.ads   # Ada bindings
+      component-*-implementation.ads/adb # Implementation
+    types/                               # Packed record YAMLs
+  xmera_shims/                           # C shim files (local copy)
+    <algorithm_name>/
+      <algo>Algorithm_c.h
+      <algo>Algorithm_c.cpp
+```
+
+The C++ algorithms remain read-only in `fp32-fsw-xmera/`. Only the C shims and Ada code live in the project.
+
+## Reference Corpus
+
+- [references/c-shim-patterns.md](references/c-shim-patterns.md) -- C shim templates, shared types, Eigen conversion
+- [references/ada-binding-transforms.md](references/ada-binding-transforms.md) -- h2ads transformation rules, complete before/after example
+- [references/packed-record-patterns.md](references/packed-record-patterns.md) -- YAML schema, type mapping, field naming
+- [references/component-yaml-templates.md](references/component-yaml-templates.md) -- Component/dependency/product/parameter YAML
+- [references/implementation-patterns.md](references/implementation-patterns.md) -- Ada implementation with/without parameters
+- [references/unit-test-patterns.md](references/unit-test-patterns.md) -- Test templates, T rename, common pitfalls
