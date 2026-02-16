@@ -144,12 +144,14 @@ All paths are coverable with proper testing techniques:
 
 | Component Type | Target | Technique for Full Coverage |
 |---|---|---|
-| Simple passive (no commands) | 95-100% | Skip connector attachment for Send_Dropped |
+| Simple passive (no commands) | 95-100% | Set Connector_*_Recv_Sync_Status for Send_Dropped |
 | Passive with commands | 90-100% | + Corrupt command for Invalid_Command |
-| Active (async recv) | 90-100% | + Overflow queue for Recv_Async_Dropped |
-| Active with commands | 85-100% | All three techniques combined |
+| Active (async recv) | 90-100% | + Recv_Async_Dropped (structurally hard -- tester raises on queue full) |
+| Active with commands | 85-100% | All techniques combined |
 
-**There is no structural ceiling** -- the adamant_example tests cover Send_Dropped, Invalid_Command, and Recv_Async_Dropped. These require tester modifications but ARE testable.
+**Send_Dropped testing:** Use `T.Connector_*_Recv_Sync_Status := Connector_Types.Message_Dropped` (NOT re-init without Connect -- `Send_If_Connected` returns early when disconnected, so Send_Dropped never fires).
+
+**Recv_Async_Dropped:** Structurally difficult -- the tester raises an exception when the component's async queue is full, before the Dropped handler fires. No framework tests cover this pattern. Accept these lines as uncoverable or document with TODO comments.
 
 ## Common Uncovered Patterns and Fixes
 

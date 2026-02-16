@@ -439,7 +439,7 @@ bash tools/impl_coverage.sh component_name     # Specific component
 - **Invalid_Command:** Corrupt `Cmd.Header.Arg_Buffer_Length := 22;` on a valid command
 - **Send_Dropped (sync sends):** Set `T.Connector_*_Recv_Sync_Status := Connector_Types.Message_Dropped;`
 - **Send_Dropped (async sends):** Use `Expect_*_Dropped` tester flag (see Send_Dropped section above)
-- **Recv_Async_Dropped:** Overflow queue (small `Init_Base Queue_Size`, send N+1)
+- **Recv_Async_Dropped:** Structurally difficult -- tester raises exception on queue full before component's Dropped handler fires. No framework tests cover this. Accept as uncoverable or document with TODO.
 
 | Component Type | Target |
 |---|---|
