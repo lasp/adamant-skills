@@ -61,8 +61,8 @@ redo test_all
 ```bash
 # Coverage analysis via gcov
 cd src/components/my_component/test
-redo clean
 redo coverage
+# If stamp mismatch errors: redo clean first, then redo coverage
 
 # Recursive coverage
 cd src

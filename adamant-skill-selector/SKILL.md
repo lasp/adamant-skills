@@ -32,7 +32,7 @@ You have 14 Adamant skills totaling ~10800 lines (with references). Loading all 
 
 ### Measuring or improving test coverage
 **Load:** `adamant-testing` (see `references/coverage-guide.md`)
-- `redo coverage` workflow, clean build requirement
+- `redo coverage` workflow, gcov stamp mismatch troubleshooting
 - `impl_coverage.sh` script for filtering to implementation .adb
 - Full path coverage techniques (Invalid_Command, Send_Dropped, Recv_Async_Dropped)
 - Adding tests to existing components (YAML + template regeneration)

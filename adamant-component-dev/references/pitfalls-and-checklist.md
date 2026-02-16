@@ -17,7 +17,7 @@ Active components have async receive connectors with queues. In tests, `T.Packet
 ### Testing Send_Dropped and Invalid_Command
 These are NOT structural ceiling -- they ARE testable:
 - **Invalid_Command**: Create valid command via `T.Commands.X(...)`, then set `Cmd.Header.Arg_Buffer_Length := 22;` to corrupt it. Framework calls `Invalid_Command`.
-- **Send_Dropped**: Skip `Attach_*` in tester's `Connect` for one connector, then trigger the component to send on it. Or add `Expect_*_Dropped` boolean flag to tester.
+- **Send_Dropped**: Only fires when `Send` returns `Message_Dropped` (async queue overflow). Sync connectors always return `Success` -- their Send_Dropped handlers are uncoverable. For async sends, add `Expect_*_Dropped` boolean flag to the hand-written tester.
 - **Recv_Async_Dropped**: Overflow the async queue by sending more messages than `Queue_Size` can hold.
 See adamant_example/parameter_manager for all three patterns.
 

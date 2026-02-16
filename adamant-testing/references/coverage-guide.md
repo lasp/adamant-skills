@@ -79,7 +79,7 @@ These patterns require tester modifications but are fully coverable (no structur
 
 Send_Dropped fires when `Send` returns `Message_Dropped` -- NOT when a connector is unattached. `Send_If_Connected` skips entirely when not connected (does not call `Send_Dropped`).
 
-**Sync connectors always return `Success`** -- `Message_Dropped` never fires for sync sends. Most bot_station components only have sync send connectors, making their `begin null; end` Send_Dropped handlers structurally uncoverable. Add a TODO comment acknowledging the gap.
+**Sync connectors always return `Success`** -- `Message_Dropped` never fires for sync sends. Most components only have sync send connectors, making their `begin null; end` Send_Dropped handlers structurally uncoverable. Add a TODO comment acknowledging the gap.
 
 **Async send connectors** can trigger Send_Dropped via queue overflow. The framework's `command_router` tests demonstrate this pattern using `Expect_*_Dropped` flags on the hand-written tester.
 

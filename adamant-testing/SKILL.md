@@ -421,7 +421,7 @@ bash tools/impl_coverage.sh component_name     # Specific component
 
 **No structural ceiling.** All executable paths are coverable with proper testing:
 - **Invalid_Command:** Corrupt `Cmd.Header.Arg_Buffer_Length := 22;` on a valid command
-- **Send_Dropped (with logic):** Re-init without Connect (see Send_Dropped Testing above)
+- **Send_Dropped (async sends):** Use `Expect_*_Dropped` tester flag (see Send_Dropped section above)
 - **Recv_Async_Dropped:** Overflow queue (small `Init_Base Queue_Size`, send N+1)
 
 | Component Type | Target |

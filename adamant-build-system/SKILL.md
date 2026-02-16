@@ -304,7 +304,7 @@ redo build/bin/Pico/main.elf
 | `No target test.elf` | Missing `test.adb` in test directory |
 | `duplicate file name` | Filenames must be globally unique across all `.path` dirs |
 | Model cache stale | `redo clear_cache` then rebuild |
-| `redo coverage` shows 0% | `redo clean` first (needs fresh gcov-instrumented build) |
+| `redo coverage` shows 0% or stamp mismatch | Stale gcov data; `redo clean` in test dir, then re-run `redo coverage` |
 | Ravenscar violations in tests | Use `env.py` (selects Linux_Test target, not Linux) |
 
 More errors and project structure: [references/build-commands.md](references/build-commands.md)
