@@ -25,7 +25,7 @@ private
    overriding procedure Parameter_Update_T_Modify (Self : in out Instance; Arg : in out Parameter_Update.T);
    overriding procedure Update_Parameters_Action (Self : in out Instance);
    overriding procedure Invalid_Parameter (Self : in out Instance; Par : in Parameter.T;
-      Errant_Field_Number : in Unsigned_32; Errant_Field : in Basic_Types.Poly_Type) is null;
+      Errant_Field_Number : in Unsigned_32; Errant_Field : in Basic_Types.Poly_Type);
 
    -- Send dropped handlers (is null for all):
    overriding procedure Data_Product_T_Send_Dropped (Self : in out Instance; Arg : in Data_Product.T) is null;
@@ -130,6 +130,15 @@ begin
    -- Parameters accessed via Self.<Parameter_Name>
    Set_Gain (Self.Alg, Self.Derivative_Gain_P.Value);
 end Update_Parameters_Action;
+
+overriding procedure Invalid_Parameter (
+   Self : in out Instance; Par : in Parameter.T;
+   Errant_Field_Number : in Unsigned_32;
+   Errant_Field : in Basic_Types.Poly_Type) is
+   pragma Annotate (GNATSAS, Intentional, "subp always fails", "intentional assertion");
+begin
+   pragma Assert (False);
+end Invalid_Parameter;
 ```
 
 ## Type Conversion Chain

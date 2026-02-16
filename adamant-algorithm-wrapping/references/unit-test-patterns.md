@@ -1,5 +1,30 @@
 # Unit Test Patterns for Algorithm Wrapper Components
 
+## Prerequisites
+
+### Component in build path
+```bash
+cd src/components/<component_name>
+touch .all_path
+```
+
+### Algorithm in fp32-fsw-xmera library
+```bash
+# Check if algorithm is in build
+grep -r "<algorithm_name>" /home/user/fp32-fsw-xmera/CMakeLists.txt
+
+# If not found, add to algorithms list in CMakeLists.txt:
+# set(algorithms "attTrackingError" "<algorithm_name>")
+
+# Rebuild library
+cd /home/user/fp32-fsw-xmera
+./clean.sh
+./build.sh linux-gcc-debug
+
+# Verify symbols exist
+nm /home/user/fp32-fsw-xmera/build/linux-gcc-debug/lib/libgncAlgorithms.a | grep -i <algorithm_name>
+```
+
 ## Setup Files
 
 ### tests.yaml

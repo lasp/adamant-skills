@@ -168,6 +168,17 @@ uint32_t FooAlgorithm_getMaxFooCount(void) {
 
 This enables Ada `pragma Assert` validation at elaboration time.
 
+## Naming Conventions
+
+- **C function names**: `ClassName_methodName` (PascalCase class, camelCase method)
+- **Opaque type**: Same name as C++ class
+- **File names**: `fooAlgorithm_c.h` / `fooAlgorithm_c.cpp`
+- **Header guard**: `F32XIMERA_FOOALGORITHM_C_H`
+- Use `reinterpret_cast` (not `static_cast` or C-style casts)
+- Use `new`/`delete` (not `malloc`/`free`)
+- Input-only parameters: `const Type*`
+- Do NOT catch C++ exceptions in shim layer
+
 ## Algorithm Patterns
 
 ### Stateless (no reset, no config)
