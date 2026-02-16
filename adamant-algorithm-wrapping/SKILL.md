@@ -319,6 +319,51 @@ adamant_bot_station/
 
 The C++ algorithms remain read-only in `fp32-fsw-xmera/`. Only the C shims and Ada code live in the project.
 
+## Alternative: Direct Get Connectors (Instead of Data Dependencies)
+
+When input types contain F64 fields (Packed_F64x3, Long_Float), use **direct get connectors** instead of data dependencies to avoid the F64 packed type endian bug. See [references/direct-connector-patterns.md](references/direct-connector-patterns.md) for full patterns.
+
+Key differences:
+- Component YAML: `return_type: Type.T` + `kind: get` (NOT `type:` + `kind: request`)
+- No `data_dependencies.yaml` file
+- No `Algorithm_Wrapper_Util` or `Data_Product_Fetch.T` connector
+- Tester needs manual field + return function override (generated tester returns uninitialized data)
+- Implementation: `Self.Input_T_Get` directly instead of `Self.Get_Input_Name(Value => ...)`
+
+## Known Issues and Workarounds
+
+### Packed_F64x3 Endian Bug
+On little-endian systems, `.C.Unpack(T)` and `.C.To_C(U)` produce CONSTRAINT_ERROR for F64 arrays. Workaround: manual field-by-field copy through native `U` type. See [references/direct-connector-patterns.md](references/direct-connector-patterns.md#f64-packed-type-endian-workaround).
+
+### Packed_F32.T Parameter Defaults
+`Packed_F32.T` is a record `(Value => Short_Float)`. YAML defaults must use record syntax: `"(Value => 0.15)"`. For `Packed_F32x3.T` (array), use `"[others => 0.0]"` (brackets, not parentheses -- parentheses triggers obsolescent syntax warning).
+
+### Init Parameter Types
+Use `Short_Float` (not `Packed_F32.T`) for scalar init parameters. Packed types as init params generate code with literal float defaults that don't type-check.
+
+### Interfaces.C Boolean Ambiguity
+`use Interfaces.C;` at body level makes `False` ambiguous (both `Standard.False` and `Interfaces.C.C_bool` false). Use qualified `Interfaces.C.C_float(...)` calls instead of `use` clause. For assertions: `pragma Assert (Standard.False);`.
+
+### Update Name Collision
+If the C binding has an `Update` procedure and the component also has parameter update infrastructure, the name `Update` may collide with `Parameter_Enums.Update`. Qualify the call: `Algorithm_C.Update(Self.Alg, ...)`.
+
+### xmera Library Build (Freestanding Eigen)
+The CMake freestanding build (`-include all_freestanding.hpp`) may fail with `std::complex` errors. Workaround: compile without the freestanding include header:
+```bash
+g++ -c -g -O0 -std=c++23 -fPIC -I algorithms -I . -I /path/to/eigen [file.cpp]
+ar rcs build/linux-gcc-debug/lib/libgncAlgorithms.a build/linux-gcc-debug/obj/*.o
+```
+
+## Existing Reference Implementations
+
+Before writing a new wrapper, check these repos for existing patterns:
+- **fp32-fsw-xmera/algorithms/**: Existing C shims (`*_c.h`, `*_c.cpp`)
+- **adamant-xmera-components/src/components/**: Existing Ada wrappers
+- **adamant-xmera-components/src/types/**: Existing packed record types (att_guid, vehicle_config, etc.)
+- **xmera/src/fswAlgorithms/**: Full C++ algorithm implementations
+
+Reuse types from xmera-components when available (att_guid, att_ref, nav_att, nav_trans, vehicle_config, packed_f32x3_record, packed_f32x9).
+
 ## Reference Corpus
 
 - [references/c-shim-patterns.md](references/c-shim-patterns.md) -- C shim templates, shared types, Eigen conversion
@@ -327,3 +372,4 @@ The C++ algorithms remain read-only in `fp32-fsw-xmera/`. Only the C shims and A
 - [references/component-yaml-templates.md](references/component-yaml-templates.md) -- Component/dependency/product/parameter YAML
 - [references/implementation-patterns.md](references/implementation-patterns.md) -- Ada implementation with/without parameters
 - [references/unit-test-patterns.md](references/unit-test-patterns.md) -- Test templates, T rename, common pitfalls
+- [references/direct-connector-patterns.md](references/direct-connector-patterns.md) -- Direct get connectors, F64 endian workaround, tester pattern
