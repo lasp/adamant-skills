@@ -245,6 +245,35 @@ end Critical_Event_T_Recv_Sync;
    redo coverage
    ```
 
+## Tester Helpers for Private State Coverage
+
+When branches depend on private component fields not reachable via commands, parameters, or connectors, add setter procedures to the hand-written tester. The tester IS a child of `Component.X.Implementation`, giving it full visibility into private record fields:
+
+```ada
+-- In tester .ads (before end):
+procedure Set_Battery_Voltage (Self : in out Instance; Value : in Interfaces.Unsigned_16);
+
+-- In tester .adb (before end):
+procedure Set_Battery_Voltage (Self : in out Instance; Value : in Interfaces.Unsigned_16) is
+begin
+   Self.Component_Instance.Last_Battery_Voltage := Value;
+end Set_Battery_Voltage;
+```
+
+Then in tests:
+```ada
+T.Set_Battery_Voltage (1500);  -- Force undervoltage condition
+T.Tick_T_Send ((Time => T.System_Time, Count => 1));
+Natural_Assert.Ge (T.Undervoltage_Fault_History.Get_Count, 1);
+```
+
+**When simulation overwrites state:** If `Tick_T_Recv_Sync` calls a simulation procedure that overwrites the field you set, you must work around the simulation:
+- Set the sum/count fields so the simulation's average computation produces the desired value
+- Adjust thresholds (e.g., Init with lower thresholds) so simulation values trigger the branch
+- Set the field AND the threshold simultaneously
+
+**Common uses:** voltage/current sensors, SOC levels, fault states, power states, temperature averages, mode flags, counters that need specific values for branch coverage.
+
 ## gcovr Known Issues
 
 - **gcovr 8.6 path bug:** Some components get `SanityCheckError: Output file ... doesn't exist`. The gcov output path is mangled. No workaround other than upgrading gcovr.
