@@ -377,6 +377,52 @@ Natural_Assert.Eq (T.Command_T_Send_Dropped_Count, 1);
 - **`is null;` in spec:** Zero coverage impact. gcov doesn't count these.
 - **`begin null; end` in body:** These ARE coverable using the `Connector_*_Recv_Sync_Status` pattern above.
 
+## Parameter Testing (Update_Parameters_Action Coverage)
+
+The tester's 3-step Stage/Validate/Update protocol does NOT call `Update_Parameters_Action`. The tester's `Update_Parameters` sends a `Parameter_Update.T` with `Operation => Update` via the modify connector, which calls `Process_Parameter_Update`. This sets `Ready_To_Update` but does NOT call `Update_Parameters_Action`.
+
+To trigger `Update_Parameters_Action`, you must separately call `Update_Parameters` on the component instance. Since this is a non-overriding procedure on `Base_Instance` (not visible through the private type), add a tester helper:
+
+```ada
+-- In tester .ads (before end):
+procedure Call_Update_Parameters (Self : in out Instance);
+
+-- In tester .adb (before end):
+procedure Call_Update_Parameters (Self : in out Instance) is
+begin
+   Self.Component_Instance.Update_Parameters;
+end Call_Update_Parameters;
+```
+
+Then in the test body, after the 3-step protocol:
+```ada
+Stat := T.Stage_Parameter (T.Parameters.Threshold ((Value => 50)));
+Stat := T.Validate_Parameters;
+Stat := T.Update_Parameters;
+T.Call_Update_Parameters;  -- Actually applies staged values
+```
+
+This pattern applies to ALL components with `parameters.yaml` and custom `Update_Parameters_Action`.
+
+## Tester Helpers for Private State
+
+When component fields are not reachable via commands or parameters, add setter procedures to the hand-written tester. The tester IS a child of `Component.X.Implementation`, so it can access private record fields:
+
+```ada
+-- In tester .ads (before end):
+procedure Set_Pressure (Self : in out Instance; Value : in Short_Float);
+
+-- In tester .adb (before end):
+procedure Set_Pressure (Self : in out Instance; Value : in Short_Float) is
+begin
+   Self.Component_Instance.Pressure := Value;
+end Set_Pressure;
+```
+
+Test file calls: `T.Set_Pressure (501.0);`
+
+Use for: simulated sensor values, internal state flags, cooldown counters -- anything the component stores privately that must be set to exercise specific branches.
+
 ## Coverage
 
 See [references/coverage-guide.md](references/coverage-guide.md) for full guide.
