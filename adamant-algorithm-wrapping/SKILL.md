@@ -300,6 +300,42 @@ end Test;
 
 > Full test templates and troubleshooting: [references/unit-test-patterns.md](references/unit-test-patterns.md)
 
+## Simplified Wrapping: Flattened C Shim + Direct Ada Bindings
+
+For algorithms with complex C++ types (Eigen matrices, message payload structs, std::array), the fastest approach skips h2ads entirely:
+
+1. **C shim flattens all complex types to primitives** -- `float[]`, `int[]`, `double` at the boundary
+2. **Ada bindings declare C arrays directly** -- `type Float_Array_Rw is array (0 .. 35) of aliased C_float;`
+3. **Component converts between Packed types and C arrays** with explicit loops
+
+This avoids needing `.C.U_C` types, `To_C`/`To_Ada` chains, and the entire xmera type infrastructure. Trade-off: manual conversion loops in the Ada body, but much simpler to get right.
+
+### Example: RW-type algorithms (mrpFeedback, mrpSteering, rwMotorTorque, etc.)
+
+```c
+// C shim: flatten RW message types to simple arrays
+void algo_update(Algo* self, const float sigma_BR[3], const float wheelSpeeds[RW_EFF_CNT],
+                 const int wheelAvailability[RW_EFF_CNT], float torque_out[3]);
+```
+
+```ada
+-- Ada binding: declare C array types directly
+type Float_Array_3 is array (0 .. 2) of aliased C_float;
+type Float_Array_Rw is array (0 .. Rw_Eff_Cnt - 1) of aliased C_float;
+type Int_Array_Rw is array (0 .. Rw_Eff_Cnt - 1) of aliased int;
+```
+
+```ada
+-- Component body: convert Packed -> C -> call -> C -> Packed
+Cmd : constant Packed_F32x3.U := Packed_F32x3.Unpack (Self.Input_T_Get);
+Input : constant Float_Array_3 := [C_float (Cmd (0)), C_float (Cmd (1)), C_float (Cmd (2))];
+```
+
+### When to use h2ads workflow vs flattened approach
+
+- **h2ads**: When xmera-components already defines the packed types and `.C` child packages
+- **Flattened**: When wrapping new algorithms, especially those with RW/thruster array types that would need many new packed record definitions
+
 ## Containing Shims in Project Repository
 
 When wrapping xmera algorithms for a project (e.g., adamant_bot_station), keep shims and wrapper components inside the project repo to avoid modifying the upstream xmera repos:
@@ -347,12 +383,31 @@ Use `Short_Float` (not `Packed_F32.T`) for scalar init parameters. Packed types 
 ### Update Name Collision
 If the C binding has an `Update` procedure and the component also has parameter update infrastructure, the name `Update` may collide with `Parameter_Enums.Update`. Qualify the call: `Algorithm_C.Update(Self.Alg, ...)`.
 
+### Unsigned_64 Arithmetic
+When computing `Call_Time` from `Sys_Time.T` fields, use `use Interfaces;` for clean arithmetic:
+```ada
+with Interfaces; use Interfaces;
+...
+Call_Time : constant Unsigned_64 := Unsigned_64 (Arg.Time.Seconds) * 1_000_000_000 + Unsigned_64 (Arg.Time.Subseconds);
+```
+Qualified `Interfaces.Unsigned_64(...)` without `use` can cause type mismatch errors on the `*` operator.
+
+### Data Product Buffer Size Limit
+The framework `data_product_header.record.yaml` hardcodes `Buffer_Length` as `format: U8`, capping `data_product_buffer_size` at 255. Large array types like `Packed_F32x36.T` (144 bytes) fit, but check your config before using large output types. If you change `data_product_buffer_size`, you must: `redo clear_cache` + `redo clean` on `adamant/src/types/data_product/` + `redo clean_all` on both framework and project.
+
+### Singular Matrix in Zero-Config Algorithms
+Algorithms using pseudo-inverse (e.g., rwNullSpace) will produce NaN if configured with zero effectors. Always initialize with at least a minimal valid configuration (e.g., 3 orthogonal wheels for rwNullSpace).
+
+### Missing Utility Dependencies
+Some algorithms (e.g., oeStateEphem) depend on utility libraries (`orbitalMotion.cpp`, `ephemerisUtilities.cpp`) not compiled in the base library. Check for undefined reference errors and compile missing sources into `libgncAlgorithms.a`.
+
 ### xmera Library Build (Freestanding Eigen)
 The CMake freestanding build (`-include all_freestanding.hpp`) may fail with `std::complex` errors. Workaround: compile without the freestanding include header:
 ```bash
-g++ -c -g -O0 -std=c++23 -fPIC -I algorithms -I . -I /path/to/eigen [file.cpp]
+g++ -c -g -O0 -std=c++23 -fPIC -I algorithms -I . -I /path/to/eigen -I /path/to/xmera/src [file.cpp]
 ar rcs build/linux-gcc-debug/lib/libgncAlgorithms.a build/linux-gcc-debug/obj/*.o
 ```
+Note: `-I /path/to/xmera/src` needed for `<architecture/msgPayloadDef/RWAvailabilityMsgPayload.h>` and similar headers that live in the xmera repo, not fp32-fsw-xmera.
 
 ## Existing Reference Implementations
 
