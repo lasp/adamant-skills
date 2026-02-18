@@ -15,24 +15,30 @@ All paths relative to `$ADAMANT_DIR` (the `adamant/` repo root).
 
 | File | Role |
 |------|------|
-| `gen/models/base.py` | Base class for all model objects. Defines `__eq__`, `__new__`, caching, and `full_filename` |
-| `gen/models/assembly.py` | Assembly model: loads components, wires connections, calls `set_assembly()` per instance |
+| `gen/models/base.py` | Base class for all model objects. Defines `__eq__`, `__hash__`, `__new__`, caching, `full_filename`, `get_dependencies()` |
+| `gen/models/assembly.py` | Assembly model: loads components, wires connections, calls `set_assembly()` per instance, generates IDs |
 | `gen/models/component.py` (`component`) | Component model: reads `*.component.yaml`, manages submodels via `set_component_instance_data`, handles per-instance mutation |
-| `gen/models/component.py` (`component_submodel`) | Base class for all component submodels (packets, events, commands, etc.): `load_component()`, `set_component()`, `set_assembly()` base implementations |
+| `gen/models/component.py` (`component_submodel`) | Base class for all component submodels (packets, events, commands, etc.): `load_component()`, `set_component()`, `set_assembly()`, `final()` |
 | `gen/models/packets.py` | Generic packet suite model (base class for custom packet models) |
 | `redo/database/model_cache_database.py` | SQLite pickle cache: `store_model` (pickle.dumps), `get_model` (pickle.loads), session ID tracking via `ADAMANT_SESSION_ID` |
-| `redo/util/model_loader.py` | `try_load_model_by_name()`, `load_model()` -- path resolution and model instantiation |
+| `redo/util/model_loader.py` | `try_load_model_by_name()`, `load_model()`, `get_model_file_path()` -- path resolution via model_database scanning BUILD_ROOTS |
 
 ### Component-Specific Model Overrides
 
 When a component ships its own `gen/models/` directory, those Python files override the generic framework models for that component's YAML files. The build path uniqueness rule applies: the first match wins; project overrides framework.
 
-**Critical example:** `src/components/parameters/gen/models/parameters_packets.py` overrides the generic `packets` model for the `Parameters` and `Parameter_Store` components. It runs `set_assembly()` to resolve per-instance packet types from the live assembly connection graph.
-
 To find all custom model overrides in the codebase:
 ```bash
 find $ADAMANT_DIR/src -name "*.py" -path "*/gen/models/*"
 ```
+
+**Three override patterns exist:**
+
+1. **Submodel override** (~15 files): Inherits from `packets`, `commands`, `data_products`, or `faults`. Overrides `set_assembly()` to resolve per-instance types from assembly state. May also override `set_component()` or `final()`.
+
+2. **Custom data structure** (~6 files): Defines standalone classes (e.g., routing tables, parameter tables, product packets) without inheriting standard submodels. Loaded by other overrides, not directly by the framework.
+
+3. **Multi-method override**: Some overrides need both `set_component()` (for component-scope data) and `set_assembly()` (for assembly-scope data). Example: `task_watchdog_faults.py`.
 
 ## Python Model Object Identity -- Critical Pitfall
 
@@ -43,116 +49,138 @@ def __eq__(self, other):
     return self and other and self.full_filename == other.full_filename
 ```
 
-**Consequence:** All instances of the same component type (e.g., three `Parameter_Store` instances all loaded from `parameter_store.component.yaml`) compare as equal under `==`. This silently causes incorrect behavior in any Python model code that tries to distinguish between multiple instances of the same component type using `==`.
+`__hash__` also uses `full_filename`. All instances of the same component type compare as equal under `==` and hash identically.
 
 **Rule:** Always use `is` (Python identity operator) when comparing component model objects that should represent specific assembly instances:
 
 ```python
-# WRONG -- True for ALL Parameter_Store instances, regardless of which one:
+# WRONG -- True for ALL Parameter_Store instances:
 conn.to_component == self.component
 
-# CORRECT -- True only for the exact Python object representing this instance:
+# CORRECT -- True only for this specific instance:
 conn.to_component is self.component
 ```
 
-This applies to all comparisons in `set_assembly()`, `set_component()`, and any other model code that traverses `assembly.connections` or `assembly.components`.
+### Why `is` Works: Pickle Memo Preservation
 
-### Why `is` Works: Model Caching Context
+The SQLite cache always returns fresh Python objects via `pickle.loads`. There is no in-memory object cache -- the session ID check only skips timestamp validation, not deserialization.
 
-The SQLite model cache (`model_cache_database`) always returns fresh Python objects via `pickle.loads` — this applies to both cache paths:
-- **This-session path:** `is_model_cached_this_session` checks `ADAMANT_SESSION_ID` in SQLite. If matched, calls `do_load_from_cache` → `pickle.loads` → fresh object.
-- **Cross-session path:** `is_cached_model_up_to_date` checks file timestamps and dependencies, then also calls `do_load_from_cache` → `pickle.loads` → fresh object.
+Object identity (`is`) is preserved **within a single pickle graph**: a component and all its submodels are pickled together. After unpickling, `submodel.component` is the exact same Python object as the component returned by `load_component()`, because pickle's memo table preserves circular references.
 
-**There is no in-memory Python object cache.** Every call to `load_from_cache` returns a new deserialized object. The session check only avoids re-validating timestamps; it does not return a cached in-memory reference.
+Connection `to_component`/`from_component` references are set by looking up `assembly.components[instance_name]` -- the same dictionary that holds the component objects. So `conn.to_component is assembly.components[name]` is always true for resolved connections.
 
-Object identity (`is`) is preserved **within a single pickle graph**: a component and all its submodels are pickled together. When unpickled, `pp.component` is the exact same Python object as the component model returned, because pickle's memo table preserves the circular reference. When `set_component_instance_data` mutates `component.instance_name` in-place, the submodel's `self.component` reflects the change immediately — they are the same object.
+### Additional base.py Methods for Debugging
 
-Connection `to_component`/`from_component` references and submodel `self.component` references are the same Python object when both originate from the same `load_component()` call in the assembly loader. This is why `is` correctly distinguishes instances even when `==` cannot.
+- `get_dependencies()` -- returns model dependency list; useful for understanding cache invalidation
+- `save_to_cache()` -- shows when models get stored
+- `__repr__()` / `__str__()` -- shows basename in debug output
+- `warning()` / `warn()` -- model-specific error reporting
+
+## Connection Model
+
+Connections are defined in `assembly.py` as `connection` objects:
+
+```python
+class connection(object):
+    def __init__(self, filename, data):
+        self.connected = False   # Set True after successful connect()
+        self.ignored = False     # Set True for "ignore" connections
+```
+
+After `connect(components)` resolves the connection:
+- `from_component` / `to_component` -- Python object references into `assembly.components`
+- `from_connector` / `to_connector` -- Connector objects from the component
+- `from_index` / `to_index` -- Array index (default 1) for arrayed connectors
+- `from_name` / `to_name` -- Formatted `"component.connector[index]"` strings
+- `name` -- Combined `"from_name-to_name"`
+- `description` -- Optional connection description from YAML
+
+**Connection resolution**: `connect()` extracts component/connector names from YAML data, looks up objects in the `components` dict, calls `from_connector.connect_to()` for bidirectional linking, then sets `connected = True`.
+
+**Subassembly connections**: Already `connected` when merged into parent assembly. Their `to_component` references point to the same Python objects as `assembly.components[name]` because subassembly components are grafted by direct reference (not copied).
 
 ## Assembly Load Sequence
 
-Understanding when each callback fires is essential for debugging `set_assembly()` issues.
+1. **`super().load()`** -- deserializes component instances and raw connections from YAML/cache.
 
-1. **`subassembly.load()`** -- loads component instances and raw connections for the current YAML file. Each component YAML is deserialized from the SQLite pickle cache.
+2. **Subassemblies loaded recursively** -- with `is_subassembly=True` (suppresses `set_assembly()`). Components and connections grafted into parent by direct reference. Duplicate instance names across subassemblies are validated.
 
-2. **Named subassemblies loaded recursively** -- with `is_subassembly=True`, which suppresses the `set_assembly()` call. Subassembly components and connections are grafted into the parent `self.components` / `self.connections` dicts by direct reference.
+3. **`connection.connect(self.components)`** -- for unconnected, non-ignored connections only. Resolves YAML stubs into live Python object references.
 
-3. **`connection.connect(self.components)` for unconnected connections only** -- resolves connection stubs with `if not connection.connected`: sets live `conn.from_component` / `conn.to_component` Python object references by looking up `self.components[instance_name]`.
+4. **`set_component_instance_data(instance_name, data)`** -- mutates each component in-place: sets `instance_name`, applies parameter overrides, resolves generic types for connectors, calculates queue sizes, handles task instance data.
 
-   **Subassembly caveat:** Connections defined inside a subassembly are already `connected` when merged into the parent assembly, so the parent's connect pass skips them. Their `conn.to_component` references point to the subassembly-scope component models. Since subassembly components are merged into `assembly.components` by **direct reference** (not copied), `conn.to_component` and `assembly.components[name]` are the same Python object. The `is` operator therefore works correctly even for subassembly connections.
+5. **`component.set_assembly(assembly)`** -- iterates `assembly.components.values()`, calling `set_assembly` which propagates to all submodels. Assembly submodels also get `set_assembly()`. Connections are fully resolved at this point.
 
-4. **`set_component_instance_data(instance_name, data)`** -- mutates each component model in-place: sets `instance_name`, applies parameter overrides, stamps instance name onto submodels. Each instance is a distinct Python object even though all share the same `full_filename`.
+6. **Component categorization** -- populates `component_kind_dict` (active/passive/queued/init/commands/etc.), assigns task priorities and ranks, gathers generic type includes.
 
-5. **`component.set_assembly(assembly)` per instance** -- iterates `assembly.components.values()`, calling `set_assembly` and propagating to all submodels (packets, events, commands, data products, parameters, faults). `assembly.connections` is fully populated at this point.
+7. **`_generate_component_ids()`** -- assigns unique IDs to all events, commands, data products, parameters, and faults across all components. Only runs when `not shallow_load`.
 
-6. **`final()`** -- called after ID assignment; post-processing hooks for generators.
+8. **`_load_complex_types()`** -- builds dependency-ordered type dictionaries from component `complex_types`.
 
-**Key insight:** By step 5, `assembly.connections` contains complete wiring information and object identity is stable. Any `set_assembly()` implementation that traces the connection graph using `is` will see correct per-instance results.
+9. **`final()`** -- post-processing hooks. Called on assembly, then per-component, then per-submodel. Use for logic that needs IDs (prefer `set_assembly()` when IDs aren't needed).
 
-## Component Model Lifecycle Per Instance
+**Key insight:** By step 5, `assembly.connections` is fully populated and object identity is stable. Custom `set_assembly()` implementations can safely trace the connection graph using `is`. IDs are NOT available until step 7.
 
-```
-model_loader.try_load_model_by_name(type)  # Returns fresh Python object via pickle.loads
-    -> base.__new__() returns cache hit or builds fresh object
-    -> base.__init__() skips load() if from_cache=True
+## Model Loader
 
-set_component_instance_data(instance_name, data)  # Called once per assembly instance
-    -> mutates in-place: instance_name, parameter_overrides
-    -> stamps submodels with component reference (preserved by pickle memo)
+`try_load_model_by_name(name, model_types)` resolves a model name to a file path via `model_database` (built by scanning BUILD_ROOTS), then calls `load_model()` which imports the Python class from the file extension and instantiates it.
 
-set_assembly(assembly)              # Called after all connections are established
-    -> submodels propagate via component.submodels[filename]
-    -> custom set_assembly() implementations can query assembly.connections
-```
-
-**Pickle memo:** Submodels pickled with a component share the same Python object references after unpickling (pickle memo preserves the object graph). So `self.component` in a submodel's `set_assembly()` is the exact same Python object as the component in `assembly.components`. This is why `is` works: all references to a given instance within a single pickle graph are identical objects.
-
-After `set_component_instance_data`, each component instance is a distinct Python object with its own `instance_name`. The `full_filename` (used by `__eq__`) is identical for all instances of the same type. Only `is` reliably identifies a specific instance.
+`get_model_file_path(name, model_types)` returns a single path or None; errors if multiple matches found. Used in custom overrides to resolve dependent model paths. Always call `redo.redo_ifchange(path)` after resolving to declare a build dependency.
 
 ## Custom `set_assembly()` Pattern
 
-When a component needs assembly-scope information (e.g., resolving packet types from connected components), override `set_assembly()` in the component's `gen/models/` directory:
+Two common patterns in custom overrides:
+
+### Pattern 1: Connection Tracing (per-instance resolution)
+
+When a component needs to resolve types from connected peers:
 
 ```python
-# src/components/my_component/gen/models/my_component_packets.py
-from models.packets import packets, packet
-from models.exceptions import ModelException
-
 class my_component_packets(packets):
     def submodel_name(self):
-        return "packets"   # Treat as a plain packets submodel
+        return "packets"
 
     def set_assembly(self, assembly):
         self.assembly = assembly
-
-        for key, pkt in self.entities.items():
-            if pkt.name == "My_Target_Packet":
-                # Trace connections using "is" to identify THIS instance
-                peer = None
-                for conn in self.assembly.connections:
-                    if (
-                        conn.to_component is self.component   # THIS instance
-                        and conn.to_connector.name == "Expected_Connector_Name"
-                    ):
-                        peer = conn.from_component
-                        break
-
-                if peer is None:
-                    raise ModelException("Could not find expected peer component.")
-
-                # Use peer to resolve the correct type
-                # ...
-
+        for conn in self.assembly.connections:
+            if (
+                conn.to_component is self.component   # THIS instance (use 'is')
+                and conn.to_connector.name == "Expected_Connector"
+            ):
+                peer = conn.from_component
+                # Use peer to resolve types...
+                break
         super(my_component_packets, self).set_assembly(assembly)
 ```
 
-**Rules for custom model overrides:**
+### Pattern 2: Init Parameter Resolution (type lookup)
+
+When a component resolves types from its own init parameters (e.g., `parameters_packets.py`):
+
+```python
+class my_component_packets(packets):
+    def submodel_name(self):
+        return "packets"
+
+    def set_assembly(self, assembly):
+        self.assembly = assembly
+        for key, pkt in self.entities.items():
+            if pkt.name == "Target_Packet":
+                # Resolve type from init parameters
+                table_ref = self.component.init.get_parameter_value("Table_Config")
+                model_path = model_loader.get_model_file_path(table_ref, model_types=[...])
+                redo.redo_ifchange(model_path)
+                resolved_model = model_loader.load_model(model_path)
+                # Replace packet entity with resolved type...
+        super(my_component_packets, self).set_assembly(assembly)
+```
+
+**Rules for all custom overrides:**
 - Place in `src/components/<name>/gen/models/<override>.py`
-- The class name must match the file name (Python module name convention)
-- Call `super().set_assembly(assembly)` at the end to invoke the base class chain
+- Class name must match file name (Python module convention)
+- Call `super().set_assembly(assembly)` at the end
 - Always use `is` for instance comparisons; never `==`
-- Use `model_loader.get_model_file_path(model_name, model_types=[...])` to resolve YAML paths from model names
-- Call `redo.redo_ifchange(model_path)` after resolving a model path to declare a build dependency
+- Call `redo.redo_ifchange(path)` after resolving model paths (avoids stale cache; beware circular dependencies)
 
 ## Debugging Code Generation Bugs
 
@@ -160,48 +188,35 @@ class my_component_packets(packets):
 
 | Symptom | Likely Root Cause |
 |---------|-------------------|
-| All instances of a component type produce the same generated output | `==` used instead of `is` in instance comparison |
-| Wrong component's data used for one assembly instance | Connection trace finds first match, not correct match |
-| `set_assembly` callback receives stale or incorrect assembly | Subassembly merge order; check `assembly.py` subassembly grafting |
-| ModelException "could not find X in assembly" despite X existing | Wrong connector name in connection trace (check generated YAML) |
-| Packet type resolves correctly in isolation but wrong in multi-instance case | `__eq__` filename comparison silently matching wrong instance |
+| All instances of a type produce same generated output | `==` used instead of `is` in instance comparison |
+| Wrong component's data for one assembly instance | Connection trace finds first match, not correct match |
+| Wrong type resolved for packet/data product | Init parameter resolution logic error; check `set_assembly()` type lookup |
+| `set_assembly` receives stale/incorrect assembly | Subassembly merge order; check `assembly.py` grafting |
+| ModelException "could not find X" despite X existing | Wrong connector name, wrong model_types filter, or circular `redo_ifchange` |
+| Correct in isolation but wrong in multi-instance case | `__eq__` filename comparison silently matching wrong instance |
 
 ### Investigation Workflow
 
-1. **Identify the generator or model** responsible for the wrong output. Check `build/src/` for the generated file and trace back to the generator via `default.do` routing.
+1. **Identify the generator or model** responsible for wrong output. Check `build/src/` for the generated file. Query `generator_database().get_generator(output_filename)` to find the generator module, class, source file, and input YAML.
 
-2. **Find the Python model class**. Look for `gen/models/` in the component's source tree. If absent, the generic framework model in `$ADAMANT_DIR/gen/models/` applies.
+2. **Find the Python model class**. Look for `gen/models/` in the component's source tree. If absent, the generic framework model applies.
 
-3. **Read `set_assembly()`** in the model class. This is where assembly-scope data is consumed.
+3. **Read `set_assembly()`** in the model class. Two patterns: connection tracing (uses `assembly.connections`) or init parameter resolution (uses `self.component.init`).
 
-4. **Check all `==` comparisons on component objects**. Any `conn.from_component == self.component` or `comp == self.component` is suspect -- replace with `is`.
+4. **For connection-tracing bugs**: Check all `==` comparisons on component objects -- replace with `is`. Verify connector names match component YAML definitions exactly.
 
-5. **Trace the connection topology** in the assembly YAML to verify the expected wiring matches what the code searches for. Connector names must exactly match the component YAML's connector definitions.
+5. **For type resolution bugs**: Verify the model name/path being looked up, check `model_types` filter, ensure `redo_ifchange` doesn't create circular dependencies.
 
-6. **Add temporary debug prints** to `set_assembly()` if needed:
+6. **Add temporary debug prints** if needed:
    ```python
    import sys
-   print(f"[DEBUG] set_assembly: self.component.instance_name={self.component.instance_name}", file=sys.stderr)
+   print(f"[DEBUG] instance={self.component.instance_name}", file=sys.stderr)
    for conn in self.assembly.connections:
        if conn.to_component is self.component:
-           print(f"[DEBUG]   conn: {conn.from_component.instance_name} -> {conn.to_connector.name}", file=sys.stderr)
+           print(f"[DEBUG]   {conn.from_component.instance_name} -> {conn.to_connector.name}", file=sys.stderr)
    ```
-   Run `redo clear_cache` and then `redo all` from the assembly directory to force regeneration with debug output visible.
 
-7. **Verify with `redo clear_cache`** before testing any model fix. The SQLite cache stores pickled model objects; stale cache entries can mask code changes.
-
-### Connection Name Discovery
-
-To find the exact connector name used in a connection, check:
-- The component's `*.component.yaml` (lists all connector definitions)
-- The generated `build/src/component-<name>.ads` (Ada spec names connectors exactly)
-- The assembly YAML connection entries (lists `from_connector` and `to_connector` names)
-
-## Related Framework Internals References
-
-- `internals-and-generation.md` in `adamant-build-system` skill -- generator dispatch, session database, build path resolution
-- `gen/models/base.py` -- full `__eq__`, `__new__`, `__init__`, and caching implementation
-- `gen/models/assembly.py` -- complete assembly loading and `set_assembly` call chain
+7. **Always `redo clear_cache`** before testing any model fix. Stale pickled objects mask code changes.
 
 ## When NOT to Use This Skill
 
@@ -209,5 +224,3 @@ To find the exact connector name used in a connection, check:
 - Assembly wiring: use `adamant-assembly-dev`
 - Build commands and code gen pipeline overview: use `adamant-build-system`
 - Type definitions: use `adamant-type-system`
-
-This skill is specifically for debugging situations where the framework's Python model layer is producing incorrect output, or when extending the framework with new custom model overrides.
