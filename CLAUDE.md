@@ -22,11 +22,11 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-cosmos-integration` | 330 | 180 | CCSDS pipeline, COSMOS plugin build/load |
 | `adamant-project-setup` | 363 | -- | New project scaffolding, env/activate, Docker, config |
 | `adamant-skill-creation` | 225 | 90 | Creating, validating, and refactoring Adamant skills |
-| `adamant-framework-internals` | 226 | -- | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
+| `adamant-framework-internals` | 254 | 180 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
 | `high-assurance-design` | 206 | -- | Design-by-invariant, non-goals, formal verification |
 | `knowledge-acquisition` | 212 | -- | Systematic codebase study with sub-agents |
 
-**Totals:** ~4100 SKILL.md lines + ~7000 reference lines = ~11100 lines
+**Totals:** ~4100 SKILL.md lines + ~7200 reference lines = ~11300 lines
 
 ## Key Principles
 

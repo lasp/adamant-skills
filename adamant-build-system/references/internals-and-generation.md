@@ -4,40 +4,7 @@ Core pipeline, generated output tables, and compilation modes are in SKILL.md. T
 
 ## Python Model Object Identity -- Critical Pitfall
 
-The base model class (`gen/models/base.py`) defines a custom `__eq__` that compares by
-**filename**, not by Python object identity:
-
-```python
-def __eq__(self, other):
-    return self and other and self.full_filename == other.full_filename
-```
-
-**Consequence:** All instances of the same component type (e.g., three `Parameter_Store`
-instances all loaded from `parameter_store.component.yaml`) compare as equal under `==`.
-This silently causes incorrect behavior in any Python model code that tries to distinguish
-between multiple instances of the same component type using `==`.
-
-**Rule:** Always use `is` (Python identity operator) when comparing component model
-objects that should represent specific assembly instances:
-
-```python
-# WRONG -- True for ALL Parameter_Store instances, regardless of which one:
-conn.to_component == self.component
-
-# CORRECT -- True only for the exact Python object representing this instance:
-conn.to_component is self.component
-```
-
-This applies to all comparisons in `set_assembly()`, `set_component()`, and any other
-model code that traverses `assembly.connections` or `assembly.components`.
-
-**Model caching context:** The session-scoped SQLite model cache (`model_cache_database`)
-returns fresh Python objects via `pickle.loads` each time the same model file is loaded.
-Object identity (`is`) is preserved within a single pickle graph (e.g., a component and
-its submodels pickled together share the same object after unpickling), but NOT across
-separate pickle operations. Connection `to_component`/`from_component` references and
-submodel `self.component` references are the same Python object when both originate from
-the same `load_component()` call in the assembly loader.
+**See `adamant-framework-internals` skill for full details.** Summary: `base.__eq__` compares by `full_filename`, not Python identity. All instances of the same component type compare equal under `==`. Always use `is` for instance comparisons in model code.
 
 ## Generator Database & Dispatch
 

@@ -175,12 +175,34 @@ class my_component_packets(packets):
         super(my_component_packets, self).set_assembly(assembly)
 ```
 
+### Pattern 3: Overriding `set_component()` to Suppress Defaults
+
+Some overrides need to prevent the base class from running default logic (e.g., adding ID bases). Override `set_component()` with a variant that skips the unwanted step:
+
+```python
+def set_component(self, component):
+    # Call variant that skips ID base assignment
+    self._set_component_no_id_bases(component)
+```
+
+### Pattern 4: Overriding `final()` for Post-ID Processing
+
+When an override loads a sub-model during `set_assembly()`, that sub-model's `final()` won't be called automatically. Override `final()` to propagate:
+
+```python
+def final(self):
+    self.resolved_sub_model.final()
+```
+
+`final()` is called after `_generate_component_ids()` -- use it for logic that needs entity IDs.
+
 **Rules for all custom overrides:**
 - Place in `src/components/<name>/gen/models/<override>.py`
 - Class name must match file name (Python module convention)
-- Call `super().set_assembly(assembly)` at the end
+- Call `super().set_assembly(assembly)` (order matters: before if you need base data first, after if you're replacing entities)
 - Always use `is` for instance comparisons; never `==`
 - Call `redo.redo_ifchange(path)` after resolving model paths (avoids stale cache; beware circular dependencies)
+- Register new types in BOTH `self.type_models` AND `self.component.complex_types`
 
 ## Debugging Code Generation Bugs
 
@@ -194,6 +216,7 @@ class my_component_packets(packets):
 | `set_assembly` receives stale/incorrect assembly | Subassembly merge order; check `assembly.py` grafting |
 | ModelException "could not find X" despite X existing | Wrong connector name, wrong model_types filter, or circular `redo_ifchange` |
 | Correct in isolation but wrong in multi-instance case | `__eq__` filename comparison silently matching wrong instance |
+| Connection resolution fails despite correct YAML | Connector name mismatch, generic type incompatibility, or arrayed index out of range |
 
 ### Investigation Workflow
 
@@ -216,7 +239,12 @@ class my_component_packets(packets):
            print(f"[DEBUG]   {conn.from_component.instance_name} -> {conn.to_connector.name}", file=sys.stderr)
    ```
 
-7. **Always `redo clear_cache`** before testing any model fix. Stale pickled objects mask code changes.
+7. **For connector resolution issues**: Check `gen/models/submodels/connector.py` -- `connect_to()` handles compatibility validation, generic type resolution (`set_type_generic()`), and arrayed connector indexing. Connection failures often stem from wrong connector names or incompatible types.
+
+8. **Always `redo clear_cache`** before testing any model fix. Stale pickled objects mask code changes.
+
+## References
+- `references/override-examples.md` -- annotated real override implementations (4 patterns + common mistakes)
 
 ## When NOT to Use This Skill
 
