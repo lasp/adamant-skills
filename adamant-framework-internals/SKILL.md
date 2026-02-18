@@ -17,9 +17,10 @@ All paths relative to `$ADAMANT_DIR` (the `adamant/` repo root).
 |------|------|
 | `gen/models/base.py` | Base class for all model objects. Defines `__eq__`, `__new__`, caching, and `full_filename` |
 | `gen/models/assembly.py` | Assembly model: loads components, wires connections, calls `set_assembly()` per instance |
-| `gen/models/component.py` | Component model: reads `*.component.yaml`, manages submodels, handles per-instance mutation |
+| `gen/models/component.py` (`component`) | Component model: reads `*.component.yaml`, manages submodels via `set_component_instance_data`, handles per-instance mutation |
+| `gen/models/component.py` (`component_submodel`) | Base class for all component submodels (packets, events, commands, etc.): `load_component()`, `set_component()`, `set_assembly()` base implementations |
 | `gen/models/packets.py` | Generic packet suite model (base class for custom packet models) |
-| `redo/database/model_cache_database.py` | SQLite-backed model cache using `pickle.dumps`/`pickle.loads` |
+| `redo/database/model_cache_database.py` | SQLite pickle cache: `store_model` (pickle.dumps), `get_model` (pickle.loads), session ID tracking via `ADAMANT_SESSION_ID` |
 | `redo/util/model_loader.py` | `try_load_model_by_name()`, `load_model()` -- path resolution and model instantiation |
 
 ### Component-Specific Model Overrides
@@ -58,7 +59,13 @@ This applies to all comparisons in `set_assembly()`, `set_component()`, and any 
 
 ### Why `is` Works: Model Caching Context
 
-The session-scoped SQLite model cache (`model_cache_database`) returns fresh Python objects via `pickle.loads` each time the same model file is loaded. Object identity (`is`) is preserved **within a single pickle graph** (e.g., a component and its submodels pickled together share the same object after unpickling), but **NOT** across separate pickle operations.
+The SQLite model cache (`model_cache_database`) always returns fresh Python objects via `pickle.loads` — this applies to both cache paths:
+- **This-session path:** `is_model_cached_this_session` checks `ADAMANT_SESSION_ID` in SQLite. If matched, calls `do_load_from_cache` → `pickle.loads` → fresh object.
+- **Cross-session path:** `is_cached_model_up_to_date` checks file timestamps and dependencies, then also calls `do_load_from_cache` → `pickle.loads` → fresh object.
+
+**There is no in-memory Python object cache.** Every call to `load_from_cache` returns a new deserialized object. The session check only avoids re-validating timestamps; it does not return a cached in-memory reference.
+
+Object identity (`is`) is preserved **within a single pickle graph**: a component and all its submodels are pickled together. When unpickled, `pp.component` is the exact same Python object as the component model returned, because pickle's memo table preserves the circular reference. When `set_component_instance_data` mutates `component.instance_name` in-place, the submodel's `self.component` reflects the change immediately — they are the same object.
 
 Connection `to_component`/`from_component` references and submodel `self.component` references are the same Python object when both originate from the same `load_component()` call in the assembly loader. This is why `is` correctly distinguishes instances even when `==` cannot.
 
@@ -70,7 +77,9 @@ Understanding when each callback fires is essential for debugging `set_assembly(
 
 2. **Named subassemblies loaded recursively** -- with `is_subassembly=True`, which suppresses the `set_assembly()` call. Subassembly components and connections are grafted into the parent `self.components` / `self.connections` dicts by direct reference.
 
-3. **`connection.connect(self.components)`** -- resolves unconnected connection stubs into live `conn.from_component` / `conn.to_component` Python object references. After this step, `assembly.connections` is fully wired.
+3. **`connection.connect(self.components)` for unconnected connections only** -- resolves connection stubs with `if not connection.connected`: sets live `conn.from_component` / `conn.to_component` Python object references by looking up `self.components[instance_name]`.
+
+   **Subassembly caveat:** Connections defined inside a subassembly are already `connected` when merged into the parent assembly, so the parent's connect pass skips them. Their `conn.to_component` references point to the subassembly-scope component models. Since subassembly components are merged into `assembly.components` by **direct reference** (not copied), `conn.to_component` and `assembly.components[name]` are the same Python object. The `is` operator therefore works correctly even for subassembly connections.
 
 4. **`set_component_instance_data(instance_name, data)`** -- mutates each component model in-place: sets `instance_name`, applies parameter overrides, stamps instance name onto submodels. Each instance is a distinct Python object even though all share the same `full_filename`.
 
