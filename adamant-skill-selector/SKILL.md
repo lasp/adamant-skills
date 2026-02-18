@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 14 Adamant skills totaling ~10800 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 15 Adamant skills totaling ~11100 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -95,6 +95,16 @@ You have 14 Adamant skills totaling ~10800 lines (with references). Loading all 
 
 **Also load:** `adamant-assembly-dev` (for assembly YAML patterns and validation rules)
 
+### Debugging framework code generation bugs
+**Load:** `adamant-framework-internals`
+- Python model object identity pitfall (`is` vs `==`, `base.__eq__` by filename)
+- Assembly load sequence and `set_assembly()` callback timing
+- Custom model override pattern (`gen/models/` per component)
+- Connection graph traversal for per-instance type resolution
+- Debug workflow: identify generator -> find model class -> trace connections -> verify with `redo clear_cache`
+
+**Also load:** `adamant-build-system` (for generator dispatch and code gen pipeline context)
+
 ### Code style checking and compliance
 **Load:** `adamant-style`
 - Ada style rules (gnat warnings, whitespace, short-circuit operators, casing)
@@ -115,6 +125,9 @@ You have 14 Adamant skills totaling ~10800 lines (with references). Loading all 
 | Measure/improve test coverage | testing (coverage guide) | component-dev |
 | Wire components into assembly | assembly-dev | framework-components |
 | Debug build failure | build-system | -- |
+| Debug code generation producing wrong output | framework-internals | build-system |
+| Fix bug in framework Python model | framework-internals | -- |
+| Extend framework with custom model override | framework-internals | component-dev |
 | Define new packed types | type-system | -- |
 | Choose components for a subsystem | framework-components | assembly-dev |
 | Full component lifecycle (build+test) | component-dev | testing |
