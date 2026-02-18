@@ -220,7 +220,13 @@ def final(self):
 
 ### Investigation Workflow
 
-1. **Identify the generator or model** responsible for wrong output. Check `build/src/` for the generated file. Query `generator_database().get_generator(output_filename)` to find the generator module, class, source file, and input YAML.
+1. **Identify the generator or model** responsible for wrong output. Check `build/src/` for the generated file. Trace to the generator:
+   ```python
+   from database.generator_database import generator_database
+   with generator_database() as db:
+       module_name, module_file, class_name, input_file = db.get_generator("path/to/output.ads")
+   # module_name: Python module, class_name: generator class, input_file: source YAML
+   ```
 
 2. **Find the Python model class**. Look for `gen/models/` in the component's source tree. If absent, the generic framework model applies.
 
@@ -241,7 +247,7 @@ def final(self):
 
 7. **For connector resolution issues**: Check `gen/models/submodels/connector.py` -- `connect_to()` handles compatibility validation, generic type resolution (`set_type_generic()`), and arrayed connector indexing. Connection failures often stem from wrong connector names or incompatible types.
 
-8. **Always `redo clear_cache`** before testing any model fix. Stale pickled objects mask code changes.
+8. **Always `redo clear_cache`** before testing any model fix. Stale pickled objects mask code changes. **Cache vs. model debugging**: If the problem disappears after `redo clear_cache` + rebuild, investigate missing `redo_ifchange` calls in custom overrides or stale dependency declarations in `get_dependencies()`. If it persists, the bug is in model code.
 
 ## References
 - `references/override-examples.md` -- annotated real override implementations (4 patterns + common mistakes)
