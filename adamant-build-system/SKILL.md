@@ -109,7 +109,6 @@ redo clean            # Remove build/ in current directory
 redo clean_all        # Recursive clean (all subdirectories)
 redo clear_cache      # Clear model cache (SQLite in $ADAMANT_TMP_DIR)
 redo run               # Build and execute main.elf (from main/ dir only)
-redo path              # Display build path info
 redo yaml_sloc         # Count YAML source lines of code
 ```
 
@@ -123,6 +122,9 @@ redo yaml_sloc         # Count YAML source lines of code
 ```bash
 redo what             # List all buildable targets in current directory
 redo what_predefined  # List predefined (universal) targets
+redo path             # Display build path info
+redo print_path       # Print resolved build path
+redo recursive        # Recursively build all subdirectories
 ```
 
 ### Style Check Details

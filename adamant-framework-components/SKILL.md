@@ -1,11 +1,11 @@
 ---
 name: adamant-framework-components
-description: Reference catalog of all 55 built-in Adamant components organized by subsystem. Quick lookup for component selection, execution models, and usage patterns.
+description: Reference catalog of all 58 built-in Adamant components organized by subsystem. Quick lookup for component selection, execution models, and usage patterns.
 ---
 
 # Adamant Framework Components Reference
 
-Quick-lookup catalog of all 55 built-in Adamant components organized by subsystem. Each entry shows purpose, execution model, key connectors, and typical use case.
+Quick-lookup catalog of all 58 built-in Adamant components organized by subsystem. Each entry shows purpose, execution model, key connectors, and typical use case.
 
 ## CCSDS Communication (7 components)
 

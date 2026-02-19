@@ -1,3 +1,4 @@
+<!-- source: adamant-xmera-components (branch-based, no version pin) -->
 # C Shim Patterns
 
 ## Opaque Handle Pattern (Header)

@@ -298,7 +298,7 @@ Do NOT invent fields. Key types:
 18. [ ] Data dependency overrides: `Get_Data_Dependency`, `Invalid_Data_Dependency`
 19. [ ] Faults use event-like API: `Self.Fault_T_Send_If_Connected(Self.Faults.Name(Time))`
 20. [ ] No `with Command_Response_Status` (not standalone -- available through base class)
-21. [ ] Component name doesn't collide with ~55 framework components
+21. [ ] Component name doesn't collide with ~58 framework components
 22. [ ] Custom type YAML filenames (e.g., `quaternion.record.yaml`) don't collide with framework types -- prefix with project/component name if needed
 23. [ ] Use `or else` / `and then` (short-circuit) for ALL boolean expressions (Ada style requirement)
 24. [ ] No trailing whitespace in Ada or YAML files

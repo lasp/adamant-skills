@@ -1,3 +1,4 @@
+<!-- source: adamant-xmera-components (branch-based, no version pin) -->
 # Unit Test Patterns for Algorithm Wrapper Components
 
 ## Prerequisites
