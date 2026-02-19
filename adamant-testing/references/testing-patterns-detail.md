@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Testing Patterns -- Detailed Reference
 
 Core patterns (lifecycle, commands, async dispatch, data dependencies) are in SKILL.md. This file has extended examples for every coverage-critical pattern.

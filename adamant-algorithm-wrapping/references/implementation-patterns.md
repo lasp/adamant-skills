@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Implementation Patterns
 
 ## Spec (.ads) Template

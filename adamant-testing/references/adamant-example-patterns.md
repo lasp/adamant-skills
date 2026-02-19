@@ -1,6 +1,7 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Adamant Example Advanced Test Patterns
 
-Advanced test patterns extracted from the complete adamant and adamant_example test corpus that are NOT documented in the existing test-corpus.md. These patterns demonstrate sophisticated testing techniques for complex components.
+Advanced test patterns extracted from the complete adamant framework test corpus that are NOT documented in the existing test-corpus.md. These patterns demonstrate sophisticated testing techniques for complex components.
 
 ---
 
@@ -418,7 +419,7 @@ Source: command_sequencer Test_Sequence_Timeouts. Demonstrates testing different
 
 Based on the complete test corpus analysis, here are the components and their test status:
 
-### Adamant Example Components (adamant_example/src/components/)
+### Example Project Components (example_project/src/components/)
 - ✅ **c_demo**: HAS TESTS
 - ✅ **counter**: HAS TESTS  
 - ✅ **cpp_demo**: HAS TESTS

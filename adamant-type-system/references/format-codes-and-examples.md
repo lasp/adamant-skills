@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Type System Format Codes & Detailed Examples
 
 The format code quick-reference table is in SKILL.md. This file has complex packing examples and practical patterns.

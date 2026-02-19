@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # COSMOS Plugin Setup & Assembly Wiring Details
 
 ## Component Configurations

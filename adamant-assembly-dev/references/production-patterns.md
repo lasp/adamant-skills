@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Assembly Production Patterns -- Detailed Reference
 
 Core pitfalls and multi-rate scheduling are in SKILL.md. This file has subsystem wiring examples.

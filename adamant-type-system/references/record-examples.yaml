@@ -1,5 +1,5 @@
 # Reference: Record Type Examples
-# These are real-world patterns from adamant_bot_station
+# These are real-world patterns from an Adamant project
 
 # --- Simple record with floats and integer ---
 # attitude_command.record.yaml

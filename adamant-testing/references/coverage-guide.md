@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Adamant Test Coverage Guide
 
 Systematic approach to measuring and improving component implementation coverage using `redo coverage` and gcovr.
@@ -115,7 +116,7 @@ Cmd : Command.T := T.Commands.Set_Route ((others => <>));
 Cmd.Header.Arg_Buffer_Length := 22;
 ```
 
-The adamant_example `parameter_manager` tests demonstrate this pattern.
+The framework's `parameter_manager` tests demonstrate this pattern.
 
 ### Recv_Async_Dropped Handler
 ```ada

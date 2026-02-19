@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Common Test Errors -- Detailed Reference
 
 Summaries are in SKILL.md. This file has extended explanations and fixes for every recurring error.

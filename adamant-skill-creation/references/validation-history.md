@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Skill Validation History
 
 Tracking convergence of Adamant skills through cold-start validation exercises.

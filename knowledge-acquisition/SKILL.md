@@ -7,6 +7,19 @@ description: Systematic study of codebases, frameworks, or domains using isolate
 
 Pattern for using cheaper model sessions (Sonnet) to study large codebases and produce reusable skills.
 
+## Tool-Agnostic Core
+
+The knowledge acquisition process is tool-agnostic. The core loop is:
+
+1. **Scope** the target (file count, structure, complexity)
+2. **Read systematically** (README first, then by priority)
+3. **Write notes incrementally** (don't rely on memory alone)
+4. **Create/improve skills** from what you learn
+5. **Validate** skills via cold-start exercises
+6. **Consolidate** and update long-term memory
+
+This pattern works with any agent framework, IDE, or CLI that can read files, spawn sub-sessions, and write output.
+
 ## When to Use
 
 - "Learn this repo" / "become an expert on X"
@@ -184,6 +197,17 @@ Use `sessions_list` to see all active sessions with token counts:
 These are rough. Actual cost depends on input:output ratio. Output tokens cost
 3-5x more than input tokens for most models.
 
+## Build Validation Notes
+
+### Long-Running redo Commands
+`redo style_all`, `redo test_all`, and `redo coverage_all` are long-running commands that can take many minutes. **Ctrl+C typically does NOT stop them** -- the process continues inside the Docker container. If you need to abort, restart the container:
+```bash
+docker restart <container_name>
+```
+
+### Validation Responsibility
+The **primary agent** (not sub-agents) runs `redo style`, `redo test`, and `redo coverage` for validation. Sub-agents create/modify files; the main agent validates them. This prevents concurrent redo conflicts and keeps the validation loop visible.
+
 ## Anti-Patterns
 
 **Do not:**
@@ -210,3 +234,16 @@ Before accepting any skill output:
 - [ ] No overlap with existing skills
 - [ ] Validates with quick_validate.py
 - [ ] Frontmatter has only name and description
+
+---
+
+## Appendix: OpenClaw Integration
+
+When using this skill within OpenClaw:
+
+- **Session spawning**: Use `sessions_spawn` or cron for study sessions. Sonnet is preferred for bulk reading (6x cheaper than Opus).
+- **Scratch files**: Direct study sessions to write to `memory/<target>-notes.md` incrementally.
+- **Session parameters**: Set `sessionTarget: isolated` for sub-agent study sessions.
+- **Usage tracking**: Run `usage_report.py` before spawning to check cumulative spend.
+- **Session status**: Use `session_status` to check context window fill; sessions at 200k tokens have maxed context.
+- **Model override**: Verify model override takes effect with `session_status` after spawn.

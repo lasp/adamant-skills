@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Build System Internals & Code Generation Details
 
 Core pipeline, generated output tables, and compilation modes are in SKILL.md. This file has internal details.

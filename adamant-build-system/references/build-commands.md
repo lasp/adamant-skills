@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Adamant Build Commands Reference
 
 Complete examples for all redo build targets. All commands assume the Adamant environment is activated (`source env/activate`).

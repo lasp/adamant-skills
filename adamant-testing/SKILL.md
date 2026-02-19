@@ -339,8 +339,12 @@ Full coverage workflow, reading reports, and common uncovered patterns: [coverag
 
 ## References
 
-- [references/test-corpus.md](references/test-corpus.md) -- All test patterns with real code examples
-- [references/adamant-example-patterns.md](references/adamant-example-patterns.md) -- Advanced patterns from adamant_example project
+- [references/setup-variants.md](references/setup-variants.md) -- Init/Set_Up patterns, Tear_Down, Tick construction
+- [references/assertion-patterns.md](references/assertion-patterns.md) -- History API, packed type assertions, with-clause sets
+- [references/command-test-patterns.md](references/command-test-patterns.md) -- Command dispatch, argument construction, helpers
+- [references/parameter-test-patterns.md](references/parameter-test-patterns.md) -- Stage/validate/update flow, data dependency mocking
+- [references/coverage-techniques.md](references/coverage-techniques.md) -- Full path coverage, error injection, anti-patterns
+- [references/adamant-example-patterns.md](references/adamant-example-patterns.md) -- Advanced patterns from example project
 - [references/common-errors-detail.md](references/common-errors-detail.md) -- Extended error documentation with solutions
 - [references/testing-patterns-detail.md](references/testing-patterns-detail.md) -- Detailed testing pattern analysis
 - [references/coverage-guide.md](references/coverage-guide.md) -- Coverage analysis setup and interpretation

@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Adamant Style Patterns -- Detailed Reference
 
 Every pattern documented in SKILL.md with before/after examples, the exact GNAT flag, and explanation.

@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # COSMOS (OpenC3) Integration Reference
 
 Adamant auto-generates COSMOS configuration from assembly YAML models. This reference covers the output format and integration setup.

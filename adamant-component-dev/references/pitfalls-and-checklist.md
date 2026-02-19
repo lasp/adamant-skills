@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Component Development Pitfalls & Checklist Details
 
 ## Checklist Explanations (Supplemental)
@@ -19,7 +20,7 @@ These are NOT structural ceiling -- they ARE testable:
 - **Invalid_Command**: Create valid command via `T.Commands.X(...)`, then set `Cmd.Header.Arg_Buffer_Length := 22;` to corrupt it. Framework calls `Invalid_Command`.
 - **Send_Dropped**: Fires when `Send` returns `Message_Dropped`. For sync connectors, set `T.Connector_*_Recv_Sync_Status := Connector_Types.Message_Dropped;` in the generated tester before triggering sends. For async sends, add `Expect_*_Dropped` boolean flag to the hand-written tester.
 - **Recv_Async_Dropped**: Overflow the async queue by sending more messages than `Queue_Size` can hold.
-See adamant_example/parameter_manager for all three patterns.
+See the framework's parameter_manager tests for all three patterns.
 
 ### gcov limitation with active components
 Some active components produce 0% coverage even with passing tests due to GNAT Ada task cleanup not flushing gcov data. The .gcda files are never written because the Ada task's finalization prevents clean process exit. This is a known GNAT/gcov limitation -- not a test quality issue.

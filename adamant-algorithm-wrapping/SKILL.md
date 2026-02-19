@@ -57,7 +57,7 @@ Add `_reset`, `_setX`, `_getX` as needed. For `#define` constants, add getter fu
 ### h2ads workflow
 
 ```bash
-cd /home/user/adamant_bot_station/src/components/<component_name>
+cd /home/user/your_project/src/components/<component_name>
 h2ads --compiler gcc \
   -I /home/user/fp32-fsw-xmera/algorithms \
   -b /home/user/fp32-fsw-xmera/algorithms/<algorithm_name> \
@@ -338,10 +338,10 @@ Input : constant Float_Array_3 := [C_float (Cmd (0)), C_float (Cmd (1)), C_float
 
 ## Containing Shims in Project Repository
 
-When wrapping xmera algorithms for a project (e.g., adamant_bot_station), keep shims and wrapper components inside the project repo to avoid modifying the upstream xmera repos:
+When wrapping xmera algorithms for a project, keep shims and wrapper components inside the project repo to avoid modifying the upstream xmera repos:
 
 ```
-adamant_bot_station/
+your_project/
   src/
     components/<component_name>/         # Adamant wrapper component
       <component_name>_algorithm_c.ads   # Ada bindings

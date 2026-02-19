@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Adamant Ada Implementation Patterns
 
 Patterns extracted from reading 10 diverse component implementations. This is the "Adamant way" of writing component Ada code.

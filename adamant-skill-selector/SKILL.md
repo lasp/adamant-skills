@@ -172,6 +172,15 @@ Examples of project-specific content:
 
 Generic Adamant skills provide the *how*. Project skills provide the *what* and *where*.
 
+## Regenerating the Routing Table
+
+This routing table can be regenerated from skill metadata:
+```bash
+bash scripts/generate_selector.sh /path/to/skills/
+```
+
+Last generated: 2026-02-19
+
 ## When NOT to Use This Selector
 
 - **General Ada/SPARK questions**: These skills are Adamant-specific. Generic Ada knowledge is already in the model.

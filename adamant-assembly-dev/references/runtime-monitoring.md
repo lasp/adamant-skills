@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Assembly Runtime Monitoring Reference
 
 ## Assembly Lifecycle (MUST follow this order)

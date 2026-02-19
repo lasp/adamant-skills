@@ -1,3 +1,4 @@
+<!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # LASEL (LASP Awesome Sequence Engine Language) Reference
 
 Domain-specific language for automated command execution in Adamant's command_sequencer component.

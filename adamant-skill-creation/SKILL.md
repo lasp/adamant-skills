@@ -179,6 +179,28 @@ Generic Adamant skills contain ZERO project-specific names, paths, or component 
 Reference from the skill-selector:
 > Generic Adamant skills provide the *how*. Project skills provide the *what* and *where*.
 
+## Validation Loop
+
+### Sub-Agent → Main Agent Workflow
+The standard validation loop for skill changes:
+
+1. **Sub-agent** creates or modifies skill files (SKILL.md, references/)
+2. **Main agent** runs `redo style` to check style compliance
+3. **Main agent** runs `redo test` to verify tests pass
+4. **Main agent** runs `redo coverage` to check coverage targets
+
+Sub-agents MUST NOT run redo commands directly. Only the main agent validates.
+
+### Concurrent redo Is Unsafe
+All redo operations must be serialized. Never run `redo style` and `redo test` in parallel -- redo uses shared build state and concurrent runs cause data corruption or spurious failures.
+
+### Skill Selector Regeneration
+After adding or modifying skills, regenerate the routing table:
+```bash
+bash scripts/generate_selector.sh /path/to/skills/
+```
+See [adamant-skill-selector/scripts/](../adamant-skill-selector/scripts/) for the generator script.
+
 ## Maintaining Skills
 
 ### When to Update
