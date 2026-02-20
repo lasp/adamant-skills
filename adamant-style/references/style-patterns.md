@@ -3,6 +3,19 @@
 
 Before/after examples for each enforced rule. See SKILL.md for full rule descriptions.
 
+## Ada Style Flag Reference
+
+Actual enforced flags: `-gnaty3aABbdDefhiklL12nOprStux`
+
+Source: `adamant/redo/targets/gpr/a_adamant.gpr`
+
+Notably NOT enforced:
+- `-gnatyc` (comment formatting) -- Adamant is more accepting
+- `-gnatym`/`-gnatyM` (max line length) -- no limit enforced
+- `-gnatys` (separate specs required) -- not enforced
+
+---
+
 ## Whitespace
 
 ### Indentation (`-gnaty3`)
