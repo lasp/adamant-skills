@@ -279,6 +279,7 @@ overriding procedure Update_Parameters_Action (Self : in out Instance) is null;
 - `Self.Update_Parameters` takes NO arguments — call in Tick handler
 - Parameter `default:` uses unpacked syntax, NOT `Type.Pack(...)`
 - Access via `Self.Kp` or `Self.Get_Kp` — NOT `Self.Parameters.Kp`
+- **Parameter lifecycle**: `Process_Parameter_Update` validates then updates internal storage. After it returns, `Self.<Param>` reflects the new value immediately -- no tick required. `Update_Parameters_Action` is called at the END of the update cycle (use it for side effects like recalculating derived state). For passive/tickless components, parameters take effect as soon as the modify connector is invoked.
 
 ## Framework Type Fields & Common Pitfalls
 
