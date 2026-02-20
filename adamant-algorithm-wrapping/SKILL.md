@@ -5,7 +5,7 @@ description: Complete pipeline for wrapping C++ algorithms into Adamant passive 
 
 # Adamant Algorithm Wrapping Pipeline
 
-```
+```ada
 C++ Algorithm -> C Shim (.h/.cpp) -> Ada Bindings (.ads) -> Packed Records -> Component YAML -> Implementation -> Tests
 ```
 
@@ -32,7 +32,7 @@ If the C++ algorithm defines structs or `#define` constants in its public API, c
 FooAlgorithm* FooAlgorithm_create(void);
 void FooAlgorithm_destroy(FooAlgorithm* self);
 OutputPayload FooAlgorithm_update(FooAlgorithm* self, const InputPayload* input);
-```
+```ada
 
 Add `_reset`, `_setX`, `_getX` as needed. For `#define` constants, add getter functions for Ada elaboration-time validation.
 
@@ -62,7 +62,7 @@ h2ads --compiler gcc \
   -I /home/user/fp32-fsw-xmera/algorithms \
   -b /home/user/fp32-fsw-xmera/algorithms/<algorithm_name> \
   /home/user/fp32-fsw-xmera/algorithms/<algorithm_name>/<algo>Algorithm_c.h
-```
+```ada
 
 Delete ALL generated files except `<algo>_algorithm_c_h.ads`. Then transform:
 
@@ -147,7 +147,7 @@ connectors:
   - description: The data product invoker connector
     type: Data_Product.T
     kind: send
-```
+```ada
 
 If component has parameters, add: `- { description: Parameter update, type: Parameter_Update.T, kind: modify }`
 
@@ -171,7 +171,7 @@ data_products:
   - name: <Output_Name>
     type: <Type>.T
     description: <what it represents>
-```
+```ada
 
 > Full templates with parameters: [references/component-yaml-templates.md](references/component-yaml-templates.md)
 
@@ -181,7 +181,7 @@ data_products:
 cd src/components/<component_name>
 redo templates
 cp build/template/*.ad[sb] .
-```
+```ada
 
 ### Implementation spec (.ads) modifications
 
@@ -228,7 +228,7 @@ package body Component.<Name>.Implementation is
    end Tick_T_Recv_Sync;
 
 end Component.<Name>.Implementation;
-```
+```ada
 
 ### Type conversion chain
 
@@ -243,7 +243,7 @@ overriding procedure Update_Parameters_Action (Self : in out Instance) is
 begin
    Set_Gain (Self.Alg, Self.Gain_Param.Value);
 end Update_Parameters_Action;
-```
+```ada
 
 > Full implementation patterns: [references/implementation-patterns.md](references/implementation-patterns.md)
 
@@ -261,7 +261,7 @@ Without this step, you will get `undefined reference` linker errors for all C fu
 ```bash
 cd src/components/<component_name>
 redo
-```
+```ada
 
 MUST compile with ZERO warnings and ZERO errors. Fix all `-gnatwu`, `-gnatwk` warnings.
 
@@ -296,7 +296,7 @@ begin
       end;
    end loop;
 end Test;
-```
+```ada
 
 ### Critical test rules
 
@@ -338,7 +338,7 @@ type Int_Array_Rw is array (0 .. Rw_Eff_Cnt - 1) of aliased int;
 -- Component body: convert Packed -> C -> call -> C -> Packed
 Cmd : constant Packed_F32x3.U := Packed_F32x3.Unpack (Self.Input_T_Get);
 Input : constant Float_Array_3 := [C_float (Cmd (0)), C_float (Cmd (1)), C_float (Cmd (2))];
-```
+```ada
 
 ### When to use h2ads workflow vs flattened approach
 
@@ -360,7 +360,7 @@ your_project/
     <algorithm_name>/
       <algo>Algorithm_c.h
       <algo>Algorithm_c.cpp
-```
+```ada
 
 The C++ algorithms remain read-only in `fp32-fsw-xmera/`. Only the C shims and Ada code live in the project.
 
@@ -398,7 +398,7 @@ When computing `Call_Time` from `Sys_Time.T` fields, use `use Interfaces;` for c
 with Interfaces; use Interfaces;
 ...
 Call_Time : constant Unsigned_64 := Unsigned_64 (Arg.Time.Seconds) * 1_000_000_000 + Unsigned_64 (Arg.Time.Subseconds);
-```
+```ada
 Qualified `Interfaces.Unsigned_64(...)` without `use` can cause type mismatch errors on the `*` operator.
 
 ### Data Product Buffer Size Limit

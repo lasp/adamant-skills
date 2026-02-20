@@ -58,7 +58,7 @@ Create a notes file BEFORE spawning. The study session MUST write to it incremen
 echo "# Study Notes: <target>" > /path/to/workspace/memory/<target>-notes.md
 echo "" >> /path/to/workspace/memory/<target>-notes.md
 echo "## Structure" >> /path/to/workspace/memory/<target>-notes.md
-```
+```ada
 
 ### 3. Spawn the Study Session
 
@@ -89,7 +89,7 @@ Skill guidelines:
 - Validate all skills before finishing
 
 Report what you learned and what skills you created/modified.
-```
+```ada
 
 **Session parameters:**
 - Model: anthropic/claude-sonnet-4-20250514 (cheaper for bulk reading)
@@ -168,7 +168,7 @@ python3 {baseDir}/scripts/usage_report.py
 
 # JSON output for scripting
 python3 {baseDir}/scripts/usage_report.py --format json
-```
+```ada
 
 The script reads the OpenClaw session store and estimates cost per session based
 on model and total tokens consumed. Costs are blended estimates (input+output

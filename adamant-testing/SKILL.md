@@ -60,7 +60,7 @@ tests:
 
 ```python
 from environments import test  # noqa: F401
-```
+```ada
 
 ## Tester Architecture
 
@@ -91,7 +91,7 @@ begin
    T.Tick_T_Send ((Time => (0, 0), Count => 1));
    Natural_Assert.Eq (T.Event_T_Recv_Sync_History.Get_Count, 1);
 end Test_Name;
-```
+```ada
 
 **Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`. Both Init and Set_Up are optional -- only call them if YAML declares `init:` or component overrides Set_Up. For per-test init params, defer Init/Set_Up to each test body (see [test-corpus.md](references/test-corpus.md) pattern 1h).
 
@@ -112,7 +112,7 @@ Status := T.Stage_Parameter (T.Parameters.Param_Name ((Field => Value)));
 Status := T.Validate_Parameters;
 Status := T.Update_Parameters;
 T.Tick_T_Send (The_Tick);  -- component applies in tick handler
-```
+```ada
 
 **ALWAYS use `T.Commands` / `T.Parameters`** -- never create local instances (wrong ID bases).
 For custom packed types on connectors: construct unpacked (.U) then `Pack`: `T.Cmd_T_Send (My_Type.Pack (unpacked_val));`
@@ -130,7 +130,7 @@ Natural_Assert.Eq (T.My_Event_History.Get_Count, 1);
 Packed_U32_Assert.Eq (T.Counter_History.Get (1), (Value => 42));
 -- Clear between phases
 T.Event_T_Recv_Sync_History.Clear;
-```
+```ada
 
 **Named connectors:** `name: Spi_Data` on send → `Spi_Data_T_Recv_Sync_History` in tester.
 
@@ -167,7 +167,7 @@ Command_Response_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get (1), (
    Registration_Id => expected_reg_id,
    Command_Id => T.Commands.Get_Set_Value_Id,  -- Use ID getter
    Status => Success));
-```
+```ada
 
 Use `Command_Enums.Command_Response_Status.E` for response status (NOT `Command_Execution_Status`).
 Need `use type Command_Enums.Command_Response_Status.E;` for `=` operator visibility.
@@ -211,7 +211,7 @@ T.Tick_T_Send ((Time => (100, 0), Count => 0));
 -- Test missing data (override return status)
 T.Data_Dependency_Return_Status_Override := Id_Out_Of_Range;
 T.Tick_T_Send ((Time => (100, 0), Count => 0));
-```
+```ada
 
 **Implementation needs:** `with Data_Product_Enums; use Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;` in the component body for status checks.
 
@@ -281,7 +281,7 @@ T.Tick_T_Send ((Time => (0, 0), Count => 1));  -- Triggers sends
 -- Restore:
 T.Connector_Event_T_Recv_Sync_Status := Connector_Types.Success;
 T.Connector_Data_Product_T_Recv_Sync_Status := Connector_Types.Success;
-```
+```ada
 
 Field names: `Connector_<Type>_Recv_Sync_Status` in generated reciprocal `.ads`.
 
@@ -312,7 +312,7 @@ Stat := T.Stage_Parameter (T.Parameters.Threshold ((Value => 50)));
 Stat := T.Validate_Parameters;
 Stat := T.Update_Parameters;
 T.Call_Update_Parameters;  -- Actually applies staged values
-```
+```ada
 
 This pattern applies to ALL components with `parameters.yaml` and custom `Update_Parameters_Action`.
 
@@ -329,7 +329,7 @@ procedure Set_Pressure (Self : in out Instance; Value : in Short_Float) is
 begin
    Self.Component_Instance.Pressure := Value;
 end Set_Pressure;
-```
+```ada
 
 Test file calls: `T.Set_Pressure (501.0);`
 

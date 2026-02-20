@@ -107,7 +107,7 @@ connections:
     from_connector: Tick_T_Send
     to_component: Core_Rate_Group_Instance
     to_connector: Tick_T_Recv_Async
-```
+```ada
 
 ## How Merging Works
 
@@ -167,7 +167,7 @@ subassemblies:
   - core
   - comm
   - gnc
-```
+```ada
 
 **Rules:**
 - Each id_base name must end with `_Id_Base` (e.g., `Event_Id_Base`, `Command_Id_Base`)
@@ -205,7 +205,7 @@ connections:
     from_index: 5
     to_component: Nav_Filter_Instance            # defined in gnc.assembly.yaml
     to_connector: Command_T_Recv_Async
-```
+```ada
 
 **Rule:** Intra-subsystem connections MUST be in the subassembly file. Inter-subsystem connections MUST be in the parent. This is not just best practice -- the model loader enforces that subassembly connections only reference components within that subassembly.
 
@@ -237,7 +237,7 @@ Component instance names must be unique across ALL subassemblies and the parent.
 
 ```
 Duplicate component 'Rate_Group_Instance' not allowed. Found in files: [...]
-```
+```ada
 
 **Fix:** Use distinct names like `Core_Rate_Group_Instance` and `Comm_Rate_Group_Instance`.
 
@@ -246,7 +246,7 @@ Duplicate component 'Rate_Group_Instance' not allowed. Found in files: [...]
 
 ```
 Duplicate id_base 'Event_Id_Base' found in comm.assembly.yaml.
-```
+```ada
 
 **Fix:** Define ALL id_bases in the parent assembly only. Do NOT use id_bases in subassemblies.
 
@@ -273,7 +273,7 @@ description: Sensor subsystem
 components:
   - type: Sensor_Reader
     # ...
-```
+```ada
 
 ### Minimal Subassemblies Are Valid
 A subassembly can contain only `description:` and `components:` with no connections, id_bases, or preamble. This is common for leaf subsystems where all wiring is cross-subassembly and done in the parent:
@@ -287,7 +287,7 @@ components:
   - type: Pressure_Sensor  
     name: Pressure_Sensor_Instance
 # No connections, id_bases, preamble, etc. - all handled by parent
-```
+```ada
 
 ### Preamble Ordering
 Subassembly preambles are concatenated in list order before the parent's preamble. If a parent preamble references a type declared in a subassembly preamble, it works (subassembly code appears first). But if a subassembly preamble references something from the parent's preamble, it won't be visible yet.

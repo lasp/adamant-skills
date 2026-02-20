@@ -60,7 +60,7 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **command_router** (active)
 - Purpose: Route commands by ID to destination components
 - Use: Central command distribution hub for assembly
-- Init: `Max_Number_Of_Commands` (required). Self-loopback: Command_Response_T_To_Forward_Send -> own Command_Response_T_Recv_Async
+- Init: `max_Number_Of_Commands` (required). Self-loopback: Command_Response_T_To_Forward_Send -> own Command_Response_T_Recv_Async
 
 **command_sequencer** (active)
 - Purpose: Execute LASEL sequences with multiple engines

@@ -1,6 +1,6 @@
 ---
 name: adamant-build-system
-description: Understanding and using the Adamant redo-based build system and code generation framework
+description: Understanding and using the Adamant redo-based build system and code generation framework. Use when building Adamant projects, debugging compilation issues, or understanding code generation.
 ---
 
 # Adamant Build System
@@ -59,7 +59,7 @@ source $ADAMANT_DIR/env/activate /path/to/project
 
 # Multiple roots:
 source $ADAMANT_DIR/env/activate "/path/to/project1:/path/to/project2"
-```
+```yaml
 
 **In Docker containers, prefer `adamant_env.sh login`** over raw `docker exec` with inline `source`. The base image's `.bashrc` may have already activated the adamant environment, blocking the project's activate via the `ADAMANT_ENVIRONMENT_SET` guard. Login handles this correctly. See `adamant-project-setup` for details.
 
@@ -110,7 +110,7 @@ redo clean_all        # Recursive clean (all subdirectories)
 redo clear_cache      # Clear model cache (SQLite in $ADAMANT_TMP_DIR)
 redo run               # Build and execute main.elf (from main/ dir only)
 redo yaml_sloc         # Count YAML source lines of code
-```
+```ada
 
 `redo clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed.
 
@@ -125,7 +125,7 @@ redo what_predefined  # List predefined (universal) targets
 redo path             # Display build path info
 redo print_path       # Print resolved build path
 redo recursive        # Recursively build all subdirectories
-```
+```ada
 
 ### Style Check Details
 `redo style` performs four checks:
@@ -140,7 +140,7 @@ Results written to `build/style/style.log`.
 
 ```
 YAML Model → Schema Validation (PyKwalify) → Python Model Object → Jinja2 Template → Generated Output
-```
+```ada
 
 ### Directory Structure
 - `gen/schemas/` -- PyKwalify YAML validation schemas
@@ -227,7 +227,7 @@ ccsds_packet_buffer_size: 1274    # CCSDS space packet buffer (if using CCSDS)
 # Task/stack configuration
 stack_margin: 1000                # Stack margin bytes (bareboard only; Linux uses 12KB fixed)
 command_registration_delay: 250   # Microseconds between command registrations
-```
+```ada
 
 ### Custom Variables
 Add project-specific key-value pairs below the required fields. Reference them in YAML via `{{ variable_name }}` or in Ada via the `Configuration` package.
@@ -245,7 +245,7 @@ ccsds_packet_buffer_size: 512
 packet_buffer_size: 480
 stack_margin: 1000
 command_registration_delay: 250
-```
+```yaml
 
 ## Compiler & Linker Flags
 
@@ -260,7 +260,7 @@ Place `all.prove.yaml` in component directory:
 ```yaml
 level: 2          # 0-4 (timeout/prover escalation)
 mode: "gold"      # check|flow|prove|all|stone|bronze|silver|gold
-```
+```yaml
 
 Override: `PROVE_SWITCHES="--level=4" redo prove`
 

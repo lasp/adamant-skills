@@ -77,7 +77,7 @@ components:
 # CORRECT: Component name differs from type
   - type: Event_Packetizer
     name: Event_Packetizer_Instance
-```
+```ada
 
 2. **Use instance NAMES (not type names) in `init_base` expressions**:
 
@@ -105,7 +105,7 @@ components:
       - "Event_To_Text => Assembly_Name_Event_To_Text.Event_To_Text'Access"
     init_base:
       - "Queue_Size => 3 * Event_Text_Logger_Instance.Get_Max_Queue_Element_Size"
-```
+```ada
 
 ⚠️ **Event_Text_Logger build path caveat**: The `event_to_text` package is auto-generated in the assembly's `build/src/`. In some build configurations (especially with subassemblies), the ELF linker step may not find this package. If you hit `"Assembly_Name_Event_To_Text" is undefined` during linking, ensure the event_to_text `.adb` is generated first by running `redo build/src/assembly_name_event_to_text.adb` from the assembly directory before the ELF build. Alternatively, omit Event_Text_Logger for test assemblies.
 
@@ -176,7 +176,7 @@ connections:
     from_connector: Sys_Time_T_Get
     to_component: Gps_Time_Instance
     to_connector: Sys_Time_T_Return
-```
+```ada
 
 The component with the `Get` connector is making a request; the component with the `Return` connector is providing the response. **Many sub-agents wire this backwards** -- double-check get/return directions.
 
@@ -215,7 +215,7 @@ Suppress warnings for intentionally unconnected send connectors:
     from_connector: Pet_T_Send
     to_component: ignore
     to_connector: ignore
-```
+```ada
 
 **⚠️ CRITICAL -- READ THIS**: `ignore` connections must only reference connectors that **actually exist** on the component. **NEVER invent connector names.** For framework components, check the [framework-components](../adamant-framework-components/SKILL.md) skill for the actual connector list.
 
@@ -261,7 +261,7 @@ connections:
     from_connector: Tick_T_Send
     to_component: Rate_Group_Instance
     to_connector: Tick_T_Recv_Async
-```
+```ada
 
 ### Multi-Rate with Tick_Divider
 
@@ -311,7 +311,7 @@ filters:
   - name: exclude_connector
     type: connector_name
     exclude: [Sys_Time_T_Get, Sys_Time_T_Return]
-```
+```yaml
 
 Filter types: `component_name`, `component_type`, `component_execution`, `connector_name`, `connector_type`, `connector_kind`. Combine with `&` (AND) or `|` (OR) in `rule`.
 
@@ -364,7 +364,7 @@ begin
       delay until Clock + Milliseconds (1000);
    end loop;
 end Main;
-```
+```ada
 
 **CRITICAL**: `Start_Components` BEFORE `Set_Up_Components`. Use `delay until` (Ravenscar -- no `delay 0.1`).
 
@@ -376,7 +376,7 @@ end Main;
 redo build/svg/assembly.svg             # Diagram
 redo all                                # Build
 redo run                                # Build and run (from main/)
-```
+```ada
 
 Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to regenerate.
 
@@ -441,7 +441,7 @@ Common framework components and their REQUIRED configuration in assembly YAML:
 ```yaml
 discriminant:
   - "Event_To_Text => Assembly_Name_Event_To_Text.Event_To_Text'Access"
-```
+```ada
 
 ⚠️ **CRITICAL - Splitter is Generic**: The component type is `Splitter` (not `Event_Splitter`). Must include `generic_types: ["T => Event.T"]` in the assembly YAML:
 
@@ -467,7 +467,7 @@ components:
 # WRONG
     init_base:
       - "Minimum_Data_Product_Id => ..."
-```
+```ada
 
 ## Assembly-Generated Packages
 

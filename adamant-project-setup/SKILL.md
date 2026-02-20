@@ -9,7 +9,7 @@ Create standalone Adamant projects outside the framework source tree.
 
 ## Project Structure
 
-```
+```ada
 <project_dir>/
 ├── .gitignore
 ├── alire.toml                          # Alire crate manifest (Ada dependencies)
@@ -41,7 +41,7 @@ Create standalone Adamant projects outside the framework source tree.
 ### 1. Copy build scripts
 ```bash
 cp $ADAMANT_DIR/*.do <project_dir>/
-```
+```ada
 Must be copies, not symlinks (redo resolves rules relative to working directory).
 
 ### 2. Create env/activate
@@ -83,7 +83,7 @@ export ADAMANT_CONFIGURATION_YAML=$PROJECT_DIR/config/project.configuration.yaml
 export PROJECT_ENVIRONMENT_SET="yes"
 
 echo "Done."
-```
+```yaml
 
 #### How BUILD_ROOTS Works
 
@@ -170,7 +170,7 @@ command_registration_delay: 250
 #
 # project_specific_variable: 17
 # project_specific_string: "hello"
-```
+```ada
 
 **Sizing guidance:**
 - `Storage_Error` at runtime → increase the relevant buffer size
@@ -200,7 +200,7 @@ services:
         extra_hosts:
             - host.docker.internal:host-gateway
         command: sleep infinity
-```
+```ada
 
 **Notes:**
 - Volume sources are relative to docker-compose.yml location (inside `docker/`)
@@ -238,7 +238,7 @@ bash docker/adamant_env.sh login
 # Inside container:
 cd src/components && redo style_all
 cd src/components && redo test_all
-```
+```ada
 
 #### Non-interactive command execution
 
@@ -248,7 +248,7 @@ For scripted/automated commands, use `docker exec` with the project's activate:
 docker exec -u user <project_name>_container bash -c \
   "source /home/user/<project_name>/env/activate 2>/dev/null && \
   cd /home/user/<project_name> && redo <target>"
-```
+```ada
 
 **Why login is preferred over raw `docker exec`:**
 - The base adamant image's `.bashrc` sources `adamant/env/activate`, which sets `ADAMANT_ENVIRONMENT_SET`. This guard variable prevents the project's activate from re-running adamant's activate with the project as an extra build root.

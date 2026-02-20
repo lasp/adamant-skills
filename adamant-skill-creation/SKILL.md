@@ -83,7 +83,7 @@ description: <What it does>. <When to use it -- specific triggers>.
 
 ## References
 - `references/<file>.md` -- <when to read it>
-```
+```ada
 
 ### Writing Rules
 
@@ -120,7 +120,7 @@ Task template:
 provided, create a <passive/active> component named <name> that <spec>.
 Include tests. Build with: docker exec <container> bash -c '...'
 Do NOT use prior Adamant knowledge -- follow the skills exactly."
-```
+```ada
 
 ### Validation Metrics
 
@@ -215,7 +215,7 @@ All redo operations must be serialized. Never run `redo style` and `redo test` i
 After adding or modifying skills, regenerate the routing table:
 ```bash
 bash scripts/generate_selector.sh /path/to/skills/
-```
+```ada
 See [adamant-skill-selector/scripts/](../adamant-skill-selector/scripts/) for the generator script.
 
 ## Maintaining Skills

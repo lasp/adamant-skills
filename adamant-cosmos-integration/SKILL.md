@@ -9,7 +9,7 @@ Connects an Adamant assembly to the COSMOS ground system via CCSDS TCP socket.
 
 ## Architecture
 
-```
+```yaml
 Uplink:  COSMOS -> TCP -> Ccsds_Socket_Interface -> Ccsds_Command_Depacketizer -> Command_Router -> Components
 Downlink: Components -> Event/Product_Packetizer -> Ccsds_Packetizer -> Socket -> COSMOS
 ```
@@ -138,7 +138,7 @@ packets:
     data_products:
       - name: Command_Router_Instance.Command_Receive_Count
     period: "5"
-```
+```ada
 
 Add `Assembly_Product_Packets` to assembly `with:`.
 
@@ -149,7 +149,7 @@ Add `Assembly_Product_Packets` to assembly `with:`.
 ```bash
 # From assembly/main/ directory:
 redo cosmos_config
-```
+```ada
 
 This invokes `build_cosmos_plugin.sh` which runs `redo-ifchange` on the assembly's COSMOS generators. The generators use Jinja2 templates to produce:
 
@@ -247,7 +247,7 @@ Interface <%= assembly_target_name %>_INT tcpip_server_interface.rb <%= port_w %
 # Optional router for forwarding to external tools
 Router <%= assembly_target_name %>_Router tcpip_server_interface.rb 7779 7779 10.0 nil Length 32 16 7
   Map_Target <%= assembly_target_name %>
-```
+```ada
 
 **Interface parameters:** `tcpip_server_interface.rb <write_port> <read_port> <timeout> <protocol> Length <bit_offset> <bit_size> <length_value_offset>`
 - `Length 32 16 7`: Length field at bit 32, 16 bits wide, add 7 to get total packet size (6-byte header + 1)
@@ -273,7 +273,7 @@ docker compose -f ../../compose.yaml run --rm \
 
 # Load into running COSMOS:
 ../../openc3.sh cli load openc3-cosmos-assembly-name-0.0.1.gem
-```
+```ada
 
 Or use the project's helper scripts:
 ```bash

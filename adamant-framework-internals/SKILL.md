@@ -47,7 +47,7 @@ The base model class (`gen/models/base.py`) defines a custom `__eq__` that compa
 ```python
 def __eq__(self, other):
     return self and other and self.full_filename == other.full_filename
-```
+```ada
 
 `__hash__` also uses `full_filename`. All instances of the same component type compare as equal under `==` and hash identically.
 
@@ -85,7 +85,7 @@ class connection(object):
     def __init__(self, filename, data):
         self.connected = False   # Set True after successful connect()
         self.ignored = False     # Set True for "ignore" connections
-```
+```ada
 
 After `connect(components)` resolves the connection:
 - `from_component` / `to_component` -- Python object references into `assembly.components`
@@ -151,7 +151,7 @@ class my_component_packets(packets):
                 # Use peer to resolve types...
                 break
         super(my_component_packets, self).set_assembly(assembly)
-```
+```ada
 
 ### Pattern 2: Init Parameter Resolution (type lookup)
 
@@ -173,7 +173,7 @@ class my_component_packets(packets):
                 resolved_model = model_loader.load_model(model_path)
                 # Replace packet entity with resolved type...
         super(my_component_packets, self).set_assembly(assembly)
-```
+```ada
 
 ### Pattern 3: Overriding `set_component()` to Suppress Defaults
 

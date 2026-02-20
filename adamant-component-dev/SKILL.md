@@ -72,7 +72,7 @@ interrupts:
   - name: Timer_Interrupt
 subtasks:
   - name: Listener
-```
+```ada
 
 **CRITICAL -- Component YAML `with` Field**: Only include types that are directly used in the **GENERATED** base class spec (usually in the preamble). Types used only in your implementation `.ads/.adb` should be `with`'d there instead:
 
@@ -84,7 +84,7 @@ with:
 # WRONG: Including packages only used in implementation
 with:
   - "Ada.Numerics.Elementary_Functions"  # Only used in implementation body
-```
+```ada
 
 This avoids unreferenced package warnings and keeps generated code clean.
 
@@ -143,7 +143,7 @@ enums:
 **CRITICAL -- Fault Param Size Limit**: Fault argument types (`param_type`) must fit within the `Fault.T` buffer (typically ~8-16 bytes). Large packed records (e.g., 10+ bytes) will cause a compile error:
 ```
 Error: Size of parameter buffer exceeds Fault.T buffer size
-```
+```ada
 Use small types like `Packed_U16.T`, `Packed_U32.T`, or custom packed types < 8 bytes.
 
 ## Required Connectors for Feature Models
@@ -161,15 +161,15 @@ Use small types like `Packed_U16.T`, `Packed_U32.T`, or custom packed types < 8 
 
 | Kind | `type:` field | `return_type:` field |
 |------|--------------|---------------------|
-| `recv_sync` | ✅ required | ❌ forbidden |
-| `recv_async` | ✅ required | ❌ forbidden |
-| `send` | ✅ required | ❌ forbidden |
-| `provide` | ✅ required | ❌ forbidden |
-| `modify` | ✅ required | ❌ forbidden |
-| `get` | ❌ forbidden | ✅ required |
-| `return` | ❌ forbidden | ✅ required |
-| `request` | ✅ required | ✅ required |
-| `service` | ✅ required | ✅ required |
+| `recv_sync` | **required** | **forbidden** |
+| `recv_async` | **required** | **forbidden** |
+| `send` | **required** | **forbidden** |
+| `provide` | **required** | **forbidden** |
+| `modify` | **required** | **forbidden** |
+| `get` | **forbidden** | **required** |
+| `return` | **forbidden** | **required** |
+| `request` | **required** | **required** |
+| `service` | **required** | **required** |
 
 **⚠️ COMMON PITFALL**: `get` and `return` connectors use `return_type:` ONLY. Writing `type:` on a `get` or `return` connector is a build error ("Connector is of kind 'return' which forbids the field: 'type'"). Only `request` and `service` use BOTH `type:` and `return_type:`.
 
@@ -186,7 +186,7 @@ Use small types like `Packed_U16.T`, `Packed_U32.T`, or custom packed types < 8 
 ```
 send → recv_sync | recv_async    request → service
 get  → return                    provide → modify
-```
+```ada
 
 ## Implementation Spec Pattern (Mandatory)
 
@@ -225,7 +225,7 @@ begin
       Command_Id => Arg.Header.Id,
       Status => Stat));
 end Command_T_Recv_Sync;
-```
+```ada
 
 Use `Self.Execute_Command(Arg)` (NOT `Self.Process_Command`). Returns `Command_Response_Status.E`.
 
@@ -242,7 +242,7 @@ begin
    Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Current_Value (The_Time, Arg));
    return Success;
 end Set_Value;
-```
+```ada
 
 Commands with `arg_type:` get `Arg : in <arg_type>` parameter; without get no extra parameter.
 
@@ -287,7 +287,7 @@ overriding function Get_Data_Dependency (Self : in out Instance;
    is (Self.Data_Product_Fetch_T_Request ((Id => Id)));
 overriding procedure Invalid_Data_Dependency (Self : in out Instance;
    Id : in Data_Product_Types.Data_Product_Id; Ret : in Data_Product_Return.T);
-```
+```ada
 
 ## Active Component Overrides
 
@@ -295,7 +295,7 @@ Active components have a `Cycle` procedure that runs on their task's schedule. I
 
 ```ada
 overriding procedure Cycle (Self : in out Instance);
-```
+```ada
 
 Use `Cycle` for periodic background work (polling, housekeeping). Most active components also receive ticks via `recv_sync` connectors for rate-group-driven work -- `Cycle` is separate from tick handling.
 
@@ -313,7 +313,7 @@ with Command;         -- needed for Command_T_Recv_Sync signature
 -- BODY (.adb): with packages used only in implementation
 with Sys_Time;        -- used in body logic
 -- Do NOT re-with packages already with'd in spec
-```
+```ada
 
 ## Parameter Overrides (ALL abstract IFF parameters.yaml exists)
 
@@ -336,7 +336,7 @@ overriding function Validate_Parameters (Self : in out Instance;
    P1 : P1_Type.U; P2 : P2_Type.U) return Parameter_Validation_Status.E
    is (Parameter_Validation_Status.Valid);
 overriding procedure Update_Parameters_Action (Self : in out Instance) is null;
-```
+```ada
 
 **Parameter access returns UNPACKED (.U)**: `Self.<Param_Name>` returns `<Type>.U` (unpacked), NOT `<Type>.T` (packed). Use `.U` for local variables when reading parameters:
 ```ada
@@ -348,7 +348,7 @@ Call `Self.Update_Parameters` (NO arguments) in Tick handler to apply staged upd
 ```ada
 Self.Update_Parameters;  -- CORRECT: no arguments
 -- WRONG: Self.Update_Parameters (Arg);
-```
+```ada
 
 ⚠️ **CRITICAL - Parameter Defaults Use Unpacked Syntax**: Parameter `default:` values use the unpacked record syntax directly (e.g., `"(Kp => (Value => 1.0), Ki => (Value => 0.1))"`), NOT `Type.Pack(...)`. The code generation wraps the packing automatically:
 
@@ -361,7 +361,7 @@ parameters:
 
 # WRONG: Do not use Type.Pack in defaults
     default: "Pid_Gains.Pack((Kp => (Value => 1.0), Ki => (Value => 0.1)))"
-```
+```ada
 
 **CRITICAL -- Parameter Access Pattern**: Parameters are NOT accessed via `Self.Parameters`. They are accessed via generated getter functions. For each parameter named `Kp` in the YAML, use:
 
@@ -373,7 +373,7 @@ Value := Self.Parameters.Kp;
 Value := Self.Kp;
 -- OR (alternate form)
 Value := Self.Get_Kp;
-```
+```ada
 
 Parameters with defaults can be retrieved without initialization. Parameters without defaults must be set via parameter update before access.
 
@@ -388,7 +388,7 @@ Parameters with defaults can be retrieved without initialization. Parameters wit
 ```ada
 overriding procedure Tick_T_Recv_Async_Dropped (Self : in out Instance; Arg : in Tick.T) is null;
 overriding procedure Data_Product_T_Recv_Async_Dropped (Self : in out Instance; Arg : in Data_Product.T) is null;
-```
+```yaml
 
 Failure to override these results in abstract subprogram compile errors.
 
@@ -411,7 +411,7 @@ Result := Ada.Numerics.Elementary_Functions.Sqrt (Value);
 with Ada.Numerics.Generic_Elementary_Functions;
 package Short_Float_Math is new Ada.Numerics.Generic_Elementary_Functions (Short_Float);
 Result := Short_Float_Math.Sqrt (Value);
-```
+```ada
 
 ## Framework Type Fields
 

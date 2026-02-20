@@ -41,7 +41,7 @@ Constraint is the feature, not the limitation.
 
 Assign integrity levels to components based on their security/correctness impact.
 
-```
+```yaml
 High integrity:   Security-critical logic, validation, crypto
                   -> Formal verification, proven contracts
 Supporting:       IO, composition, networking, storage
@@ -134,7 +134,7 @@ For time-bounded projects:
 
 All untrusted input passes through a validation pipeline that produces typed evidence:
 
-```
+```ada
 Raw_Input -> Validate -> Valid_Input (new type, only constructable via validation)
                 |
                 -> Reject (with structured error, never expose internals)

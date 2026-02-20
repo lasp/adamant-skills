@@ -71,7 +71,7 @@ enums:                        # REQUIRED, min 1 enum
         description: string   # Optional
       - name: Second
         value: 1
-```
+```ada
 
 ## Format Code Quick-Reference Table
 
@@ -117,7 +117,7 @@ preamble: |
 preamble: |
   subtype Three_Bit_Type is Interfaces.Unsigned_8 range 0 .. 7;    # fits U3
   subtype Four_Bit_Type is Interfaces.Unsigned_8 range 0 .. 15;    # fits U4
-```
+```ada
 
 Both work. `mod` types do NOT need `with: [Interfaces]`. `subtype ... is Interfaces.Unsigned_8 range` DOES need it.
 
@@ -142,7 +142,7 @@ fields:
   - name: Reserved
     type: Six_Bit_Type
     format: U6                       # 6 bits padding → byte-aligned
-```
+```ada
 
 ## Generated Code Structure
 
@@ -199,7 +199,7 @@ package My_Enums is
    end Status_Type;
 end My_Enums;
 -- Usage: My_Enums.Status_Type.E, My_Enums.Status_Type.Ok
-```
+```ada
 
 ## Assertion Package Usage
 
@@ -208,7 +208,7 @@ Auto-generated `-assertion.ads` provides type-safe test helpers:
 with My_Type.Assertion; use My_Type.Assertion;
 -- Compare two unpacked records field-by-field:
 My_Type.Assertion.My_Type_Assert_Eq (Expected, Actual);
-```
+```ada
 
 For enums: `My_Enums.Assertion.Status_Type_Assert_Eq (Expected, Actual);`
 
@@ -238,7 +238,7 @@ fields:
     format: U8x20
     variable_length: Length
     variable_length_offset: 0        # CCSDS uses -1
-```
+```yaml
 
 Only ONE variable-length field allowed, must be LAST field. Cannot nest variable-length types.
 
@@ -257,7 +257,7 @@ Arrays: `Packed_F32x3.T`, `Packed_F64x3.T`
 ```yaml
 skip_validation: True    # Platform-specific types (System.Address)
 byte_image: True         # Print as byte array instead of typed Image
-```
+```ada
 
 ## Key Validation Rules
 
@@ -292,7 +292,7 @@ redo all                          # Build everything
 redo build/html/type_name.html    # HTML docs
 redo build/svg/type_name.svg      # Bit layout diagram
 redo build/py/type_name.py        # Python class
-```
+```ada
 
 ## Common Patterns
 
@@ -307,7 +307,7 @@ fields:
   - name: Count
     type: Interfaces.Unsigned_16
     format: U16
-```
+```ada
 
 ### Record with Nested Packed Type (no format!)
 ```yaml
@@ -333,7 +333,7 @@ Unpacked : My_Type.U := My_Type.Unpack (Packed_Val);
 ```ada
 Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Counter (The_Time, (Value => 42)));
 Self.Event_T_Send_If_Connected (Self.Events.Status_Changed (The_Time, My_Record.Pack (My_Val)));
-```
+```ada
 
 ## Type Organization in Projects
 
