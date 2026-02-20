@@ -306,7 +306,7 @@ Use `Cycle` for periodic background work (polling, housekeeping). Most active co
 
 Only `with` packages in the **spec** (`.ads`) if the spec references them (e.g., type declarations, overriding subprogram parameter types). All other `with` clauses go in the **body** (`.adb`). Unused `with` in either file triggers a style warning (`-gnatwr`).
 
-**The implementation child package does NOT inherit `with`/`use` from the generated base class.** You must explicitly `with` every package you reference. However, types visible through connector parameter types (e.g., `Tick.T` if you override `Tick_T_Recv_Sync`) are already `with`'d by the parent -- don't re-`with` them in the body if they're only used in the overriding procedure signatures (which are in the spec).
+**Ada child packages inherit parent `with`/`use` visibility.** The implementation child package CAN see packages `with`'d by the generated base class spec. However, only add `with` in your spec for types you declare in signatures; add `with` in your body for types only used in the body. Do NOT re-`with`/`use` packages already visible from the base class (e.g., `Interfaces` when the base already has it) -- this causes redundant `-gnatwr` warnings.
 
 ```ada
 -- SPEC (.ads): with packages for types used in declarations/signatures
@@ -494,8 +494,7 @@ param_type: Packed_Byte.T
 28. [ ] Use `[]` for array aggregates: `[others => 0]` not `(others => 0)` (Ada 2022 syntax). Record aggregates MUST use `()`. Nested array-of-records: `[others => (others => <>)]`
 29. [ ] Space before `(` in type conversions: `Unsigned_32 (X)` not `Unsigned_32(X)`
 30. [ ] `then` on its own line for multi-line if conditions
-31. [ ] Don't add `with Interfaces; use Interfaces;` to impl spec if base class already provides it (components with commands/init/data deps get it automatically). Note: some generated component specs have REDUNDANT `use Interfaces;` that triggers `-gnatwr` -- this is unfixable (code gen artifact, not your code).
-    **HOWEVER**: If your handwritten impl spec/body directly uses `Interfaces.Unsigned_32` (or similar), you MUST add `with Interfaces;` yourself. The auto-provided `with Interfaces; use Interfaces;` is only in the GENERATED base class spec -- it is NOT inherited by the implementation child package.
+31. [ ] Ada child packages DO inherit parent `with`/`use` visibility. If the generated base class spec has `with Interfaces; use Interfaces;`, then `Interfaces` types ARE visible in your implementation child package. Do NOT add redundant `with Interfaces; use Interfaces;` -- it causes a `-gnatwr` style warning. Only add `with Interfaces;` if the base class does NOT have it (simple components without commands/init/data deps).
 31a. [ ] When doing arithmetic on `Interfaces` types (`Unsigned_32`, etc.), add `use Interfaces;` in the body to make operators (`+`, `-`, etc.) visible. Otherwise use qualified calls: `Interfaces."+"(Self.Count, 1)`.
 32. [ ] Use `Ignore : Type renames Arg;` pattern (not `pragma Unreferenced`) for unused connector handler parameters:
     ```ada
