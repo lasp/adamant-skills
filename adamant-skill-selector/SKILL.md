@@ -52,6 +52,17 @@ You have 15 Adamant skills totaling ~11100 lines (with references). Loading all 
 - View filters, validation rules
 
 **Also load:** `adamant-framework-components` (catalog of all 55 built-in components to select from)
+**Also load if needed:** `adamant-subassemblies` -- if splitting a large assembly into reusable subassemblies
+
+### Splitting assemblies into subassemblies
+**Load:** `adamant-subassemblies`
+- Decomposing monolithic assembly YAML into reusable pieces
+- Subassembly merge behavior (components, connections, preamble, id_bases)
+- Cross-subassembly wiring patterns
+- ID base range allocation across subassemblies
+- Build path requirements for subassembly discovery
+
+**Also load:** `adamant-assembly-dev` (for full assembly YAML reference and connection patterns)
 
 ### Selecting framework components for a design
 **Load:** `adamant-framework-components`
@@ -135,6 +146,7 @@ You have 15 Adamant skills totaling ~11100 lines (with references). Loading all 
 | Wrap C++ algorithm into Adamant component | algorithm-wrapping | component-dev |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | Memory-mapped register interface | type-system | component-dev |
+| Split assembly into subassemblies | subassemblies | assembly-dev |
 | Create system architecture from scratch | assembly-dev | framework-components |
 | Start a new Adamant project | project-setup | build-system |
 | Run/monitor assembly at runtime | assembly-dev (runtime ref) | -- |
