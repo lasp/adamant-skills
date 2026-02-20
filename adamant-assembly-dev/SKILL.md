@@ -380,6 +380,8 @@ redo run                                # Build and run (from main/)
 
 Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to regenerate.
 
+**Build phases**: `redo all` runs multiple phases: YAML validation, Ada code generation, compilation, and documentation generation (LaTeX/SVG). Documentation failures (configuration.ads, .tex files) do NOT mean the core assembly failed -- the assembly Ada code may compile fine. Check whether the actual `.ads/.adb` files in `build/src/` were generated before concluding the build failed.
+
 ## Common Assembly Errors
 
 | Error | Cause | Fix |
