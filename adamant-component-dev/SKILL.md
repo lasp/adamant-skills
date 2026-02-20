@@ -136,7 +136,7 @@ enums:
         value: 0
 ```
 
-**Feature connectors are NOT auto-generated** -- you MUST list them in component.yaml.
+**⚠️ CRITICAL -- Feature connectors are NOT auto-generated** -- you MUST explicitly list ALL required connectors in `component.yaml` `connectors:` section. Having `commands.yaml` does NOT add a `Command.T recv_sync` connector automatically. You must write it yourself. Same for events, data products, faults, parameters, and data dependencies. See table below.
 
 **CRITICAL -- Fault Param Size Limit**: Fault argument types (`param_type`) must fit within the `Fault.T` buffer (typically ~8-16 bytes). Large packed records (e.g., 10+ bytes) will cause a compile error:
 ```
@@ -170,6 +170,14 @@ Use small types like `Packed_U16.T`, `Packed_U32.T`, or custom packed types < 8 
 | `service` | ✅ required | ✅ required |
 
 **⚠️ COMMON PITFALL**: `get` and `return` connectors use `return_type:` ONLY. Writing `type:` on a `get` or `return` connector is a build error ("Connector is of kind 'return' which forbids the field: 'type'"). Only `request` and `service` use BOTH `type:` and `return_type:`.
+
+## Connector Call Syntax
+
+```ada
+-- send: Self.Event_T_Send_If_Connected (Arg);
+-- get (no argument): The_Time : constant Sys_Time.T := Self.Sys_Time_T_Get;
+-- request (takes argument): Result := Self.Data_Product_Fetch_T_Request ((Id => Dp_Id));
+```
 
 ## Connector Compatibility
 
@@ -291,15 +299,18 @@ Use `Cycle` for periodic background work (polling, housekeeping). Most active co
 
 ## Spec vs Body `with` Clauses
 
-Only `with` packages in the **spec** (`.ads`) if the spec references them (e.g., in type declarations visible to callers). All other `with` clauses go in the **body** (`.adb`). Unused `with` in the spec triggers a style warning. Common pattern:
+Only `with` packages in the **spec** (`.ads`) if the spec references them (e.g., type declarations, overriding subprogram parameter types). All other `with` clauses go in the **body** (`.adb`). Unused `with` in either file triggers a style warning (`-gnatwr`).
+
+**The implementation child package does NOT inherit `with`/`use` from the generated base class.** You must explicitly `with` every package you reference. However, types visible through connector parameter types (e.g., `Tick.T` if you override `Tick_T_Recv_Sync`) are already `with`'d by the parent -- don't re-`with` them in the body if they're only used in the overriding procedure signatures (which are in the spec).
 
 ```ada
--- SPEC: Only what's needed for type declarations
-with Component.Component_Name.Implementation;  -- always present (parent)
+-- SPEC (.ads): with packages for types used in declarations/signatures
+with Tick;            -- needed for Tick_T_Recv_Sync signature
+with Command;         -- needed for Command_T_Recv_Sync signature
 
--- BODY: Everything else
-with Sys_Time;        -- used in implementation
-with Interfaces;      -- used for arithmetic
+-- BODY (.adb): with packages used only in implementation
+with Sys_Time;        -- used in body logic
+-- Do NOT re-with packages already with'd in spec
 ```
 
 ## Parameter Overrides (ALL abstract IFF parameters.yaml exists)
