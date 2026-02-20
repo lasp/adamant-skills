@@ -181,8 +181,9 @@ def generate_component_yaml(spec, output_dir):
                 for c in conn[direction]:
                     lines.append(f"  - description: {c.get('description', direction + ' connector')}")
                     if direction == "get":
-                        # get connectors use return_type, not type
-                        lines.append(f"    return_type: {c['type']}")
+                        # get connectors use return_type in Adamant schema
+                        get_type = c.get('type', c.get('return_type', 'MISSING_TYPE'))
+                        lines.append(f"    return_type: {get_type}")
                     else:
                         lines.append(f"    type: {c['type']}")
                     if direction == "request":
