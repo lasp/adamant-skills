@@ -128,13 +128,7 @@ redo recursive        # Recursively build all subdirectories
 ```ada
 
 ### Style Check Details
-`redo style` performs four checks:
-1. **Ada style** -- Recompiles all `.o` files with `CHECK_STYLE=True`, enforcing GNAT style switches (`-gnaty3aABbdDefhiklL12nOprStux`)
-2. **Python flake8** -- Checks `*.py` in current dir and `build/py/` (ignores E121,E123,E126,E226,E24,E704,W503,W504,E402,E501)
-3. **YAML lint** -- Validates YAML files after resolving Jinja2 templates via configuration
-4. **Codespell** -- Spell-checks all source files (uses `redo/codespell/ignore_list.txt`)
-
-Results written to `build/style/style.log`.
+`redo style`: Ada recompile with `-gnaty` flags + Python flake8 + YAML lint + codespell. Results in `build/style/style.log`.
 
 ## Code Generation Pipeline
 
@@ -181,23 +175,13 @@ YAML Model → Schema Validation (PyKwalify) → Python Model Object → Jinja2 
 ### Template Directories (`gen/templates/`)
 Templates organized by output type: `array/`, `assembly/`, `base/`, `commands/`, `component/`, `configuration/`, `data_dependencies/`, `data_products/`, `enums/`, `events/`, `faults/`, `gpr/`, `memory_map/`, `packets/`, `parameters/`, `record/`, `register_map/`, `requirements/`, `tests/`, `tex/`.
 
-### Generated Output per Model Type
-
-| Model Type | Key Outputs |
-|-----------|-------------|
-| Component | Base class `.ads/.adb`, implementation stubs in `build/template/` |
-| Assembly | Ada source, HTML, Python, MATLAB, XML, COSMOS config |
-| Record/Array/Enum | Ada (pack/unpack/validate/assert/C), Python, MATLAB, LaTeX |
-| Commands/Events/etc | Ada suites, HTML, LaTeX |
-| Tests | AUnit runner, tester, reciprocal component |
-
 ### Key Generated Files
-- **component.yaml** → `build/src/component-{name}.ads/.adb` (base class), `build/template/component-{name}-implementation.ads/.adb` (stubs)
-- **events.yaml** → `build/src/{name}_events.ads/.adb` + `-representation`
-- **commands.yaml** → `build/src/{name}_commands.ads/.adb`
+- **component.yaml** → `build/src/component-{name}.ads/.adb` (base class), `build/template/` (stubs)
+- **events/commands/data_products/etc.yaml** → `build/src/{name}_{feature}.ads/.adb`
 - **record.yaml** → `build/src/{name}.ads/.adb` + `-representation`, `-validation`, `-assertion`, `-c`
+- **assembly.yaml** → Ada source, HTML, Python, MATLAB, XML, COSMOS config
 
-Generated files live in `build/src/`. Source files with the same name override generated ones.
+Generated files live in `build/src/`. Source files with the same name override generated ones. Full layout: [references/internals-and-generation.md](references/internals-and-generation.md)
 
 ### Jinja2 Template Variables
 YAML files can use Jinja2 syntax to reference configuration values:
@@ -232,27 +216,11 @@ command_registration_delay: 250   # Microseconds between command registrations
 ### Custom Variables
 Add project-specific key-value pairs below the required fields. Reference them in YAML via `{{ variable_name }}` or in Ada via the `Configuration` package.
 
-### Example Project Configuration
-```yaml
----
-description: Configuration for the Adamant Bot Station demo.
-data_product_buffer_size: 32
-command_buffer_size: 128
-event_buffer_size: 32
-parameter_buffer_size: 32
-fault_buffer_size: 8
-ccsds_packet_buffer_size: 512
-packet_buffer_size: 480
-stack_margin: 1000
-command_registration_delay: 250
-```yaml
-
 ## Compiler & Linker Flags
 
 Key flags (from `a_adamant.gpr`): `-gnat2022 -gnatwa -gnatf` (Ada 2022, all warnings, full errors).
 Style: `-gnaty3aABbdDefhiklL12nOprStux` (see adamant-style skill for full flag reference).
 Linux_Test: no Ravenscar, links AUnit. Bareboard: Ravenscar enforced, dead code elimination.
-Full flag details: [references/build-commands.md](references/build-commands.md)
 
 ## SPARK Prove Configuration
 
@@ -312,10 +280,8 @@ redo build/bin/Pico/main.elf
 More errors and project structure: [references/build-commands.md](references/build-commands.md)
 
 ## References
-- [references/build-commands.md](references/build-commands.md) -- All redo targets and build commands
-- [references/build-system-audit.md](references/build-system-audit.md) -- Undocumented targets and audit findings
-- [references/internals-and-generation.md](references/internals-and-generation.md) -- Code generation internals, template database, generator architecture
-- [references/spark-prove-guide.md](references/spark-prove-guide.md) -- Complete SPARK prove setup, configuration, and contract patterns
+- [references/internals-and-generation.md](references/internals-and-generation.md) -- Code generation internals, generator dispatch, file layout
+- [references/spark-prove-guide.md](references/spark-prove-guide.md) -- SPARK prove config, contract patterns, gotchas
 
 ## Related Skills
 

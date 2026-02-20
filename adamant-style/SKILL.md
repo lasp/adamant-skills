@@ -7,18 +7,16 @@ description: Adamant code style rules enforced by redo style. Use when writing o
 
 `redo style` enforces Ada compiler warnings, YAML lint, Python flake8, and codespell. All code must pass.
 
-## Running Style Checks
-
 ```bash
 redo style              # Current directory
 redo style_all          # Recursive (all subdirectories)
-```ada
+```
 
 Style logs written to `build/style/style.log` per directory.
 
-## Ada Style Flags (Actual)
+## Ada Style Flags
 
-The enforced flags are `-gnaty3aABbdDefhiklL12nOprStux`:
+Enforced: `-gnaty3aABbdDefhiklL12nOprStux`
 
 | Flag | Rule |
 |------|------|
@@ -27,7 +25,7 @@ The enforced flags are `-gnaty3aABbdDefhiklL12nOprStux`:
 | `A` | Multi-dimensional `'Length` must specify index |
 | `B` | Short-circuit operators required for booleans |
 | `b` | No trailing blanks |
-| `d` | No DOS line endings (CR+LF) |
+| `d` | No DOS line endings |
 | `D` | Identifiers in mixed case |
 | `e` | Labels required on `end` statements |
 | `f` | No form feeds or vertical tabs |
@@ -50,302 +48,155 @@ NOT enforced: `c` (comment formatting), `m`/`M` (max line length), `s` (separate
 ## Ada Whitespace Rules
 
 - **3-space indentation** (`-gnaty3`): Not 2, not 4
-- **No trailing whitespace** on any line (`-gnatyb`)
+- **No trailing whitespace** (`-gnatyb`)
 - **No multiple blank lines** in sequence (`-gnatyu`)
-- **No tabs** (`-gnatyh`): Spaces only
-- **No DOS line endings** (`-gnatyd`): Unix LF only
-- **No form feeds or vertical tabs** (`-gnatyf`)
-- **Space required before `(`** in type conversions and function calls (`-gnatyt`)
-  ```ada
-  -- WRONG: Unsigned_32(Value)
-  -- RIGHT: Unsigned_32 (Value)
-  ```
-- **Space around binary operators**: `A + B`, `2 ** 16`, not `A+B`, `2**16`
+- **No tabs** (`-gnatyh`), no form feeds (`-gnatyf`), no DOS line endings (`-gnatyd`)
+- **Space before `(`** in type conversions/calls: `Unsigned_32 (Value)` not `Unsigned_32(Value)`
+- **Space around binary operators**: `A + B`, `2 ** 16`
 - **No space after `(` or before `)`**: `Foo (X, Y)` not `Foo ( X, Y )`
 - **No unnecessary parentheses** (`-gnatyx`): `return X;` not `return (X);`
 
 ## Ada Naming and Casing
 
-- **Identifiers in mixed case** (`-gnatyD`): `My_Variable` not `MY_VARIABLE` or `myvariable`
-- **Match declaration casing exactly** (`-gnatyr`): If declared `Heartbeat_OK`, never `Heartbeat_Ok`
-- **Keywords lower case** (`-gnatyk`): `begin`, `end`, `if`, never `BEGIN`, `If`
-- **Attribute casing** (`-gnatya`): `'Length`, `'Range`, `'First` (RM standard)
-- **Standard casing** (`-gnatyn`): `Integer`, `Boolean`, `Natural` per RM
-- **Pragma casing** (`-gnatyp`): `pragma Unreferenced`, not `pragma UNREFERENCED`
+- **Mixed case identifiers** (`-gnatyD`): `My_Variable`
+- **Match declaration casing exactly** (`-gnatyr`): If declared `Heartbeat_OK`, always `Heartbeat_OK`
+- **Keywords lower case** (`-gnatyk`): `begin`, `end`, `if`
+- **Attribute/standard/pragma casing per RM** (`-gnatya`, `-gnatyn`, `-gnatyp`): `'Length`, `Integer`, `pragma Unreferenced`
 
-## Short-Circuit Operators (CRITICAL)
+## Short-Circuit Operators (`-gnatyB`) — CRITICAL
 
-- **Always use `or else`** instead of `or` for boolean expressions (`-gnatyB`)
-- **Always use `and then`** instead of `and` for boolean expressions
-- Bitwise `or` / `and` on integer types are fine (they're not boolean)
-  ```ada
-  -- WRONG: if A > 0 or B > 0 then
-  -- RIGHT: if A > 0 or else B > 0 then
-  -- OK:    Mask := Mask or 16#FF#;  (bitwise, not boolean)
-  ```
+Always use `or else`/`and then` for boolean expressions. Bitwise `or`/`and` on integers is fine.
+```ada
+-- WRONG: if A > 0 or B > 0 then
+-- RIGHT: if A > 0 or else B > 0 then
+-- OK:    Mask := Mask or 16#FF#;  (bitwise, not boolean)
+```
 
 ## Control Flow Layout
 
-- **`then` on its own line** when condition spans multiple lines (`-gnatyi`)
+- **`then` on its own line** when condition spans multiple lines (`-gnatyi`):
   ```ada
-  -- WRONG:
-  if Self.Enabled and then
-     Self.Count > Threshold then
-  -- RIGHT:
   if Self.Enabled and then
      Self.Count > Threshold
   then
   ```
-- **No statements on same line as `then`/`else`** (`-gnatyS`)
-  ```ada
-  -- WRONG: if X then return; end if;
-  -- RIGHT:
-  if X then
-     return;
-  end if;
-  ```
-- **Labels on `end` statements** (`-gnatye`): `end My_Proc;` not bare `end;` for named blocks
-- **Max nesting depth 12** (`-gnatyL12`): Refactor deeply nested code
-- **`null;` required** in empty blocks: Cannot leave only a comment in an if/else/loop body
+- **No statements on `then`/`else` line** (`-gnatyS`): Always use separate lines
+- **Labels on `end`** (`-gnatye`): `end My_Proc;` not bare `end;`
+- **Max nesting 12** (`-gnatyL12`): Refactor if exceeded
+- **`null;` required** in empty blocks (comment-only bodies not allowed)
 
 ## Array Aggregates (Ada 2022)
 
-- **Use `[]` not `()`** for array aggregates (`-gnatwj`)
-- **Record aggregates MUST use `()`** -- only arrays use `[]`
-  ```ada
-  Buffer := [others => 0];                       -- RIGHT (array)
-  Buffer := (others => 0);                       -- WRONG (obsolescent)
-  Rec := (Field_A => 1, Field_B => 2);           -- RIGHT (record)
-  Arr := [others => (others => <>)];             -- RIGHT: outer [] (array), inner () (record)
-  ```
+Use `[]` for arrays, `()` for records. `-gnatwj` warns on obsolescent `()` array syntax.
+```ada
+Buffer := [others => 0];                       -- array
+Rec := (Field_A => 1, Field_B => 2);           -- record
+Arr := [others => (others => <>)];             -- outer [] array, inner () record
+```
 
-## Multi-Dimensional Array `'Length` (`-gnatyA`)
+## Multi-Dimensional `'Length` (`-gnatyA`)
 
 ```ada
--- WRONG: Buffer'Length
--- RIGHT: Buffer'Length (1)     -- must specify dimension index
-```ada
+-- WRONG: Buffer'Length     RIGHT: Buffer'Length (1)
+```
 
 ## With-Clauses and Visibility
 
-- **Only `with` packages you actually reference** (`-gnatwu`)
-- **No redundant `with`** in body if spec already has it (`-gnatwr`)
-- **No redundant `use`** if already visible through base class (`-gnatwr`)
-- Move `with` to body if only the body references it
-- **`overriding` keyword required** on overriding declarations (`-gnatyO`)
+- **Only `with` packages you reference** (`-gnatwu`)
+- **No redundant `with`** in body if spec has it (`-gnatwr`)
+- **Move `with` to body** if only body references it
+- **`overriding` keyword required** (`-gnatyO`)
 
-### `use Interfaces` Redundancy Rule
+### `use Interfaces` Redundancy
 
-Components with commands, init params, or data dependencies get `with Interfaces; use Interfaces;` in their generated base class. Adding it again in the implementation spec triggers `-gnatwr`. Simple tick-only components do NOT get it automatically and need it explicitly.
+Components with commands, init params, or data dependencies get `with Interfaces; use Interfaces;` in generated base class. Adding again triggers `-gnatwr`. Simple tick-only components need it explicitly.
 
 ## Variables and Constants
 
-- **No unused variables** (`-gnatwu`): Use `pragma Unreferenced (Var);` if needed
-- **No useless assignments** (`-gnatwm`): Don't assign if value is never read
-- **Assigned-but-never-read**: `pragma Unreferenced` does NOT suppress this. Use `pragma Warnings (Off, Var);` or rename to `Ignore_*`
-- **Declare constants when possible** (`-gnatwk`): If never modified, use `constant`
+- **No unused variables** (`-gnatwu`): `pragma Unreferenced (Var);`
+- **Assigned-but-never-read**: `pragma Unreferenced` does NOT work. Use `pragma Warnings (Off, Var);` or rename `Ignore_*`
+- **Declare constants when possible** (`-gnatwk`)
 
 ## Subprogram and Aggregate Style
 
-- **`is null`** for empty connector drop handlers: `overriding procedure X_Send_Dropped (...) is null;`
-- **Named association** in aggregates when >1 field: `(Value => 42)` not `(42)`
-- **Underscore grouping** for large literals: `16#FFFF_FFFF#` not `16#FFFFFFFF#`
-- **Based literals**: Use `16#...#` for hex
+- **`is null`** for empty connector drop handlers
+- **Named association** in aggregates when >1 field
+- **Underscore grouping** for large literals: `16#FFFF_FFFF#`
 - **Qualified aggregates**: `Packed_U16.T'(Value => N)` when type is ambiguous
 
 ## YAML Rules
 
-1. **Document start marker required**: Every `.yaml` file must begin with `---`
-2. **No trailing whitespace**
-3. **Consistent indentation**: 2 spaces for YAML (Adamant convention)
-4. **No tabs**: Spaces only
-5. **Quoted string defaults**: Enum defaults and string values: `default: "Sensor_Id.Sensor_Id_Type.Temperature_1"`
-6. **`with:` only for preamble/field types**: Include a package in `with:` only if preamble code or field types reference it
-
-### Type YAML Preamble Style
+1. **`---` document start marker** required
+2. **No trailing whitespace**, no tabs
+3. **2-space indentation** (Adamant convention)
+4. **Quoted enum defaults**: `default: "Sensor_Id.Sensor_Id_Type.Temperature_1"`
+5. **`with:` only for preamble/field types** — NOT for connector types
 
 ```yaml
-preamble: |
-  type Stale_Count_Type is mod 2**4;
-  type Bit_Type is mod 2**1;
-```ada
+# WRONG:          # RIGHT:
+with:              with:
+  - Tick             - Interfaces
+  - Command        preamble: |
+                     use Interfaces;
+```
 
-YAML is linted by yamllint with a project-specific config. Jinja2 templates are resolved before linting.
-
-### Component YAML `with:`
-
-**`with:` is ONLY for preamble code visibility.** Do not put connector types or framework types here.
-
-```yaml
-# WRONG:
-with:
-  - Tick
-  - Command
-
-# RIGHT -- only if preamble references it:
-with:
-  - Interfaces
-preamble: |
-  use Interfaces;
-  subtype My_Range is Unsigned_8 range 0 .. 100;
-```ada
-
-**Assembly YAML `with:` is different** -- assemblies legitimately need packages for discriminants and init params.
+Assembly YAML `with:` is different — assemblies legitimately need packages for discriminants and init params.
 
 ## Python (flake8)
 
-Ignored flake8 rules: E121, E123, E126, E226, E24, E704, W503, W504, E402, E501.
+Ignored rules: E121, E123, E126, E226, E24, E704, W503, W504, E402, E501.
 
-```python
-from environments import test  # noqa: F401
-```ada
-
-- Must have `# noqa: F401` to suppress unused import warning
+- `from environments import test  # noqa: F401` — suppress unused import
 - Must have exactly one trailing newline
-- E501 (line length) is NOT enforced
 
 ## Codespell
 
-Codespell runs on all files in the directory (excluding build dirs). It checks for common misspellings. The project has an ignore list at `$ADAMANT_DIR/redo/codespell/ignore_list.txt`. If codespell flags a legitimate word, add it to the ignore list or restructure the text.
+Runs on all files (excluding build dirs). Project ignore list at `$ADAMANT_DIR/redo/codespell/ignore_list.txt`.
 
 ## Framework Template Artifacts (Cannot Fix)
 
-These warnings come from generated template/type files and are expected:
-
+Expected warnings from generated template/type files:
 - `unit "Component.X.Implementation.Tester" is not referenced in spec`
-- `with clause might be moved to body` (on test spec)
-- `unnecessary with of ancestor` (on test spec)
+- `with clause might be moved to body`
+- `unnecessary with of ancestor`
 - `unit "Interfaces" is not referenced` in generated type specs
-
-These are produced by `redo templates` and would be overwritten if modified.
-
-## Implementation Spec Patterns
-
-```ada
--- Component with commands/init/data deps: Interfaces visible via base class
--- Do NOT add: with Interfaces; use Interfaces;  (redundant)
-with Tick;
-with Command;
-
-package Component.Limit_Checker.Implementation is
-   type Instance is new Limit_Checker.Base_Instance with private;
-private
-   type Instance is new Limit_Checker.Base_Instance with record
-      Current_Value : Unsigned_16 := 0;
-   end record;
-   overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T);
-   overriding procedure Event_T_Send_Dropped (Self : in out Instance; Arg : in Event.T) is null;
-end Component.Limit_Checker.Implementation;
-```ada
-
-## Implementation Body Patterns
-
-```ada
-package body Component.Sensor_Reader.Implementation is
-   use type Interfaces.Unsigned_32;
-
-   overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T) is
-      pragma Unreferenced (Arg);
-      The_Time : constant Sys_Time.T := Self.Sys_Time_T_Get;
-   begin
-      Self.Data_Product_T_Send_If_Connected (
-         Self.Data_Products.Reading_Count (The_Time, (Value => Self.Reading_Count)));
-   end Tick_T_Recv_Sync;
-end Component.Sensor_Reader.Implementation;
-```ada
-
-Key patterns:
-- `pragma Unreferenced (Arg);` when tick argument unused
-- `use type` for operator visibility without full `use`
-- `Self.*_Send_If_Connected` for optional connectors
-- Qualified aggregates: `Packed_U16.T'(Value => N)` when type ambiguous
 
 ## AI/Sub-Agent Output Warnings
 
-Code generated by AI agents or copy-pasted from AI output frequently has these style violations:
+Common violations in AI-generated code:
+1. Trailing whitespace — fix: `sed -i 's/[[:space:]]*$//' file.adb`
+2. Multiple consecutive blank lines
+3. Wrong indentation (2 or 4 instead of 3)
+4. `(others => 0)` instead of `[others => 0]`
+5. Boolean `or`/`and` instead of `or else`/`and then`
+6. Missing space before `(` in type conversions
 
-1. **Trailing whitespace** -- AI outputs often pad lines with spaces. Bulk fix: `sed -i 's/[[:space:]]*$//' file.adb`
-2. **Multiple consecutive blank lines** -- AI likes visual separation. Ada style (`-gnatyu`) forbids it.
-3. **Wrong indentation** -- AI defaults to 2 or 4 spaces. Adamant requires exactly 3 (`-gnaty3`).
-4. **`(others => 0)` instead of `[others => 0]`** -- AI trained on pre-Ada-2022 syntax.
-5. **Boolean `or`/`and` instead of `or else`/`and then`** -- AI doesn't know Adamant's `-gnatyB` rule.
-6. **Missing space before `(`** in type conversions -- `Unsigned_32(X)` instead of `Unsigned_32 (X)`.
-
-**Always run `redo style` on every file touched by AI or sub-agents before committing.** A bulk trailing-whitespace fix across all test files is often necessary after sub-agent work:
-```bash
-find src/components -name "*.adb" -path "*/test/*" -exec sed -i 's/[[:space:]]*$//' {} +
-find src/components -name "*.ads" -path "*/test/*" -exec sed -i 's/[[:space:]]*$//' {} +
-```ada
-
-## Common Patterns by Frequency
-
-### Most Common (fix first)
-1. **Unused `with` in test bodies** (40+): Left over from templates or copy-paste
-2. **Redundant `use Interfaces`** (20+): Already visible through generated base class
-3. **Unused `with` in component bodies** (15+): Redundant with already in spec
-4. **`(others => ...)` array syntax** (64): Needs `[others => ...]` (Ada 2022)
-5. **Unused `with` in component specs** (10+): Declared but not referenced
-
-### Frequent
-6. **Unused `Count` from `Dispatch_All`**: Use `Natural_Assert.Eq (T.Dispatch_All, N)` directly, or suppress with `pragma Warnings (Off, "variable ""Count"" is assigned but never read");` before the package body. Ada forbids bare function calls (`T.Dispatch_All;` illegal).
-7. **Missing space before `(`** in type conversions
-8. **`or` / `and` instead of `or else` / `and then`**
-9. **`then` not on its own line** in multi-line conditions
-10. **Redundant conversions**: `Natural (I)` where `I` is already Natural
-
-### Dangerous Removals (verify before removing)
-- **`with X; use X;` where `use` provides operator visibility**: Removing `with Command_Types;` breaks `=` and `<`
-- **`use Command_Execution_Status;`**: If removed, `return Success;` becomes ambiguous
-- **`AUnit.Assertions`**: GNAT reports "no entities referenced" even when `Assert` is called via `use`. Only remove if ALL assertions use qualified names
-- **Rule**: Before removing ANY `with`, grep the body for types/operators/procedures from that package
-
-### Occasional
-11. **Bad casing** (not matching declaration)
-12. **Type mismatches in assertions**: Wrong `Packed_U16_Assert` vs `Packed_U32_Assert`
-13. **Multiple blank lines** in sequence
-14. **Duplicate with-clauses** (same package withed twice)
-15. **`use Command_Execution_Status.E;`** in test bodies -- has no effect
-16. **Record aggregate with `[]`**: Only arrays use `[]`
-17. **`Short_Float` vs `IEEE_Float_32`**: `Packed_F32.T.Value` is `Short_Float`
-18. **Missing space around `**` operator**: `2**16` -> `2 ** 16`
-19. **Assigned-but-never-read variables**: Use `pragma Warnings (Off, Var);`
-20. **Unnecessary parentheses**: `return (X);` -> `return X;` (`-gnatyx`)
-21. **Wrong indentation**: Must be exactly 3 spaces per level
-22. **Statements on `then`/`else` line**: Must be on separate line (`-gnatyS`)
+**Always run `redo style` on AI-touched files before committing.**
 
 ## Quick Decision Table
 
 | Situation | Action |
 |---|---|
 | Unused variable | `pragma Unreferenced (Var);` |
-| Assigned-but-never-read | `pragma Warnings (Off, Var);` or rename `Ignore_*` |
+| Assigned-but-never-read | `pragma Warnings (Off, Var);` or `Ignore_*` |
 | Unused `with` in body (spec has it) | Remove from body |
 | Unused `with` in spec (only body uses it) | Move to body |
-| `with X; use X;` seems unused but operators used | Keep it -- grep first |
-| `(others => 0)` on array | Change to `[others => 0]` |
-| `(others => <>)` on record | Keep `()` -- records use parens |
-| Boolean `or`/`and` | Change to `or else`/`and then` |
+| `with X; use X;` seems unused but operators used | Keep — grep first |
+| `(others => 0)` on array | `[others => 0]` |
+| `(others => <>)` on record | Keep `()` |
+| Boolean `or`/`and` | `or else`/`and then` |
 | Multi-line if | Put `then` on its own line |
 | Empty block body | Add `null;` |
 | Function result unused | `Ignore := Func (...); pragma Unreferenced (Ignore);` |
 | Redundant `use Interfaces` | Remove if base class provides it |
-| Unnecessary parens | `return X;` not `return (X);` |
-| Wrong indentation | Use 3 spaces per level |
-| Statement on then/else line | Move to next line |
-| `Buffer'Length` on 2D array | Use `Buffer'Length (1)` |
+| `Buffer'Length` on 2D array | `Buffer'Length (1)` |
 
-## Style Checklist
+## Dangerous Removals (Verify Before Removing)
 
-```bash
-redo style
-cat build/style/style.log
-```
-
-ALL style warnings are fixable. Common test spec warnings and fixes:
-- `unit "Component.X.Implementation.Tester" is not referenced in spec` -- move the `with` to the body
-- `with clause might be moved to body` -- move the `with` to the body
-- `unnecessary with of ancestor` -- child packages auto-see parents, remove the `with`
-- Redundant `with/use Interfaces` in YAML `preamble:` -- generated base already adds it when component has commands/init
+- **`with X; use X;` providing operator visibility**: Removing breaks `=`, `<` operators
+- **`use Command_Execution_Status;`**: Removing makes `return Success;` ambiguous
+- **`AUnit.Assertions`**: Only remove if ALL assertions use qualified names (no bare `Assert`)
+- **Rule**: Before removing ANY `with`, grep the body for types/operators from that package
 
 ## Related Skills
 
@@ -355,4 +206,4 @@ ALL style warnings are fixable. Common test spec warnings and fixes:
 
 ## References
 
-- **[references/style-patterns.md](references/style-patterns.md)**: Detailed examples for every pattern with before/after code
+- **[references/style-patterns.md](references/style-patterns.md)**: Before/after examples for every pattern
