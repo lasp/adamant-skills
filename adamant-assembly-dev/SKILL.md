@@ -483,6 +483,7 @@ Auto-generated from the assembly model:
 
 - **`set_id_bases` is optional** -- omit for auto-assignment. Don't use `"Auto"` as a value.
 - **`id_bases` values must be positive** (>= 1). Using 0 causes a code generation error.
+- **Only include used `id_bases`**: Valid bases are `Data_Product_Id_Base`, `Event_Id_Base`, `Command_Id_Base`, `Packet_Id_Base`. Including unused bases (e.g., `Fault_Id_Base`) triggers a warning.
 - **`Rate_Group` `Tick_T_Send_Count`** must EXACTLY match connected component count.
 - **System time provider** is `Gps_Time` (NOT `System_Time`). Instance name is conventional.
 - **`Product_Database`** uses `init:` (NOT `init_base:`) for Min/Max Data Product ID.
