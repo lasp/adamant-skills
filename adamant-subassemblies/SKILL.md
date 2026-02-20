@@ -211,7 +211,10 @@ connections:
 
 ⚠️ **CRITICAL - Cross-Subassembly Data Dependencies**: If a component in subassembly A has data dependencies that need to map to data products from components in subassembly B, the `map_data_dependencies` resolver CANNOT find them. The mapper only searches at the subassembly level, not across subassemblies.
 
-**SOLUTION**: Move the component with cross-subassembly data dependencies to the parent assembly instead of keeping it in a subassembly. This gives the mapper access to all component data products during resolution.
+**SOLUTIONS** (in order of preference):
+1. Move the component with data dependencies to the PARENT assembly (gives mapper full visibility)
+2. Move the data product SOURCE component to the same subassembly as the consumer
+3. Do NOT remove data dependencies to work around this -- they are a core feature. Restructure the subassembly instead.
 
 ## View System Interaction
 
