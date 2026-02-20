@@ -16,7 +16,13 @@ Subassemblies split a large assembly YAML into smaller, reusable pieces. Each su
 - **Team workflow** -- different engineers own different subsystems in separate files
 - **Incremental integration** -- build and validate subsystems independently before combining
 
-Subassemblies are NOT separate executables. They merge into a single assembly producing one Ada package and one binary. Subassemblies are purely a modeling concept -- the autocode flattens everything into a single assembly with no runtime distinction between subassembly boundaries.
+Subassemblies are a **lightweight modeling construct only**. They do NOT trickle down into autocode at all -- generation is still flat. The output is one Ada package, one binary, with no runtime distinction between subassembly boundaries. Subassemblies exist purely to break the assembly model into manageable, reusable pieces.
+
+**Key properties:**
+- Allow sharing component groups between different build targets (e.g., a common telemetry pipeline used by multiple assemblies)
+- Enable state-based decomposition (idle, safe, monitor, etc.) where a master flight assembly includes all states
+- All connections within a subassembly are self-contained in that subassembly's file
+- Cross-subassembly wiring goes in the parent (or importing) assembly
 
 ## File Structure
 
