@@ -98,38 +98,93 @@ def generate_component_yaml(spec, output_dir):
 
     if spec.get("init"):
         lines.append("init:")
+        lines.append("  parameters:")
         for param in spec["init"]:
-            lines.append(f"  - name: {param['name']}")
-            lines.append(f"    type: {param['type']}")
+            lines.append(f"    - name: {param['name']}")
+            lines.append(f"      type: {param['type']}")
             if "default" in param:
-                lines.append(f'    default: "{param["default"]}"')
+                lines.append(f'      default: "{param["default"]}"')
             if "description" in param:
-                lines.append(f"    description: {param['description']}")
+                lines.append(f"      description: {param['description']}")
 
-    if spec.get("connectors"):
+    # Auto-inject required connectors for features
+    conn = spec.get("connectors", {})
+    if not isinstance(conn, dict):
+        conn = {}
+
+    # Commands require Command.T recv_sync + Command_Response.T send
+    if spec.get("commands"):
+        if "recv_sync" not in conn:
+            conn["recv_sync"] = []
+        has_cmd_recv = any(c.get("type") == "Command.T" for c in conn.get("recv_sync", []))
+        if not has_cmd_recv:
+            conn["recv_sync"].append({"type": "Command.T", "description": "Command input"})
+        if "send" not in conn:
+            conn["send"] = []
+        has_cmd_resp = any(c.get("type") == "Command_Response.T" for c in conn.get("send", []))
+        if not has_cmd_resp:
+            conn["send"].append({"type": "Command_Response.T", "description": "Command response output"})
+
+    # Parameters require Parameter_Update.T modify
+    if spec.get("parameters"):
+        if "modify" not in conn:
+            conn["modify"] = []
+        has_param = any(c.get("type") == "Parameter_Update.T" for c in conn.get("modify", []))
+        if not has_param:
+            conn["modify"].append({"type": "Parameter_Update.T", "description": "Parameter update interface"})
+
+    # Events require Event.T send
+    if spec.get("events"):
+        if "send" not in conn:
+            conn["send"] = []
+        has_evt = any(c.get("type") == "Event.T" for c in conn.get("send", []))
+        if not has_evt:
+            conn["send"].append({"type": "Event.T", "description": "Event output"})
+
+    # Data products require Data_Product.T send
+    if spec.get("data_products"):
+        if "send" not in conn:
+            conn["send"] = []
+        has_dp = any(c.get("type") == "Data_Product.T" for c in conn.get("send", []))
+        if not has_dp:
+            conn["send"].append({"type": "Data_Product.T", "description": "Data product output"})
+
+    # Faults require Fault.T send
+    if spec.get("faults"):
+        if "send" not in conn:
+            conn["send"] = []
+        has_fault = any(c.get("type") == "Fault.T" for c in conn.get("send", []))
+        if not has_fault:
+            conn["send"].append({"type": "Fault.T", "description": "Fault output"})
+
+    # Data dependencies require Data_Product_Fetch.T request
+    if spec.get("data_dependencies"):
+        if "request" not in conn:
+            conn["request"] = []
+        has_fetch = any(c.get("type") == "Data_Product_Fetch.T" for c in conn.get("request", []))
+        if not has_fetch:
+            conn["request"].append({"type": "Data_Product_Fetch.T", "return_type": "Data_Product_Return.T", "description": "Data product fetch for data dependencies"})
+
+    if conn:
         lines.append("connectors:")
-        conn = spec["connectors"]
 
-        for direction in ["recv_sync", "recv_async"]:
-            if direction in conn:
-                lines.append(f"  - description: {conn[direction][0].get('description', direction + ' connector')}")
-                lines.append(f"    type: {conn[direction][0]['type']}")
+        for direction in ["recv_sync", "recv_async", "modify"]:
+            for c in conn.get(direction, []):
+                lines.append(f"  - description: {c.get('description', direction + ' connector')}")
+                lines.append(f"    type: {c['type']}")
                 lines.append(f"    kind: {direction}")
-                if conn[direction][0].get("name"):
-                    lines.append(f"    name: {conn[direction][0]['name']}")
-                # Handle multiple of same direction
-                for c in conn[direction][1:]:
-                    lines.append(f"  - description: {c.get('description', direction + ' connector')}")
-                    lines.append(f"    type: {c['type']}")
-                    lines.append(f"    kind: {direction}")
-                    if c.get("name"):
-                        lines.append(f"    name: {c['name']}")
+                if c.get("name"):
+                    lines.append(f"    name: {c['name']}")
 
         for direction in ["send", "get", "request"]:
             if direction in conn:
                 for c in conn[direction]:
                     lines.append(f"  - description: {c.get('description', direction + ' connector')}")
-                    lines.append(f"    type: {c['type']}")
+                    if direction == "get":
+                        # get connectors use return_type, not type
+                        lines.append(f"    return_type: {c['type']}")
+                    else:
+                        lines.append(f"    type: {c['type']}")
                     if direction == "request":
                         lines.append(f"    return_type: {c.get('return_type', 'Not_Specified')}")
                     lines.append(f"    kind: {direction}")
@@ -476,7 +531,7 @@ def generate_test_infrastructure(spec, output_dir):
     lines.append(f"description: {snake_to_mixed(name)} unit tests")
     lines.append(f"tests:")
     lines.append(f"  - name: {snake_to_mixed(name)}_Tests")
-    lines.append(f"    component: {snake_to_mixed(name)}")
+    lines.append(f"    description: Unit tests for {snake_to_mixed(name)}")
     path = os.path.join(test_dir, f"{name}.tests.yaml")
     with open(path, "w") as f:
         f.write("\n".join(lines) + "\n")
