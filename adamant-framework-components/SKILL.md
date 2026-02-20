@@ -282,7 +282,7 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **Need fault protection?** Use task_watchdog + fault_correction
 **Need memory operations?** Use memory_manager + memory_packetizer
 **Need command routing?** Use command_router + command_protector
-**Need monitoring?** Use cpu_monitor + stack_monitor + queue_monitor
+**Need monitoring?** Use cpu_monitor + stack_monitor + queue_monitor (note: stack_monitor and cpu_monitor require `Task_Types.Task_Info_List_Access` init params -- check component YAML for exact init signatures before using)
 **Need sequences?** Use command_sequencer + sequence_store
 
 Components marked (either) can be active or passive - choose based on assembly needs.

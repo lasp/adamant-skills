@@ -404,6 +404,7 @@ Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to rege
 
 - **`execution:` is NOT an assembly YAML field**: The `execution:` key (active/passive) is defined in the COMPONENT YAML, not in assembly YAML. Do not include it when instantiating components in assemblies. Active/passive execution is determined by the component model.
 
+- **Always check framework component YAML for init signatures**: Before using a framework component, read its `.component.yaml` to see exact init parameter names, types, and whether `not_null` is set. Do NOT guess init param types -- e.g., Stack_Monitor requires `Task_Types.Task_Info_List_Access` (not `Stack_Monitor.Task_List_Type`).
 - **Do NOT specify `init:` when component has no init section**: If the component YAML has no `init:` block at all, the assembly MUST NOT include `init:` or `init: []`. Adding it causes `"init" does not exist` error.
 - **`init: []` required when component defines init params**: If a component's YAML defines `init:` with parameters (even ones with defaults), the assembly instantiation MUST include the `init:` key. Use `init: []` to accept all defaults, or provide explicit values. Omitting `init:` entirely causes a code generation error. Furthermore, "default" values in component YAML are documentation only -- the generated Ada code has NO default parameter values. ALL init params must be explicitly provided in the assembly YAML.
 
