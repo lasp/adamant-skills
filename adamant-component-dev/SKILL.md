@@ -25,6 +25,8 @@ component_name/
 └── test/                                        # See adamant-testing skill
 ```
 
+⚠️ **CRITICAL -- Implementation File Naming**: Files MUST be `component-<name>-implementation.ads/.adb` (with `component-` prefix and hyphens). The package declaration MUST be `Component.<Name>.Implementation`. The `end` statement MUST be `end Component.<Name>.Implementation;`. Getting this wrong is the #1 cold-start error -- the generated base class is `Component.<Name>`, NOT `<Name>`.
+
 **CRITICAL**: Do NOT create a `build/` directory manually.
 
 ## Workflow
@@ -334,6 +336,12 @@ overriding function Validate_Parameters (Self : in out Instance;
    P1 : P1_Type.U; P2 : P2_Type.U) return Parameter_Validation_Status.E
    is (Parameter_Validation_Status.Valid);
 overriding procedure Update_Parameters_Action (Self : in out Instance) is null;
+```
+
+**Parameter access returns UNPACKED (.U)**: `Self.<Param_Name>` returns `<Type>.U` (unpacked), NOT `<Type>.T` (packed). Use `.U` for local variables when reading parameters:
+```ada
+Gain_Value : Packed_F32.U := Self.Gain;  -- CORRECT: .U (unpacked)
+-- WRONG: Gain_Value : Packed_F32.T := Self.Gain;  -- type mismatch!
 ```
 
 Call `Self.Update_Parameters` (NO arguments) in Tick handler to apply staged updates:
