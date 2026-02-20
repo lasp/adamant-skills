@@ -127,7 +127,10 @@ Both work. `mod` types do NOT need `with: [Interfaces]`. `subtype ... is Interfa
 
 - Fields are packed **contiguously** in declaration order, MSB first (big-endian `.T`)
 - Total bit count MUST be byte-aligned (divisible by 8) -- pad with reserved fields if needed
-- Generator produces `.T` (big-endian), `.T_Le` (little-endian), and `.U` (unpacked)
+- Generator produces `.T` (big-endian packed record), `.T_Le` (little-endian), and `.U` (unpacked record with native-typed fields)
+- `.T` is a **record type** with named fields -- NOT a byte array. Initialize with named aggregates: `(Field_1 => X, Field_2 => Y)`, never `(others => 0)`
+- `.U` fields use **unpacked** subtypes: nested `Packed_F32.T` becomes `Short_Float` in `.U`, nested enums become the enum type directly
+- For `=` on packed types in Ada, need `use type My_Type.T;` to get operator visibility
 - Nested packed types (e.g., `Packed_F32.T` as a field) inherit the parent's bit position
 - No implicit padding -- you must add explicit padding fields for alignment
 
