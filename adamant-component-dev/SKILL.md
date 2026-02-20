@@ -304,6 +304,17 @@ with Interfaces;      -- used for arithmetic
 
 ## Parameter Overrides (ALL abstract IFF parameters.yaml exists)
 
+Components with `parameters.yaml` generate a `modify` connector that MUST be overridden:
+
+```ada
+-- REQUIRED: modify connector handler (abstract, must override)
+overriding procedure Parameter_Update_T_Modify (Self : in out Instance; Arg : in out Parameter_Update.T) is
+begin
+   Self.Process_Parameter_Update (Arg);
+end Parameter_Update_T_Modify;
+```
+
+Additional abstract overrides:
 ```ada
 overriding procedure Invalid_Parameter (Self : in out Instance; Par : in Parameter.T;
    Errant_Field_Number : in Unsigned_32; Errant_Field : in Basic_Types.Poly_Type);
@@ -314,7 +325,11 @@ overriding function Validate_Parameters (Self : in out Instance;
 overriding procedure Update_Parameters_Action (Self : in out Instance) is null;
 ```
 
-Call `Self.Update_Parameters` explicitly (e.g., in Tick handler).
+Call `Self.Update_Parameters` (NO arguments) in Tick handler to apply staged updates:
+```ada
+Self.Update_Parameters;  -- CORRECT: no arguments
+-- WRONG: Self.Update_Parameters (Arg);
+```
 
 ⚠️ **CRITICAL - Parameter Defaults Use Unpacked Syntax**: Parameter `default:` values use the unpacked record syntax directly (e.g., `"(Kp => (Value => 1.0), Ki => (Value => 0.1))"`), NOT `Type.Pack(...)`. The code generation wraps the packing automatically:
 
@@ -433,7 +448,7 @@ param_type: Packed_Byte.T
 14. [ ] No `Packed_U8` -- use `Packed_Byte.T`
 15. [ ] No dynamic allocation (Ravenscar profile)
 16. [ ] Active + recv_async: override `{Type}_T_Recv_Async_Dropped`
-17. [ ] Parameter overrides: `Invalid_Parameter`, `Validate_Parameters`, `Update_Parameters_Action`
+17. [ ] Parameter overrides: `Parameter_Update_T_Modify`, `Invalid_Parameter`, `Validate_Parameters`, `Update_Parameters_Action`
 18. [ ] Data dependency overrides: `Get_Data_Dependency`, `Invalid_Data_Dependency`
 18a. [ ] Data dependency names in assembly YAML `map_data_dependencies` must exactly match names from `.data_dependencies.yaml` -- no renaming
 19. [ ] Faults use event-like API: `Self.Fault_T_Send_If_Connected(Self.Faults.Name(Time))`
@@ -453,7 +468,12 @@ param_type: Packed_Byte.T
 31. [ ] Don't add `with Interfaces; use Interfaces;` to impl spec if base class already provides it (components with commands/init/data deps get it automatically). Note: some generated component specs have REDUNDANT `use Interfaces;` that triggers `-gnatwr` -- this is unfixable (code gen artifact, not your code).
     **HOWEVER**: If your handwritten impl spec/body directly uses `Interfaces.Unsigned_32` (or similar), you MUST add `with Interfaces;` yourself. The auto-provided `with Interfaces; use Interfaces;` is only in the GENERATED base class spec -- it is NOT inherited by the implementation child package.
 31a. [ ] When doing arithmetic on `Interfaces` types (`Unsigned_32`, etc.), add `use Interfaces;` in the body to make operators (`+`, `-`, etc.) visible. Otherwise use qualified calls: `Interfaces."+"(Self.Count, 1)`.
-32. [ ] No `pragma Unreferenced` unless variable is genuinely needed but intentionally unused
+32. [ ] Use `Ignore : Type renames Arg;` pattern (not `pragma Unreferenced`) for unused connector handler parameters:
+    ```ada
+    overriding procedure Parameter_Update_T_Modify (Self : in out Instance; Arg : in out Parameter_Update.T) is
+       -- Arg is used by Process_Parameter_Update, so no Ignore needed here
+    ```
+32a. [ ] Avoid redundant type conversions -- `Unsigned_32 (X)` when X is already `Unsigned_32` triggers `-gnatwr`
 33. [ ] See `adamant-style` skill for full style reference
 34. [ ] `Packed_F32.T.Value` is `Short_Float` (Ada 32-bit float), NOT `Interfaces.IEEE_Float_32` -- use `Short_Float` for F32 record fields and arithmetic
 
