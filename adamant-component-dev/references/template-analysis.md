@@ -1,7 +1,7 @@
 <!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Template Analysis: Adamant Component Code Generation Patterns
 
-This document analyzes the Jinja2 templates that generate Adamant component code to identify patterns and edge cases not documented in the main skills. Templates examined from `~/.openclaw/workspace/projects/adamant/gen/templates/component/` and `~/.openclaw/workspace/projects/adamant/gen/templates/tests/`.
+This document analyzes the Jinja2 templates that generate Adamant component code to identify patterns and edge cases not documented in the main skills. Templates examined from `adamant/gen/templates/component/` and `adamant/gen/templates/tests/`.
 
 ## Template Overview
 

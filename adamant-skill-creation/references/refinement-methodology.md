@@ -100,7 +100,7 @@ Use cron to spawn iteration rounds automatically:
 
 ## State File
 
-`~/.openclaw/workspace/memory/skill-refinement-state.json`:
+State file (project-specific, not in skills repo):
 ```json
 {
   "currentSkill": "component-dev",
