@@ -482,6 +482,7 @@ Auto-generated from the assembly model:
 ## Key Pitfalls
 
 - **`set_id_bases` is optional** -- omit for auto-assignment. Don't use `"Auto"` as a value.
+- **Only use `set_id_bases` on components that HAVE ID-bearing features** (commands, events, data products, faults, packets). Components like `Gps_Time` that only provide/return data have no IDs and will error if `set_id_bases` is specified.
 - **`id_bases` values must be positive** (>= 1). Using 0 causes a code generation error.
 - **Only include used `id_bases`**: Valid bases are `Data_Product_Id_Base`, `Event_Id_Base`, `Command_Id_Base`, `Packet_Id_Base`. Including unused bases (e.g., `Fault_Id_Base`) triggers a warning.
 - **`Rate_Group` `Tick_T_Send_Count`** must EXACTLY match connected component count.
