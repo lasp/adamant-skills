@@ -71,10 +71,13 @@ with Command;                             -- for invalid command construction
 with Sys_Time;                            -- for timestamps
 with Data_Product;                        -- if inspecting raw DPs
 
+-- For command response/status assertions:
+with Command_Enums.Assertion; use Command_Enums.Assertion;
+-- Gives: Command_Response_Status_Assert, Command_Execution_Status_Assert
+
 -- NEVER with these (they don't exist as standalone packages):
 -- Command_Response_Status  (use Command_Enums.Command_Response_Status)
 -- Command_Execution_Status (use Command_Enums.Command_Execution_Status)
--- Command_Response_Assert  (use Command_Response.Assertion if needed)
 ```ada
 
 **Name collisions**: `Tick` can collide with `Ada.Real_Time.Tick`. Always qualify: `Tick.T`, not just `T` when ambiguous. Add `use Tick;` if you reference `Tick.T` frequently.
@@ -376,7 +379,20 @@ redo coverage    # From the component's test/ directory
 Focus on `component-*-implementation.adb` in `build/coverage/coverage.txt`. Ignore generated files (`build/src/`, `test/build/`).
 
 **Key coverage patterns:**
-- **Invalid_Command:** `Cmd.Header.Arg_Buffer_Length := 22;`
+- **Invalid_Command** (requires `with Command;` in test body):
+```ada
+declare
+   Cmd : Command.T := T.Commands.My_Command ((Field => 0));
+begin
+   Cmd.Header.Arg_Buffer_Length := 22;  -- corrupt length
+   T.Command_T_Send (Cmd);
+   -- Check command response shows Length_Error:
+   Natural_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get_Count, 1);
+   Command_Response_Status_Assert.Eq (
+      T.Command_Response_T_Recv_Sync_History.Get (1).Status,
+      Command_Enums.Command_Response_Status.Length_Error);
+end;
+```ada
 - **Send_Dropped (sync):** `T.Connector_*_Recv_Sync_Status := Connector_Types.Message_Dropped;`
 - **Untested branches:** Map `Missing` line numbers to source with `cat -n`
 
