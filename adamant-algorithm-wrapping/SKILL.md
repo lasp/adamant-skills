@@ -247,6 +247,15 @@ end Update_Parameters_Action;
 
 > Full implementation patterns: [references/implementation-patterns.md](references/implementation-patterns.md)
 
+## C/C++ Compilation and Linking
+
+**The Ada build system does NOT automatically compile `.c` or `.cpp` files** in component directories. C/C++ stub files must be compiled separately:
+
+1. **Via CMake/Makefile**: Compile into a static library (e.g., `libgncAlgorithms.a`) and link via the project `.gpr` file
+2. **Via project GPR**: Add the `.c` file to the project's GPR `Source_Dirs` or `Source_Files` and ensure `for Languages use ("Ada", "C");`
+
+Without this step, you will get `undefined reference` linker errors for all C functions called from Ada bindings.
+
 ## Step 6: Build and Verify
 
 ```bash

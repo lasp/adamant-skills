@@ -131,7 +131,9 @@ Suppress warnings for intentionally unconnected send connectors:
     to_connector: ignore
 ```
 
-**CRITICAL**: `ignore` connections must only reference connectors that **actually exist** on the component. Never invent connector names. For framework components, check the [framework-components](../adamant-framework-components/SKILL.md) skill for the actual connector list.
+**⚠️ CRITICAL -- READ THIS**: `ignore` connections must only reference connectors that **actually exist** on the component. **NEVER invent connector names.** For framework components, check the [framework-components](../adamant-framework-components/SKILL.md) skill for the actual connector list.
+
+**ONLY ignore connectors you can verify exist.** If you are unsure whether a connector exists on a component, **leave it unwired** -- the generator will warn about unattached connectors (warnings are non-fatal) rather than fail on a nonexistent connector name (which IS fatal). An unwired-connector warning is always better than a build-breaking invented name.
 
 ### Generic Component Connectors
 

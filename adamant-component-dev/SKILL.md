@@ -135,6 +135,22 @@ enums:
 | `parameters.yaml` | `Parameter_Update.T` modify |
 | `data_dependencies.yaml` | `Data_Product_Fetch.T`/`Data_Product_Return.T` request + `Sys_Time.T` get |
 
+## Connector Kind Field Rules
+
+| Kind | `type:` field | `return_type:` field |
+|------|--------------|---------------------|
+| `recv_sync` | ✅ required | ❌ forbidden |
+| `recv_async` | ✅ required | ❌ forbidden |
+| `send` | ✅ required | ❌ forbidden |
+| `provide` | ✅ required | ❌ forbidden |
+| `modify` | ✅ required | ❌ forbidden |
+| `get` | ❌ forbidden | ✅ required |
+| `return` | ❌ forbidden | ✅ required |
+| `request` | ✅ required | ✅ required |
+| `service` | ✅ required | ✅ required |
+
+**⚠️ COMMON PITFALL**: `get` and `return` connectors use `return_type:` ONLY. Writing `type:` on a `get` or `return` connector is a build error ("Connector is of kind 'return' which forbids the field: 'type'"). Only `request` and `service` use BOTH `type:` and `return_type:`.
+
 ## Connector Compatibility
 
 ```
