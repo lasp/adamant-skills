@@ -130,6 +130,24 @@ After initial skill creation, shift to building real artifacts to discover gaps.
 
 **Study generated output, not just source.** For code generation frameworks, the generated files ARE the API contract. Read `build/src/`, `build/template/`, and every output directory. The generated base class, event/command/data product packages, and template stubs define the exact function signatures, naming conventions, and type paths your implementation must use. Reading only the generator source or YAML schemas gives you the input format but not the output contract.
 
+### 5b. Experience Pool Aggregation
+
+When running multiple study or validation sessions, aggregate discoveries across sessions
+rather than letting each session's findings remain isolated.
+
+**The problem:** Sub-agent A discovers that Tick.T needs Unsigned_32 for Count. Sub-agent B,
+working on a different skill, hits the same error independently. Without aggregation, each
+session rediscovers the same facts.
+
+**The solution:**
+1. After each sub-agent finishes, extract cross-cutting lessons (not just skill-specific ones)
+2. Propagate to all affected skills before spawning the next sub-agent
+3. Track which sessions contributed to each skill ("ancestor tracking")
+4. Skills with diverse ancestry (fixes from multiple independent sessions) are more robust
+
+See `adamant-skill-creation/references/refinement-methodology.md` for the full
+experience pool pattern and state file format.
+
 ### 6. Update Memory
 
 After consolidation, update MEMORY.md with:

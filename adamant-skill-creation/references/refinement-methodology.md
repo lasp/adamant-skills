@@ -90,6 +90,81 @@ Track per skill:
 
 Convergence target: 0 errors on cold start for 2 consecutive rounds.
 
+## Experience Pool (Group-Evolution Pattern)
+
+Inspired by group-evolving agents (GEA): treat validation rounds across skills as a
+shared experience pool rather than isolated branches.
+
+### Cross-Skill Experience Aggregation
+
+After each validation round, extract lessons that apply beyond the tested skill:
+
+```
+Round result for component-dev:
+  Error: "Tick.T needs Count => N (Unsigned_32 not Unsigned_16)"
+  -> Primary fix: component-dev SKILL.md
+  -> Cross-skill propagation: testing skill (tester stimulus patterns),
+     assembly-dev (rate group tick types)
+```
+
+Maintain a shared error log across all skills:
+```
+memory/skill-refinement/cross-skill-errors.md
+  # Errors discovered in one skill that affect others
+  ## <date> component-dev R5
+  - Tick.T Count type: also affects testing, assembly-dev [PROPAGATED]
+  - Connector call syntax (get=no args): also affects algorithm-wrapping [PROPAGATED]
+```
+
+### Ancestor Tracking
+
+Track which validation sessions contributed to each skill's current state.
+Skills with more diverse ancestry (fixes from multiple independent rounds/agents)
+are empirically more robust than those refined in a single session.
+
+Add to state file per skill:
+```json
+{
+  "component-dev": {
+    "rounds": 5,
+    "ancestors": ["R1-opus-2026-02-12", "R3-sonnet-2026-02-15", "R5-sonnet-2026-02-20"],
+    "ancestorCount": 3,
+    "converged": true
+  }
+}
+```
+
+Skills with ancestorCount < 2 are candidates for additional stress testing with
+a different model or task complexity level.
+
+### Performance-Novelty Selection
+
+When choosing which skill to validate next, balance:
+- **Performance**: error rate in most recent round (lower = better performing)
+- **Novelty**: how long since last validation, or how much the skill changed since last test
+
+Priority formula (informal):
+```
+priority = (days_since_last_test * lines_changed_since_test) / (1 + recent_error_rate)
+```
+
+High priority = untested changes accumulating. Low priority = recently validated, few changes.
+
+### Population-Wide Quality
+
+Don't just track best-case (best agent on best skill). Track worst-case:
+- What is the worst cold-start error count across ALL skills?
+- Which skill produces the most errors from a fresh agent?
+- The floor matters more than the ceiling for reliability.
+
+Report format:
+```
+Skill Health (worst-case across all skills):
+  Worst: assembly-dev (2 errors, last tested 2026-02-18)
+  Best:  type-system (0 errors, last tested 2026-02-20)
+  Floor: 2 errors  <- this is the number to drive to zero
+```
+
 ## Scheduling
 
 Use cron to spawn iteration rounds automatically:
@@ -107,10 +182,25 @@ State file (project-specific, not in skills repo):
   "round": 1,
   "phase": "stress-test",
   "results": {
-    "component-dev": {"rounds": 0, "lastErrors": null, "converged": false},
-    "testing": {"rounds": 0, "lastErrors": null, "converged": false},
-    ...
+    "component-dev": {
+      "rounds": 5,
+      "lastErrors": 0,
+      "converged": true,
+      "ancestors": ["R1-opus-2026-02-12", "R3-sonnet-2026-02-15", "R5-sonnet-2026-02-20"],
+      "lastTested": "2026-02-20",
+      "linesChangedSinceTest": 0
+    },
+    "testing": {
+      "rounds": 3,
+      "lastErrors": 0,
+      "converged": true,
+      "ancestors": ["R1-sonnet-2026-02-15", "R2-sonnet-2026-02-18"],
+      "lastTested": "2026-02-18",
+      "linesChangedSinceTest": 12
+    }
   },
-  "schedule": "every-30-min"
+  "schedule": "every-30-min",
+  "crossSkillErrors": "memory/skill-refinement/cross-skill-errors.md",
+  "worstCaseFloor": 0
 }
 ```

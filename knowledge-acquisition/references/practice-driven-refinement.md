@@ -72,6 +72,27 @@ For each compilation error or unexpected behavior:
 - **The correct pattern** (what the generated code actually does)
 - **Which skill to update** (type-system, component-dev, assembly-dev, build-system)
 
+## Diversity-to-Progress Conversion
+
+Multiple validation rounds produce diverse error discoveries. The key insight (from
+group-evolution research) is that diversity alone is insufficient -- it must be
+*consolidated* into the shared artifact (the skill) to produce cumulative progress.
+
+**Transient diversity** (wasted): Sub-agent discovers a pattern, reports it, but the
+lesson stays in the session transcript. Next sub-agent rediscovers it independently.
+
+**Consolidated diversity** (progress): Each discovery is immediately written into the
+skill. Every subsequent agent benefits from all prior agents' discoveries. The skill
+becomes the shared experience pool.
+
+Metrics to watch:
+- **Ancestor count**: How many independent sessions contributed to this skill?
+  Higher = more robust. Skills with only 1 ancestor are fragile.
+- **Cross-skill propagation rate**: What fraction of errors affected multiple skills?
+  Track this to ensure lessons don't stay isolated in one skill.
+- **Rediscovery rate**: How often do new sub-agents hit errors that were already found
+  and fixed in other skills? Non-zero means propagation is incomplete.
+
 ## Anti-Patterns
 
 - **Don't look at framework source first**: the whole point is to test the skills
@@ -79,3 +100,4 @@ For each compilation error or unexpected behavior:
 - **Don't build trivial components**: each build should exercise something new
 - **Don't ignore warnings**: they often reveal incorrect assumptions about Ada visibility
 - **Don't batch lessons**: update skills immediately while context is fresh
+- **Don't let discoveries die in transcripts**: every lesson goes into a skill file, not just the session log

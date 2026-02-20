@@ -16,7 +16,7 @@ Guide for creating and maintaining Adamant framework skills that enable cold-sta
 
 An agent loads selector -> reads 1-2 SKILL.md files -> reads references only when needed. Context is precious -- every line must justify its token cost.
 
-### Current Skill Inventory (15 skills)
+### Current Skill Inventory (16 skills)
 
 | Skill | Purpose | SKILL.md | References |
 |-------|---------|----------|------------|
@@ -36,7 +36,7 @@ An agent loads selector -> reads 1-2 SKILL.md files -> reads references only whe
 | adamant-subassemblies | Subassembly patterns + nesting | ~450 | -- |
 | adamant-skill-creation | This skill | ~300 | ~200 |
 
-Total: ~4000 SKILL.md + ~6000 references = ~10000 lines
+Total: ~5600 SKILL.md + ~8500 references = ~14000 lines
 
 ## Creating a New Adamant Skill
 
@@ -139,6 +139,22 @@ Track validation rounds:
 - **Convergence**: 0 errors on cold start = skill is production-ready
 
 Historical data: Skills went from ~20 errors/round to 0 errors over 19 rounds of iteration.
+
+### Cross-Skill Experience Propagation
+
+Errors found in one skill often reveal gaps in others. After each validation round:
+1. Classify each error: does it affect only this skill, or also related skills?
+2. Propagate fixes to all affected skills in the same commit
+3. Log cross-skill errors in a shared error file (see `references/refinement-methodology.md`)
+
+This prevents the "branch isolation" problem where a lesson learned during component-dev
+testing never reaches the testing or assembly-dev skills.
+
+### Population-Wide Quality Floor
+
+Track not just best-case performance but worst-case across all skills. The reliability
+of the skill set is bounded by its weakest member. Report the floor (worst cold-start
+error count across all skills) and prioritize driving it to zero.
 
 ## Separating Project-Specific Content
 
