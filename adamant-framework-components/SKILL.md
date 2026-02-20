@@ -106,7 +106,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **event_text_logger** (active)
 - Purpose: Print events as text using assembly-specific conversion
 - Use: Human-readable event logging for debugging
-- Discriminant: `Event_To_Text` (required, assembly-generated access type). NO Sys_Time_T_Get connector
+- Discriminant: `Event_To_Text` (required, assembly-generated access type)
+- Connectors: `Event_T_Recv_Async` only (NO Sys_Time_T_Get connector)
 
 ## System Monitoring (5 components)
 
@@ -204,6 +205,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Purpose: Fast ID-indexed database for latest data products
 - Use: Central telemetry database with direct indexing
 - Init: `Minimum_Data_Product_Id`, `Maximum_Data_Product_Id` (both required)
+- Connectors: `Data_Product_T_Recv_Sync` (input), `Packet_T_Send` (output)
+- **NOT the same as Ccsds_Packetizer**: Product_Database produces `Packet.T`; Ccsds_Packetizer receives `Packet.T` (via `T_Recv_Async`) and produces CCSDS-framed packets
 
 **product_packetizer** (passive)
 - Purpose: Request data products and packetize at rates

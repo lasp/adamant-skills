@@ -72,6 +72,20 @@ subtasks:
   - name: Listener
 ```
 
+**CRITICAL -- Component YAML `with` Field**: Only include types that are directly used in the **GENERATED** base class spec (usually in the preamble). Types used only in your implementation `.ads/.adb` should be `with`'d there instead:
+
+```yaml
+# CORRECT: Only include packages used in preamble/generated code
+with:
+  - "Interfaces"                   # Used in preamble for Unsigned_8
+  
+# WRONG: Including packages only used in implementation
+with:
+  - "Ada.Numerics.Elementary_Functions"  # Only used in implementation body
+```
+
+This avoids unreferenced package warnings and keeps generated code clean.
+
 ## Feature Model Formats
 
 ```yaml
@@ -106,7 +120,7 @@ parameters:
 # faults.yaml -- requires Fault.T send connector
 faults:
   - name: Bad_Value_Fault
-    param_type: Packed_U32.T          # Optional
+    param_type: Packed_U32.T          # Optional -- MUST fit within Fault.T buffer
 
 # packets.yaml
 packets:
@@ -123,6 +137,12 @@ enums:
 ```
 
 **Feature connectors are NOT auto-generated** -- you MUST list them in component.yaml.
+
+**CRITICAL -- Fault Param Size Limit**: Fault argument types (`param_type`) must fit within the `Fault.T` buffer (typically ~8-16 bytes). Large packed records (e.g., 10+ bytes) will cause a compile error:
+```
+Error: Size of parameter buffer exceeds Fault.T buffer size
+```
+Use small types like `Packed_U16.T`, `Packed_U32.T`, or custom packed types < 8 bytes.
 
 ## Required Connectors for Feature Models
 
@@ -236,6 +256,20 @@ Status := Self.Get_Foo (Stale_Reference => time, Value => out_var);  -- no times
 -- Returns Data_Product_Enums.Data_Dependency_Status.E (Success | Not_Available | Stale | Error)
 ```
 
+**CRITICAL -- Data Dependency Status Checking**: `Data_Dependency_Status` is defined in `Data_Product_Enums`. Your component implementation body MUST include:
+
+```ada
+with Data_Product_Enums; use Data_Product_Enums;
+```
+
+to compare against `Data_Dependency_Status.Success`:
+
+```ada
+if Status = Data_Dependency_Status.Success then
+  -- Process valid data
+end if;
+```
+
 Overrides (BOTH abstract, MUST implement):
 ```ada
 overriding function Get_Data_Dependency (Self : in out Instance;
@@ -259,17 +293,55 @@ overriding procedure Update_Parameters_Action (Self : in out Instance) is null;
 
 Call `Self.Update_Parameters` explicitly (e.g., in Tick handler).
 
+**CRITICAL -- Parameter Access Pattern**: Parameters are NOT accessed via `Self.Parameters`. They are accessed via generated getter functions. For each parameter named `Kp` in the YAML, use:
+
+```ada
+-- WRONG: Parameters record does not exist
+Value := Self.Parameters.Kp;
+
+-- CORRECT: Generated getter function
+Value := Self.Kp;
+-- OR (alternate form)
+Value := Self.Get_Kp;
+```
+
+Parameters with defaults can be retrieved without initialization. Parameters without defaults must be set via parameter update before access.
+
 ## Execution Model
 
 - **Passive**: Synchronous processing. Only has Init if YAML defines `init:` section.
 - **Active**: Has message queue. Queue size is set via `init_base` in **assembly YAML** (not component Init). Has `{Type}_T_Recv_Async` handlers and `{Type}_T_Recv_Async_Dropped` overflow handlers.
 - Command connectors stay `recv_sync` even on active components.
 
+**CRITICAL -- Active Component Dropped Handlers**: Every `recv_async` connector generates an abstract `*_Dropped` handler that MUST be overridden. Common pattern:
+
+```ada
+overriding procedure Tick_T_Recv_Async_Dropped (Self : in out Instance; Arg : in Tick.T) is null;
+overriding procedure Data_Product_T_Recv_Async_Dropped (Self : in out Instance; Arg : in Data_Product.T) is null;
+```
+
+Failure to override these results in abstract subprogram compile errors.
+
 ## Auto-Provided Packages (Do NOT `with` these)
 
 `Command_Execution_Status`, `Command_Response_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces` (when commands/features use it).
 
 Exception: If your component has no commands but needs Unsigned types, add `with Interfaces; use Interfaces;`.
+
+**CRITICAL -- Math Functions**: Ada's `Interfaces` package has NO math functions (Sqrt, Sin, Cos, etc.). Use:
+- `Ada.Numerics.Elementary_Functions` for `Long_Float` (64-bit) math
+- `Ada.Numerics.Generic_Elementary_Functions` instantiated for `Short_Float` (32-bit)
+
+```ada
+-- For Long_Float:
+with Ada.Numerics.Elementary_Functions;
+Result := Ada.Numerics.Elementary_Functions.Sqrt (Value);
+
+-- For Short_Float:
+with Ada.Numerics.Generic_Elementary_Functions;
+package Short_Float_Math is new Ada.Numerics.Generic_Elementary_Functions (Short_Float);
+Result := Short_Float_Math.Sqrt (Value);
+```
 
 ## Framework Type Fields
 

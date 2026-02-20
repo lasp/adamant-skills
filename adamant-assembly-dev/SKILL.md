@@ -21,6 +21,12 @@ assembly_name/
 
 **CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main procedure file name must be unique across the entire build path. If the project shares build roots with another project that has `main.adb`, use a unique name like `project_main.adb` / `procedure Project_Main`. The build system discovers source files by filename -- collisions are fatal.
 
+### Required Files for Specific Components
+
+When using certain framework components, the assembly MUST include additional files:
+
+- **Product_Packetizer** (or `Ccsds_Packetizer`): Assembly MUST have a corresponding `.product_packets.yaml` file in the assembly directory. This file defines the packet structure used by the packetizer discriminant.
+
 ## Assembly YAML Field-by-Field Reference
 
 Every field from the schema (`gen/schemas/assembly.yaml`):
@@ -57,6 +63,34 @@ Every field from the schema (`gen/schemas/assembly.yaml`):
 | `init` | str[] | No | Implementation-specific init params |
 | `map_data_dependencies` | map[] | No | Map data dependencies to external data products |
 | `subtasks` | map[] | No | Internal subtask definitions |
+
+**CRITICAL -- Component Naming Rules**:
+
+1. **Component `name` MUST differ from its `type`**. Standard convention: append `_Instance` suffix.
+
+```yaml
+# WRONG: Component name matches type name
+components:
+  - type: Event_Packetizer
+    name: Event_Packetizer   # COMPILE ERROR: name = type
+
+# CORRECT: Component name differs from type
+  - type: Event_Packetizer
+    name: Event_Packetizer_Instance
+```
+
+2. **Use instance NAMES (not type names) in `init_base` expressions**:
+
+```yaml
+# WRONG: Using type name in init_base expression
+  - type: Rate_Group
+    name: Rate_Group_Instance
+    init_base:
+      - "Queue_Size => 5 * Rate_Group.Get_Max_Queue_Element_Size"   # WRONG: Rate_Group
+
+# CORRECT: Using instance name in init_base expression
+      - "Queue_Size => 5 * Rate_Group_Instance.Get_Max_Queue_Element_Size"  # CORRECT: Rate_Group_Instance
+```
 
 ### Subtask Fields
 
@@ -112,6 +146,21 @@ init_base:
 - **Get → Return**: Synchronous request/response (e.g. `Sys_Time_T_Get` → `Sys_Time_T_Return`)
 - **Request → Service**: Client/server fetch pattern (e.g. `Data_Product_Fetch_T_Request` → `Data_Product_Fetch_T_Service`)
 
+### Connection Direction
+
+**CRITICAL -- Get/Return Wiring Rule**: For Get/Return pairs, the `get` connector is the **INVOKER** (from), the `return` connector is the **INVOKEE** (to). Connection flows from the requesting component TO the provider:
+
+```yaml
+# CORRECT: Component requesting time -> Time_Source providing time
+connections:
+  - from_component: My_Component
+    from_connector: Sys_Time_T_Get
+    to_component: Gps_Time_Instance
+    to_connector: Sys_Time_T_Return
+```
+
+The component with the `Get` connector is making a request; the component with the `Return` connector is providing the response. **Many sub-agents wire this backwards** -- double-check get/return directions.
+
 ### Non-Guarded (Sync) vs Guarded (Async)
 
 | Pattern | When to use |
@@ -120,6 +169,24 @@ init_base:
 | `Recv_Async` | Active components receiving from different task contexts, rate group ticks |
 
 **Key**: Active components typically receive ticks via `Recv_Async` (into their queue), but passive components ticked by a rate group use `Recv_Sync` (runs on rate group's task).
+
+### Queue Type Selection
+
+Active components use different queue types based on their `recv_async` connectors:
+
+- **Standard queue**: When ALL `recv_async` connectors have the SAME priority (or no priority specified):
+  ```yaml
+  init_base:
+    - "Queue_Size => 5 * My_Component_Instance.Get_Max_Queue_Element_Size"
+  ```
+
+- **Priority queue**: When `recv_async` connectors have DIFFERENT priorities:
+  ```yaml
+  init_base:
+    - "Priority_Queue_Depth => 100"    # Integer count, NOT size expression
+  ```
+
+**CRITICAL**: If multiple async connectors have different priorities (e.g., one priority 1, another priority 10), the component automatically uses a priority queue. Use `Priority_Queue_Depth => N` (integer count) NOT `Queue_Size => N * Get_Max_Queue_Element_Size`.
 
 ### Ignoring Unconnected Connectors
 
@@ -309,6 +376,8 @@ Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to rege
 | Command_Response not wired | Component has `Command_Response_T_Send` but no connection | Wire to Command_Router or `ignore` |
 | Missing router self-loop | `Command_Response_T_To_Forward_Send` not connected | Wire back to router's `Command_Response_T_Recv_Async` |
 | Stack too small | Stack size < 2000 bytes | Minimum is 2000; use 50000 for typical components |
+| Event_Splitter count mismatch | `T_Send_Count => 3` but only 2 connections wired | T_Send_Count MUST exactly match number of T_Send connections |
+| Missing map_data_dependencies | Component has data_dependencies.yaml but no mapping | Every component with data_dependencies.yaml MUST have map_data_dependencies in assembly |
 
 ## Framework Component Init Requirements
 
@@ -323,7 +392,7 @@ Common framework components and their REQUIRED configuration in assembly YAML:
 | product_packetizer | `init: []` (empty) | `Packet_List => Assembly_Product_Packets.Packet_List'Access` | -- | Empty init required even when all params optional |
 | ticker | -- | -- | -- | Wire Sys_Time_T_Get (easy to forget) |
 | rate_group | -- | -- | Queue_Size | Arrayed Tick_T_Send: count MUST match connections |
-| tick_divider | -- | `Divider_List => Dividers'Access` | -- | Preamble defines Divider_Array_Type |
+| tick_divider | `Dividers => Dividers'Access` | -- | -- | Preamble defines Divider_Array_Type |
 | splitter (generic) | -- | -- | -- | Use `T_Recv_Sync` not `Event_T_Recv_Sync` |
 
 ## Assembly-Generated Packages
