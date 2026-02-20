@@ -6,35 +6,36 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (15 skills, ~11100+ lines with refs)
+## Skill Inventory (16 skills, ~14000 lines with refs)
 
 | Skill | SKILL.md | Refs | Purpose |
 |-------|----------|------|---------|
-| `adamant-skill-selector` | 180 | -- | **Read first.** Maps tasks to skills. |
-| `adamant-component-dev` | 330 | 1070 | Components: YAML models, generated API, implementation patterns, LASEL |
-| `adamant-testing` | 356 | 1870 | Test harness, History API, assertions, coverage, advanced patterns |
-| `adamant-framework-components` | 300 | 170 | Catalog of all 55 built-in components + audit |
-| `adamant-assembly-dev` | 371 | 750 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
-| `adamant-type-system` | 354 | 180 | YAML type definitions, format codes, Ada type hierarchy |
-| `adamant-style` | 342 | 660 | Ada/YAML/Python style rules enforced by `redo style` |
-| `adamant-algorithm-wrapping` | 334 | 560 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
-| `adamant-build-system` | 316 | 900 | Redo commands, code gen, build paths, SPARK prove |
-| `adamant-cosmos-integration` | 330 | 180 | CCSDS pipeline, COSMOS plugin build/load |
-| `adamant-project-setup` | 363 | -- | New project scaffolding, env/activate, Docker, config |
-| `adamant-skill-creation` | 225 | 90 | Creating, validating, and refactoring Adamant skills |
-| `adamant-framework-internals` | 254 | 180 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
-| `high-assurance-design` | 206 | -- | Design-by-invariant, non-goals, formal verification |
-| `knowledge-acquisition` | 212 | -- | Systematic codebase study with sub-agents |
+| `adamant-skill-selector` | 200 | -- | **Read first.** Maps tasks to skills. |
+| `adamant-component-dev` | 503 | 1240 | Components: YAML models, generated API, implementation patterns, LASEL |
+| `adamant-testing` | 368 | 2360 | Test harness, History API, assertions, coverage, advanced patterns |
+| `adamant-framework-components` | 304 | 170 | Catalog of all 58 built-in components + audit |
+| `adamant-assembly-dev` | 528 | 750 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
+| `adamant-subassemblies` | 463 | -- | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
+| `adamant-type-system` | 358 | 180 | YAML type definitions, format codes, Ada type hierarchy |
+| `adamant-style` | 358 | 660 | Ada/YAML/Python style rules enforced by `redo style` |
+| `adamant-algorithm-wrapping` | 439 | 1375 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
+| `adamant-build-system` | 324 | 870 | Redo commands, code gen, build paths, SPARK prove |
+| `adamant-cosmos-integration` | 327 | 180 | CCSDS pipeline, COSMOS plugin build/load |
+| `adamant-project-setup` | 381 | -- | New project scaffolding, env/activate, Docker, config |
+| `adamant-skill-creation` | 324 | 300 | Creating, validating, and refactoring Adamant skills |
+| `adamant-framework-internals` | 260 | 180 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
+| `high-assurance-design` | 206 | 100 | Design-by-invariant, non-goals, formal verification |
+| `knowledge-acquisition` | 249 | 80 | Systematic codebase study with sub-agents |
 
-**Totals:** ~4100 SKILL.md lines + ~7200 reference lines = ~11300 lines
+**Totals:** ~5600 SKILL.md lines + ~8500 reference lines = ~14000 lines
 
 ## Key Principles
 
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
 - **Compiler-validated.** 30+ rounds of build-test-fix cycles across 100+ components + unit tests. Components compile clean on first try when skills are followed.
-- **Selector-driven.** Load 1-2 skills per task, not all 15.
+- **Selector-driven.** Load 1-2 skills per task, not all 16.
 - **Three-tier prompt strategy:** This file (CLAUDE.md) -> skill-selector -> deep skills.
-- **~300 line SKILL.md target.** Dense patterns in SKILL.md, detailed examples in references/.
+- **~300-500 line SKILL.md target.** Dense patterns in SKILL.md, detailed examples in references/.
 - **No project-specific content.** Generic skills contain zero project names or paths. Project-specific guidance lives in the project repo.
 - **No commits/push instructions.** Skills are agent-level -- orchestrators handle git.
 - **No structural coverage ceiling.** All paths are coverable with proper testing techniques.
@@ -45,9 +46,10 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 - **Style:** 221/221 directories, 0 failures
 - **Coverage:** 89%+ aggregate across 100+ components
 - **Invalid_Command tests:** 63/63 components passing
-- **Cold-start:** Fresh agents produce compiling components with 0-2 errors
+- **Cold-start:** Fresh agents produce compiling components with 0 errors (stress-tested 2026-02-20)
 - **Component lifecycle:** New component from YAML to passing tests validated 19+ times
-- **Convergence:** Round 19 achieved zero errors from cold-start agent
+- **Convergence:** Systematic stress testing across all generative skills -- 0 cold-start errors
+- **Subassemblies:** 10-round iteration, R10 achieved zero errors from cold-start agent
 
 ## Critical Build Rules
 
@@ -55,3 +57,4 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 - **NEVER manually delete build directories** (`rm -rf build`, `rm -rf */build`, etc.). Use `redo clean` or `redo clean_all`. Bulk-deleting build dirs corrupts redo state and may require container recreation to recover.
 - **`redo coverage`** runs from the component's `test/` directory. No `redo clean` needed.
 - **`source project/env/activate`** (not `adamant/env/activate`) -- sets BUILD_ROOTS correctly.
+- **Never run concurrent redo processes** in the same container -- corrupts redo state.
