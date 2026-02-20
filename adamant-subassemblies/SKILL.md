@@ -16,7 +16,7 @@ Subassemblies split a large assembly YAML into smaller, reusable pieces. Each su
 - **Team workflow** -- different engineers own different subsystems in separate files
 - **Incremental integration** -- build and validate subsystems independently before combining
 
-Subassemblies are a **lightweight modeling construct only**. They do NOT trickle down into autocode at all -- generation is still flat. The output is one Ada package, one binary, with no runtime distinction between subassembly boundaries. Subassemblies exist purely to break the assembly model into manageable, reusable pieces.
+Subassemblies are a **modeling construct** for breaking assemblies into manageable pieces. The final output is one binary with no runtime distinction between subassembly boundaries. However, the code generator DOES produce per-subassembly intermediate files (e.g., `<subassembly>_components.ads`, per-subassembly `event_to_text`). The parent assembly's `with:` list must reference the TOP-LEVEL assembly's generated packages (e.g., `Parent_Assembly_Commands`, `Parent_Assembly_Event_To_Text`), NOT per-subassembly ones. Components in subassemblies get their IDs from the parent assembly's ID allocation.
 
 **Key properties:**
 - Allow sharing component groups between different build targets (e.g., a common telemetry pipeline used by multiple assemblies)
