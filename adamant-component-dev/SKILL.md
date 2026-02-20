@@ -352,10 +352,13 @@ Gain_Value : Packed_F32.U := Self.Gain;  -- CORRECT: .U (unpacked)
 
 **Parameter lifecycle**: `Process_Parameter_Update` validates then updates internal storage. After it returns, `Self.<Param>` reflects the new value immediately -- no tick required. `Update_Parameters_Action` is called at the END of the update cycle (use it for side effects like recalculating derived state). For passive/tickless components, parameters take effect as soon as the modify connector is invoked.
 
-Call `Self.Update_Parameters` (NO arguments) in Tick handler to apply staged updates:
+⚠️ **CRITICAL -- Self.Update_Parameters in Tick handler**: Components with parameters MUST call `Self.Update_Parameters` at the START of every Tick handler. Without this call, parameter updates staged via the tester's 3-step protocol (Stage/Validate/Update) will NEVER take effect. This is the #1 missed step in parameter-using components:
 ```ada
-Self.Update_Parameters;  -- CORRECT: no arguments
--- WRONG: Self.Update_Parameters (Arg);
+overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T) is
+begin
+   Self.Update_Parameters;  -- MUST be first line. NO arguments.
+   -- ... rest of tick logic using Self.Kp, Self.Ki, etc.
+end Tick_T_Recv_Sync;
 ```ada
 
 ⚠️ **CRITICAL - Parameter Defaults Use Unpacked Syntax**: Parameter `default:` values use the unpacked record syntax directly (e.g., `"(Kp => (Value => 1.0), Ki => (Value => 0.1))"`), NOT `Type.Pack(...)`. The code generation wraps the packing automatically:
