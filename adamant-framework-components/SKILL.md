@@ -302,4 +302,6 @@ Component names must be unique across the entire build path (framework + project
 ## Related Skills
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)
 - **Assembly**: [adamant-assembly-dev](../adamant-assembly-dev/SKILL.md)
+- **Subassemblies**: [adamant-subassemblies](../adamant-subassemblies/SKILL.md)
 - **Build system**: [adamant-build-system](../adamant-build-system/SKILL.md)
+- **COSMOS**: [adamant-cosmos-integration](../adamant-cosmos-integration/SKILL.md) -- CCSDS components for ground system

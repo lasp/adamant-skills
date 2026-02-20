@@ -437,3 +437,10 @@ Reuse types from xmera-components when available (att_guid, att_ref, nav_att, na
 - [references/implementation-patterns.md](references/implementation-patterns.md) -- Ada implementation with/without parameters
 - [references/unit-test-patterns.md](references/unit-test-patterns.md) -- Test templates, T rename, common pitfalls
 - [references/direct-connector-patterns.md](references/direct-connector-patterns.md) -- Direct get connectors, F64 endian workaround, tester pattern
+
+## Related Skills
+
+- **Type system**: [adamant-type-system](../adamant-type-system/SKILL.md) -- packed record creation for C interop types
+- **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md) -- component YAML and implementation patterns
+- **Testing**: [adamant-testing](../adamant-testing/SKILL.md) -- unit test patterns for wrapped components
+- **Build system**: [adamant-build-system](../adamant-build-system/SKILL.md) -- Ada binding generation via `-fdump-ada-spec`

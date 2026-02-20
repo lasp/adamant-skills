@@ -366,3 +366,5 @@ Full coverage workflow, reading reports, and common uncovered patterns: [coverag
 
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)
 - **Assembly**: [adamant-assembly-dev](../adamant-assembly-dev/SKILL.md)
+- **Style**: [adamant-style](../adamant-style/SKILL.md) -- test code must pass `redo style`
+- **Type system**: [adamant-type-system](../adamant-type-system/SKILL.md) -- packed type assertions and comparisons
