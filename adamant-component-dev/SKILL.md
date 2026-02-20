@@ -339,8 +339,9 @@ overriding procedure Invalid_Parameter (Self : in out Instance; Par : in Paramet
    Errant_Field_Number : in Unsigned_32; Errant_Field : in Basic_Types.Poly_Type);
 -- Note: Par is Parameter.T, NOT Parameter_Update.T
 overriding function Validate_Parameters (Self : in out Instance;
-   P1 : P1_Type.U; P2 : P2_Type.U) return Parameter_Validation_Status.E
+   My_Param_1 : My_Param_1_Type.U; My_Param_2 : My_Param_2_Type.U) return Parameter_Validation_Status.E
    is (Parameter_Validation_Status.Valid);
+-- NOTE: Parameter names match YAML parameter names exactly (not P1/P2). Types are unpacked (.U).
 overriding procedure Update_Parameters_Action (Self : in out Instance) is null;
 ```ada
 
@@ -350,7 +351,7 @@ Gain_Value : Packed_F32.U := Self.Gain;  -- CORRECT: .U (unpacked)
 -- WRONG: Gain_Value : Packed_F32.T := Self.Gain;  -- type mismatch!
 ```
 
-**Parameter lifecycle**: `Process_Parameter_Update` validates then updates internal storage. After it returns, `Self.<Param>` reflects the new value immediately -- no tick required. `Update_Parameters_Action` is called at the END of the update cycle (use it for side effects like recalculating derived state). For passive/tickless components, parameters take effect as soon as the modify connector is invoked.
+**Parameter lifecycle**: `Process_Parameter_Update` handles staging and validation. However, staged parameters are NOT applied until `Self.Update_Parameters` is called. Components MUST call `Self.Update_Parameters` at the start of their primary processing handler -- Tick handler for active/ticked components, recv_sync handler for passive/tickless components. Without this call, parameter updates will never take effect. `Update_Parameters_Action` is called at the END of the update cycle (use it for side effects like recalculating derived state).
 
 ⚠️ **CRITICAL -- Self.Update_Parameters in Tick handler**: Components with parameters MUST call `Self.Update_Parameters` at the START of every Tick handler. Without this call, parameter updates staged via the tester's 3-step protocol (Stage/Validate/Update) will NEVER take effect. This is the #1 missed step in parameter-using components:
 ```ada

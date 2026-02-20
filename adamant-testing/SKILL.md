@@ -379,6 +379,10 @@ Field names: `Connector_<Type>_Recv_Sync_Status` in generated reciprocal `.ads`.
 
 Use `Expect_*_Dropped` tester flag (hand-edit tester). See framework `command_router` tests.
 
+### Array Event.T connector tester crash
+
+⚠️ When a component forwards Event.T through an array send connector (e.g., `count: 4`) AND has a separate Event.T send for component-generated events, the generated tester's `Event_T_Recv_Sync` handler calls `Dispatch_Event` on ALL received events. Forwarded events have IDs that don't match local event IDs, causing CONSTRAINT_ERROR (range check failure). **Fix:** After copying tester template, remove `Self.Dispatch_Event(Arg)` from the `Event_T_Recv_Sync` handler that receives forwarded (non-local) events.
+
 ## Parameter Testing
 
 ### Full Stage-Validate-Update Cycle
