@@ -72,7 +72,7 @@ Every field from the schema (`gen/schemas/assembly.yaml`):
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `data_dependency` | str | **Yes** | Component's data dependency name |
+| `data_dependency` | str | **Yes** | Component's data dependency name (**must exactly match** a name from the component's `.data_dependencies.yaml`) |
 | `data_product` | str | **Yes** | Target: `"Instance_Name.Data_Product_Name"` |
 | `stale_limit_us` | int | **Yes** | Microseconds before stale (0 = never stale) |
 
@@ -130,6 +130,8 @@ Suppress warnings for intentionally unconnected send connectors:
     to_component: ignore
     to_connector: ignore
 ```
+
+**CRITICAL**: `ignore` connections must only reference connectors that **actually exist** on the component. Never invent connector names. For framework components, check the [framework-components](../adamant-framework-components/SKILL.md) skill for the actual connector list.
 
 ### Generic Component Connectors
 
@@ -278,6 +280,8 @@ end Main;
 
 **CRITICAL**: `Start_Components` BEFORE `Set_Up_Components`. Use `delay until` (Ravenscar -- no `delay 0.1`).
 
+**CRITICAL**: The Ada procedure name MUST match the filename (without `.adb` extension). If the file is `my_main.adb`, the procedure must be `procedure My_Main`. Ada enforces this -- a mismatch is a compile error.
+
 ## Build Commands
 
 ```bash
@@ -342,6 +346,8 @@ Auto-generated from the assembly model:
 - **ALL Event_T_Send** connectors must wire to Event_Splitter (or directly to Event_Packetizer). Missing = lost events.
 - **ALL Data_Product_T_Send** connectors must wire to Product_Database. Missing = lost telemetry.
 - **Arrayed connector indices** must be sequential starting from 1. `Tick_T_Send_Count => 3` needs exactly indices 1, 2, 3.
+- **Every component with `commands.yaml`** MUST have its `Command_T_Recv_Sync` wired to the Command_Router. `Command_T_Send_Count` must include ALL commandable components. Missing wiring = commands never registered.
+- **`map_data_dependencies.data_dependency`** must exactly match a name defined in the component's `.data_dependencies.yaml`. Do not rename or paraphrase -- copy it verbatim.
 
 ## Running an Assembly
 

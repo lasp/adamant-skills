@@ -296,6 +296,7 @@ Do NOT invent fields. Key types:
 16. [ ] Active + recv_async: override `{Type}_T_Recv_Async_Dropped`
 17. [ ] Parameter overrides: `Invalid_Parameter`, `Validate_Parameters`, `Update_Parameters_Action`
 18. [ ] Data dependency overrides: `Get_Data_Dependency`, `Invalid_Data_Dependency`
+18a. [ ] Data dependency names in assembly YAML `map_data_dependencies` must exactly match names from `.data_dependencies.yaml` -- no renaming
 19. [ ] Faults use event-like API: `Self.Fault_T_Send_If_Connected(Self.Faults.Name(Time))`
 20. [ ] No `with Command_Response_Status` (not standalone -- available through base class)
 21. [ ] Component name doesn't collide with ~58 framework components
