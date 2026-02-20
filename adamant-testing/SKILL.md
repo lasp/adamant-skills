@@ -95,6 +95,11 @@ end Test_Name;
 
 **Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`. Both Init and Set_Up are optional -- only call them if YAML declares `init:` or component overrides Set_Up. For per-test init params, defer Init/Set_Up to each test body (see [test-corpus.md](references/test-corpus.md) pattern 1h).
 
+**⚠️ History Depth**: Generated `Init_Base` initializes all histories with `Depth => 100`. If a test sends more than 100 events/data products/commands, the history overflows and the test fails with "History is full." Solutions:
+- Increase depth in Init_Base: `Self.Event_T_Recv_Sync_History.Init (Depth => 500);`
+- Clear histories mid-test: `Self.Tester.Event_T_Recv_Sync_History.Clear;`
+- Design tests to use fewer iterations (preferred -- keep tests small and focused)
+
 ## Sending Stimuli
 
 ```ada
