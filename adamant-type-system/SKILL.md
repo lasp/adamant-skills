@@ -94,6 +94,10 @@ enums:                        # REQUIRED, min 1 enum
 
 No format needed when field type is another packed type (e.g., `Packed_F32.T`, `My_Record.T`).
 
+### Format Code Syntax Rules
+
+- **Record field format strings**: The `format:` field in record YAML uses Adamant format codes (F32, U16, U32, I8, E16, etc.), NOT printf-style format strings. Format codes follow the regex `^[uUiIfFeE][0-9]+(x[0-9]+)?$`. Examples: `F32` for float, `U16` for unsigned 16-bit, `I32` for signed 32-bit.
+
 See [references/format-codes-and-examples.md](references/format-codes-and-examples.md) for complex packing examples.
 
 ## Sub-Byte Bitfields (CRITICAL)

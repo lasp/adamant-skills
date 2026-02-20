@@ -376,6 +376,10 @@ param_type: Packed_Byte.T
 
 **General rule:** Framework distinct types need `use type` for operator visibility (=, /=, <, etc.).
 
+### Record Type Field Access
+
+- **Record type fields vs packed type fields**: Custom record types defined in `*.record.yaml` with plain Ada types (Short_Float, Interfaces.Unsigned_16, etc.) produce record fields that are accessed directly (e.g., `My_Record.Temperature`). Only Packed_* types (Packed_F32.T, Packed_U16.T, etc.) have a `.Value` accessor. Do NOT use `.Value` on plain record fields.
+
 ## Connector Count (Array Connectors)
 
 `count: 0` or N = one-to-many fan-out with index:
