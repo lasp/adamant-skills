@@ -316,7 +316,8 @@ overriding procedure Update_Parameters_Action (Self : in out Instance) is null;
 7. [ ] Entity names unique across events/DPs/commands/faults/parameters
 8. [ ] `get`: `return_type:` only. `request`: both `type:` and `return_type:`
 9. [ ] Custom record fields have `format:` (see adamant-type-system)
-10. [ ] No `Packed_U8` (use `Packed_Byte.T`); no dynamic allocation (Ravenscar)
+10. [ ] No `Packed_U8` (use `Packed_Byte.T`); no `Packed_Bool` (use `Packed_Boolean.T`); no dynamic allocation (Ravenscar)
+11. [ ] Component name must NOT match any of ~58 framework built-in names (see adamant-framework-components catalog). E.g., `command_sequencer`, `event_filter`, `fault_counter` are taken.
 11. [ ] Parameter overrides: `Parameter_Update_T_Modify`, `Invalid_Parameter`, `Validate_Parameters`, `Update_Parameters_Action`
 12. [ ] Data dep overrides: `Get_Data_Dependency`, `Invalid_Data_Dependency`; names must match YAML exactly
 13. [ ] Faults API: `Self.Fault_T_Send_If_Connected(Self.Faults.Name(Time))`
