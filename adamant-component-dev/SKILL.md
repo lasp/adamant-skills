@@ -95,9 +95,10 @@ This avoids unreferenced package warnings and keeps generated code clean.
 commands:
   - name: Set_Value
     description: Set the value
-    arg_type: Packed_U32.T            # Omit for no-arg commands
+    arg_type: Packed_U32.T            # Omit for no-arg commands. FIELD IS 'arg_type' NOT 'type'
 
 # events.yaml -- requires Event.T send connector
+# NOTE: events use 'param_type', commands use 'arg_type' -- NEITHER uses plain 'type'
 events:
   - name: Value_Changed
     description: The value was changed
