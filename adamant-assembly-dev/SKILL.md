@@ -107,6 +107,8 @@ components:
       - "Queue_Size => 3 * Event_Text_Logger_Instance.Get_Max_Queue_Element_Size"
 ```
 
+⚠️ **Event_Text_Logger build path caveat**: The `event_to_text` package is auto-generated in the assembly's `build/src/`. In some build configurations (especially with subassemblies), the ELF linker step may not find this package. If you hit `"Assembly_Name_Event_To_Text" is undefined` during linking, ensure the event_to_text `.adb` is generated first by running `redo build/src/assembly_name_event_to_text.adb` from the assembly directory before the ELF build. Alternatively, omit Event_Text_Logger for test assemblies.
+
 ⚠️ **CRITICAL - Component YAML vs Assembly YAML Fields**: `priority`, `stack_size`, `secondary_stack_size` are **assembly-level fields** and must NOT appear in the `.component.yaml` file. They go in the assembly YAML component entry only. Putting these in component YAML causes build errors.
 
 ### Subtask Fields
@@ -478,6 +480,7 @@ Auto-generated from the assembly model:
 ## Key Pitfalls
 
 - **`set_id_bases` is optional** -- omit for auto-assignment. Don't use `"Auto"` as a value.
+- **`id_bases` values must be positive** (>= 1). Using 0 causes a code generation error.
 - **`Rate_Group` `Tick_T_Send_Count`** must EXACTLY match connected component count.
 - **System time provider** is `Gps_Time` (NOT `System_Time`). Instance name is conventional.
 - **`Product_Database`** uses `init:` (NOT `init_base:`) for Min/Max Data Product ID.

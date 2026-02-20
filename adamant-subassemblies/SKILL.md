@@ -137,7 +137,7 @@ Could not load model for subassembly 'core'. Make sure the model exists in the p
 
 ⚠️ **CRITICAL CONSTRAINT**: ID base keys must be **globally unique**. The same key name (e.g., `Event_Id_Base`) CANNOT appear in multiple subassemblies. This means you cannot give each subassembly its own `Event_Id_Base`.
 
-**SOLUTION**: Define ALL id_bases in the parent assembly only. Do NOT define id_bases in subassemblies.
+**SOLUTION**: Define ALL id_bases in the parent assembly only. Do NOT define id_bases in subassemblies. Values must be positive (>= 1, NOT 0).
 
 ```yaml
 # WRONG: Same id_base key in multiple subassemblies
