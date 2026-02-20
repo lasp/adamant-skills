@@ -301,6 +301,7 @@ Do NOT invent fields. Key types:
 20. [ ] No `with Command_Response_Status` (not standalone -- available through base class)
 21. [ ] Component name doesn't collide with ~58 framework components
 22. [ ] Custom type YAML filenames (e.g., `quaternion.record.yaml`) don't collide with framework types -- prefix with project/component name if needed
+22a. [ ] Verify component and type model names don't collide with existing names anywhere in the project or framework. Model names must be globally unique across all build paths -- two `.record.yaml` files with the same base name in different directories WILL conflict
 23. [ ] Use `or else` / `and then` (short-circuit) for ALL boolean expressions (Ada style requirement)
 24. [ ] No trailing whitespace in Ada or YAML files
 25. [ ] All YAML files start with `---` document start marker
@@ -310,6 +311,8 @@ Do NOT invent fields. Key types:
 29. [ ] Space before `(` in type conversions: `Unsigned_32 (X)` not `Unsigned_32(X)`
 30. [ ] `then` on its own line for multi-line if conditions
 31. [ ] Don't add `with Interfaces; use Interfaces;` to impl spec if base class already provides it (components with commands/init/data deps get it automatically). Note: some generated component specs have REDUNDANT `use Interfaces;` that triggers `-gnatwr` -- this is unfixable (code gen artifact, not your code).
+    **HOWEVER**: If your handwritten impl spec/body directly uses `Interfaces.Unsigned_32` (or similar), you MUST add `with Interfaces;` yourself. The auto-provided `with Interfaces; use Interfaces;` is only in the GENERATED base class spec -- it is NOT inherited by the implementation child package.
+31a. [ ] When doing arithmetic on `Interfaces` types (`Unsigned_32`, etc.), add `use Interfaces;` in the body to make operators (`+`, `-`, etc.) visible. Otherwise use qualified calls: `Interfaces."+"(Self.Count, 1)`.
 32. [ ] No `pragma Unreferenced` unless variable is genuinely needed but intentionally unused
 33. [ ] See `adamant-style` skill for full style reference
 34. [ ] `Packed_F32.T.Value` is `Short_Float` (Ada 32-bit float), NOT `Interfaces.IEEE_Float_32` -- use `Short_Float` for F32 record fields and arithmetic

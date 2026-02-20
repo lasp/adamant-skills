@@ -342,7 +342,7 @@ src/types/
 │   └── my_array.array.yaml
 ```
 
-Each type directory needs its own `.all_path`. File names must be unique across entire build path.
+Each type directory needs its own `.all_path`. File names must be **globally unique** across the entire build path (all `BUILD_ROOTS`). Two `.record.yaml` files with the same base name (e.g., `sensor_reading.record.yaml`) in different directories WILL conflict at build time — both produce the same Ada spec file (`sensor_reading-c.ads`). Prefix with project or component name if needed (e.g., `bot_station_sensor_reading.record.yaml`).
 
 ## Style
 
