@@ -25,7 +25,7 @@ component_name/
 └── test/                                        # See adamant-testing skill
 ```
 
-⚠️ **CRITICAL -- Implementation File Naming**: Files MUST be `component-<name>-implementation.ads/.adb` (with `component-` prefix and hyphens). The package declaration MUST be `Component.<Name>.Implementation`. The `end` statement MUST be `end Component.<Name>.Implementation;`. Getting this wrong is the #1 cold-start error -- the generated base class is `Component.<Name>`, NOT `<Name>`.
+⚠️ **CRITICAL -- Implementation File Naming**: Files MUST be `component-<name>-implementation.ads/.adb` (with `component-` prefix and hyphens). Package declaration MUST be `Component.<Name>.Implementation`. The generated base class is `Component.<Name>`, NOT `<Name>`.
 
 **CRITICAL**: Do NOT create a `build/` directory manually.
 
@@ -34,7 +34,7 @@ component_name/
 ```bash
 redo templates && cp build/template/* .   # Generate and copy stubs
 redo all                                  # Build
-redo test                                 # Run tests
+redo test                                 # Run tests (see adamant-testing)
 ```
 
 ## Component Model (YAML)
@@ -72,21 +72,9 @@ interrupts:
   - name: Timer_Interrupt
 subtasks:
   - name: Listener
-```ada
+```
 
-**CRITICAL -- Component YAML `with` Field**: Only include types that are directly used in the **GENERATED** base class spec (usually in the preamble). Types used only in your implementation `.ads/.adb` should be `with`'d there instead:
-
-```yaml
-# CORRECT: Only include packages used in preamble/generated code
-with:
-  - "Interfaces"                   # Used in preamble for Unsigned_8
-  
-# WRONG: Including packages only used in implementation
-with:
-  - "Ada.Numerics.Elementary_Functions"  # Only used in implementation body
-```ada
-
-This avoids unreferenced package warnings and keeps generated code clean.
+**CRITICAL -- `with` Field**: Only include packages used in **preamble/generated code**. Types used only in implementation `.ads/.adb` should be `with`'d there.
 
 ## Feature Model Formats
 
@@ -95,18 +83,17 @@ This avoids unreferenced package warnings and keeps generated code clean.
 commands:
   - name: Set_Value
     description: Set the value
-    arg_type: Packed_U32.T            # Omit for no-arg commands. FIELD IS 'arg_type' NOT 'type'
+    arg_type: Packed_U32.T            # Omit for no-arg. Field is 'arg_type' NOT 'type'
 
 # events.yaml -- requires Event.T send connector
-# NOTE: events use 'param_type', commands use 'arg_type' -- NEITHER uses plain 'type'
+# events use 'param_type', commands use 'arg_type' -- NEITHER uses plain 'type'
 events:
   - name: Value_Changed
     description: The value was changed
-    param_type: Packed_U32.T          # Omit for no-param events. MUST be packed type (not raw enums)
+    param_type: Packed_U32.T          # Omit for no-param. MUST be packed type
 
 # data_products.yaml -- requires Data_Product.T send connector
-# NOTE: Do NOT add 'id:' fields to commands, events, data_products, or faults -- IDs are auto-assigned.
-# Only packets.yaml uses explicit 'id:' fields.
+# Do NOT add 'id:' fields -- IDs are auto-assigned. Only packets.yaml uses explicit 'id:'
 data_products:
   - name: Current_Value
     type: Packed_U32.T
@@ -125,29 +112,16 @@ parameters:
 # faults.yaml -- requires Fault.T send connector
 faults:
   - name: Bad_Value_Fault
-    param_type: Packed_U32.T          # Optional -- MUST fit within Fault.T buffer
+    param_type: Packed_U32.T          # Optional -- MUST fit within Fault.T buffer (~8-16 bytes)
 
 # packets.yaml
 packets:
   - name: Status_Packet
     id: 7
     type: Status_Data.T
-
-# enums.yaml
-enums:
-  - name: My_State
-    literals:
-      - name: Off
-        value: 0
 ```
 
-**⚠️ CRITICAL -- Feature connectors are NOT auto-generated** -- you MUST explicitly list ALL required connectors in `component.yaml` `connectors:` section. Having `commands.yaml` does NOT add a `Command.T recv_sync` connector automatically. You must write it yourself. Same for events, data products, faults, parameters, and data dependencies. See table below.
-
-**CRITICAL -- Fault Param Size Limit**: Fault argument types (`param_type`) must fit within the `Fault.T` buffer (typically ~8-16 bytes). Large packed records (e.g., 10+ bytes) will cause a compile error:
-```
-Error: Size of parameter buffer exceeds Fault.T buffer size
-```ada
-Use small types like `Packed_U16.T`, `Packed_U32.T`, or custom packed types < 8 bytes.
+**⚠️ CRITICAL -- Feature connectors are NOT auto-generated** -- you MUST explicitly list ALL required connectors in `component.yaml`. See table below.
 
 ## Required Connectors for Feature Models
 
@@ -162,34 +136,20 @@ Use small types like `Packed_U16.T`, `Packed_U32.T`, or custom packed types < 8 
 
 ## Connector Kind Field Rules
 
-| Kind | `type:` field | `return_type:` field |
-|------|--------------|---------------------|
-| `recv_sync` | **required** | **forbidden** |
-| `recv_async` | **required** | **forbidden** |
-| `send` | **required** | **forbidden** |
-| `provide` | **required** | **forbidden** |
-| `modify` | **required** | **forbidden** |
-| `get` | **forbidden** | **required** |
-| `return` | **forbidden** | **required** |
-| `request` | **required** | **required** |
-| `service` | **required** | **required** |
+| Kind | `type:` | `return_type:` |
+|------|---------|----------------|
+| `recv_sync`, `recv_async`, `send`, `provide`, `modify` | **required** | **forbidden** |
+| `get`, `return` | **forbidden** | **required** |
+| `request`, `service` | **required** | **required** |
 
-**⚠️ COMMON PITFALL**: `get` and `return` connectors use `return_type:` ONLY. Writing `type:` on a `get` or `return` connector is a build error ("Connector is of kind 'return' which forbids the field: 'type'"). Only `request` and `service` use BOTH `type:` and `return_type:`.
-
-## Connector Call Syntax
-
-```ada
--- send: Self.Event_T_Send_If_Connected (Arg);
--- get (no argument): The_Time : constant Sys_Time.T := Self.Sys_Time_T_Get;
--- request (takes argument): Result := Self.Data_Product_Fetch_T_Request ((Id => Dp_Id));
-```
+**⚠️ COMMON PITFALL**: `get`/`return` use `return_type:` ONLY. Writing `type:` is a build error.
 
 ## Connector Compatibility
 
 ```
 send → recv_sync | recv_async    request → service
 get  → return                    provide → modify
-```ada
+```
 
 ## Implementation Spec Pattern (Mandatory)
 
@@ -203,7 +163,6 @@ private
    type Instance is new My_Component.Base_Instance with record    -- PRIVATE: fields
       My_Field : Interfaces.Unsigned_32 := 0;
    end record;
-   -- Connector handlers
    overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T);
    -- Command handlers (IFF commands.yaml exists)
    overriding procedure Command_T_Recv_Sync (Self : in out Instance; Arg : in Command.T);
@@ -228,9 +187,9 @@ begin
       Command_Id => Arg.Header.Id,
       Status => Stat));
 end Command_T_Recv_Sync;
-```ada
+```
 
-Use `Self.Execute_Command(Arg)` (NOT `Self.Process_Command`). Returns `Command_Response_Status.E` (visible via `use Command_Enums;` in generated base -- do NOT add `with Command_Response_Status;`, it is not a standalone package).
+Use `Self.Execute_Command(Arg)` (NOT `Self.Process_Command`).
 
 ## Command Handler Pattern
 
@@ -245,9 +204,7 @@ begin
    Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Current_Value (The_Time, Arg));
    return Success;
 end Set_Value;
-```ada
-
-Commands with `arg_type:` get `Arg : in <arg_type>` parameter; without get no extra parameter.
+```
 
 ## Generated Code API (Quick Reference)
 
@@ -258,6 +215,7 @@ See [references/generated-api.md](references/generated-api.md) for full details.
 - Faults: `Self.Fault_T_Send_If_Connected (Self.Faults.Name (The_Time));`
 - Time: `The_Time : constant Sys_Time.T := Self.Sys_Time_T_Get;`
 - Send: use `*_Send_If_Connected` (safe) vs `*_Send` (asserts connected)
+- Connector call syntax: `Self.{Type}_T_{Kind}` (e.g., `Self.Sys_Time_T_Get`, `Self.Data_Product_Fetch_T_Request ((Id => Dp_Id))`)
 
 ## Data Dependencies API
 
@@ -265,254 +223,117 @@ See [references/generated-api.md](references/generated-api.md) for full details.
 -- Two overloads:
 Status := Self.Get_Foo (Stale_Reference => time, Timestamp => out_time, Value => out_var);
 Status := Self.Get_Foo (Stale_Reference => time, Value => out_var);  -- no timestamp
--- Stale_Reference is IN (you provide it), Value is OUT, Timestamp is OUT
 -- Returns Data_Product_Enums.Data_Dependency_Status.E (Success | Not_Available | Stale | Error)
 ```
 
-**CRITICAL -- Data Dependency Status Checking**: `Data_Dependency_Status` is defined in `Data_Product_Enums`. Your component implementation body MUST include:
+**CRITICAL**: Body MUST include `with Data_Product_Enums; use Data_Product_Enums;` for status comparison.
 
-```ada
-with Data_Product_Enums; use Data_Product_Enums;
-```
-
-to compare against `Data_Dependency_Status.Success`:
-
-```ada
-if Status = Data_Dependency_Status.Success then
-  -- Process valid data
-end if;
-```
-
-Overrides (BOTH abstract, MUST implement):
+Required overrides (BOTH abstract, MUST implement):
 ```ada
 overriding function Get_Data_Dependency (Self : in out Instance;
    Id : in Data_Product_Types.Data_Product_Id) return Data_Product_Return.T
    is (Self.Data_Product_Fetch_T_Request ((Id => Id)));
 overriding procedure Invalid_Data_Dependency (Self : in out Instance;
    Id : in Data_Product_Types.Data_Product_Id; Ret : in Data_Product_Return.T);
-```ada
+```
 
 ## Active Component Overrides
 
-Active components have a `Cycle` procedure that runs on their task's schedule. It is abstract and MUST be overridden:
+Active components MUST override abstract `Cycle` procedure. Every `recv_async` connector generates an abstract `*_Dropped` handler that MUST be overridden:
 
 ```ada
 overriding procedure Cycle (Self : in out Instance);
-```ada
+overriding procedure Tick_T_Recv_Async_Dropped (Self : in out Instance; Arg : in Tick.T) is null;
+```
 
-Use `Cycle` for periodic background work (polling, housekeeping). Most active components also receive ticks via `recv_sync` connectors for rate-group-driven work -- `Cycle` is separate from tick handling.
+Command connectors stay `recv_sync` even on active components. Queue size set via `init_base` in assembly YAML (see adamant-assembly-dev).
 
 ## Spec vs Body `with` Clauses
 
-Only `with` packages in the **spec** (`.ads`) if the spec references them (e.g., type declarations, overriding subprogram parameter types). All other `with` clauses go in the **body** (`.adb`). Unused `with` in either file triggers a style warning (`-gnatwr`).
-
-**The implementation child package does NOT inherit `with`/`use` from the generated base class.** You must explicitly `with` every package you reference. However, types visible through connector parameter types (e.g., `Tick.T` if you override `Tick_T_Recv_Sync`) are already `with`'d by the parent -- don't re-`with` them in the body if they're only used in the overriding procedure signatures (which are in the spec).
+Only `with` in spec if the spec references the type. All others go in body. The implementation child package does NOT inherit `with`/`use` from the generated base class.
 
 ```ada
--- SPEC (.ads): with packages for types used in declarations/signatures
-with Tick;            -- needed for Tick_T_Recv_Sync signature
-with Command;         -- needed for Command_T_Recv_Sync signature
-
--- BODY (.adb): with packages used only in implementation
-with Sys_Time;        -- used in body logic
-with Event_Types; use Event_Types;  -- need 'use' for operator visibility on typed IDs
--- Do NOT re-with packages already with'd in spec
--- When comparing framework typed IDs (Event_Id, Command_Id, etc.), you need
--- 'use <Type_Package>;' to make comparison operators visible.
-```ada
+-- SPEC: with for types in declarations/signatures
+with Tick; with Command;
+-- BODY: with for implementation-only usage
+with Sys_Time;
+with Event_Types; use Event_Types;  -- 'use' needed for operator visibility on typed IDs
+```
 
 ## Parameter Overrides (ALL abstract IFF parameters.yaml exists)
 
-Components with `parameters.yaml` generate a `modify` connector that MUST be overridden:
-
 ```ada
--- REQUIRED: modify connector handler (abstract, must override)
 overriding procedure Parameter_Update_T_Modify (Self : in out Instance; Arg : in out Parameter_Update.T) is
-begin
-   Self.Process_Parameter_Update (Arg);
-end Parameter_Update_T_Modify;
-```
+begin Self.Process_Parameter_Update (Arg); end Parameter_Update_T_Modify;
 
-Additional abstract overrides:
-```ada
 overriding procedure Invalid_Parameter (Self : in out Instance; Par : in Parameter.T;
    Errant_Field_Number : in Unsigned_32; Errant_Field : in Basic_Types.Poly_Type);
--- Note: Par is Parameter.T, NOT Parameter_Update.T
 overriding function Validate_Parameters (Self : in out Instance;
    P1 : P1_Type.U; P2 : P2_Type.U) return Parameter_Validation_Status.E
    is (Parameter_Validation_Status.Valid);
 overriding procedure Update_Parameters_Action (Self : in out Instance) is null;
-```ada
-
-**Parameter access returns UNPACKED (.U)**: `Self.<Param_Name>` returns `<Type>.U` (unpacked), NOT `<Type>.T` (packed). Use `.U` for local variables when reading parameters:
-```ada
-Gain_Value : Packed_F32.U := Self.Gain;  -- CORRECT: .U (unpacked)
--- WRONG: Gain_Value : Packed_F32.T := Self.Gain;  -- type mismatch!
 ```
 
-Call `Self.Update_Parameters` (NO arguments) in Tick handler to apply staged updates:
-```ada
-Self.Update_Parameters;  -- CORRECT: no arguments
--- WRONG: Self.Update_Parameters (Arg);
-```ada
+**Key rules:**
+- `Self.<Param_Name>` returns `.U` (unpacked), NOT `.T`
+- `Self.Update_Parameters` takes NO arguments — call in Tick handler
+- Parameter `default:` uses unpacked syntax, NOT `Type.Pack(...)`
+- Access via `Self.Kp` or `Self.Get_Kp` — NOT `Self.Parameters.Kp`
 
-⚠️ **CRITICAL - Parameter Defaults Use Unpacked Syntax**: Parameter `default:` values use the unpacked record syntax directly (e.g., `"(Kp => (Value => 1.0), Ki => (Value => 0.1))"`), NOT `Type.Pack(...)`. The code generation wraps the packing automatically:
+## Framework Type Fields & Common Pitfalls
 
-```yaml
-# CORRECT: Use unpacked record syntax in defaults
-parameters:
-  - name: Pid_Gains
-    type: Pid_Gains.T
-    default: "(Kp => (Value => 1.0), Ki => (Value => 0.1))"
-
-# WRONG: Do not use Type.Pack in defaults
-    default: "Pid_Gains.Pack((Kp => (Value => 1.0), Ki => (Value => 0.1)))"
-```ada
-
-**CRITICAL -- Parameter Access Pattern**: Parameters are NOT accessed via `Self.Parameters`. They are accessed via generated getter functions. For each parameter named `Kp` in the YAML, use:
-
-```ada
--- WRONG: Parameters record does not exist
-Value := Self.Parameters.Kp;
-
--- CORRECT: Generated getter function
-Value := Self.Kp;
--- OR (alternate form)
-Value := Self.Get_Kp;
-```ada
-
-Parameters with defaults can be retrieved without initialization. Parameters without defaults must be set via parameter update before access.
-
-## Execution Model
-
-- **Passive**: Synchronous processing. Only has Init if YAML defines `init:` section.
-- **Active**: Has message queue. Queue size is set via `init_base` in **assembly YAML** (not component Init). Has `{Type}_T_Recv_Async` handlers and `{Type}_T_Recv_Async_Dropped` overflow handlers.
-- Command connectors stay `recv_sync` even on active components.
-
-**CRITICAL -- Active Component Dropped Handlers**: Every `recv_async` connector generates an abstract `*_Dropped` handler that MUST be overridden. Common pattern:
-
-```ada
-overriding procedure Tick_T_Recv_Async_Dropped (Self : in out Instance; Arg : in Tick.T) is null;
-overriding procedure Data_Product_T_Recv_Async_Dropped (Self : in out Instance; Arg : in Data_Product.T) is null;
-```yaml
-
-Failure to override these results in abstract subprogram compile errors.
+- `Packet_Header.T`: Time, Id (`Packet_Types.Packet_Id` = Natural subtype), Sequence_Count (mod 2**14), Buffer_Length. NO Priority.
+- `Event_Header.T`: Time, Id (U16), Param_Buffer_Length (U8). NO Severity.
+- `Command.Header.Id` is `Command_Types.Command_Id` (distinct type). Need `use Command_Types;` for operators.
+- ⚠️ `Packed_Byte.T` NOT `Packed_U8.T` — framework has no `Packed_U8`
+- ⚠️ `Packed_F32.T.Value` is `Short_Float`, NOT `Interfaces.IEEE_Float_32`
+- ⚠️ Math: use `Ada.Numerics.Elementary_Functions` (Long_Float) or `Generic_Elementary_Functions` (Short_Float). `Interfaces` has NO math.
+- Record fields with plain Ada types accessed directly; only `Packed_*` types have `.Value`
+- `Natural` needs 31 bits — does NOT fit U16 format. Use `Interfaces.Unsigned_16`.
+- Enum literals must NOT collide with framework package names (e.g., `Fault` → `Faulted`)
 
 ## Auto-Provided Packages (Do NOT `with` these)
 
 `Command_Execution_Status`, `Command_Response_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces` (when commands/features use it).
 
-Exception: If your component has no commands but needs Unsigned types, add `with Interfaces; use Interfaces;`.
-
-**CRITICAL -- Math Functions**: Ada's `Interfaces` package has NO math functions (Sqrt, Sin, Cos, etc.). Use:
-- `Ada.Numerics.Elementary_Functions` for `Long_Float` (64-bit) math
-- `Ada.Numerics.Generic_Elementary_Functions` instantiated for `Short_Float` (32-bit)
-
-```ada
--- For Long_Float:
-with Ada.Numerics.Elementary_Functions;
-Result := Ada.Numerics.Elementary_Functions.Sqrt (Value);
-
--- For Short_Float:
-with Ada.Numerics.Generic_Elementary_Functions;
-package Short_Float_Math is new Ada.Numerics.Generic_Elementary_Functions (Short_Float);
-Result := Short_Float_Math.Sqrt (Value);
-```ada
-
-## Framework Type Fields
-
-Do NOT invent fields. Key types:
-- `Packet.Header.Id` is `Packet_Types.Packet_Id` (Natural subtype, NOT Unsigned_16). Need `with Packet_Types; use type Packet_Types.Packet_Id;` for operators. Cast to `Unsigned_16` for packed params.
-- `Command.Header.Id` is `Command_Types.Command_Id` (distinct type). Need `with Command_Types; use Command_Types;`
-- `Packet_Header.T`: Time, Id, Sequence_Count (mod 2**14), Buffer_Length (Natural). NO Priority.
-- `Event_Header.T`: Time, Id (U16), Param_Buffer_Length (U8). NO Severity.
-
-⚠️ **CRITICAL - Packed_U8 Does Not Exist**: The framework type is `Packed_Byte.T` (NOT `Packed_U8.T`). Sub-agents consistently get this wrong:
-
-```yaml
-# WRONG: Packed_U8 does not exist
-param_type: Packed_U8.T
-
-# CORRECT: Use Packed_Byte.T
-param_type: Packed_Byte.T
-```
-
-**General rule:** Framework distinct types need `use type` for operator visibility (=, /=, <, etc.).
-
-### Record Type Field Access
-
-- **Record type fields vs packed type fields**: Custom record types defined in `*.record.yaml` with plain Ada types (Short_Float, Interfaces.Unsigned_16, etc.) produce record fields that are accessed directly (e.g., `My_Record.Temperature`). Only Packed_* types (Packed_F32.T, Packed_U16.T, etc.) have a `.Value` accessor. Do NOT use `.Value` on plain record fields.
+**HOWEVER**: Implementation child package does NOT inherit these — `with` explicitly if your code references them directly.
 
 ## Connector Count (Array Connectors)
 
-`count: 0` or N = one-to-many fan-out with index:
-- Generated index type: `<Type>_T_Send_Index`
-- **Indices are 1-based** (`Connector_Index_Type'First = 1`). Map from 0-based with offset.
+- `count: 0` or N = one-to-many with index. Index type: `<Type>_T_Send_Index`, **1-based**.
 - Send: `Self.Packet_T_Send_If_Connected(Index, Arg)`
-- Loop: `for I in Packet_T_Send_Index'Range loop`
-- Dropped: takes extra `Index` parameter
-- Two connectors of same type get numbered: `Event_T_Send` (1st), `Event_T_Send_2` (2nd)
-- **⚠️ Each numbered send connector needs its own `*_Dropped` handler**: `Event_T_Send_Dropped` AND `Event_T_Send_2_Dropped` -- missing either causes "type must be declared abstract" error
+- Two connectors of same type get numbered: `Event_T_Send` (1st), `Event_T_Send_2` (2nd) — each needs its own `*_Dropped` handler
 
 ## Pre-Flight Checklist
 
-1. [ ] Spec uses `with private` / private full record pattern
-2. [ ] `Init` override present IFF YAML has `init:` section
-2a. [ ] Active components: `Cycle` override MUST be present (abstract in base class)
-3. [ ] `Set_Up` override (optional) -- called AFTER `Start_Components` in assembly. Use for post-init registration (e.g., command registration). Defined as `is null` in Core_Instance.
-4. [ ] `Invalid_Command` (procedure, 4 params) present IFF `commands.yaml` exists
-4. [ ] `Command_T_Recv_Sync` present IFF `commands.yaml` exists
-5. [ ] ALL `*_Send_Dropped` handlers overridden for every send connector
-6. [ ] NO `with` for auto-provided packages (see list above)
-7. [ ] NO `build/` directory created manually
-8. [ ] Empty `.all_path` file present
-9. [ ] Entity names unique across events, data products, commands, faults, parameters
-10. [ ] `use Command_Execution_Status;` INSIDE package body, not before it
-11. [ ] `get` connectors: `return_type:` only. `request`: both `type:` and `return_type:`
-12. [ ] Custom record fields have `format:` specified (see adamant-type-system)
-13. [ ] Qualify ambiguous literals: `Command_Execution_Status.Success`
-14. [ ] No `Packed_U8` -- use `Packed_Byte.T`
-15. [ ] No dynamic allocation (Ravenscar profile)
-16. [ ] Active + recv_async: override `{Type}_T_Recv_Async_Dropped`
-17. [ ] Parameter overrides: `Parameter_Update_T_Modify`, `Invalid_Parameter`, `Validate_Parameters`, `Update_Parameters_Action`
-18. [ ] Data dependency overrides: `Get_Data_Dependency`, `Invalid_Data_Dependency`
-18a. [ ] Data dependency names in assembly YAML `map_data_dependencies` must exactly match names from `.data_dependencies.yaml` -- no renaming
-19. [ ] Faults use event-like API: `Self.Fault_T_Send_If_Connected(Self.Faults.Name(Time))`
-20. [ ] No `with Command_Response_Status` (not standalone -- available through base class)
-21. [ ] Component name doesn't collide with ~58 framework components
-22. [ ] Custom type YAML filenames (e.g., `quaternion.record.yaml`) don't collide with framework types -- prefix with project/component name if needed
-22a. [ ] Verify component and type model names don't collide with existing names anywhere in the project or framework. Model names must be globally unique across all build paths -- two `.record.yaml` files with the same base name in different directories WILL conflict
-23. [ ] Use `or else` / `and then` (short-circuit) for ALL boolean expressions (Ada style requirement)
-24. [ ] No trailing whitespace in Ada or YAML files (applies to ALL files -- YAML, Ada, Python)
-24a. [ ] Init parameter `default:` values MUST be quoted strings (`"10"` not `10`)
-25. [ ] All YAML files start with `---` document start marker
-26. [ ] Only `with` packages you actually reference -- unused `with` is a style warning
-27. [ ] Verify with `redo style` -- all warnings must be resolved
-28. [ ] Use `[]` for array aggregates: `[others => 0]` not `(others => 0)` (Ada 2022 syntax). Record aggregates MUST use `()`. Nested array-of-records: `[others => (others => <>)]`
-29. [ ] Space before `(` in type conversions: `Unsigned_32 (X)` not `Unsigned_32(X)`
-30. [ ] `then` on its own line for multi-line if conditions
-31. [ ] Don't add `with Interfaces; use Interfaces;` to impl spec if base class already provides it (components with commands/init/data deps get it automatically). Note: some generated component specs have REDUNDANT `use Interfaces;` that triggers `-gnatwr` -- this is unfixable (code gen artifact, not your code).
-    **HOWEVER**: If your handwritten impl spec/body directly uses `Interfaces.Unsigned_32` (or similar), you MUST add `with Interfaces;` yourself. The auto-provided `with Interfaces; use Interfaces;` is only in the GENERATED base class spec -- it is NOT inherited by the implementation child package.
-31a. [ ] When doing arithmetic on `Interfaces` types (`Unsigned_32`, etc.), add `use Interfaces;` in the body to make operators (`+`, `-`, etc.) visible. Otherwise use qualified calls: `Interfaces."+"(Self.Count, 1)`.
-32. [ ] Use `Ignore : Type renames Arg;` pattern (not `pragma Unreferenced`) for unused connector handler parameters:
-    ```ada
-    overriding procedure Parameter_Update_T_Modify (Self : in out Instance; Arg : in out Parameter_Update.T) is
-       -- Arg is used by Process_Parameter_Update, so no Ignore needed here
-    ```
-32a. [ ] Avoid redundant type conversions -- `Unsigned_32 (X)` when X is already `Unsigned_32` triggers `-gnatwr`
-33. [ ] See `adamant-style` skill for full style reference
-34. [ ] `Packed_F32.T.Value` is `Short_Float` (Ada 32-bit float), NOT `Interfaces.IEEE_Float_32` -- use `Short_Float` for F32 record fields and arithmetic
+1. [ ] Spec: `with private` / private full record pattern
+2. [ ] `Init` override IFF YAML has `init:`; `Cycle` override IFF active component
+3. [ ] `Set_Up` override (optional) — for post-init work (command registration, initial DPs)
+4. [ ] `Invalid_Command` + `Command_T_Recv_Sync` IFF `commands.yaml` exists
+5. [ ] ALL `*_Send_Dropped` handlers for every send connector; `*_Recv_Async_Dropped` for every recv_async
+6. [ ] NO `with` for auto-provided packages; NO `build/` dir; empty `.all_path` present
+7. [ ] Entity names unique across events/DPs/commands/faults/parameters
+8. [ ] `get`: `return_type:` only. `request`: both `type:` and `return_type:`
+9. [ ] Custom record fields have `format:` (see adamant-type-system)
+10. [ ] No `Packed_U8` (use `Packed_Byte.T`); no dynamic allocation (Ravenscar)
+11. [ ] Parameter overrides: `Parameter_Update_T_Modify`, `Invalid_Parameter`, `Validate_Parameters`, `Update_Parameters_Action`
+12. [ ] Data dep overrides: `Get_Data_Dependency`, `Invalid_Data_Dependency`; names must match YAML exactly
+13. [ ] Faults API: `Self.Fault_T_Send_If_Connected(Self.Faults.Name(Time))`
+14. [ ] Component/type names globally unique — no collision with ~58 framework components
+15. [ ] Style: `or else`/`and then`, no trailing whitespace, `---` YAML start, `[]` for arrays, space before `(` in conversions, `then` on own line, `use Command_Execution_Status;` INSIDE body
+16. [ ] `Ignore : Type renames Arg;` for unused params (not `pragma Unreferenced`)
+17. [ ] See `adamant-style` skill for full style reference; `redo style` to verify
 
 ## References
-- [references/generated-api.md](references/generated-api.md) -- Full generated code API for all connector types
-- [references/implementation-patterns.md](references/implementation-patterns.md) -- 25 Ada patterns from real component implementations
-- [references/lasel-reference.md](references/lasel-reference.md) -- LASEL command sequence system (46 opcodes, engine states)
-- [references/pitfalls-and-checklist.md](references/pitfalls-and-checklist.md) -- Extended pitfalls and error patterns
-- [references/template-analysis.md](references/template-analysis.md) -- Jinja2 code generation template analysis
+- [references/generated-api.md](references/generated-api.md) — Generated code API details
+- [references/implementation-patterns.md](references/implementation-patterns.md) — Ada patterns from real components
+- [references/lasel-reference.md](references/lasel-reference.md) — LASEL command sequence language
+- [references/template-analysis.md](references/template-analysis.md) — Code generation edge cases
 
 ## Related Skills
 
 - **Types**: [adamant-type-system](../adamant-type-system/SKILL.md)
 - **Testing**: [adamant-testing](../adamant-testing/SKILL.md)
 - **Assembly**: [adamant-assembly-dev](../adamant-assembly-dev/SKILL.md)
+- **Build**: [adamant-build-system](../adamant-build-system/SKILL.md)
 - **Algorithm wrapping**: [adamant-algorithm-wrapping](../adamant-algorithm-wrapping/SKILL.md)
