@@ -51,7 +51,7 @@ You have 15 Adamant skills totaling ~11100 lines (with references). Loading all 
 - Command routing, event bifurcation, ID assignment
 - View filters, validation rules
 
-**Also load:** `adamant-framework-components` (catalog of all 55 built-in components to select from)
+**Also load:** `adamant-framework-components` (catalog of all 58 built-in components to select from)
 **Also load if needed:** `adamant-subassemblies` -- if splitting a large assembly into reusable subassemblies
 
 ### Splitting assemblies into subassemblies
@@ -66,7 +66,7 @@ You have 15 Adamant skills totaling ~11100 lines (with references). Loading all 
 
 ### Selecting framework components for a design
 **Load:** `adamant-framework-components`
-- Catalog of all 55 built-in components organized by subsystem
+- Catalog of all 58 built-in components organized by subsystem
 - Command routing, telemetry, sequencing, fault management, parameters, etc.
 
 ### Setting up a new Adamant project

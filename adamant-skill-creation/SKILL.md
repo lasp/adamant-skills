@@ -16,7 +16,7 @@ Guide for creating and maintaining Adamant framework skills that enable cold-sta
 
 An agent loads selector -> reads 1-2 SKILL.md files -> reads references only when needed. Context is precious -- every line must justify its token cost.
 
-### Current Skill Inventory (14 skills)
+### Current Skill Inventory (15 skills)
 
 | Skill | Purpose | SKILL.md | References |
 |-------|---------|----------|------------|
@@ -26,13 +26,14 @@ An agent loads selector -> reads 1-2 SKILL.md files -> reads references only whe
 | adamant-assembly-dev | Assembly wiring + scheduling | ~365 | ~700 |
 | adamant-type-system | Packed types, enums, arrays | ~355 | ~300 |
 | adamant-build-system | Redo, code gen, prove | ~310 | ~900 |
-| adamant-framework-components | 55 built-in components catalog | ~295 | -- |
+| adamant-framework-components | 58 built-in components catalog | ~295 | -- |
 | adamant-cosmos-integration | Ground system (OpenC3) | ~325 | ~400 |
 | adamant-algorithm-wrapping | C++ -> C shim -> Ada -> Adamant | ~325 | ~110 |
 | adamant-project-setup | New project bootstrap | ~365 | -- |
 | adamant-style | Ada/YAML/Python style rules | ~340 | ~660 |
 | high-assurance-design | Design-by-invariant methodology | ~205 | -- |
 | knowledge-acquisition | Study repos, create skills | ~210 | -- |
+| adamant-subassemblies | Subassembly patterns + nesting | ~450 | -- |
 | adamant-skill-creation | This skill | ~300 | ~200 |
 
 Total: ~4000 SKILL.md + ~6000 references = ~10000 lines
