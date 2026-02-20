@@ -104,6 +104,8 @@ events:
     param_type: Packed_U32.T          # Omit for no-param events. MUST be packed type (not raw enums)
 
 # data_products.yaml -- requires Data_Product.T send connector
+# NOTE: Do NOT add 'id:' fields to commands, events, data_products, or faults -- IDs are auto-assigned.
+# Only packets.yaml uses explicit 'id:' fields.
 data_products:
   - name: Current_Value
     type: Packed_U32.T
