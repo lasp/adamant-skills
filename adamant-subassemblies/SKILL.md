@@ -16,7 +16,7 @@ Subassemblies split a large assembly YAML into smaller, reusable pieces. Each su
 - **Team workflow** -- different engineers own different subsystems in separate files
 - **Incremental integration** -- build and validate subsystems independently before combining
 
-Subassemblies are NOT separate executables. They merge into a single assembly producing one Ada package and one binary.
+Subassemblies are NOT separate executables. They merge into a single assembly producing one Ada package and one binary. Subassemblies are purely a modeling concept -- the autocode flattens everything into a single assembly with no runtime distinction between subassembly boundaries.
 
 ## File Structure
 
@@ -172,14 +172,16 @@ subassemblies:
 
 **Strategy:** Plan ID ranges at the parent level and document the allocation in comments. Component IDs will be auto-assigned sequentially starting from the base values.
 
-## Cross-Subassembly Connections
+## Connection Scoping Rules
 
-Components defined in different subassemblies can be wired together. The connections can go in:
+⚠️ **CRITICAL**: Each subassembly must be able to act as a standalone assembly. Connections defined in a subassembly can ONLY reference components defined in that subassembly (or its own nested subassemblies). A subassembly CANNOT wire to components in a sibling subassembly or the parent.
 
-1. **The parent assembly** (recommended for cross-subassembly wiring)
-2. **Either subassembly** (works but harder to track)
+**Where connections go:**
 
-Since all components merge into a single namespace, any connection can reference any component regardless of which file defined it:
+1. **Intra-subassembly connections** go in the subassembly file (wiring between components within the same subassembly)
+2. **Cross-subassembly connections** go in the parent assembly (wiring between components in different subassemblies, or between parent components and subassembly components)
+
+Since all components merge into a single namespace at the parent level, the parent's connections can reference any component regardless of which subassembly defined it:
 
 ```yaml
 # Parent assembly connections -- wiring between subsystems
@@ -199,7 +201,7 @@ connections:
     to_connector: Command_T_Recv_Async
 ```
 
-**Best practice:** Keep intra-subsystem connections in the subassembly file. Put inter-subsystem connections in the parent. This makes the integration points explicit.
+**Rule:** Intra-subsystem connections MUST be in the subassembly file. Inter-subsystem connections MUST be in the parent. This is not just best practice -- the model loader enforces that subassembly connections only reference components within that subassembly.
 
 ⚠️ **CRITICAL - Cross-Subassembly Data Dependencies**: If a component in subassembly A has data dependencies that need to map to data products from components in subassembly B, the `map_data_dependencies` resolver CANNOT find them. The mapper only searches at the subassembly level, not across subassemblies.
 
@@ -236,17 +238,25 @@ Duplicate id_base 'Event_Id_Base' found in comm.assembly.yaml.
 
 **Fix:** Define ALL id_bases in the parent assembly only. Do NOT use id_bases in subassemblies.
 
-### Empty Connections Field Crash
-A `connections:` key with only comments (no actual connections) results in `TypeError: 'NoneType' object is not iterable`. 
+### Subassembly Connections
+Subassemblies SHOULD define internal connections when components within the subassembly need to be wired together (e.g., Ticker -> Tick_Divider -> Rate_Group, CCSDS pipeline, event routing chains). This makes the subassembly self-contained and reusable.
 
-**Fix:** Omit the `connections:` key entirely if there are no intra-subassembly connections:
+If a subassembly has NO internal connections (all wiring is cross-subassembly and goes in the parent), omit the `connections:` key entirely. A `connections:` key with only comments (no actual entries) causes `TypeError: 'NoneType' object is not iterable`.
 
 ```yaml
 # WRONG: Empty connections field
 connections:
   # No actual connections, just comments
 
-# CORRECT: No connections field at all
+# CORRECT for subassembly with internal wiring:
+connections:
+  - from_component: Ticker_Instance
+    from_connector: Tick_T_Send
+    to_component: Rate_Group_Instance
+    to_connector: Tick_T_Recv_Async
+
+# CORRECT for subassembly with no internal wiring:
+# (simply omit the connections: key)
 description: Sensor subsystem
 components:
   - type: Sensor_Reader
@@ -254,7 +264,7 @@ components:
 ```
 
 ### Minimal Subassemblies Are Valid
-A subassembly can contain only `description:` and `components:` with no connections, id_bases, or preamble. This is common for leaf subsystems where all wiring is done in the parent:
+A subassembly can contain only `description:` and `components:` with no connections, id_bases, or preamble. This is common for leaf subsystems where all wiring is cross-subassembly and done in the parent:
 
 ```yaml
 # Minimal valid subassembly
@@ -425,8 +435,10 @@ connections:
 |----------|--------|
 | How do I reference a subassembly? | Add its name to `subassemblies:` list in parent |
 | Can subassemblies nest? | Yes -- subassemblies can reference further subassemblies |
-| Can I wire between subassemblies? | Yes -- all components share one namespace after merge |
-| Where should cross-subsystem connections go? | In the parent assembly |
+| Can I wire between subassemblies? | Yes, but only from the parent assembly |
+| Can a subassembly wire to a sibling's component? | No -- subassembly connections are scoped to its own components |
+| Where should cross-subsystem connections go? | In the parent assembly (required, not just recommended) |
+| Where should intra-subsystem connections go? | In the subassembly file |
 | Can two subassemblies define the same component name? | No -- fatal error |
 | Can two subassemblies set the same id_base? | No -- fatal error |
 | Do views know about subassembly boundaries? | No -- views see the flattened assembly |
