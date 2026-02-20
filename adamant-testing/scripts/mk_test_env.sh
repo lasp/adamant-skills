@@ -54,8 +54,11 @@ else
     echo "  $TESTS_YAML already exists (skipped)"
 fi
 
-echo "Done. Next steps:"
+echo ""
+echo "Done. Next steps (run in Docker from test/ dir):"
 echo "  1. Edit $TESTS_YAML to define test cases"
-echo "  2. In Docker: cd test && redo templates"
-echo "  3. Copy tester files: cp build/template/*.ads build/template/*.adb ."
-echo "  4. Write test implementations in ${COMP_NAME}_tests-implementation.adb"
+echo "  2. cd test && redo templates"
+echo "  3. cp build/template/component-*-tester.ads build/template/component-*-tester.adb ."
+echo "  4. cp build/template/*_tests-implementation.ads build/template/test.adb ."
+echo "  5. Write ONLY ${COMP_NAME}_tests-implementation.adb (test case bodies)"
+echo "  6. redo test"

@@ -28,16 +28,24 @@ Setup: `bash scripts/mk_test_env.sh [test_names...]` (from component directory)
 
 ## Workflow
 
+**⚠️ CRITICAL -- NEVER write tester .ads/.adb or test.adb from scratch.** These files are ~500 lines of generated code with complex reciprocal connector wiring, History API instantiation, and AUnit scaffolding. ALWAYS generate them:
+
 ```bash
-redo templates                              # Generate tester stubs
-cp build/template/component-*-tester.ads build/template/component-*-tester.adb .
-cp build/template/*_tests-implementation.ads .   # ONLY spec, NOT .adb (overwrites tests!)
-cp build/template/test.adb .
+# From the test/ directory:
+cd test/
+redo templates                              # Generate ALL tester stubs
+cp build/template/component-*-tester.ads .  # Tester spec (generated)
+cp build/template/component-*-tester.adb .  # Tester body (generated)
+cp build/template/*_tests-implementation.ads .   # Test spec (generated)
+cp build/template/test.adb .               # AUnit runner (generated)
+# Then write ONLY: *_tests-implementation.adb (test case bodies)
 redo test                                   # Build and run
 redo coverage                                # Coverage analysis via gcov
 ```
 
-**Adding tests:** Add to tests.yaml → `redo templates` → copy ONLY the `*_tests-implementation.ads` → add implementation in `.adb` → `redo test`.
+**The ONLY file you write from scratch is `*_tests-implementation.adb`** (the test case bodies). Everything else is generated. You also need `env.py` and `*.tests.yaml`.
+
+**Adding tests:** Add to tests.yaml -> `redo templates` -> copy ONLY the `*_tests-implementation.ads` -> add implementation in `.adb` -> `redo test`.
 
 ## Test Model
 

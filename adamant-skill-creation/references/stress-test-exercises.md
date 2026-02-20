@@ -22,17 +22,22 @@ Cold-start sub-agent exercises for each skill. Each exercise starts from NOTHING
 ## Exercise: test
 
 **Skills loaded:** adamant-skill-selector, adamant-testing, adamant-component-dev
-**Task:** Write a complete test suite for an existing component. Use `heartbeat_monitor` from the component exercise (or an existing bot_station component if not available).
+**Task:** Write tests for an existing component (e.g., `limit_checker` or similar).
+Steps:
+1. Read the component's YAML files to understand its interface
+2. Create `test/` directory with `env.py` and `component_name.tests.yaml`
+3. Run `redo templates` from test/ dir to generate tester scaffolding
+4. Copy generated files from `build/template/` to `test/`
+5. Write ONLY the `*_tests-implementation.adb` (test case bodies) from scratch
 Tests must cover:
-- Nominal tick behavior (counter increments)
-- Command execution (Reset_Counter, Set_Timeout)
-- Fault triggering (timeout exceeded)
-- Parameter update (Warning_Threshold)
-- Data product emission
-- All events verified via typed history
-- Coverage target: all branches in implementation
-**Create in:** `/home/user/adamant_bot_station/src/components/heartbeat_monitor/test/`
-**Validation:** `redo coverage` from component directory
+- Nominal behavior
+- Command execution (all commands)
+- Event verification via typed history
+- Data product verification
+- Parameter updates (stage/validate/update cycle)
+- Error/fault paths
+**Create in:** `/home/user/adamant_bot_station/src/components/<component>/test/`
+**Validation:** `redo test` then `redo coverage` from component directory
 
 ## Exercise: assembly
 
