@@ -358,7 +358,10 @@ Gain_Value : Packed_F32.U := Self.Gain;  -- CORRECT: .U (unpacked)
 overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T) is
 begin
    Self.Update_Parameters;  -- MUST be first line. NO arguments.
-   -- ... rest of tick logic using Self.Kp, Self.Ki, etc.
+   -- Read parameters AFTER this call, not before. Ada constants declared
+   -- before Update_Parameters capture stale values:
+   -- WRONG: Kp : constant Short_Float := Self.Kp; Self.Update_Parameters;
+   -- RIGHT: Self.Update_Parameters; Kp : constant Short_Float := Self.Kp;
 end Tick_T_Recv_Sync;
 ```ada
 
