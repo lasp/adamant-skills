@@ -334,6 +334,8 @@ Based on 14 skills developed over 20+ sessions:
 
 ## References
 - [references/validation-history.md](references/validation-history.md) -- Convergence data from 19 rounds of skill validation
+- [references/refinement-methodology.md](references/refinement-methodology.md) -- Stress test design, experience pool, ancestor tracking
+- [references/evolution-plan.md](references/evolution-plan.md) -- Plan for continued improvement beyond per-skill convergence
 
 ## Related Skills
 - **Skill selector**: [adamant-skill-selector](../adamant-skill-selector/SKILL.md)
