@@ -49,6 +49,36 @@ redo coverage                                # Coverage analysis via gcov
 
 **Adding tests:** Add to tests.yaml -> `redo templates` -> copy ONLY the `*_tests-implementation.ads` -> add implementation in `.adb` -> `redo test`.
 
+## Test Body `with` Clauses
+
+The test body (`*_tests-implementation.adb`) does NOT inherit visibility from the generated tester. You must explicitly `with` every package you use. Common pattern:
+
+```ada
+-- Required for most test bodies:
+with Interfaces; use Interfaces;          -- Unsigned_16, Unsigned_32, etc.
+with Basic_Assertions; use Basic_Assertions;  -- Natural_Assert, Boolean_Assert
+
+-- For typed assertion packages (match your data product/event param types):
+with Packed_U32.Assertion; use Packed_U32.Assertion;  -- Packed_U32_Assert
+with Packed_U16.Assertion; use Packed_U16.Assertion;
+
+-- For command response checking:
+with Command_Enums; use Command_Enums;
+
+-- For framework types used directly in test logic:
+with Tick;                                -- qualify as Tick.T in sends
+with Command;                             -- for invalid command construction
+with Sys_Time;                            -- for timestamps
+with Data_Product;                        -- if inspecting raw DPs
+
+-- NEVER with these (they don't exist as standalone packages):
+-- Command_Response_Status  (use Command_Enums.Command_Response_Status)
+-- Command_Execution_Status (use Command_Enums.Command_Execution_Status)
+-- Command_Response_Assert  (use Command_Response.Assertion if needed)
+```ada
+
+**Name collisions**: `Tick` can collide with `Ada.Real_Time.Tick`. Always qualify: `Tick.T`, not just `T` when ambiguous. Add `use Tick;` if you reference `Tick.T` frequently.
+
 ## Test Model
 
 ```yaml
