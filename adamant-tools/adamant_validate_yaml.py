@@ -21,6 +21,13 @@ import os
 import glob
 import yaml
 
+# Try to use pykwalify for authoritative schema validation (available inside Docker)
+try:
+    from pykwalify.core import Core as PykwalifyCore
+    HAS_PYKWALIFY = True
+except ImportError:
+    HAS_PYKWALIFY = False
+
 
 # Framework component names that will collide
 FRAMEWORK_COMPONENTS = {
@@ -322,6 +329,36 @@ def main():
     # File naming
     all_errors.extend(validate_file_naming(comp_dir, comp_name))
 
+    # pykwalify schema validation (if available and SCHEMAPATH set)
+    schema_dir = os.environ.get("SCHEMAPATH")
+    if HAS_PYKWALIFY and schema_dir and os.path.isdir(schema_dir):
+        schema_map = {
+            "component": "component.yaml",
+            "events": "events.yaml",
+            "data_products": "data_products.yaml",
+            "commands": "commands.yaml",
+            "parameters": "parameters.yaml",
+            "faults": "faults.yaml",
+            "data_dependencies": "data_dependencies.yaml",
+        }
+        for kind, schema_file in schema_map.items():
+            yaml_file = os.path.join(comp_dir, f"{comp_name}.{kind}.yaml")
+            schema_path = os.path.join(schema_dir, schema_file)
+            if os.path.isfile(yaml_file) and os.path.isfile(schema_path):
+                try:
+                    c = PykwalifyCore(source_file=yaml_file, schema_files=[schema_path])
+                    c.validate(raise_exception=True)
+                except Exception as e:
+                    # Extract just the validation error message
+                    msg = str(e).split("\n")[0] if "\n" in str(e) else str(e)
+                    all_errors.append(ValidationError(yaml_file, f"Schema validation: {msg}"))
+        if not all_errors:
+            print(f"Validation: PASS ({comp_name}) [pykwalify schema-validated]")
+        else:
+            pass  # Fall through to error output below
+    elif HAS_PYKWALIFY and not schema_dir:
+        pass  # pykwalify available but no SCHEMAPATH -- use heuristic checks only
+
     # Output
     error_count = sum(1 for e in all_errors if e.severity == "ERROR")
     warn_count = sum(1 for e in all_errors if e.severity == "WARNING")
@@ -332,8 +369,8 @@ def main():
             print(str(e))
         if error_count > 0:
             sys.exit(1)
-    else:
-        print(f"Validation: PASS ({comp_name})")
+    elif not (HAS_PYKWALIFY and schema_dir):
+        print(f"Validation: PASS ({comp_name}) [heuristic only -- install pykwalify + set SCHEMAPATH for full validation]")
 
 
 if __name__ == "__main__":
