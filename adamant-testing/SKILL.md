@@ -148,7 +148,7 @@ begin
 end Test_Name;
 ```ada
 
-**Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`. Both Init and Set_Up are optional -- only call them if YAML declares `init:` or component overrides Set_Up. For per-test init params, defer Init/Set_Up to each test body (see [test-corpus.md](references/test-corpus.md) pattern 1h).
+**Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`. Both Init and Set_Up are optional -- only call them if YAML declares `init:` or component overrides Set_Up. For per-test init params, defer Init/Set_Up to each test body (see [setup-variants.md](references/setup-variants.md) for deferred init patterns).
 
 **⚠️ History Depth**: Generated `Init_Base` initializes all histories with `Depth => 100`. If a test sends more than 100 events/data products/commands, the history overflows and the test fails with "History is full." Solutions:
 - Increase depth in Init_Base: `Self.Event_T_Recv_Sync_History.Init (Depth => 500);`
@@ -164,8 +164,11 @@ T.Command_T_Send (T.Commands.My_Noop_Command);                 -- no args
 
 -- Parameters (3-step + tick):
 Status := T.Stage_Parameter (T.Parameters.Param_Name ((Field => Value)));
+pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
 Status := T.Validate_Parameters;
+pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
 Status := T.Update_Parameters;
+pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
 T.Tick_T_Send (The_Tick);  -- component applies in tick handler
 ```ada
 
@@ -244,29 +247,58 @@ with Command_Enums; use type Command_Enums.Command_Response_Status.E;
 
 ## Data Dependency Testing
 
+### Setting Mock Values and Ticking
+
 The tester generates named fields for each data dependency. Set them directly:
 ```ada
 -- CRITICAL: Use non-zero timestamps! (0,0) causes staleness failures.
 Test_Time : constant Sys_Time.T := (100, 0);
+The_Tick : constant Tick.T := (Time => Test_Time, Count => 0);
 
 -- In Set_Up_Test:
 T.System_Time := Test_Time;
 T.Data_Dependency_Timestamp_Override := Test_Time;
 
 -- Set mock values (field names match data_dependencies.yaml names)
-T.Setpoint := (Value => 50.0);          -- Packed_F32.T
-T.Process_Value := (Value => 45.0);     -- Packed_F32.T
-T.Tick_T_Send ((Time => Test_Time, Count => 0));  -- Match timestamps!
--- Component calls Self.Get_Setpoint(...) which reads T.Setpoint
+T.Sensor_Value := (Value => 50.0);
+T.Tick_T_Send (The_Tick);
+-- Component calls Self.Get_Sensor_Value(...) which reads T.Sensor_Value
+```
 
--- Test stale data (override timestamp returned by tester)
-T.Data_Dependency_Timestamp_Override := (50, 0);  -- Old timestamp
-T.Tick_T_Send ((Time => (100, 0), Count => 0));
+Source: threshold_monitor. Field names (Sensor_Value, Setpoint, etc.) match the names in `data_dependencies.yaml`. The tester auto-generates these fields.
 
--- Test missing data (override return status)
-T.Data_Dependency_Return_Status_Override := Id_Out_Of_Range;
-T.Tick_T_Send ((Time => (100, 0), Count => 0));
+### Multiple Data Dependencies
+
 ```ada
+T.Setpoint := (Value => 10.0);          -- Packed_F32.T
+T.Process_Value := (Value => 7.0);      -- Packed_F32.T
+T.Tick_T_Send (The_Tick);
+-- error = 10.0 - 7.0 = 3.0, output = Kp * 3.0 = 3.0
+Packed_F32_Assert.Eq (T.Output_History.Get (1), (Value => 3.0));
+```
+
+Source: pid_controller. Set all dependency fields before ticking.
+
+### Simulating Fetch Failure
+
+```ada
+T.Data_Dependency_Return_Status_Override := Data_Product_Enums.Fetch_Status.Id_Out_Of_Range;
+T.Tick_T_Send (The_Tick);
+-- Component's error path fires a fault, no DPs sent
+Natural_Assert.Eq (T.Sensor_Failure_History.Get_Count, 1);
+Natural_Assert.Eq (T.Data_Product_T_Recv_Sync_History.Get_Count, 0);
+```
+
+Source: threshold_monitor. Override the return status to test the component's error handling for missing/failed data dependencies.
+
+### Simulating Stale Data
+
+```ada
+T.Data_Dependency_Timestamp_Override := (50, 0);  -- Old timestamp
+T.Tick_T_Send ((Time => (100, 0), Count => 0));   -- Current time is newer
+```
+
+The framework detects that the data product timestamp is older than expected and reports staleness to the component.
 
 **Implementation needs:** `with Data_Product_Enums; use Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;` in the component body for status checks.
 
@@ -276,7 +308,7 @@ Add `with` for every type referenced in tests: `Basic_Assertions`, `Packed_F32.A
 
 ## Common Errors
 
-Top errors that waste time (full list with explanations: [common-errors-detail.md](references/common-errors-detail.md)):
+Top errors that waste time:
 
 1. **Wrong stimulus API:** `T.*_T_Send` to stimulate, NOT `T.*_T_Recv_Sync`
 2. **Init params → `Component_Instance.Init`**, NOT `Init_Base`
@@ -344,7 +376,50 @@ Field names: `Connector_<Type>_Recv_Sync_Status` in generated reciprocal `.ads`.
 
 Use `Expect_*_Dropped` tester flag (hand-edit tester). See framework `command_router` tests.
 
-## Parameter Testing (Update_Parameters_Action Coverage)
+## Parameter Testing
+
+### Full Stage-Validate-Update Cycle
+
+The complete parameter update flow requires three steps plus a tick:
+
+```ada
+Status := T.Stage_Parameter (T.Parameters.Output_Limit ((Value => 5.0)));
+pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+Status := T.Validate_Parameters;
+pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+Status := T.Update_Parameters;
+pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+T.Tick_T_Send (The_Tick);  -- New parameter values take effect
+```
+
+Declare Status as `Parameter_Enums.Parameter_Update_Status.E`. Requires:
+```ada
+with Parameter_Enums; use type Parameter_Enums.Parameter_Update_Status.E;
+```
+
+### Validation Rejection Testing
+
+```ada
+Status := T.Stage_Parameter (T.Parameters.Warning_Threshold ((Value => 95.0)));
+pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+Status := T.Validate_Parameters;
+pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Validation_Error);
+```
+
+Source: threshold_monitor. Stage succeeds (just buffers), but Validate rejects because the component's Validate_Parameters override checks cross-parameter constraints (warning >= critical is invalid).
+
+### Parameter Takes Effect on Tick
+
+After Update_Parameters succeeds, the component reads new values in its next tick handler. You must send a tick after updating:
+
+```ada
+Status := T.Update_Parameters;
+T.Tick_T_Send (The_Tick);
+-- Now assert the new behavior (output clamped to 5.0)
+Packed_F32_Assert.Eq (T.Output_History.Get (1), (Value => 5.0));
+```
+
+### Update_Parameters_Action Coverage
 
 The tester's 3-step Stage/Validate/Update protocol does NOT call `Update_Parameters_Action`. The tester's `Update_Parameters` sends a `Parameter_Update.T` with `Operation => Update` via the modify connector, which calls `Process_Parameter_Update`. This sets `Ready_To_Update` but does NOT call `Update_Parameters_Action`.
 
@@ -367,7 +442,7 @@ Stat := T.Stage_Parameter (T.Parameters.Threshold ((Value => 50)));
 Stat := T.Validate_Parameters;
 Stat := T.Update_Parameters;
 T.Call_Update_Parameters;  -- Actually applies staged values
-```ada
+```
 
 This pattern applies to ALL components with `parameters.yaml` and custom `Update_Parameters_Action`.
 
@@ -421,14 +496,10 @@ Full coverage workflow, reading reports, and common uncovered patterns: [coverag
 ## References
 
 - [references/setup-variants.md](references/setup-variants.md) -- Init/Set_Up patterns, Tear_Down, Tick construction
-- [references/assertion-patterns.md](references/assertion-patterns.md) -- History API, packed type assertions, with-clause sets
+- [references/assertion-patterns.md](references/assertion-patterns.md) -- History API, packed type assertions, with-clause sets, extended testing patterns
 - [references/command-test-patterns.md](references/command-test-patterns.md) -- Command dispatch, argument construction, helpers
-- [references/parameter-test-patterns.md](references/parameter-test-patterns.md) -- Stage/validate/update flow, data dependency mocking
-- [references/coverage-techniques.md](references/coverage-techniques.md) -- Full path coverage, error injection, anti-patterns
-- [references/adamant-example-patterns.md](references/adamant-example-patterns.md) -- Advanced patterns from example project
-- [references/common-errors-detail.md](references/common-errors-detail.md) -- Extended error documentation with solutions
-- [references/testing-patterns-detail.md](references/testing-patterns-detail.md) -- Detailed testing pattern analysis
-- [references/coverage-guide.md](references/coverage-guide.md) -- Coverage analysis setup and interpretation
+- [references/adamant-example-patterns.md](references/adamant-example-patterns.md) -- Advanced patterns: task-based testing, memory regions, packet construction
+- [references/coverage-guide.md](references/coverage-guide.md) -- Coverage analysis, advanced techniques, and anti-patterns
 
 ## Related Skills
 
