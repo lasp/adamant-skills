@@ -404,6 +404,7 @@ Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to rege
 
 - **`execution:` is NOT an assembly YAML field**: The `execution:` key (active/passive) is defined in the COMPONENT YAML, not in assembly YAML. Do not include it when instantiating components in assemblies. Active/passive execution is determined by the component model.
 
+- **Do NOT specify `init:` when component has no init section**: If the component YAML has no `init:` block at all, the assembly MUST NOT include `init:` or `init: []`. Adding it causes `"init" does not exist` error.
 - **`init: []` required when component defines init params**: If a component's YAML defines `init:` with parameters (even ones with defaults), the assembly instantiation MUST include the `init:` key. Use `init: []` to accept all defaults, or provide explicit values. Omitting `init:` entirely causes a code generation error. Furthermore, "default" values in component YAML are documentation only -- the generated Ada code has NO default parameter values. ALL init params must be explicitly provided in the assembly YAML.
 
 - **Rate_Group and other framework components with optional init params**: Even when all init params are optional, the `init:` key must be present. Use `init: []` or provide values like `- "Ticks_Per_Timing_Report => 10"`.
