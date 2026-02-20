@@ -100,9 +100,24 @@ from environments import test  # noqa: F401
 ## Tester Architecture
 
 Testers are **reciprocal components** with inverted connectors:
-- Component sends → tester receives (captures in histories)
-- Component receives → tester sends (provides stimuli)
+- Component sends -> tester receives (captures in histories)
+- Component receives -> tester sends (provides stimuli)
 - White-box access via `T.Component_Instance`
+
+**⚠️ History naming follows the TESTER's perspective (inverted from component):**
+- Component has `Event_T_Send` -> tester history is `T.Event_T_Recv_Sync_History`
+- Component has `Data_Product_T_Send` -> tester history is `T.Data_Product_T_Recv_Sync_History`
+- Component has `Command_Response_T_Send` -> tester history is `T.Command_Response_T_Recv_Sync_History`
+- Component has `Fault_T_Send` -> tester history is `T.Fault_T_Recv_Sync_History`
+- Typed histories use event/DP/fault names: `T.My_Event_History`, `T.My_Data_Product_History`
+
+**Sending stimuli to component (tester sends what component receives):**
+- `T.Tick_T_Send(...)` -- sends tick TO component
+- `T.Command_T_Send(...)` -- sends command TO component
+- `T.Commands.My_Command(...)` -- constructs command with correct ID (ALWAYS use this)
+- `T.Parameters.My_Param(...)` -- constructs parameter with correct ID
+
+**NEVER use `T.Command_T_Send_History`** -- that doesn't exist. The tester SENDS commands (no history for sends). It RECEIVES responses (history for receives).
 
 ## Test Lifecycle
 
