@@ -64,7 +64,7 @@ init:
   parameters:
     - name: "Param"
       type: "Natural"
-      default: "10"
+      default: "10"              # MUST be a string (quoted), even for integers
       description: What this parameter does
 interrupts:
   - name: Timer_Interrupt
@@ -279,6 +279,29 @@ overriding procedure Invalid_Data_Dependency (Self : in out Instance;
    Id : in Data_Product_Types.Data_Product_Id; Ret : in Data_Product_Return.T);
 ```
 
+## Active Component Overrides
+
+Active components have a `Cycle` procedure that runs on their task's schedule. It is abstract and MUST be overridden:
+
+```ada
+overriding procedure Cycle (Self : in out Instance);
+```
+
+Use `Cycle` for periodic background work (polling, housekeeping). Most active components also receive ticks via `recv_sync` connectors for rate-group-driven work -- `Cycle` is separate from tick handling.
+
+## Spec vs Body `with` Clauses
+
+Only `with` packages in the **spec** (`.ads`) if the spec references them (e.g., in type declarations visible to callers). All other `with` clauses go in the **body** (`.adb`). Unused `with` in the spec triggers a style warning. Common pattern:
+
+```ada
+-- SPEC: Only what's needed for type declarations
+with Component.Component_Name.Implementation;  -- always present (parent)
+
+-- BODY: Everything else
+with Sys_Time;        -- used in implementation
+with Interfaces;      -- used for arithmetic
+```
+
 ## Parameter Overrides (ALL abstract IFF parameters.yaml exists)
 
 ```ada
@@ -394,6 +417,7 @@ param_type: Packed_Byte.T
 
 1. [ ] Spec uses `with private` / private full record pattern
 2. [ ] `Init` override present IFF YAML has `init:` section
+2a. [ ] Active components: `Cycle` override MUST be present (abstract in base class)
 3. [ ] `Set_Up` override (optional) -- called AFTER `Start_Components` in assembly. Use for post-init registration (e.g., command registration). Defined as `is null` in Core_Instance.
 4. [ ] `Invalid_Command` (procedure, 4 params) present IFF `commands.yaml` exists
 4. [ ] `Command_T_Recv_Sync` present IFF `commands.yaml` exists
@@ -418,7 +442,8 @@ param_type: Packed_Byte.T
 22. [ ] Custom type YAML filenames (e.g., `quaternion.record.yaml`) don't collide with framework types -- prefix with project/component name if needed
 22a. [ ] Verify component and type model names don't collide with existing names anywhere in the project or framework. Model names must be globally unique across all build paths -- two `.record.yaml` files with the same base name in different directories WILL conflict
 23. [ ] Use `or else` / `and then` (short-circuit) for ALL boolean expressions (Ada style requirement)
-24. [ ] No trailing whitespace in Ada or YAML files
+24. [ ] No trailing whitespace in Ada or YAML files (applies to ALL files -- YAML, Ada, Python)
+24a. [ ] Init parameter `default:` values MUST be quoted strings (`"10"` not `10`)
 25. [ ] All YAML files start with `---` document start marker
 26. [ ] Only `with` packages you actually reference -- unused `with` is a style warning
 27. [ ] Verify with `redo style` -- all warnings must be resolved
