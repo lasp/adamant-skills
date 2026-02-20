@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 15 Adamant skills totaling ~11100 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 16 Adamant skills totaling ~15300 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -131,7 +131,8 @@ You have 15 Adamant skills totaling ~11100 lines (with references). Loading all 
 
 | Task | Primary Skill | Secondary |
 |------|--------------|-----------|
-| New component from scratch | component-dev | type-system, style |
+| New component from scratch | component-dev | tools, type-system, style |
+| Scaffold + validate before building | tools | component-dev |
 | Add tests to existing component | testing | component-dev |
 | Measure/improve test coverage | testing (coverage guide) | component-dev |
 | Wire components into assembly | assembly-dev | framework-components |
@@ -163,6 +164,14 @@ These patterns cause compilation errors if violated:
 - **Preamble enums**: live in the packed type package directly (different from standalone)
 - **Data dependencies**: require `request` connector (`Data_Product_Fetch.T`), NOT `get`
 - **Parameters**: require `modify` connector, NOT `recv_sync`
+
+### Inspecting generated API, scaffolding components, validating YAML
+**Load:** `adamant-tools`
+- `adamant_inspect.py` -- extract generated API summary after first build
+- `adamant_scaffold.py` -- generate all component files from a spec YAML
+- `adamant_validate_yaml.py` -- pre-flight YAML validation without Docker
+
+**Use alongside:** `adamant-component-dev` and `adamant-testing`
 
 ### Creating or improving Adamant skills
 **Load:** `adamant-skill-creation`
