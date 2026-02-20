@@ -1,10 +1,9 @@
-<!-- source: adamant-xmera-components (branch-based, no version pin) -->
 # C Shim Patterns
 
-## Opaque Handle Pattern (Header)
+## Opaque Handle Pattern
 
+**Header:**
 ```c
-/* MIT License ... */
 #ifndef F32XIMERA_FOOALGORITHM_C_H
 #define F32XIMERA_FOOALGORITHM_C_H
 
@@ -15,21 +14,10 @@
 extern "C" {
 #endif
 
-/** @brief Opaque handle to the C++ FooAlgorithm instance. */
 typedef struct FooAlgorithm FooAlgorithm;
 
-/** @brief Construct a new FooAlgorithm instance.
- *  @return Pointer to a new FooAlgorithm (must be destroyed). */
 FooAlgorithm* FooAlgorithm_create(void);
-
-/** @brief Destroy a previously created FooAlgorithm.
- *  @param self Pointer to the instance to destroy. */
 void FooAlgorithm_destroy(FooAlgorithm* self);
-
-/** @brief Run the update step.
- *  @param self      Pointer to the instance.
- *  @param inputMsg  Pointer to input message payload.
- *  @return OutputPayload  The computed output message. */
 OutputPayload FooAlgorithm_update(FooAlgorithm* self, const InputPayload* inputMsg);
 
 #ifdef __cplusplus
@@ -39,8 +27,7 @@ OutputPayload FooAlgorithm_update(FooAlgorithm* self, const InputPayload* inputM
 #endif
 ```
 
-## C Shim Implementation
-
+**Implementation:**
 ```cpp
 #include "fooAlgorithm_c.h"
 #include "fooAlgorithm.h"
@@ -60,8 +47,7 @@ OutputPayload FooAlgorithm_update(FooAlgorithm* self, const InputPayload* inputM
 
 ## POD Conversion for Eigen Types
 
-When C++ uses Eigen types, define POD equivalents in the header:
-
+Define POD equivalents in the header:
 ```c
 typedef struct {
     float data[3];
@@ -69,16 +55,15 @@ typedef struct {
 ```
 
 Convert at the boundary in the .cpp:
-
 ```cpp
-// C to Eigen (setter)
+// C to Eigen
 void FooAlgorithm_setVector(FooAlgorithm* self, Vector3f_c vec) {
     Eigen::Vector3f eigenVec;
     eigenVec << vec.data[0], vec.data[1], vec.data[2];
     reinterpret_cast<::FooAlgorithm*>(self)->setVector(eigenVec);
 }
 
-// Eigen to C (getter)
+// Eigen to C
 Vector3f_c FooAlgorithm_getVector(FooAlgorithm* self) {
     Eigen::Vector3f eigenVec = reinterpret_cast<::FooAlgorithm*>(self)->getVector();
     Vector3f_c out;
@@ -91,7 +76,7 @@ Vector3f_c FooAlgorithm_getVector(FooAlgorithm* self) {
 
 ## Shared Types Header
 
-When the C++ algorithm defines structs or constants used in the public API, create a shared header to eliminate duplication:
+When the C++ algorithm defines structs or constants used in the public API, create a shared header:
 
 ```c
 /* fooTypes.h */
@@ -116,23 +101,7 @@ typedef struct {
 #endif
 ```
 
-Include this header in BOTH the C++ algorithm and the C shim:
-
-```cpp
-// fooAlgorithm.h
-#include "fooTypes.h"
-class FooAlgorithm {
-    void setProperties(const FooProperties& props);
-};
-```
-
-```c
-// fooAlgorithm_c.h
-#include "fooTypes.h"
-void FooAlgorithm_setProperties(FooAlgorithm* self, const FooProperties* props);
-```
-
-The shim implementation uses direct passthrough (no field-by-field copying):
+Include this header in BOTH the C++ algorithm and the C shim. The shim implementation uses direct passthrough:
 
 ```cpp
 void FooAlgorithm_setProperties(FooAlgorithm* self, const FooProperties* props) {
@@ -145,12 +114,6 @@ void FooAlgorithm_setProperties(FooAlgorithm* self, const FooProperties* props) 
 - C++ algorithm defines structs used in public methods
 - `#define` constants referenced from Ada
 - Custom types passed to or returned from algorithm methods
-
-### When NOT to create shared types
-
-- Internal implementation details
-- Types already in `msgPayloadDef/`
-- Eigen types (use Vector3f_c POD conversion instead)
 
 ## Constant Validation Getters
 
@@ -168,17 +131,6 @@ uint32_t FooAlgorithm_getMaxFooCount(void) {
 ```
 
 This enables Ada `pragma Assert` validation at elaboration time.
-
-## Naming Conventions
-
-- **C function names**: `ClassName_methodName` (PascalCase class, camelCase method)
-- **Opaque type**: Same name as C++ class
-- **File names**: `fooAlgorithm_c.h` / `fooAlgorithm_c.cpp`
-- **Header guard**: `F32XIMERA_FOOALGORITHM_C_H`
-- Use `reinterpret_cast` (not `static_cast` or C-style casts)
-- Use `new`/`delete` (not `malloc`/`free`)
-- Input-only parameters: `const Type*`
-- Do NOT catch C++ exceptions in shim layer
 
 ## Algorithm Patterns
 
@@ -206,17 +158,13 @@ Type AlgorithmName_getParameter(const AlgorithmName* self);
 OutputPayload AlgorithmName_update(AlgorithmName* self, const InputPayload* input);
 ```
 
-## Real Examples
+## Naming Conventions
 
-### sunSearch (shared types pattern)
-- `fp32-fsw-xmera/algorithms/sunSearch/sunSearchTypes.h` -- shared types
-- `fp32-fsw-xmera/algorithms/sunSearch/sunSearchAlgorithm_c.h` -- C shim header
-- `fp32-fsw-xmera/algorithms/sunSearch/sunSearchAlgorithm_c.cpp` -- C shim impl
-
-### attTrackingError (Eigen conversion pattern)
-- `fp32-fsw-xmera/algorithms/attTrackingError/attTrackingErrorAlgorithm_c.h`
-- `fp32-fsw-xmera/algorithms/attTrackingError/attTrackingErrorAlgorithm_c.cpp`
-
-### navAggregate (shared output type pattern)
-- `fp32-fsw-xmera/algorithms/navAggregate/navAggregateOutput.h` -- shared output type
-- `fp32-fsw-xmera/algorithms/navAggregate/navAggregateAlgorithm_c.h`
+- **C function names**: `ClassName_methodName` (PascalCase class, camelCase method)
+- **Opaque type**: Same name as C++ class
+- **File names**: `fooAlgorithm_c.h` / `fooAlgorithm_c.cpp`
+- **Header guard**: `F32XIMERA_FOOALGORITHM_C_H`
+- Use `reinterpret_cast` (not `static_cast` or C-style casts)
+- Use `new`/`delete` (not `malloc`/`free`)
+- Input-only parameters: `const Type*`
+- Do NOT catch C++ exceptions in shim layer
