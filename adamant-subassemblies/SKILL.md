@@ -225,8 +225,8 @@ Duplicate id_base 'Event_Id_Base' found in comm.assembly.yaml.
 ### Preamble Ordering
 Subassembly preambles are concatenated in list order before the parent's preamble. If a parent preamble references a type declared in a subassembly preamble, it works (subassembly code appears first). But if a subassembly preamble references something from the parent's preamble, it won't be visible yet.
 
-### No Nested Subassemblies
-The schema allows `subassemblies:` in any assembly YAML, but in practice subassemblies are loaded with `is_subassembly=True` which uses the `subassembly` base class (not the full `assembly` class). This means **subassemblies cannot themselves reference further subassemblies** -- only one level of nesting is supported.
+### Nested Subassemblies Are Supported
+Subassemblies are loaded as `assembly(is_subassembly=True)` which runs the full assembly load, including processing of their own `subassemblies:` field. This means **nesting works** -- a subassembly can reference further subassemblies. Use this to organize by system state with subsystem groupings within each state.
 
 ### Connector Count Coordination
 If a component in the parent has an arrayed connector (e.g., `Tick_T_Send_Count => 5`), some of those connections may target components in subassemblies. The count must match the total number of wired connections regardless of which file defines the target components.
@@ -379,7 +379,7 @@ connections:
 | Question | Answer |
 |----------|--------|
 | How do I reference a subassembly? | Add its name to `subassemblies:` list in parent |
-| Can subassemblies nest? | No -- only one level deep |
+| Can subassemblies nest? | Yes -- subassemblies can reference further subassemblies |
 | Can I wire between subassemblies? | Yes -- all components share one namespace after merge |
 | Where should cross-subsystem connections go? | In the parent assembly |
 | Can two subassemblies define the same component name? | No -- fatal error |
