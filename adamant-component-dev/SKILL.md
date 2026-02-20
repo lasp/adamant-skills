@@ -227,7 +227,7 @@ begin
 end Command_T_Recv_Sync;
 ```ada
 
-Use `Self.Execute_Command(Arg)` (NOT `Self.Process_Command`). Returns `Command_Response_Status.E`.
+Use `Self.Execute_Command(Arg)` (NOT `Self.Process_Command`). Returns `Command_Response_Status.E` (visible via `use Command_Enums;` in generated base -- do NOT add `with Command_Response_Status;`, it is not a standalone package).
 
 ## Command Handler Pattern
 
