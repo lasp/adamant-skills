@@ -6,7 +6,7 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (16 skills, ~14000 lines with refs)
+## Skill Inventory (16 skills, ~13900 lines with refs)
 
 | Skill | SKILL.md | Refs | Purpose |
 |-------|----------|------|---------|
@@ -27,7 +27,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `high-assurance-design` | 206 | 100 | Design-by-invariant, non-goals, formal verification |
 | `knowledge-acquisition` | 249 | 80 | Systematic codebase study with sub-agents |
 
-**Totals:** ~5600 SKILL.md lines + ~8500 reference lines = ~14000 lines
+**Totals:** ~5600 SKILL.md lines + ~8300 reference lines = ~13900 lines
 
 ## Key Principles
 
