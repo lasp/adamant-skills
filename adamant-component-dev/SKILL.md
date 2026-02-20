@@ -449,6 +449,7 @@ param_type: Packed_Byte.T
 - Loop: `for I in Packet_T_Send_Index'Range loop`
 - Dropped: takes extra `Index` parameter
 - Two connectors of same type get numbered: `Event_T_Send` (1st), `Event_T_Send_2` (2nd)
+- **⚠️ Each numbered send connector needs its own `*_Dropped` handler**: `Event_T_Send_Dropped` AND `Event_T_Send_2_Dropped` -- missing either causes "type must be declared abstract" error
 
 ## Pre-Flight Checklist
 
