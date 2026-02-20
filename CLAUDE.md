@@ -6,28 +6,28 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (16 skills, ~13900 lines with refs)
+## Skill Inventory (16 skills, ~11900 lines with refs)
 
-| Skill | SKILL.md | Refs | Purpose |
-|-------|----------|------|---------|
-| `adamant-skill-selector` | 200 | -- | **Read first.** Maps tasks to skills. |
-| `adamant-component-dev` | 503 | 1240 | Components: YAML models, generated API, implementation patterns, LASEL |
-| `adamant-testing` | 368 | 2360 | Test harness, History API, assertions, coverage, advanced patterns |
-| `adamant-framework-components` | 304 | 170 | Catalog of all 58 built-in components + audit |
-| `adamant-assembly-dev` | 528 | 750 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
-| `adamant-subassemblies` | 463 | -- | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
-| `adamant-type-system` | 358 | 180 | YAML type definitions, format codes, Ada type hierarchy |
-| `adamant-style` | 358 | 660 | Ada/YAML/Python style rules enforced by `redo style` |
-| `adamant-algorithm-wrapping` | 439 | 1375 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
-| `adamant-build-system` | 324 | 870 | Redo commands, code gen, build paths, SPARK prove |
-| `adamant-cosmos-integration` | 327 | 180 | CCSDS pipeline, COSMOS plugin build/load |
-| `adamant-project-setup` | 381 | -- | New project scaffolding, env/activate, Docker, config |
-| `adamant-skill-creation` | 324 | 300 | Creating, validating, and refactoring Adamant skills |
-| `adamant-framework-internals` | 260 | 180 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
-| `high-assurance-design` | 206 | 100 | Design-by-invariant, non-goals, formal verification |
-| `knowledge-acquisition` | 249 | 80 | Systematic codebase study with sub-agents |
+| Skill | Lines | Purpose |
+|-------|-------|---------|
+| `adamant-skill-selector` | 200 | **Read first.** Maps tasks to skills. |
+| `adamant-component-dev` | 1758 | Components: YAML models, generated API, implementation patterns, LASEL |
+| `adamant-assembly-dev` | 1282 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
+| `adamant-build-system` | 1190 | Redo commands, code gen, build paths, SPARK prove |
+| `adamant-algorithm-wrapping` | 1167 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
+| `adamant-style` | 1021 | Ada/YAML/Python style rules enforced by `redo style` |
+| `adamant-testing` | 892 | Test harness, History API, assertions, coverage, advanced patterns |
+| `adamant-skill-creation` | 839 | Creating, validating, and refactoring Adamant skills |
+| `adamant-type-system` | 539 | YAML type definitions, format codes, Ada type hierarchy |
+| `adamant-cosmos-integration` | 510 | CCSDS pipeline, COSMOS plugin build/load |
+| `adamant-framework-components` | 477 | Catalog of all 58 built-in components + audit |
+| `adamant-subassemblies` | 463 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
+| `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
+| `adamant-project-setup` | 381 | New project scaffolding, env/activate, Docker, config |
+| `high-assurance-design` | ~300 | Design-by-invariant, non-goals, formal verification |
+| `knowledge-acquisition` | ~330 | Systematic codebase study with sub-agents |
 
-**Totals:** ~5600 SKILL.md lines + ~8300 reference lines = ~13900 lines
+**Total:** ~11900 lines (down from ~14000 after P1+P2 trimming)
 
 ## Key Principles
 
