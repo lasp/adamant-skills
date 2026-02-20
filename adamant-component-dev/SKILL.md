@@ -312,7 +312,10 @@ with Command;         -- needed for Command_T_Recv_Sync signature
 
 -- BODY (.adb): with packages used only in implementation
 with Sys_Time;        -- used in body logic
+with Event_Types; use Event_Types;  -- need 'use' for operator visibility on typed IDs
 -- Do NOT re-with packages already with'd in spec
+-- When comparing framework typed IDs (Event_Id, Command_Id, etc.), you need
+-- 'use <Type_Package>;' to make comparison operators visible.
 ```ada
 
 ## Parameter Overrides (ALL abstract IFF parameters.yaml exists)
