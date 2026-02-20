@@ -135,32 +135,42 @@ Could not load model for subassembly 'core'. Make sure the model exists in the p
 
 ## ID Base Management
 
-Each subassembly can declare its own `id_bases` to control where its event IDs, command IDs, etc. start. This prevents collisions when merging:
+⚠️ **CRITICAL CONSTRAINT**: ID base keys must be **globally unique**. The same key name (e.g., `Event_Id_Base`) CANNOT appear in multiple subassemblies. This means you cannot give each subassembly its own `Event_Id_Base`.
+
+**SOLUTION**: Define ALL id_bases in the parent assembly only. Do NOT define id_bases in subassemblies.
 
 ```yaml
+# WRONG: Same id_base key in multiple subassemblies
 # core.assembly.yaml
+id_bases:
+  - "Event_Id_Base => 1"        # FATAL ERROR: duplicate key
+
+# comm.assembly.yaml  
+id_bases:
+  - "Event_Id_Base => 500"      # FATAL ERROR: duplicate key
+
+# CORRECT: All id_bases in parent only
+# parent.assembly.yaml
 id_bases:
   - "Event_Id_Base => 1"
   - "Command_Id_Base => 1"
+  - "Data_Product_Id_Base => 1"
+  - "Fault_Id_Base => 1"
 
-# comm.assembly.yaml
-id_bases:
-  - "Event_Id_Base => 500"
-  - "Command_Id_Base => 200"
-
-# gnc.assembly.yaml
-id_bases:
-  - "Event_Id_Base => 1000"
-  - "Command_Id_Base => 400"
+subassemblies:
+  - core
+  - comm
+  - gnc
 ```
 
 **Rules:**
 - Each id_base name must end with `_Id_Base` (e.g., `Event_Id_Base`, `Command_Id_Base`)
 - Values must be positive integers
-- The same id_base name **cannot appear in two subassemblies** or in both a subassembly and the parent -- this is a fatal duplicate error
-- If you need assembly-wide id_bases, define them in the parent only
+- **ID base keys must be globally unique** across ALL subassemblies and the parent
+- If you need assembly-wide id_bases, define them in the parent assembly ONLY
+- Subassemblies should NOT contain `id_bases:` sections
 
-**Strategy:** Allocate non-overlapping ID ranges to each subassembly. Document the allocation in comments.
+**Strategy:** Plan ID ranges at the parent level and document the allocation in comments. Component IDs will be auto-assigned sequentially starting from the base values.
 
 ## Cross-Subassembly Connections
 
@@ -191,6 +201,10 @@ connections:
 
 **Best practice:** Keep intra-subsystem connections in the subassembly file. Put inter-subsystem connections in the parent. This makes the integration points explicit.
 
+⚠️ **CRITICAL - Cross-Subassembly Data Dependencies**: If a component in subassembly A has data dependencies that need to map to data products from components in subassembly B, the `map_data_dependencies` resolver CANNOT find them. The mapper only searches at the subassembly level, not across subassemblies.
+
+**SOLUTION**: Move the component with cross-subassembly data dependencies to the parent assembly instead of keeping it in a subassembly. This gives the mapper access to all component data products during resolution.
+
 ## View System Interaction
 
 Views work on the **merged** (flattened) assembly. When generating views:
@@ -214,13 +228,44 @@ Duplicate component 'Rate_Group_Instance' not allowed. Found in files: [...]
 **Fix:** Use distinct names like `Core_Rate_Group_Instance` and `Comm_Rate_Group_Instance`.
 
 ### Duplicate ID Bases
-The same `id_base` key cannot appear in multiple subassemblies:
+⚠️ **CRITICAL**: The same `id_base` key cannot appear in multiple subassemblies:
 
 ```
 Duplicate id_base 'Event_Id_Base' found in comm.assembly.yaml.
 ```
 
-**Fix:** Only one subassembly (or the parent) should set each id_base type. Coordinate ranges across subassemblies.
+**Fix:** Define ALL id_bases in the parent assembly only. Do NOT use id_bases in subassemblies.
+
+### Empty Connections Field Crash
+A `connections:` key with only comments (no actual connections) results in `TypeError: 'NoneType' object is not iterable`. 
+
+**Fix:** Omit the `connections:` key entirely if there are no intra-subassembly connections:
+
+```yaml
+# WRONG: Empty connections field
+connections:
+  # No actual connections, just comments
+
+# CORRECT: No connections field at all
+description: Sensor subsystem
+components:
+  - type: Sensor_Reader
+    # ...
+```
+
+### Minimal Subassemblies Are Valid
+A subassembly can contain only `description:` and `components:` with no connections, id_bases, or preamble. This is common for leaf subsystems where all wiring is done in the parent:
+
+```yaml
+# Minimal valid subassembly
+description: Standalone sensor collection
+components:
+  - type: Temperature_Sensor
+    name: Temp_Sensor_Instance
+  - type: Pressure_Sensor  
+    name: Pressure_Sensor_Instance
+# No connections, id_bases, preamble, etc. - all handled by parent
+```
 
 ### Preamble Ordering
 Subassembly preambles are concatenated in list order before the parent's preamble. If a parent preamble references a type declared in a subassembly preamble, it works (subassembly code appears first). But if a subassembly preamble references something from the parent's preamble, it won't be visible yet.

@@ -53,9 +53,9 @@ Every field from the schema (`gen/schemas/assembly.yaml`):
 | `name` | str | No | Instance name (auto-generated from type if omitted) |
 | `description` | str | No | Role of this instance in the assembly |
 | `execution` | `active`\|`passive` | Only if component is `either` | Task mode |
-| `priority` | int | Active only | Task priority number |
-| `stack_size` | int | Active only | Primary stack size in bytes |
-| `secondary_stack_size` | int | Active only | Secondary stack for unconstrained return types |
+| `priority` | int | **REQUIRED for active** | Task priority number |
+| `stack_size` | int | **REQUIRED for active** | Primary stack size in bytes |
+| `secondary_stack_size` | int | **REQUIRED for active** | Secondary stack for unconstrained return types |
 | `generic_types` | str[] | No | Generic parameter resolution (e.g. `"T => Event.T"`) |
 | `discriminant` | str[] | No | Record discriminant values (e.g. `"Period_Us => 200000"`) |
 | `init_base` | str[] | No | Base init params: queue size, arrayed connector counts |
@@ -91,6 +91,23 @@ components:
 # CORRECT: Using instance name in init_base expression
       - "Queue_Size => 5 * Rate_Group_Instance.Get_Max_Queue_Element_Size"  # CORRECT: Rate_Group_Instance
 ```
+
+⚠️ **CRITICAL - Active Components REQUIRE Priority/Stack**: Event_Text_Logger, Command_Router, and ANY active component MUST have `priority:`, `stack_size:`, and `secondary_stack_size:` in the assembly YAML. Missing these fields on active components causes build failures:
+
+```yaml
+# Event_Text_Logger is ACTIVE - requires all three fields
+  - type: Event_Text_Logger
+    name: Event_Text_Logger_Instance
+    priority: 1                          # REQUIRED
+    stack_size: 50000                    # REQUIRED  
+    secondary_stack_size: 10000          # REQUIRED
+    discriminant:
+      - "Event_To_Text => Assembly_Name_Event_To_Text.Event_To_Text'Access"
+    init_base:
+      - "Queue_Size => 3 * Event_Text_Logger_Instance.Get_Max_Queue_Element_Size"
+```
+
+⚠️ **CRITICAL - Component YAML vs Assembly YAML Fields**: `priority`, `stack_size`, `secondary_stack_size` are **assembly-level fields** and must NOT appear in the `.component.yaml` file. They go in the assembly YAML component entry only. Putting these in component YAML causes build errors.
 
 ### Subtask Fields
 
@@ -387,13 +404,46 @@ Common framework components and their REQUIRED configuration in assembly YAML:
 |-----------|------|--------------|-----------|-------|
 | command_router | `Max_Number_Of_Commands => N` | -- | Queue_Size | Self-loopback required (from_index: 1) |
 | event_packetizer | `Num_Internal_Packets => N`, `Partial_Packet_Timeout => T` | -- | -- | NO init_base |
-| event_text_logger | -- | `Event_To_Text => Assembly_Event_To_Text.Event_To_Text'Access` | Queue_Size | NO Sys_Time_T_Get |
-| product_database | `Minimum_Data_Product_Id => M`, `Maximum_Data_Product_Id => N` | -- | -- | IDs from assembly-generated package |
+| event_text_logger | -- | `Event_To_Text => Assembly_Name_Event_To_Text.Event_To_Text'Access` | Queue_Size, priority, stack_size, secondary_stack_size | ACTIVE component, requires discriminant |
+| product_database | `Minimum_Data_Product_Id => M`, `Maximum_Data_Product_Id => N` | -- | -- | Use `init:` (NOT init_base) |
 | product_packetizer | `init: []` (empty) | `Packet_List => Assembly_Product_Packets.Packet_List'Access` | -- | Empty init required even when all params optional |
 | ticker | -- | -- | -- | Wire Sys_Time_T_Get (easy to forget) |
 | rate_group | -- | -- | Queue_Size | Arrayed Tick_T_Send: count MUST match connections |
 | tick_divider | `Dividers => Dividers'Access` | -- | -- | Preamble defines Divider_Array_Type |
-| splitter (generic) | -- | -- | -- | Use `T_Recv_Sync` not `Event_T_Recv_Sync` |
+| splitter (generic) | -- | -- | `T_Send_Count => N` | Component type is `Splitter`, requires `generic_types: ["T => Event.T"]` |
+
+⚠️ **CRITICAL - Event_Text_Logger Discriminant**: Event_Text_Logger requires a discriminant that includes the assembly name:
+
+```yaml
+discriminant:
+  - "Event_To_Text => Assembly_Name_Event_To_Text.Event_To_Text'Access"
+```
+
+⚠️ **CRITICAL - Splitter is Generic**: The component type is `Splitter` (not `Event_Splitter`). Must include `generic_types: ["T => Event.T"]` in the assembly YAML:
+
+```yaml
+components:
+  - type: Splitter
+    name: Event_Splitter_Instance
+    generic_types: ["T => Event.T"]
+    init_base:
+      - "T_Send_Count => 3"
+```
+
+⚠️ **CRITICAL - Product_Database Uses init**: `Minimum_Data_Product_Id` and `Maximum_Data_Product_Id` go in `init:`, NOT `init_base:`
+
+```yaml
+# CORRECT
+  - type: Product_Database  
+    name: Product_Database_Instance
+    init:
+      - "Minimum_Data_Product_Id => Assembly_Data_Products.Minimum_Data_Product_Id"
+      - "Maximum_Data_Product_Id => Assembly_Data_Products.Maximum_Data_Product_Id"
+
+# WRONG
+    init_base:
+      - "Minimum_Data_Product_Id => ..."
+```
 
 ## Assembly-Generated Packages
 
@@ -410,7 +460,7 @@ Auto-generated from the assembly model:
 - **`set_id_bases` is optional** -- omit for auto-assignment. Don't use `"Auto"` as a value.
 - **`Rate_Group` `Tick_T_Send_Count`** must EXACTLY match connected component count.
 - **System time provider** is `Gps_Time` (NOT `System_Time`). Instance name is conventional.
-- **`Product_Database`** (NOT `Data_Product_Database`) is the built-in DP store.
+- **`Product_Database`** uses `init:` (NOT `init_base:`) for Min/Max Data Product ID.
 - **`Command_Router` needs** `Command_Response_T_To_Forward_Send_Count >= 1`.
 - **`with:` packages** must exist in build path -- unknown packages silently fail.
 - **`Ccsds_Socket_Interface`** is a TCP CLIENT -- connects TO a ground server.
@@ -419,6 +469,10 @@ Auto-generated from the assembly model:
 - **Arrayed connector indices** must be sequential starting from 1. `Tick_T_Send_Count => 3` needs exactly indices 1, 2, 3.
 - **Every component with `commands.yaml`** MUST have its `Command_T_Recv_Sync` wired to the Command_Router. `Command_T_Send_Count` must include ALL commandable components. Missing wiring = commands never registered.
 - **`map_data_dependencies.data_dependency`** must exactly match a name defined in the component's `.data_dependencies.yaml`. Do not rename or paraphrase -- copy it verbatim.
+- **Event_Text_Logger discriminant** must include assembly name: `Assembly_Name_Event_To_Text.Event_To_Text'Access`.
+- **Splitter component type** is `Splitter` (not `Event_Splitter`) and requires `generic_types: ["T => Event.T"]`.
+- **Active components** (Event_Text_Logger, Command_Router) MUST have priority, stack_size, secondary_stack_size.
+- **Component YAML cannot contain** `priority`, `stack_size`, `secondary_stack_size` -- these are assembly-only fields.
 
 ## Running an Assembly
 

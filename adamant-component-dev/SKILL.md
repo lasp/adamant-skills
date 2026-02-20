@@ -115,7 +115,7 @@ data_dependencies:
 parameters:
   - name: Start_Count
     type: Packed_U16.T
-    default: "(Value => 0)"           # REQUIRED
+    default: "(Value => 0)"           # REQUIRED - uses UNPACKED record syntax
 
 # faults.yaml -- requires Fault.T send connector
 faults:
@@ -293,6 +293,19 @@ overriding procedure Update_Parameters_Action (Self : in out Instance) is null;
 
 Call `Self.Update_Parameters` explicitly (e.g., in Tick handler).
 
+⚠️ **CRITICAL - Parameter Defaults Use Unpacked Syntax**: Parameter `default:` values use the unpacked record syntax directly (e.g., `"(Kp => (Value => 1.0), Ki => (Value => 0.1))"`), NOT `Type.Pack(...)`. The code generation wraps the packing automatically:
+
+```yaml
+# CORRECT: Use unpacked record syntax in defaults
+parameters:
+  - name: Pid_Gains
+    type: Pid_Gains.T
+    default: "(Kp => (Value => 1.0), Ki => (Value => 0.1))"
+
+# WRONG: Do not use Type.Pack in defaults
+    default: "Pid_Gains.Pack((Kp => (Value => 1.0), Ki => (Value => 0.1)))"
+```
+
 **CRITICAL -- Parameter Access Pattern**: Parameters are NOT accessed via `Self.Parameters`. They are accessed via generated getter functions. For each parameter named `Kp` in the YAML, use:
 
 ```ada
@@ -350,6 +363,16 @@ Do NOT invent fields. Key types:
 - `Command.Header.Id` is `Command_Types.Command_Id` (distinct type). Need `with Command_Types; use Command_Types;`
 - `Packet_Header.T`: Time, Id, Sequence_Count (mod 2**14), Buffer_Length (Natural). NO Priority.
 - `Event_Header.T`: Time, Id (U16), Param_Buffer_Length (U8). NO Severity.
+
+⚠️ **CRITICAL - Packed_U8 Does Not Exist**: The framework type is `Packed_Byte.T` (NOT `Packed_U8.T`). Sub-agents consistently get this wrong:
+
+```yaml
+# WRONG: Packed_U8 does not exist
+param_type: Packed_U8.T
+
+# CORRECT: Use Packed_Byte.T
+param_type: Packed_Byte.T
+```
 
 **General rule:** Framework distinct types need `use type` for operator visibility (=, /=, <, etc.).
 
