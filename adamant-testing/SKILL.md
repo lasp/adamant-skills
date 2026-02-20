@@ -75,9 +75,14 @@ with Data_Product;                        -- if inspecting raw DPs
 with Command_Enums.Assertion; use Command_Enums.Assertion;
 -- Gives: Command_Response_Status_Assert, Command_Execution_Status_Assert
 
--- NEVER with these (they don't exist as standalone packages):
--- Command_Response_Status  (use Command_Enums.Command_Response_Status)
--- Command_Execution_Status (use Command_Enums.Command_Execution_Status)
+-- NEVER with these directly (they are child instantiations, not standalone):
+-- Natural_Assert              -> with Basic_Assertions; use Basic_Assertions;
+-- Boolean_Assert              -> with Basic_Assertions; use Basic_Assertions;
+-- Packed_U16_Assert           -> with Packed_U16.Assertion; use Packed_U16.Assertion;
+-- Packed_U32_Assert           -> with Packed_U32.Assertion; use Packed_U32.Assertion;
+-- Command_Response_Status_Assert -> with Command_Enums.Assertion; use Command_Enums.Assertion;
+-- Command_Response_Status     -> use Command_Enums.Command_Response_Status
+-- Command_Execution_Status    -> use Command_Enums.Command_Execution_Status
 ```ada
 
 **Name collisions**: `Tick` can collide with `Ada.Real_Time.Tick`. Always qualify: `Tick.T`, not just `T` when ambiguous. Add `use Tick;` if you reference `Tick.T` frequently.
