@@ -226,7 +226,7 @@ Status := Self.Get_Foo (Stale_Reference => time, Value => out_var);  -- no times
 -- Returns Data_Product_Enums.Data_Dependency_Status.E (Success | Not_Available | Stale | Error)
 ```
 
-**CRITICAL**: Body MUST include `with Data_Product_Enums; use Data_Product_Enums;` for status comparison.
+**CRITICAL**: Body MUST include `with Data_Product_Enums; use Data_Product_Enums; use type Data_Product_Enums.Data_Dependency_Status.E;` for `=` operator visibility on status comparison.
 
 Required overrides (BOTH abstract, MUST implement):
 ```ada
