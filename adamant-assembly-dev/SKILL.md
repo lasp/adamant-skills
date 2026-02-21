@@ -348,6 +348,8 @@ parameters:
 
 Fields: `parameters_instance_name` (required), `parameters` (required, list of strings or lists for grouped params).
 
+**WARNING:** The `<name>` portion becomes an Ada package name. It MUST NOT collide with existing package names -- especially the assembly package itself. For assembly `ceres_fsw`, do NOT name the file `ceres_fsw.ceres_fsw.parameter_table.yaml`. Use a distinct prefix like `ceres_fsw_params.ceres_fsw.parameter_table.yaml`.
+
 ### Task Watchdog List (`<name>.<assembly>.task_watchdog_list.yaml`)
 
 Configures the `task_watchdog` framework component's pet monitoring.
