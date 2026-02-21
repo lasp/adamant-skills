@@ -318,9 +318,19 @@ redo build/bin/Pico/main.elf
 |-------|-----|
 | `No target test.elf` | Missing `test.adb` in test directory |
 | `duplicate file name` | Filenames must be globally unique across all `.path` dirs |
-| Model cache stale | `redo clear_cache` then rebuild |
+| Model cache stale | `redo clear_cache` then rebuild (see escalation below) |
 | `redo coverage` shows 0% or stamp mismatch | Stale gcov data; `redo clean` in test dir, then re-run `redo coverage` |
 | Ravenscar violations in tests | Use `env.py` (selects Linux_Test target, not Linux) |
+
+### Model Cache Troubleshooting Escalation
+
+If `redo clear_cache` + rebuild doesn't fix stale generated output:
+
+1. **Check for file overrides**: A hand-written file in the source directory overrides generated output in `build/src/`. Run `find . -name "the_file.ads" -not -path "*/build/*"` -- if found outside `build/`, that's your stale copy.
+2. **Clean + clear + rebuild**: `redo clean` then `redo clear_cache` then `redo all` (in that order -- clean removes old `.o` files that redo's dep tracking might skip).
+3. **Check `$ADAMANT_TMP_DIR`**: Multiple environments may use different temp dirs. Verify: `echo $ADAMANT_TMP_DIR`.
+4. **Full clean**: `redo clean_all` on both adamant and project directories.
+5. **Fresh Docker volumes**: `adamant_env.sh remove` + `start` as last resort.
 
 More errors and project structure: [references/build-commands.md](references/build-commands.md)
 
