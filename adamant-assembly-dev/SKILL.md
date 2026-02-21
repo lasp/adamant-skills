@@ -582,6 +582,21 @@ Auto-generated from the assembly model:
 - **Active components** (Event_Text_Logger, Command_Router) MUST have priority, stack_size, secondary_stack_size.
 - **Component YAML cannot contain** `priority`, `stack_size`, `secondary_stack_size` -- these are assembly-only fields.
 
+## Assembly Wiring Checklist
+
+Before building, verify every component has ALL required connections:
+
+1. **Every component** → `Sys_Time_T_Get` wired to time provider (if component has that connector)
+2. **Every `Event_T_Send`** → Event_Splitter `T_Recv_Sync` (index N)
+3. **Every `Data_Product_T_Send`** → Product_Database `Data_Product_T_Recv_Sync`
+4. **Every `Command_T_Recv_Sync`** → Command_Router `Command_T_Send` (index N)
+5. **Every `Command_Response_T_Send`** → Command_Router `Command_Response_T_Recv_Async`
+6. **Every `Fault_T_Send`** → Fault_Correction (or `to_component: ignore`)
+7. **Arrayed send counts** (`Tick_T_Send_Count`, `T_Send_Count`, `Command_T_Send_Count`) match EXACTLY the number of wired connections
+8. **Active components** have `priority`, `stack_size`, `secondary_stack_size`
+9. **Passive components with `recv_async`** (Product_Packetizer, Limiter) have `init_base: Queue_Size`
+10. **Command_Router self-loop**: `Command_Response_T_To_Forward_Send` → own `Command_Response_T_Recv_Async`
+
 ## Running an Assembly
 
 ```bash
