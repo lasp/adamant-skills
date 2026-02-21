@@ -435,6 +435,8 @@ Do NOT invent fields. Key types:
 - `Command.Header.Id` is `Command_Types.Command_Id` (distinct type). Need `with Command_Types; use Command_Types;`
 - `Packet_Header.T`: Time, Id, Sequence_Count (mod 2**14), Buffer_Length (Natural). NO Priority.
 - `Event_Header.T`: Time, Id (U16), Param_Buffer_Length (U8). NO Severity.
+- `Fault_Header.T`: Time (Sys_Time.T), Id (Fault_Types.Fault_Id, U16), Param_Buffer_Length (U8). Access via `Arg.Header.Id`, `Arg.Header.Time`.
+- `Fault.T`: Header (Fault_Header.T) + Param_Buffer (variable-length byte buffer). Need `with Fault_Types;` for `Fault_Id`.
 
 ⚠️ **CRITICAL - Packed_U8 Does Not Exist**: The framework type is `Packed_Byte.T` (NOT `Packed_U8.T`). Sub-agents consistently get this wrong:
 
