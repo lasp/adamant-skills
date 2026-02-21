@@ -85,6 +85,12 @@ with Command_Enums.Assertion; use Command_Enums.Assertion;
 -- Command_Execution_Status    -> use Command_Enums.Command_Execution_Status
 ```ada
 
+**Assertion methods**: `Eq`, `Neq`, `Lt`, `Le`, `Gt`, `Ge` -- all available on `Natural_Assert`, `Packed_U16_Assert`, etc. Use `Ge` for "at least N" checks (common for accumulated counts).
+
+**Discarding status**: When a function returns a status you don't need, use `pragma Warnings (Off, "unused"); Ignore := Some_Function; pragma Warnings (On, "unused");` or the `Ignore renames` pattern.
+
+**Package-level `use type`**: Can be placed at package body level (not just inside procedures) for operators needed across multiple test methods.
+
 **Name collisions**: `Tick` can collide with `Ada.Real_Time.Tick`. Always qualify: `Tick.T`, not just `T` when ambiguous. Add `use Tick;` if you reference `Tick.T` frequently.
 
 ## Test Model
@@ -152,6 +158,8 @@ end Test_Name;
 ```ada
 
 **Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`. Both Init and Set_Up are optional -- only call them if YAML declares `init:` or component overrides Set_Up. For per-test init params, defer Init/Set_Up to each test body (see [setup-variants.md](references/setup-variants.md) for deferred init patterns).
+
+**Re-init mid-test:** To test different init configurations within a single test file, call `Final_Base` then repeat the full setup: `Final_Base` → `Init_Base` → `Connect` → `Component_Instance.Init(new_params)` → `Set_Up`. This resets all histories and reconnects.
 
 **⚠️ History Depth**: Generated `Init_Base` initializes all histories with `Depth => 100`. If a test sends more than 100 events/data products/commands, the history overflows and the test fails with "History is full." Solutions:
 - Increase depth in Init_Base: `Self.Event_T_Recv_Sync_History.Init (Depth => 500);`
