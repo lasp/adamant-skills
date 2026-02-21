@@ -287,6 +287,7 @@ byte_image: True         # Print as byte array instead of typed Image
 7. Enum names must differ from parent package name
 8. Do NOT use `Boolean` as packed field -- use `mod 2**1`/U1 or enum E1
 9. Sub-byte fields MUST use `mod` or `subtype range` types defined in preamble
+10. Arrays are ALWAYS fixed-length -- `variable_length` applies only to record fields, not array definitions
 10. Enum literal `value:` is optional -- auto-increments from 0 if omitted
 
 ## Common Type Errors and Fixes
