@@ -263,12 +263,24 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Use: Safe memory writing with arming mechanism
 
 **logger** (passive)
-- Purpose: Log generic data to circular buffer
-- Use: Data logging and playback for any data type
+- Purpose: Log generic data to circular buffer with configurable memory allocation
+- Use: Data logging and playback for any data type with heap or static memory options
+- Generic: `T` (any data type to log), `Serialized_Length` (function for variable-length packed types)
+- With: `Circular_Buffer_Meta`, `Serializer_Types`, `Logger_Enums`
+- Init:
+  - `bytes` (Basic_Types.Byte_Array_Access, default null) -- preallocated memory for log data; if null, heap allocation used
+  - `meta_Data` (Circular_Buffer_Meta.T_Access, default null) -- preallocated meta data storage; must be null if size positive
+  - `size` (Integer, default -1) -- bytes to allocate on heap if bytes=null; must be negative if bytes not null
+  - `initial_Mode` (Logger_Enums.Logger_Mode.E, default Disabled) -- initial logging state (enabled/disabled)
+- Connectors: `T_Recv_Sync` (generic data in), `Memory_Dump_Send` (to memory packetizer), `Command_T_Recv_Sync`, `Command_Response_T_Send`, `Event_T_Send`, `Data_Product_T_Send`, `Sys_Time_T_Get`
 
 **limiter** (passive)
-- Purpose: Rate-limit generic data output by tick rate
-- Use: Rate control for any data type
+- Purpose: Rate-limit generic data output by tick rate with configurable threshold
+- Use: Queue and meter output of any data type at commandable rates; packet rate in units of periodic tick
+- Generic: `T` (any data type), `Serialized_Length` (function for variable-length packed types)
+- With: `Serializer_Types`
+- Init: `Max_Sends_Per_Tick` (Interfaces.Unsigned_16) -- maximum sends per tick; stops at threshold or empty queue
+- Connectors: `Tick_T_Recv_Sync` (rate control), `T_Recv_Async` (queued input), `T_Send` (metered output), `Command_T_Recv_Sync` (optional), `Command_Response_T_Send` (optional), `Parameter_Update_T_Modify` (optional), `Data_Product_T_Send`, `Event_T_Send`, `Sys_Time_T_Get`
 
 ## Parameter Management (2 components)
 
@@ -290,8 +302,14 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 ## Control Systems (1 component)
 
 **pid_controller** (passive)
-- Purpose: PID control with P/I/D gains and diagnostics
-- Use: Closed-loop control systems
+- Purpose: PID control with P/I/D gains, integral wind-up limiting, and optional statistical diagnostics
+- Use: Closed-loop control systems with feed-forward, error statistics (mean/variance/max), and diagnostic packets
+- Init:
+  - `control_Frequency` (Short_Float) -- control frequency in Hz for PID time step calculation
+  - `database_Update_Period` (Unsigned_16) -- period in ticks for data product updates
+  - `moving_Average_Max_Samples` (Natural) -- max diagnostic samples for statistics; 0 disables statistics
+  - `moving_Average_Init_Samples` (Integer, default -1) -- initial samples for statistics; -1 uses max
+- Connectors: `Control_Input_U_Recv_Sync` (measured/commanded positions + feed-forward), `Control_Output_U_Send` (PID output), `Parameter_Update_T_Modify` (PID gains), `Packet_T_Send` (diagnostics), `Command_T_Recv_Sync`, `Command_Response_T_Send`, `Event_T_Send`, `Data_Product_T_Send`, `Sys_Time_T_Get`
 
 ## Data Product Management (4 components)
 
@@ -347,19 +365,19 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **ticker** (active)
 - Purpose: Generate periodic ticks at microsecond intervals
 - Use: Primary tick source for assembly scheduling
-- discriminant: `Period_Us` (microseconds between ticks)
-- Connectors: `Tick_T_Send`, `Sys_Time_T_Get`
+- Discriminant: `Period_Us` (Positive) -- the tick period in microseconds
+- Connectors: `Tick_T_Send` (periodic output), `Sys_Time_T_Get`
 
 **tick_listener** (passive)
 - Purpose: Count ticks since last invocation
 - Use: Software interrupt simulation
 
 **splitter** (passive)
-- Purpose: Split single connector into arrayed outputs
-- Use: Fan-out distribution for any data type
-- generic_types: `T => Event.T` (or any connector type)
-- init_base: `T_Send_Count`
-- Connectors: `T_Recv_Sync`, `T_Send` (arrayed)
+- Purpose: Split single connector into arrayed outputs for simultaneous distribution
+- Use: Fan-out distribution when single send connector needs to go to multiple destinations
+- Generic: `T` (any connector type for compile-time instantiation)
+- No init parameters
+- Connectors: `T_Recv_Sync` (single input), `T_Send` (arrayed output, count=0, size determined by assembly)
 
 ## Time Synchronization (4 components)
 
