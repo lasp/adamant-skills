@@ -12,6 +12,7 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **ccsds_command_depacketizer** (passive)
 - Purpose: CCSDS packets -> Adamant commands with validation
 - Use: Convert uplinked command packets to internal format
+- Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (in), `Command_T_Send` (out), `Event_T_Send`, `Data_Product_T_Send`, `Packet_T_Send` (errors), `Sys_Time_T_Get`, `Command_Response_T_Send`, `Command_T_Recv_Sync` (self-commands)
 
 **ccsds_downsampler** (passive)
 - Purpose: Filter packets by APID with configurable rates
@@ -32,6 +33,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **ccsds_router** (either)
 - Purpose: Route CCSDS packets by APID lookup table
 - Use: Distribute packets to appropriate processing components
+- Init: `Table` (Router_Table_Entry_Array), `Report_Unrecognized_APIDs` (Boolean, default True)
+- Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (in sync), `Ccsds_Space_Packet_T_Recv_Async` (in async), `Ccsds_Space_Packet_T_Send` (arrayed, count=0 variable), `Unrecognized_Ccsds_Space_Packet_T_Send` (unmatched APIDs), `Event_T_Send`, `Packet_T_Send` (errors), `Sys_Time_T_Get`
 
 **ccsds_serial_interface** (active)
 - Purpose: CCSDS over serial via Ada.Text_IO
@@ -107,7 +110,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **event_packetizer** (passive)
 - Purpose: Collect events into packets with timeout
 - Use: Efficient event downlink batching
-- Init: `Num_Internal_Packets`, `Partial_Packet_Timeout` (both required). NO init_base
+- Init: `Num_Internal_Packets` (Two_Or_More, min 2), `Partial_Packet_Timeout` (Natural, 0=disabled). NO init_base
+- Connectors: `Tick_T_Recv_Sync`, `Event_T_Recv_Sync` (events in), `Command_T_Recv_Sync`, `Packet_T_Send` (event packets out), `Sys_Time_T_Get`, `Data_Product_T_Send`, `Command_Response_T_Send`
 
 **event_text_logger** (active)
 - Purpose: Print events as text using assembly-specific conversion
@@ -217,6 +221,9 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **product_packetizer** (passive)
 - Purpose: Request data products and packetize at rates
 - Use: Telemetry packet generation from data products
+- Discriminant: `Packet_List` (Product_Packet_Types.Packet_Description_List_Access_Type, autocoded from product_packets.yaml)
+- Init: `Commands_Dispatched_Per_Tick` (Positive, default 3)
+- Connectors: `Tick_T_Recv_Sync`, `Data_Product_Fetch_T_Request` (request to Product_Database), `Packet_T_Send` (packets out), `Command_T_Recv_Async`, `Event_T_Send`, `Sys_Time_T_Get`, `Command_Response_T_Send`
 
 **sequence_store** (active)
 - Purpose: Manage memory slots storing sequences by ID
