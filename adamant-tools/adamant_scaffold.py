@@ -359,10 +359,21 @@ def generate_implementation_spec(spec, output_dir):
         lines.append(f"   overriding procedure Init (Self : in out Instance; {params});")
     lines.append("")
 
-    # Recv connectors
-    if spec.get("connectors"):
-        for direction in ["recv_sync", "recv_async"]:
-            for c in spec["connectors"].get(direction, []):
+    # Recv connectors (skip Command.T and Parameter_Update.T -- handled by commands/parameters sections)
+    auto_handled_types = set()
+    if spec.get("commands"):
+        auto_handled_types.add("Command.T")
+    if spec.get("parameters"):
+        auto_handled_types.add("Parameter_Update.T")
+
+    conn_spec = spec.get("connectors", {})
+    if not isinstance(conn_spec, dict):
+        conn_spec = {}
+    if conn_spec:
+        for direction in ["recv_sync", "recv_async", "modify"]:
+            for c in conn_spec.get(direction, []):
+                if c.get("type") in auto_handled_types:
+                    continue
                 type_name = c["type"].replace(".", "_")
                 proc_name = f"{type_name}_{direction.title().replace('_', '_')}"
                 if c.get("name"):
@@ -376,11 +387,22 @@ def generate_implementation_spec(spec, output_dir):
         lines.append("   overriding procedure Command_T_Recv_Sync (Self : in out Instance; Arg : in Command.T);")
         lines.append("")
 
-    # Dropped handlers
-    if spec.get("connectors"):
-        for c in spec["connectors"].get("send", []):
-            type_name = c["type"].replace(".", "_")
-            lines.append(f"   overriding procedure {type_name}_Send_Dropped (Self : in out Instance; Arg : in {c['type']}) is null;")
+    # Dropped handlers for all send connectors (user-specified + auto-injected)
+    dropped_types = []
+    for c in conn_spec.get("send", []):
+        dropped_types.append(c["type"])
+    if spec.get("commands") and "Command_Response.T" not in dropped_types:
+        dropped_types.append("Command_Response.T")
+    if spec.get("events") and "Event.T" not in dropped_types:
+        dropped_types.append("Event.T")
+    if spec.get("data_products") and "Data_Product.T" not in dropped_types:
+        dropped_types.append("Data_Product.T")
+    if spec.get("faults") and "Fault.T" not in dropped_types:
+        dropped_types.append("Fault.T")
+    for dtype in dropped_types:
+        type_name = dtype.replace(".", "_")
+        lines.append(f"   overriding procedure {type_name}_Send_Dropped (Self : in out Instance; Arg : in {dtype}) is null;")
+    if dropped_types:
         lines.append("")
 
     # Data dependency abstracts
@@ -422,7 +444,8 @@ def generate_implementation_body(spec, output_dir):
         with_clauses.add("Data_Product_Types")
     if spec.get("commands"):
         with_clauses.add("Command_Enums")
-        with_clauses.add("Command")
+    if spec.get("parameters"):
+        with_clauses.add("Parameter_Enums")
 
     for w in sorted(with_clauses):
         lines.append(f"with {w};")
@@ -441,10 +464,21 @@ def generate_implementation_body(spec, output_dir):
         lines.append(f"   end Init;")
         lines.append("")
 
-    # Recv handlers
-    if spec.get("connectors"):
-        for direction in ["recv_sync", "recv_async"]:
-            for c in spec["connectors"].get(direction, []):
+    # Recv handlers (skip Command.T/Parameter_Update.T -- handled by dedicated sections)
+    auto_handled_types = set()
+    if spec.get("commands"):
+        auto_handled_types.add("Command.T")
+    if spec.get("parameters"):
+        auto_handled_types.add("Parameter_Update.T")
+
+    conn = spec.get("connectors", {})
+    if not isinstance(conn, dict):
+        conn = {}
+    if conn:
+        for direction in ["recv_sync", "recv_async", "modify"]:
+            for c in conn.get(direction, []):
+                if c.get("type") in auto_handled_types:
+                    continue
                 type_name = c["type"].replace(".", "_")
                 proc_name = f"{type_name}_{direction.title().replace('_', '_')}"
                 if c.get("name"):
