@@ -128,7 +128,8 @@ data_product_buffer_size: 32
 
 # Size of serialization buffer in command type (bytes).
 # Must fit the largest command argument payload.
-command_buffer_size: 128
+# Use 255 when using Product_Database (its Override command takes Data_Product.T).
+command_buffer_size: 255
 
 # Size of serialization buffer in event type (bytes).
 # Must fit the largest event parameter payload.

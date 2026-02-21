@@ -310,6 +310,8 @@ Only `with` packages in the **spec** (`.ads`) if the spec references them (e.g.,
 
 **Ada child packages inherit parent `with`/`use` visibility.** The implementation child package CAN see packages `with`'d by the generated base class spec. However, only add `with` in your spec for types you declare in signatures; add `with` in your body for types only used in the body. Do NOT re-`with`/`use` packages already visible from the base class (e.g., `Interfaces` when the base already has it) -- this causes redundant `-gnatwr` warnings.
 
+**Types in feature YAMLs are auto-visible via generated API.** Types referenced in `data_products.yaml`, `events.yaml`, `faults.yaml`, etc. are accessed through the generated `Self.Data_Products.*`, `Self.Events.*`, `Self.Faults.*` functions. You do NOT need to `with` these types in your implementation body -- the generated base class already imports them. Adding an explicit `with` for a type only used via `Self.Data_Products.Name(...)` will trigger an unused unit warning.
+
 ```ada
 -- SPEC (.ads): with packages for types used in declarations/signatures
 with Tick;            -- needed for Tick_T_Recv_Sync signature

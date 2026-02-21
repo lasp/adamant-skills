@@ -169,7 +169,7 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Init (NO init_base):
   - `Num_Internal_Packets` (Two_Or_More) -- number of internal double-buffered packets; minimum 2. When all exhausted, events are dropped
   - `Partial_Packet_Timeout` (Natural) -- ticks before sending a partial packet (must have ≥1 event); 0 disables (only full packets sent)
-- Connectors: `Tick_T_Recv_Sync` (triggers send of full/timeout packets), `Event_T_Recv_Sync` (events in), `Command_T_Recv_Sync`, `Packet_T_Send` (event packets out), `Sys_Time_T_Get`, `Data_Product_T_Send`, `Command_Response_T_Send` (7 total)
+- Connectors: `Tick_T_Recv_Sync` (triggers send of full/timeout packets), `Event_T_Recv_Sync` (events IN -- NOT Event_T_Send), `Command_T_Recv_Sync`, `Packet_T_Send` (event packets out as Packet.T), `Sys_Time_T_Get`, `Data_Product_T_Send`, `Command_Response_T_Send` (7 total)
 
 **event_text_logger** (active)
 - Purpose: Print events as text using assembly-specific conversion
