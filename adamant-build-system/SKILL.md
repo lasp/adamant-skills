@@ -213,6 +213,30 @@ GPR Source_Dirs includes both `build/src/` (generated) and the component's sourc
 
 **Template stubs** (`build/template/`) work differently -- they are NOT in Source_Dirs. You explicitly copy them to your source directory to create implementation files. They are never auto-included.
 
+### Test Template Workflow (Critical)
+
+This is the #1 source of test build failures. Test directories need generated template files copied in:
+
+```bash
+# From the component directory (NOT the test/ dir):
+cd src/components/my_component
+redo templates                    # generates build/template/*.ads, *.adb
+cp build/template/my_component_tests-implementation.ads test/
+cp build/template/my_component_tests-implementation.adb test/
+# Also copy tester files:
+cp build/template/component-my_component-implementation-tester.ads test/
+cp build/template/component-my_component-implementation-tester.adb test/
+```
+
+Only THEN can you edit the test body. Without these files, `redo test` fails with "Cannot find template files". The test directory has NO `.all_path` file -- it uses `env.py` only (`from environments import test`).
+
+### Ada Elaboration / Binding Step
+
+Assembly main executables require an elaboration step (adainit/adafinal). This is handled automatically by `redo` via `gnatbind` during the link phase. If you see "undefined reference to adainit", it means:
+1. The main procedure is missing `pragma Ada_Main` or the GPR Main attribute is wrong
+2. The bind step was skipped (corrupted redo state -- fix with `redo clean_all`)
+3. For standalone encapsulated libraries (FFI), GNAT handles adainit/adafinal automatically when using relocatable (shared) mode
+
 ### Jinja2 Template Variables
 YAML files can use Jinja2 syntax to reference configuration values:
 ```yaml

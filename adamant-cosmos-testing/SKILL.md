@@ -572,6 +572,10 @@ def wait_for_stable(target, packet, item, duration_s=5, poll_s=0.5):
 
 Use for interruption tests (disable component, verify downstream freezes) and quiescent state checks.
 
+**Always pair negative assertions with positive-control re-enable tests.** A system that was never active also passes `wait_for_stable`. Pattern: (1) verify thing IS changing, (2) disable, (3) verify thing STOPS changing, (4) re-enable, (5) verify thing RESUMES changing. Steps 1 and 4-5 prevent false passes.
+
+**Duration guidance:** Set `duration_s` to at least 3x the component's control period. A 1 Hz controller needs >= 3s; a 10 Hz controller needs >= 0.3s (use 1s minimum for reliability).
+
 ## Boot Sequence Testing
 
 Early boot phases need `wait_packet` (not `wait_check`) because telemetry may not have arrived yet:
