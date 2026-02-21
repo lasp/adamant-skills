@@ -229,6 +229,15 @@ Natural_Assert.Gt (T.Async_Data_Send_Dropped_Count, 0);
 
 ## Command Response Verification
 
+**Active components (recv_async commands):** You MUST call `T.Dispatch_All` after sending commands before checking responses. Commands sit in the queue until dispatched. Without this, all command response assertions silently pass with count=0.
+
+```ada
+-- Active component command test pattern:
+T.Command_T_Send (cmd);                        -- queued, not processed
+Natural_Assert.Eq (T.Dispatch_All, 1);          -- NOW it processes
+-- Check response AFTER dispatch:
+```
+
 ```ada
 Natural_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get_Count, 1);
 Command_Response_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get (1), (
