@@ -12,7 +12,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **ccsds_command_depacketizer** (passive)
 - Purpose: CCSDS packets -> Adamant commands with validation
 - Use: Convert uplinked command packets to internal format
-- Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (in), `Command_T_Send` (out), `Event_T_Send`, `Data_Product_T_Send`, `Packet_T_Send` (errors), `Sys_Time_T_Get`, `Command_Response_T_Send`, `Command_T_Recv_Sync` (self-commands)
+- No init parameters
+- Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (CCSDS packets in), `Command_T_Send` (commands out), `Data_Product_T_Send`, `Event_T_Send`, `Packet_T_Send` (error packets), `Sys_Time_T_Get`, `Command_Response_T_Send`, `Command_T_Recv_Sync` (self-commands)
 
 **ccsds_downsampler** (passive)
 - Purpose: Filter packets by APID with configurable rates
@@ -38,11 +39,13 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (CCSDS in), `Data_Product_T_Send` (extracted products), `Event_T_Send`, `Sys_Time_T_Get`
 
 **ccsds_router** (either)
-- Purpose: Route CCSDS packets by APID lookup table
-- Use: Distribute packets to appropriate processing components
-- Init: `Table` (Router_Table_Entry_Array), `Report_Unrecognized_APIDs` (Boolean, default True)
-- Table entry type: `Router_Table_Entry` has fields: `Apid` (Ccsds_Apid_Type), `Destinations` (Destination_Table_Access -- array of connector indices), `Sequence_Count_Mode` (No_Check/Warn/Drop_Dupes). An autocoder exists to generate the table from YAML (`gen/` subdir).
-- Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (in sync), `Ccsds_Space_Packet_T_Recv_Async` (in async), `Ccsds_Space_Packet_T_Send` (arrayed, count=0 variable), `Unrecognized_Ccsds_Space_Packet_T_Send` (unmatched APIDs), `Event_T_Send`, `Packet_T_Send` (errors), `Sys_Time_T_Get`
+- Purpose: Route CCSDS packets by APID lookup table with sequence count checking
+- Use: Distribute packets to appropriate processing components by APID; autocoder exists in gen/ subdirectory for table generation
+- With: `Ccsds_Router_Types`
+- Init:
+  - `Table` (Ccsds_Router_Types.Router_Table_Entry_Array, not_null) -- routing table mapping APIDs to output connectors with sequence count modes
+  - `Report_Unrecognized_APIDs` (Boolean, default True) -- send error packet/event for unrecognized APIDs
+- Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (sync input), `Ccsds_Space_Packet_T_Recv_Async` (async input), `Ccsds_Space_Packet_T_Send` (arrayed output, count=0), `Unrecognized_Ccsds_Space_Packet_T_Send` (unmatched APIDs), `Event_T_Send`, `Packet_T_Send` (errors), `Sys_Time_T_Get`
 
 **ccsds_serial_interface** (active)
 - Purpose: CCSDS over serial via Ada.Text_IO
@@ -79,11 +82,11 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Connectors: `Command_T_To_Forward_Recv_Sync` (commands to check), `Command_T_Send` (forwarded commands), `Data_Product_T_Send`, `Event_T_Send`, `Packet_T_Send` (error packets), `Sys_Time_T_Get`
 
 **command_router** (active)
-- Purpose: Route commands by ID to destination components
-- Use: Central command distribution hub for assembly
-- init_base: `Queue_Size`, `Command_T_Send_Count`, `Command_Response_T_To_Forward_Send_Count`
-- init: `Max_Number_Of_Commands`
-- Connectors: `Command_T_To_Route_Recv_Async` (input), `Command_T_Send` (arrayed), `Command_Response_T_Recv_Async` (self-loopback from Forward), `Command_Response_T_To_Forward_Send`, `Event_T_Send`, `Data_Product_T_Send`, `Sys_Time_T_Get`
+- Purpose: Route commands by ID to destination components with registration table
+- Use: Central command distribution hub for assembly; includes NOOP self-test commands and response forwarding
+- Init:
+  - `max_Number_Of_Commands` (Natural) -- maximum unique commands that can be registered (sizes internal heap table)
+- Connectors: `Command_T_To_Route_Recv_Async` (main command input), `Command_T_To_Route_Recv_Sync` (high-priority bypass), `Command_T_Send` (arrayed output, count=0), `Command_Response_T_Recv_Async` (registration + responses), `Command_Response_T_To_Forward_Send` (response forwarding, count=0), `Command_T_Recv_Async` (self-commands), `Command_Response_T_Send` (self-responses), `Event_T_Send`, `Data_Product_T_Send`, `Sys_Time_T_Get`
 
 **command_sequencer** (active)
 - Purpose: Execute LASEL sequences with multiple engines
@@ -320,19 +323,26 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 ## Rate Group & Scheduling (5 components)
 
 **rate_group** (active)
-- Purpose: Execute components at periodic rate with timing
-- Use: Fundamental scheduling providing tasks for passive components
-- init_base: `Queue_Size`, `Tick_T_Send_Count`
-- init: `Ticks_Per_Timing_Report`
-- Connectors: `Tick_T_Recv_Async`, `Tick_T_Send` (arrayed), `Pet_T_Send`, `Event_T_Send`, `Sys_Time_T_Get`
+- Purpose: Execute components at periodic rate with cycle slip detection and timing reports
+- Use: Fundamental scheduling providing tasks for passive components; executes connected components in order
+- Init:
+  - `Ticks_Per_Timing_Report` (Interfaces.Unsigned_16, default 1) -- period in ticks for timing report data product (0=disabled)
+  - `Timing_Report_Delay_Ticks` (Interfaces.Unsigned_16, default 3) -- ticks to wait before calculating timing report (ignores startup transients)
+  - `Issue_Time_Exceeded_Events` (Boolean, default False) -- issue events when execution time exceeds maximum
+- Connectors: `Tick_T_Recv_Async` (periodic trigger), `Tick_T_Send` (arrayed output, count=0), `Pet_T_Send` (watchdog service), `Data_Product_T_Send`, `Event_T_Send`, `Sys_Time_T_Get`
 
 **tick_divider** (passive)
-- Purpose: Divide tick rate into multiple subrates
-- Use: Multi-rate scheduling from single tick source
-- init_base: `Tick_T_Send_Count`
-- init: `Dividers` (access to preamble-defined `Divider_Array_Type`)
-- preamble: Define `Divider_Array_Type` as array of Natural
-- Connectors: `Tick_T_Recv_Sync`, `Tick_T_Send` (arrayed), `Event_T_Send`, `Sys_Time_T_Get`
+- Purpose: Divide tick rate into multiple subrates with priority ordering
+- Use: Multi-rate scheduling from single tick source; first connector has highest priority
+- With: `Connector_Types`, `Interfaces`
+- Preamble:
+  - `Divider_Array_Type` (array of Interfaces.Unsigned_32 indexed by Connector_Types.Connector_Index_Type)
+  - `Divider_Array_Type_Access` (access to Divider_Array_Type)
+  - `Tick_Source_Type` (Internal, Tick_Counter) -- counting mode
+- Init:
+  - `Dividers` (Divider_Array_Type_Access, not_null) -- divisor values per output connector (0=disabled)
+  - `Tick_Source` (Tick_Source_Type, default Internal) -- use internal counter or incoming tick's Count field
+- Connectors: `Tick_T_Recv_Sync` (input), `Tick_T_Send` (arrayed output, count=0), `Event_T_Send`, `Sys_Time_T_Get`
 
 **ticker** (active)
 - Purpose: Generate periodic ticks at microsecond intervals
