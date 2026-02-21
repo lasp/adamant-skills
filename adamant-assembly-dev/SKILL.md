@@ -137,7 +137,7 @@ components:
 | `from_component` | str | **Yes** | Source component instance name |
 | `from_connector` | str | **Yes** | Source connector name |
 | `from_index` | int (1–65535) | No | Array index for arrayed send connectors |
-| `to_component` | str | **Yes** | Destination component (or `ignore`) |
+| `to_component` | str | **Yes** | Destination component instance name |
 | `to_connector` | str | **Yes** | Destination connector (or `ignore`) |
 | `to_index` | int (1–65535) | No | Array index for arrayed receive connectors |
 
@@ -209,15 +209,7 @@ Active components use different queue types based on their `recv_async` connecto
 
 ### Ignoring Unconnected Connectors
 
-Suppress warnings for intentionally unconnected send connectors:
-```yaml
-  - from_component: Rate_Group_Instance
-    from_connector: Pet_T_Send
-    to_component: ignore
-    to_connector: ignore
-```ada
-
-**⚠️ CRITICAL -- READ THIS**: `ignore` connections must only reference connectors that **actually exist** on the component. **NEVER invent connector names.** For framework components, check the [framework-components](../adamant-framework-components/SKILL.md) skill for the actual connector list.
+To suppress warnings for intentionally unconnected send connectors, simply leave them unwired. The framework generates `*_Send_Dropped` handlers (which you implement as `is null`) for any unwired send connectors. There is NO `to_component: ignore` syntax in Adamant.
 
 **ONLY ignore connectors you can verify exist.** If you are unsure whether a connector exists on a component, **leave it unwired** -- the generator will warn about unattached connectors (warnings are non-fatal) rather than fail on a nonexistent connector name (which IS fatal). An unwired-connector warning is always better than a build-breaking invented name.
 
@@ -417,7 +409,7 @@ Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to rege
 
 ### Component Field Restrictions
 
-- **`execution:` is NOT an assembly YAML field**: The `execution:` key (active/passive) is defined in the COMPONENT YAML, not in assembly YAML. Do not include it when instantiating components in assemblies. Active/passive execution is determined by the component model.
+- **`execution:` is ONLY for `either`-execution components**: Components with `execution: either` in their component YAML require `execution: active` or `execution: passive` in the assembly YAML to resolve the ambiguity. Do NOT add it for components that are already `active` or `passive` in their component model.
 
 - **Always check framework component YAML for init signatures**: Before using a framework component, read its `.component.yaml` to see exact init parameter names, types, and whether `not_null` is set. Do NOT guess init param types -- e.g., Stack_Monitor requires `Task_Types.Task_Info_List_Access` (not `Stack_Monitor.Task_List_Type`).
 - **Do NOT specify `init:` when component has no init section**: If the component YAML has no `init:` block at all, the assembly MUST NOT include `init:` or `init: []`. Adding it causes `"init" does not exist` error.
@@ -427,7 +419,7 @@ Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to rege
 
 ### Connection Rules
 
-- **No `to_component: ignore` syntax**: Adamant has no "ignore" connection target. Simply leave unneeded send connectors unwired -- the framework generates warnings but compiles fine.
+- **No `to_component: ignore` syntax**: Adamant has no "ignore" connection target. Simply leave unneeded send connectors unwired -- the framework generates dropped handlers but compiles fine.
 
 - **Don't wire same send connector in both subassembly and parent**: A send connector can only connect to one target. If a subassembly already wires a component's send connector internally, the parent cannot wire it again. Choose one location for the connection.
 

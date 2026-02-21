@@ -503,7 +503,7 @@ param_type: Packed_Byte.T
 30. [ ] `then` on its own line for multi-line if conditions
 31. [ ] Ada child packages DO inherit parent `with`/`use` visibility. If the generated base class spec has `with Interfaces; use Interfaces;`, then `Interfaces` types ARE visible in your implementation child package. Do NOT add redundant `with Interfaces; use Interfaces;` -- it causes a `-gnatwr` style warning. Only add `with Interfaces;` if the base class does NOT have it (simple components without commands/init/data deps).
 31a. [ ] When doing arithmetic on `Interfaces` types (`Unsigned_32`, etc.), add `use Interfaces;` in the body to make operators (`+`, `-`, etc.) visible. Otherwise use qualified calls: `Interfaces."+"(Self.Count, 1)`.
-32. [ ] Use `Ignore : Type renames Arg;` pattern (not `pragma Unreferenced`) for unused connector handler parameters:
+32. [ ] Use `Ignore : Type renames Arg;` pattern for unused connector handler parameters (preferred for new code; `pragma Unreferenced (Arg);` is also valid and common in existing code):
     ```ada
     overriding procedure Parameter_Update_T_Modify (Self : in out Instance; Arg : in out Parameter_Update.T) is
        -- Arg is used by Process_Parameter_Update, so no Ignore needed here
