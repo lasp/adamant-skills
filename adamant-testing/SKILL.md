@@ -159,7 +159,9 @@ end Test_Name;
 
 **Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`. Both Init and Set_Up are optional -- only call them if YAML declares `init:` or component overrides Set_Up. For per-test init params, defer Init/Set_Up to each test body (see [setup-variants.md](references/setup-variants.md) for deferred init patterns).
 
-**Re-init mid-test:** To test different init configurations within a single test file, call `Final_Base` then repeat the full setup: `Final_Base` → `Init_Base` → `Connect` → `Component_Instance.Init(new_params)` → `Set_Up`. This resets all histories and reconnects.
+**Re-init mid-test (full):** To fully reset, call `Final_Base` then repeat: `Final_Base` → `Init_Base` → `Connect` → `Component_Instance.Init(new_params)` → `Set_Up`. This resets all histories and reconnects.
+
+**Re-init mid-test (simple):** For passive components, you can often just call `T.Component_Instance.Init(new_params)` directly without the full teardown cycle. This changes init config without resetting histories. Used in real code (e.g., bot_station PID controller tests).
 
 **⚠️ History Depth**: Generated `Init_Base` initializes all histories with `Depth => 100`. If a test sends more than 100 events/data products/commands, the history overflows and the test fails with "History is full." Solutions:
 - Increase depth in Init_Base: `Self.Event_T_Recv_Sync_History.Init (Depth => 500);`
@@ -263,7 +265,11 @@ Do NOT call `Smart_Assert.Eq(...)` directly -- requires generic instantiation fi
 with Basic_Assertions; use Basic_Assertions;
 with Packed_U32.Assertion; use Packed_U32.Assertion;
 with Command_Enums; use type Command_Enums.Command_Response_Status.E;
+with Parameter_Enums; use Parameter_Enums.Parameter_Validation_Status;  -- for parameter tests
+with Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;  -- for data dep tests
 ```
+
+**Alternative:** `use type Parameter_Enums.Parameter_Validation_Status.E;` or `use Parameter_Enums.Parameter_Validation_Status;` -- both work. Package `use` gives direct name visibility (`Valid` vs `Parameter_Validation_Status.Valid`).
 
 ## Data Dependency Testing
 
@@ -271,7 +277,8 @@ with Command_Enums; use type Command_Enums.Command_Response_Status.E;
 
 The tester generates named fields for each data dependency. Set them directly:
 ```ada
--- CRITICAL: Use non-zero timestamps! (0,0) causes staleness failures.
+-- Use non-zero timestamps when testing data dependency STALENESS.
+-- (0,0) is fine for non-staleness tests (commands, events, basic DPs).
 Test_Time : constant Sys_Time.T := (100, 0);
 The_Tick : constant Tick.T := (Time => Test_Time, Count => 0);
 
