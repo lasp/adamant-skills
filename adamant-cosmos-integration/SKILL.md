@@ -268,6 +268,19 @@ Router <%= assembly_target_name %>_Router tcpip_server_interface.rb 7779 7779 10
 
 **cmd_sync_checksum.rb:** Adamant-provided (copied to plugin `lib/`). Same as cmd_checksum but prepends sync word `FED4AFEE`. Serial only.
 
+### Gemspec Template
+
+```ruby
+# openc3-cosmos-<assembly_name>.gemspec
+Gem::Specification.new do |s|
+  s.name = "openc3-cosmos-<assembly_name>"
+  s.summary = "COSMOS plugin for <Assembly_Name>"
+  s.version = "0.0.1"
+  s.authors = ["Your Name"]
+  s.files = Dir["{targets,lib,procedures,plugin.txt}/**/*"]
+end
+```
+
 ### Building and Loading the Plugin Gem
 
 ```bash
