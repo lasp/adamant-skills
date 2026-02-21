@@ -156,10 +156,11 @@ Components with commands, init params, or data dependencies get `with Interfaces
 
 ## Advanced Ada Constructs
 
-### `use type` vs `use all type`
-- **`use type Package.Type_Name;`** makes operators visible for that specific type. Preferred.
+### `use type` vs `use all type` vs `use Package`
+- **`use type Package.Type_Name;`** makes operators visible for that specific type. Preferred for arithmetic (`+`, `-`, `<`, etc.).
 - **`use all type Package.Type_Name;`** also makes primitive subprograms visible. Avoid unless needed -- broader scope risks name conflicts.
-- The skill examples use `use type` exclusively. Follow that pattern.
+- **`use Package;`** makes all public names visible including enum literals. Use when you need enum values directly (e.g., `use Command_Enums.Command_Response_Status;` to write `Success` instead of `Command_Response_Status.Success`).
+- Both `use type` and `use Package` can be placed at **package body level** (not just inside procedures) when needed across multiple subprograms. Body-level is the more common pattern in real code.
 
 ### Expression Functions
 - Allowed for simple single-expression results:

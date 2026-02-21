@@ -207,7 +207,7 @@ Command Assembly_Name Component-Command_Name Big_Endian "description"
 
 ```bash
 # From assembly/main/ directory:
-./install_cosmos_plugin.sh /path/to/cosmos-project/plugins/openc3-cosmos-assembly/
+./install_cosmos_plugin.sh /path/to/assembly.assembly.yaml /path/to/cosmos-project/plugins/openc3-cosmos-assembly/
 ```
 
 This copies:
@@ -411,8 +411,9 @@ CCSDS components are typically placed in a **safe mode** or base assembly config
 ## Rate Group Assignments
 
 CCSDS components in rate groups:
-- **Event_Packetizer**: Must be ticked -- sends batched events on tick. Place in a rate group (typically the same one that ticks components generating events).
-- **Product_Packetizer**: Must be ticked -- fetches data products and sends packets per `period` in product_packets.yaml. Place in appropriate rate group for desired telemetry rates.
+- **Event_Packetizer**: Must be ticked -- sends batched events on tick. Place in a **slower rate group** (e.g., Slow_Rate_Group at 1 Hz or less) to batch events efficiently.
+- **Product_Packetizer**: Must be ticked -- fetches data products and sends packets per `period` in product_packets.yaml. Place in a **slower rate group** for desired telemetry rates.
+- **Auto-generated packet types**: The assembly generates `Error_Packet` and `Dump_Packet` telemetry types in addition to the packets defined in `product_packets.yaml`. These carry CCSDS error frames and database dump data respectively.
 - **Ccsds_Socket_Interface**: Active component (has its own task + Listener subtask). Does NOT go in a rate group.
 - **Ccsds_Command_Depacketizer**: Passive, driven by socket data arrival. Does NOT need ticking.
 - **Ccsds_Packetizer**: Passive, driven by incoming Packet_T_Recv_Sync. Does NOT need ticking.
