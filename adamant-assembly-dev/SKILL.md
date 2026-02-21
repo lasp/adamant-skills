@@ -209,7 +209,7 @@ Active components use different queue types based on their `recv_async` connecto
 
 ### Ignoring Unconnected Connectors
 
-To suppress warnings for intentionally unconnected send connectors, simply leave them unwired. The framework generates `*_Send_Dropped` handlers (which you implement as `is null`) for any unwired send connectors. There is NO `to_component: ignore` syntax in Adamant.
+To explicitly mark send connectors as intentionally unwired, use `to_component: ignore`. This suppresses warnings and generates `*_Send_Dropped` handlers (which you implement as `is null`). Alternatively, simply leave them unwired -- the framework generates the same dropped handlers either way.
 
 **ONLY ignore connectors you can verify exist.** If you are unsure whether a connector exists on a component, **leave it unwired** -- the generator will warn about unattached connectors (warnings are non-fatal) rather than fail on a nonexistent connector name (which IS fatal). An unwired-connector warning is always better than a build-breaking invented name.
 
@@ -419,7 +419,7 @@ Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to rege
 
 ### Connection Rules
 
-- **No `to_component: ignore` syntax**: Adamant has no "ignore" connection target. Simply leave unneeded send connectors unwired -- the framework generates dropped handlers but compiles fine.
+- **`to_component: ignore` is valid**: Use it to explicitly mark send connectors as intentionally unwired. Generates dropped handlers. Equivalent to leaving the connector unwired but makes intent explicit in the YAML.
 
 - **Don't wire same send connector in both subassembly and parent**: A send connector can only connect to one target. If a subassembly already wires a component's send connector internally, the parent cannot wire it again. Choose one location for the connection.
 
