@@ -17,6 +17,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **ccsds_downsampler** (passive)
 - Purpose: Filter packets by APID with configurable rates
 - Use: Reduce telemetry downlink rate for specific packet types
+- Init: `Downsample_List` (Ccsds_Downsampler_Types.Ccsds_Downsample_Packet_List_Access, not_null) -- list of APIDs with filter factors for downsampling
+- Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (packets in), `Command_T_Recv_Sync`, `Ccsds_Space_Packet_T_Send` (filtered packets out), `Command_Response_T_Send`, `Data_Product_T_Send`, `Event_T_Send`, `Sys_Time_T_Get`
 
 **ccsds_echo** (passive)
 - Purpose: Echo CCSDS packets as Adamant packets
@@ -103,6 +105,9 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **connector_delayer** (active)
 - Purpose: Delay transmission by configurable microseconds
 - Use: Space out data transmission or create alarms
+- Generic: `T` (any data type), `Serialized_Length` (serialization function for variable-length types)
+- Init: `Delay_Us` (Natural) -- microseconds to delay before transmission
+- Connectors: `T_Recv_Async` (queued input), `T_Send` (delayed output), `Sys_Time_T_Get`, `Event_T_Send`
 
 **connector_protector** (passive)
 - Purpose: Thread-safe protected object for connectors
@@ -138,6 +143,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **event_limiter** (passive)
 - Purpose: Rate-limit events to prevent flooding
 - Use: Prevent event storms, maintain system stability
+- Init: `Event_Id_Start` (Event_Types.Event_Id) -- start of ID range for limiting, `Event_Id_Stop` (Event_Types.Event_Id) -- end of ID range, `Event_Disable_List` (Two_Counter_Entry.Event_Id_List, default empty) -- IDs disabled by default, `Event_Limit_Persistence` (Two_Counter_Entry.Persistence_Type) -- max events per tick before limiting (1-7)
+- Connectors: `Tick_T_Recv_Sync` (decrement counters), `Event_T_Recv_Sync` (events in), `Command_T_Recv_Sync`, `Event_Forward_T_Send` (passed events), `Event_T_Send` (component events), `Sys_Time_T_Get`, `Command_Response_T_Send`, `Data_Product_T_Send`, `Packet_T_Send` (state dump)
 
 **event_packetizer** (passive)
 - Purpose: Collect events into packets with timeout
@@ -211,6 +218,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **memory_copier** (active)
 - Purpose: Service memory copy commands with timeout
 - Use: Safe memory region copying between addresses
+- Init: `ticks_Until_Timeout` (Natural) -- timeout ticks before failing copy command
+- Connectors: `Timeout_Tick_Recv_Sync` (timeout tick), `Command_T_Recv_Async`, `Command_Response_T_Send`, `Memory_Region_Copy_T_Send` (copy request), `Memory_Region_Release_T_Recv_Sync` (copy response), `Memory_Region_Request_T_Get` (scratch memory), `Ided_Memory_Region_T_Send` (release scratch), `Event_T_Send`, `Sys_Time_T_Get`
 
 **memory_dumper** (active)
 - Purpose: Dump memory regions or compute CRC by command
@@ -338,6 +347,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **gps_time** (passive)
 - Purpose: Provide GPS-format system time service
 - Use: Central time service for assembly
+- No init parameters
+- Connectors: `Sys_Time_T_Return` (provides GPS time service)
 
 **precision_time_protocol_master** (active)
 - Purpose: PTP master for slave clock synchronization
