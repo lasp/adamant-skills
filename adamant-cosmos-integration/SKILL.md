@@ -182,6 +182,9 @@ Telemetry Assembly_Name Packet_Name Big_Endian "description"
   Item Subseconds 80 32 UINT "..."
   Append_Item Component.Field 32 UINT "..."
   Append_Item CRC 16 UINT "Packet CRC value"
+
+# Event packets use negative offset for CRC:
+  Item CRC -16 16 UINT "Packet CRC value"
 ```
 
 **Commands (cmd.txt):**
@@ -194,6 +197,8 @@ Command Assembly_Name Component-Command_Name Big_Endian "description"
   Parameter Checksum 56 8 UINT 0 255 0 "..."
   ID_Parameter Adamant_Command_Id 64 16 UINT MIN MAX <cmd_id> "..."
   Append_Parameter Arg_Name 32 UINT MIN MAX 0 "..."
+  # For buffer/array arguments:
+  Append_Array_Parameter Buffer 8 UINT 256 "Buffer data"   # 256 bytes
 ```
 
 ## Plugin Installation
@@ -250,15 +255,18 @@ Router <%= assembly_target_name %>_Router tcpip_server_interface.rb 7779 7779 10
 ```ada
 
 **Interface parameters:** `tcpip_server_interface.rb <write_port> <read_port> <timeout> <protocol> Length <bit_offset> <bit_size> <length_value_offset>`
-- `Length 32 16 7`: Length field at bit 32, 16 bits wide, add 7 to get total packet size (6-byte header + 1)
+- `Length 32 16 7`: Length field at bit 32 (CCSDS Packet_Length), 16 bits wide, add 7 to get total packet size
+  - The `7` comes from CCSDS convention: `Packet_Length = (data_bytes + secondary_header) - 1`, so total = Packet_Length + 7 (6-byte primary header + 1 for the minus-one encoding)
 
 ### Protocol Files
 
-**crc_sync_protocol.rb:** On read, strips 4-byte sync word (`FED4AFEE`), validates CRC-16 on remaining data. On write, appends CRC-16. Used for both serial and TCP (sync word only present in serial).
+**crc_protocol.rb:** COSMOS built-in protocol (NOT copied to plugin `lib/`). On read, validates CRC-16 on packet data. On write, computes and appends CRC-16. Used for TCP connections. Parameters: `crc_parameter_name false "ERROR" -16 16` (CRC at last 16 bits).
 
-**cmd_checksum.rb:** On write, XOR all packet bytes with seed 0xFF, write result to Checksum field. TCP only.
+**crc_sync_protocol.rb:** Adamant-provided (copied to plugin `lib/`). On read, strips 4-byte sync word (`FED4AFEE`), then validates CRC-16. Used for serial connections where sync words frame packets.
 
-**cmd_sync_checksum.rb:** Same as cmd_checksum but prepends sync word `FED4AFEE`. Serial only.
+**cmd_checksum.rb:** Adamant-provided (copied to plugin `lib/`). On write, XOR all packet bytes with seed 0xFF, write result to Checksum field. TCP only.
+
+**cmd_sync_checksum.rb:** Adamant-provided (copied to plugin `lib/`). Same as cmd_checksum but prepends sync word `FED4AFEE`. Serial only.
 
 ### Building and Loading the Plugin Gem
 
@@ -328,6 +336,15 @@ raw   = tlm_raw("TARGET PKT ITEM")          # Raw binary
 - Each subpacket contains: event header (ID, timestamp) + serialized event data.
 - COSMOS parses these using the generated tlm.txt `Subpacket.Data` block definition.
 - `Num_Internal_Packets` init param controls max events per batch; `Partial_Packet_Timeout` forces send of partial batches.
+
+## Rate Group Assignments
+
+CCSDS components in rate groups:
+- **Event_Packetizer**: Must be ticked -- sends batched events on tick. Place in a rate group (typically the same one that ticks components generating events).
+- **Product_Packetizer**: Must be ticked -- fetches data products and sends packets per `period` in product_packets.yaml. Place in appropriate rate group for desired telemetry rates.
+- **Ccsds_Socket_Interface**: Active component (has its own task + Listener subtask). Does NOT go in a rate group.
+- **Ccsds_Command_Depacketizer**: Passive, driven by socket data arrival. Does NOT need ticking.
+- **Ccsds_Packetizer**: Passive, driven by incoming Packet_T_Recv_Sync. Does NOT need ticking.
 
 ## Key Gotchas
 
