@@ -6,7 +6,7 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (18 skills, ~16000 lines with refs)
+## Skill Inventory (18 skills, ~15200 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
@@ -29,7 +29,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-tools` | 1688 | API inspector, component scaffolder, YAML validator (Python scripts) |
 | `high-assurance-design` | 304 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~16000 lines (includes tool scripts)
+**Total:** ~15200 lines (includes tool scripts)
 
 ## Key Principles
 
