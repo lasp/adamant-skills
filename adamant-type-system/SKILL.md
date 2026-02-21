@@ -203,22 +203,15 @@ package My_Enums is
 end My_Enums;
 -- Usage: My_Enums.Status_Type.E, My_Enums.Status_Type.Ok
 
--- ⚠️ CRITICAL: Enum child packages (e.g., My_Enums.Status_Type) are defined
--- INSIDE the parent file (my_enums.ads), NOT as separate ada child unit files.
--- The redo source database indexes files by package name, so it finds
--- "my_enums" but NOT "my_enums.status_type". This means:
---
--- ❌ NEVER use custom enum types in YAML models (data_products, events,
---    commands, faults, parameters). Using "My_Enums.Status_Type.T" as a
---    type in YAML will cause redo dependency resolution to fail.
---
--- ✅ Use Packed_Byte.T (or Packed_U16.T) in YAML models for enum-valued
---    fields. Convert to/from the enum in hand-written implementation code:
---      Val : My_Enums.Status_Type.E := My_Enums.Status_Type.E'Val (Arg.Value);
---      Out := (Value => My_Enums.Status_Type.E'Pos (Val));
---
--- ✅ You CAN use custom enums in hand-written .ads/.adb files with
---    "with My_Enums;" -- the parent package IS found in the database.
+-- Enum child package types ARE supported in YAML models. The framework
+-- uses them extensively (86 YAML files reference Enums.* types).
+-- Example from adamant_example:
+--   type: Parameter_Manager_Enums.Parameter_Table_Copy_Type.E
+-- Example from framework:
+--   type: Command_Protector_Enums.Armed_State.E
+-- The enum .ads file must be discoverable via .all_path in the build roots.
+-- If redo can't find an enum type, check that the enum's directory has
+-- .all_path and is in a BUILD_ROOTS path (via env/activate).
 ```ada
 
 ## Assertion Package Usage
