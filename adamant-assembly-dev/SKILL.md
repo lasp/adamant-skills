@@ -445,7 +445,18 @@ redo all                                # Build
 redo run                                # Build and run (from main/)
 ```ada
 
-Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to regenerate.
+Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to regenerate. **NEVER use `rm -rf build`** -- always use `redo clean`.
+
+### Phased Assembly Integration
+
+Build assemblies incrementally. Start with the minimum viable assembly (time source, rate groups, mission components, event pipeline), verify it compiles, then add infrastructure one component at a time:
+
+1. **Minimal:** Gps_Time + Ticker + Rate_Groups + mission components + Event_Splitter/Limiter/Packetizer/Text_Logger + Product_Database + Command_Router
+2. **+Parameters:** Add Parameters component + parameter_table.yaml
+3. **+CCSDS:** Add Ccsds_Packetizer + Ccsds_Command_Depacketizer + Ccsds_Socket_Interface + product_packets.yaml
+4. **+Safety:** Add Fault_Correction + Task_Watchdog + supporting config YAMLs
+
+Each addition requires correct wiring AND supporting YAML files. Verify `redo all` passes before adding the next layer.
 
 **Build phases**: `redo all` runs multiple phases: YAML validation, Ada code generation, compilation, and documentation generation (LaTeX/SVG). Documentation failures (configuration.ads, .tex files) do NOT mean the core assembly failed -- the assembly Ada code may compile fine. Check whether the actual `.ads/.adb` files in `build/src/` were generated before concluding the build failed.
 
