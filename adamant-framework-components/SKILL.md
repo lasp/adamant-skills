@@ -132,8 +132,11 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **event_packetizer** (passive)
 - Purpose: Collect events into packets with timeout
 - Use: Efficient event downlink batching
-- Init: `Num_Internal_Packets` (Two_Or_More, min 2), `Partial_Packet_Timeout` (Natural, 0=disabled). NO init_base
-- Connectors: `Tick_T_Recv_Sync`, `Event_T_Recv_Sync` (events in), `Command_T_Recv_Sync`, `Packet_T_Send` (event packets out), `Sys_Time_T_Get`, `Data_Product_T_Send`, `Command_Response_T_Send`
+- Preamble: Defines `Two_Or_More` subtype (Positive range 2 .. Positive'Last)
+- Init (NO init_base):
+  - `Num_Internal_Packets` (Two_Or_More) -- number of internal double-buffered packets; minimum 2. When all exhausted, events are dropped
+  - `Partial_Packet_Timeout` (Natural) -- ticks before sending a partial packet (must have ≥1 event); 0 disables (only full packets sent)
+- Connectors: `Tick_T_Recv_Sync` (triggers send of full/timeout packets), `Event_T_Recv_Sync` (events in), `Command_T_Recv_Sync`, `Packet_T_Send` (event packets out), `Sys_Time_T_Get`, `Data_Product_T_Send`, `Command_Response_T_Send` (7 total)
 
 **event_text_logger** (active)
 - Purpose: Print events as text using assembly-specific conversion
@@ -144,8 +147,15 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 ## System Monitoring (5 components)
 
 **cpu_monitor** (passive)
-- Purpose: Monitor CPU execution time for tasks/interrupts
-- Use: System performance monitoring and diagnostics
+- Purpose: Monitor CPU execution time for tasks/interrupts over 3 configurable time periods
+- Use: System performance monitoring and diagnostics. Uses Ada.Execution_Time.Clock (nonstandard interface -- reads task IDs from autocoded globals, not connectors)
+- Preamble: Defines `Num_Measurement_Periods` (range 0..2), `Execution_Periods_Type` (array of Positive indexed by Num_Measurement_Periods)
+- Init:
+  - `Task_List` (Task_Types.Task_Info_List_Access, not_null) -- autocoded list of tasks to monitor
+  - `Interrupt_List` (Interrupt_Types.Interrupt_Id_List_Access, not_null) -- autocoded list of interrupts to monitor
+  - `Execution_Periods` (Execution_Periods_Type, default [1, 6, 30]) -- tick multiples for each of 3 measurement windows (e.g. at 10s tick: 10s, 1min, 5min)
+  - `Packet_Period` (Unsigned_16, default 1) -- ticks between packet sends; 0 disables
+- Connectors: `Tick_T_Recv_Sync`, `Packet_T_Send`, `Sys_Time_T_Get`, `Command_T_Recv_Sync`, `Command_Response_T_Send`, `Data_Product_T_Send`, `Event_T_Send` (7 total)
 
 **queue_monitor** (passive)
 - Purpose: Monitor queue usage for all queued components
@@ -154,8 +164,12 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Connectors: Tick.T recv_sync, Packet.T send, Sys_Time.T get, Command.T recv_sync, Command_Response.T send, Data_Product.T send, Event.T send (7 total)
 
 **stack_monitor** (passive)
-- Purpose: Monitor stack usage for all assembly tasks
-- Use: System health monitoring for task stack utilization
+- Purpose: Monitor stack and secondary stack usage (percent) for all assembly tasks
+- Use: System health monitoring for task stack utilization; recalculates on every tick
+- Init:
+  - `Task_List` (Task_Types.Task_Info_List_Access, not_null) -- autocoded list of tasks to monitor
+  - `Packet_Period` (Unsigned_16, default 1) -- ticks between packet sends; 0 disables
+- Connectors: `Tick_T_Recv_Sync`, `Packet_T_Send`, `Sys_Time_T_Get`, `Command_T_Recv_Sync`, `Command_Response_T_Send`, `Data_Product_T_Send`, `Event_T_Send` (7 total)
 
 **task_watchdog** (passive)
 - Purpose: Monitor component health via pets
@@ -246,11 +260,14 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Use: Data product snapshotting and synchronization
 
 **product_database** (passive)
-- Purpose: Fast ID-indexed database for latest data products
-- Use: Central telemetry database with direct indexing
-- Init: `Minimum_Data_Product_Id`, `Maximum_Data_Product_Id` (both required)
-- Connectors: `Data_Product_T_Recv_Sync` (input), `Packet_T_Send` (output)
-- **NOT the same as Ccsds_Packetizer**: Product_Database produces `Packet.T`; Ccsds_Packetizer receives `Packet.T` (via `T_Recv_Async`) and produces CCSDS-framed packets
+- Purpose: Fast ID-indexed database for latest data products using direct ID-to-index lookup
+- Use: Central telemetry database with direct indexing. Works best with compact (non-sparse) ID spaces
+- Init:
+  - `Minimum_Data_Product_Id` (Data_Product_Types.Data_Product_Id) -- minimum accepted ID
+  - `Maximum_Data_Product_Id` (Data_Product_Types.Data_Product_Id) -- maximum accepted ID; heap allocates max-sized entry for every ID in range
+  - `Send_Event_On_Missing` (Boolean, default True) -- send event when fetching a missing product; disable if expected
+- Connectors: `Data_Product_T_Recv_Sync` (store), `Data_Product_Fetch_T_Service` (fetch by ID), `Event_T_Send`, `Command_T_Recv_Sync`, `Command_Response_T_Send`, `Data_Product_T_Send` (component DPs), `Packet_T_Send` (database dumps), `Sys_Time_T_Get` (8 total)
+- **NOT the same as Ccsds_Packetizer**: Product_Database produces `Packet.T`; Ccsds_Packetizer receives `Packet.T` and produces CCSDS-framed packets
 
 **product_packetizer** (passive)
 - Purpose: Request data products and packetize at rates
@@ -343,7 +360,7 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **Need fault protection?** Use task_watchdog + fault_correction
 **Need memory operations?** Use memory_manager + memory_packetizer
 **Need command routing?** Use command_router + command_protector
-**Need monitoring?** Use cpu_monitor + stack_monitor + queue_monitor (note: stack_monitor and cpu_monitor require `Task_Types.Task_Info_List_Access` init params -- check component YAML for exact init signatures before using)
+**Need monitoring?** Use cpu_monitor + stack_monitor + queue_monitor (all passive; cpu_monitor and stack_monitor require autocoded `Task_Info_List_Access`; cpu_monitor also needs `Interrupt_Id_List_Access`)
 **Need sequences?** Use command_sequencer + sequence_store
 
 Components marked (either) can be active or passive - choose based on assembly needs.
