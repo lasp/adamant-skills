@@ -119,9 +119,14 @@ def validate_component_yaml(path, comp_name):
                 if conn_type == "Fault.T" and conn_kind == "send":
                     has_fault_send = True
 
-            # Check that command components have response send
-            if has_command_recv and not has_command_response_send:
-                errors.append(ValidationError(path, "Has Command.T recv but missing Command_Response.T send connector"))
+            # Check that command handler components have response send
+            # Only flag if this component defines commands (has commands.yaml) --
+            # components that recv Command.T for logging/forwarding don't need responses
+            comp_dir_check = os.path.dirname(path)
+            comp_base = os.path.splitext(os.path.basename(path))[0].replace(".component", "")
+            has_commands_yaml = os.path.isfile(os.path.join(comp_dir_check, f"{comp_base}.commands.yaml"))
+            if has_command_recv and not has_command_response_send and has_commands_yaml:
+                errors.append(ValidationError(path, "Has Command.T recv and commands.yaml but missing Command_Response.T send connector"))
 
     # Check init params (can be a list or dict with 'parameters' key)
     if "init" in data:
@@ -309,6 +314,13 @@ def main():
 
     comp_name = os.path.basename(os.path.normpath(comp_dir))
     all_errors = []
+
+    # Detect assembly directories -- skip component validation
+    assembly_yamls = glob.glob(os.path.join(comp_dir, "*.assembly.yaml"))
+    if assembly_yamls:
+        print(f"Assembly directory detected ({comp_name}). Component validation not applicable.")
+        print(f"  Found: {', '.join(os.path.basename(f) for f in assembly_yamls)}")
+        sys.exit(0)
 
     # Validate component YAML
     comp_yaml = os.path.join(comp_dir, f"{comp_name}.component.yaml")

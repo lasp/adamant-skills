@@ -158,8 +158,8 @@ class AdaStyleChecker:
                     if not re.search(r'\b(function|procedure|pragma)\b', line):
                         self.add_violation(filename, i, "ERROR", "Missing space before '(' in type conversion")
                 
-                # Rule 9: return ( - unnecessary parentheses
-                if re.search(r'\breturn\s*\(', line):
+                # Rule 9: return ( - unnecessary parentheses (but not record aggregates)
+                if re.search(r'\breturn\s*\(', line) and not re.search(r'\breturn\s*\(.*=>', line):
                     self.add_violation(filename, i, "ERROR", "Unnecessary parentheses around return value")
                 
                 # Rule 10: Statements on same line as then/else
