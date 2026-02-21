@@ -25,6 +25,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **ccsds_packetizer** (passive)
 - Purpose: Adamant packets -> CCSDS packets with CRC/timestamp
 - Use: Package internal packets for CCSDS downlink
+- Connectors: `Packet_T_Recv_Sync` (in, receives Adamant packets), `Ccsds_Space_Packet_T_Send` (out, sends CCSDS packets)
+- No init, no commands -- pure passthrough conversion with CRC16 + 8-byte secondary header timestamp
 
 **ccsds_product_extractor** (passive)
 - Purpose: Extract data products from CCSDS packet data
