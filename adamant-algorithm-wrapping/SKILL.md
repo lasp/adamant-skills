@@ -11,6 +11,8 @@ C++ Algorithm -> C Shim (.h/.cpp) -> Ada Bindings (.ads) -> Packed Records -> Co
 
 Seven deterministic steps. Each step has one correct output given the inputs. Follow in order.
 
+**Pure C shortcut:** If the algorithm is already pure C (not C++), skip Step 1 entirely -- the C header IS the shim. Go directly to Step 2 (Ada Bindings) using `pragma Import (C, ...)` on the C function signatures. No `extern "C"` or `reinterpret_cast` needed.
+
 ## Step 1: Create C Shim
 
 **Input:** C++ algorithm class (`FooAlgorithm` in `fooAlgorithm.h/.cpp`)
