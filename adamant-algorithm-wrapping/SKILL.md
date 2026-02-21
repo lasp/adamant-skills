@@ -307,6 +307,24 @@ end Test;
 - Call `Destroy` before re-initializing for multiple configurations
 - Select 3-5 representative cases from Python tests for integration validation
 
+### C test stub pattern
+
+For unit testing without the full C++ toolchain, create a pure C reimplementation of the algorithm's C shim API. The test stub provides the same function signatures but uses simplified math (or hardcoded outputs). Place in the component's test directory and link instead of the real library:
+
+```c
+// test/vec3_math_c_stub.c -- pure C, no C++ dependency
+#include "vec3_math_c.h"
+Vec3Math* vec3_math_create(void) { return (Vec3Math*)1; }  // dummy handle
+void vec3_math_destroy(Vec3Math* self) { (void)self; }
+void vec3_math_cross(Vec3Math* self, const float* a, const float* b, float* out) {
+    out[0] = a[1]*b[2] - a[2]*b[1];  // real math, no C++ needed
+    out[1] = a[2]*b[0] - a[0]*b[2];
+    out[2] = a[0]*b[1] - a[1]*b[0];
+}
+```
+
+This enables `redo test` without requiring the C++ algorithm library to be built or mounted.
+
 > Full test templates and troubleshooting: [references/unit-test-patterns.md](references/unit-test-patterns.md)
 
 ## Simplified Wrapping: Flattened C Shim + Direct Ada Bindings
