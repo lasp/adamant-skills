@@ -313,6 +313,8 @@ Build: `redo build/svg/assembly.svg` (full) or `redo views/build/svg/<view_name>
 
 Beyond the main `.assembly.yaml` and `.product_packets.yaml`, assemblies can use three additional YAML files for system-level configuration.
 
+**⚠️ Config file naming:** All config files follow the `<name>.<assembly>.<config_type>.yaml` pattern. The `<name>` prefix MUST be distinct from the assembly name and any other generated package names. Files whose names match generated-file patterns (e.g., `<assembly>_<suffix>.ads`) may be deleted by `redo clean` -- if your config YAML disappears after a clean, rename it with a more distinct prefix.
+
 ### Fault Response Table (`<name>.<assembly>.fault_responses.yaml`)
 
 Maps faults to corrective commands. Used by the `fault_correction` framework component.
