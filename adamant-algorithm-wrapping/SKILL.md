@@ -69,7 +69,7 @@ volumes:
 . $ADAMANT_DIR/env/activate $MISSION_DIR $WRAPPER_DIR
 ```
 
-The wrapper repo has its own `src/components/` and `src/types/` with `.all_path` markers. The mission project's `env/activate` passes it as an additional build root so redo discovers wrapper components alongside mission components. Mission-specific wrappers can also live directly in the mission project.
+The dependency path is one-directional: the mission project **consumes** types and components from the supporting repos (adamant, adamant-xmera-components, fp32-fsw-xmera, eigen). The wrapper repo has its own `src/components/` and `src/types/` with `.all_path` markers. The mission project's `env/activate` passes supporting repos as additional build roots so redo discovers their components and types alongside mission-specific code. Mission-specific wrappers can also live directly in the mission project.
 
 ## Step 1: Create C Shim
 
