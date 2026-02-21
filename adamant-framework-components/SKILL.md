@@ -77,6 +77,16 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **command_sequencer** (active)
 - Purpose: Execute LASEL sequences with multiple engines
 - Use: Automated sequence execution with parallel engines
+- Preamble: Defines `Create_Sequence_Load_Command_Access` -- function access type that formulates sequence load commands (mission-specific)
+- Init:
+  - `Num_Engines` (Seq_Types.Num_Engines_Type) -- number of parallel sequence engines
+  - `Stack_Size` (Seq_Types.Stack_Depth_Type) -- stack depth per engine for subsequence calls
+  - `Create_Sequence_Load_Command_Function` (Create_Sequence_Load_Command_Access, not_null) -- mission-specific sequence load command builder
+  - `Packet_Period` (Unsigned_16) -- summary packet rate in ticks (0=disabled)
+  - `Continue_On_Command_Failure` (Boolean) -- if True, engines continue on failed commands
+  - `Timeout_Limit` (Natural) -- ticks before timeout on command response/subsequence load (0=disabled)
+  - `Instruction_Limit` (Positive) -- max instructions before forced pause (prevents infinite loops)
+- Connectors: `Tick_T_Recv_Async`, `Command_Response_T_Recv_Async` (register source per engine), `Command_T_Recv_Async` (self-commands), `Sequence_Load_T_Recv_Async` (load sequences via memory region), `Sequence_Load_Return_T_Send`, `Command_T_Send` (sequence commands out), `Data_Product_Fetch_T_Request` (telemetry conditionals), `Command_Response_T_Send`, `Packet_T_Send`, `Data_Product_T_Send`, `Event_T_Send`, `Sys_Time_T_Get` (12 total)
 
 **connector_counter_8/16** (passive)
 - Purpose: Count connector invocations (1/2 byte counters)
@@ -99,12 +109,21 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **forwarder** (passive)
 - Purpose: Enable/disable control switch for data streams
 - Use: Stream on/off switch for any data type
+- Generic: `T` -- any connector type (instantiated at compile time)
+- Init:
+  - `Startup_Forwarding_State` (Basic_Enums.Enable_Disable_Type.E) -- Enable or Disable forwarding at startup
+- Connectors: `T_Recv_Sync` (data in), `Command_T_Recv_Sync`, `T_Send` (forwarded data), `Command_Response_T_Send`, `Data_Product_T_Send`, `Event_T_Send`, `Sys_Time_T_Get` (7 total)
 
 ## Event Management (4 components)
 
 **event_filter** (passive)
 - Purpose: Filter events by ID range and configurable state
 - Use: Suppress unwanted events, debug mode control
+- Init:
+  - `Event_Id_Start_Range` (Event_Types.Event_Id) -- start of filterable event ID range
+  - `Event_Id_End_Range` (Event_Types.Event_Id) -- end of filterable event ID range
+  - `Event_Filter_List` (Event_Filter_Entry.Event_Id_List, default empty) -- IDs filtered by default
+- Connectors: `Tick_T_Recv_Sync`, `Event_T_Recv_Sync` (events in), `Command_T_Recv_Sync`, `Event_Forward_T_Send` (passed events), `Event_T_Send` (component events), `Sys_Time_T_Get`, `Command_Response_T_Send`, `Data_Product_T_Send`, `Packet_T_Send` (9 total)
 
 **event_limiter** (passive)
 - Purpose: Rate-limit events to prevent flooding
@@ -141,6 +160,9 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **task_watchdog** (passive)
 - Purpose: Monitor component health via pets
 - Use: Software watchdog for component liveness monitoring
+- Init:
+  - `Task_Watchdog_Entry_Init_List` (Task_Watchdog_Types.Task_Watchdog_Init_List) -- autocoded list of monitored components with limits, criticality, and actions
+- Connectors: `Tick_T_Recv_Sync`, `Pet_T_Recv_Sync` (arrayed, count=0, one per monitored component), `Pet_T_Send` (downstream hw watchdog), `Command_T_Recv_Sync`, `Command_Response_T_Send`, `Fault_T_Send`, `Event_T_Send`, `Data_Product_T_Send`, `Sys_Time_T_Get` (9 total)
 
 **last_chance_manager** (passive)
 - Purpose: Manage non-volatile exception data from LCH
@@ -199,6 +221,11 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **parameters** (active)
 - Purpose: Stage, update, report active system parameters
 - Use: Central parameter management and distribution
+- Init:
+  - `Parameter_Table_Entries` (Parameters_Component_Types.Parameter_Table_Entry_List_Access, not_null) -- autocoded parameter table layout
+  - `Table_Id` (Parameter_Types.Parameter_Table_Id) -- unique ID for this parameter table (autocoded)
+  - `Dump_Parameters_On_Change` (Boolean, default False) -- auto-dump on any parameter change
+- Connectors: `Parameter_Update_T_Provide` (arrayed, count=0), `Command_T_Recv_Async`, `Command_Response_T_Send`, `Parameters_Memory_Region_T_Recv_Async` (table upload or store), `Parameters_Memory_Region_Release_T_Send`, `Packet_T_Send`, `Event_T_Send`, `Data_Product_T_Send`, `Sys_Time_T_Get` (9 total)
 
 **parameter_store** (active)
 - Purpose: Store parameter table in non-volatile memory
