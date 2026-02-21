@@ -152,6 +152,57 @@ Components with commands, init params, or data dependencies get `with Interfaces
 - **Underscore grouping** for large literals: `16#FFFF_FFFF#` not `16#FFFFFFFF#`
 - **Based literals**: Use `16#...#` for hex
 - **Qualified aggregates**: `Packed_U16.T'(Value => N)` when type is ambiguous
+- **Box default `<>`**: Use in aggregates when default initialization is appropriate. Prefer explicit values for critical fields: `(Status => Success, Count => 0)` over `(Status => Success, Count => <>)`.
+
+## Advanced Ada Constructs
+
+### `use type` vs `use all type`
+- **`use type Package.Type_Name;`** makes operators visible for that specific type. Preferred.
+- **`use all type Package.Type_Name;`** also makes primitive subprograms visible. Avoid unless needed -- broader scope risks name conflicts.
+- The skill examples use `use type` exclusively. Follow that pattern.
+
+### Expression Functions
+- Allowed for simple single-expression results:
+  ```ada
+  function Is_Valid (X : T) return Boolean is (X.Field > 0);
+  ```
+- Use traditional function body for anything complex or multi-line.
+- Same spacing rules apply (space before `(`, operators, etc.).
+
+### Renaming Declarations
+- Use sparingly, primarily for shortening deeply qualified names:
+  ```ada
+  T : Component.Sensor.Implementation.Tester.Instance_Access renames Self.Tester;
+  ```
+- Standard declaration formatting. Document the reason when not obvious.
+
+### Generic Instantiations
+- Standard declaration formatting with space before `(`:
+  ```ada
+  package My_Assert is new Basic_Assertions.Generic_Assert (My_Type);
+  ```
+
+### Multi-Line String Concatenation
+- Align continuation strings, space around `&`:
+  ```ada
+  Message := "First part of string " &
+             "second part continues " &
+             "on multiple lines";
+  ```
+
+### SPARK Contracts and Aspects
+- Format aspects with consistent indentation:
+  ```ada
+  function Increment (X : Natural) return Natural
+     with Pre  => X < Natural'Last,
+          Post => Increment'Result = X + 1;
+  ```
+- SPARK pragmas follow standard pragma casing (`-gnatyp`): `pragma Annotate (GNATprove, ...)`, `pragma SPARK_Mode`.
+- See **adamant-build-system** (SPARK prove section) for prove configuration.
+
+### Access Types (Ravenscar Warning)
+- Ravenscar profile restricts dynamic allocation and task types. Prefer generic formal subprograms over access-to-subprogram types when possible.
+- If access types are necessary, document the justification.
 
 ## YAML Rules
 
