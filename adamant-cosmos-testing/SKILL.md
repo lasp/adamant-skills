@@ -371,6 +371,39 @@ expected.unpack(raw_bytes_from_tlm)
 assert expected.Field_1 == 42
 ```
 
+### Packed_F32 encoding for command parameters
+```python
+import struct
+
+# Many Adamant commands take packed float32 values as U32 integers
+def pack_f32(value: float) -> int:
+    """Pack a float32 into a big-endian U32 for COSMOS command parameter."""
+    return struct.unpack('>I', struct.pack('>f', value))[0]
+
+# Usage: cmd(f"ASSEMBLY Pid_Controller_Instance-Set_Kp with VALUE {pack_f32(2.5)}")
+```
+
+### Event subpacket decoding via pydep
+```python
+# Event packets (APID 98) contain variable-length subpackets.
+# Each subpacket has: Event_Header (id, timestamp) + serialized event record.
+# Use pydep-built types to decode:
+from event_header import Event_Header
+from mode_changed_event import Mode_Changed_Event
+
+raw = tlm("ASSEMBLY EVENT_PACKET SUBPACKET_DATA", type="RAW")
+header = Event_Header()
+header.unpack(raw[:Event_Header.size()])
+event_id = header.Id
+# Decode body based on event_id mapping
+if event_id == MODE_CHANGED_ID:
+    body = Mode_Changed_Event()
+    body.unpack(raw[Event_Header.size():Event_Header.size() + Mode_Changed_Event.size()])
+    assert body.New_Mode == expected_mode
+```
+
+**Note:** Direct event subpacket parsing requires knowing the event record layout from generated Python types. When pydep types aren't available, verify events indirectly via data product state changes (e.g., check that Mode data product changed after sending a mode command).
+
 ### CRC validation
 ```python
 from crc16 import Crc16
@@ -453,6 +486,47 @@ curl http://localhost:2900/script-api/running-script \
   -H "Authorization: $TOKEN" \
   -d '{"name":"ASSEMBLY/procedures/integration_suite.py","scope":"DEFAULT"}'
 ```
+
+## Array Data Products in Telemetry
+
+COSMOS flattens array data products into individually-named items. For an array data product `Zone_Temperature` with 4 elements, the tlm.txt typically defines:
+
+```
+ITEM Zone_Temperature_0 ...   # First element
+ITEM Zone_Temperature_1 ...   # Second element
+```
+
+Access in scripts:
+```python
+temp_0 = tlm("ASSEMBLY THERMAL_HK Zone_Temperature_0.Value")
+temp_1 = tlm("ASSEMBLY THERMAL_HK Zone_Temperature_1.Value")
+```
+
+**Note:** The exact naming depends on how the product_packets.yaml and tlm.txt define the items. Always check your tlm.txt for the actual item names.
+
+## Limits-Based Out-of-Range Detection
+
+Use COSMOS limits + telemetry overrides to test out-of-range condition handling without real sensor data:
+
+```python
+def test_overvoltage_detection(self):
+    # Set tight limits
+    set_limits("ASSEMBLY", "POWER_HK", "BUS_VOLTAGE", 10.0, 12.0, 14.0, 16.0)
+    enable_limits("ASSEMBLY", "POWER_HK", "BUS_VOLTAGE")
+    # Override telemetry to trigger violation
+    override_tlm("ASSEMBLY", "POWER_HK", "BUS_VOLTAGE", 17.0)
+    wait(1)
+    # Check limits state
+    ool = get_out_of_limits()
+    voltage_ool = [v for v in ool if v[2] == "BUS_VOLTAGE"]
+    if not voltage_ool:
+        raise CheckError("Expected BUS_VOLTAGE out of limits")
+    # Cleanup
+    normalize_tlm("ASSEMBLY", "POWER_HK", "BUS_VOLTAGE")
+    disable_limits("ASSEMBLY", "POWER_HK", "BUS_VOLTAGE")
+```
+
+`get_out_of_limits()` returns a list of `[target, packet, item, state]` tuples where state is `"RED"`, `"RED_HIGH"`, `"RED_LOW"`, `"YELLOW"`, `"YELLOW_HIGH"`, or `"YELLOW_LOW"`.
 
 ## Practical Notes
 
