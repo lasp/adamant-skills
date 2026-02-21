@@ -36,6 +36,7 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Purpose: Route CCSDS packets by APID lookup table
 - Use: Distribute packets to appropriate processing components
 - Init: `Table` (Router_Table_Entry_Array), `Report_Unrecognized_APIDs` (Boolean, default True)
+- Table entry type: `Router_Table_Entry` has fields: `Apid` (Ccsds_Apid_Type), `Destinations` (Destination_Table_Access -- array of connector indices), `Sequence_Count_Mode` (No_Check/Warn/Drop_Dupes). An autocoder exists to generate the table from YAML (`gen/` subdir).
 - Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (in sync), `Ccsds_Space_Packet_T_Recv_Async` (in async), `Ccsds_Space_Packet_T_Send` (arrayed, count=0 variable), `Unrecognized_Ccsds_Space_Packet_T_Send` (unmatched APIDs), `Event_T_Send`, `Packet_T_Send` (errors), `Sys_Time_T_Get`
 
 **ccsds_serial_interface** (active)
