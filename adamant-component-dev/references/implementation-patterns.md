@@ -251,3 +251,30 @@ end Invalid_Data_Dependency;
 - Treating Stale_Reference as OUT (it's IN -- you provide the reference time)
 - Missing Get_Data_Dependency override in the impl spec
 - Missing Invalid_Data_Dependency override in the impl body
+
+## Component Design Archetypes
+
+Common component patterns for mission software. Not framework components -- these are patterns to implement as project-specific components.
+
+### Mode Manager
+Command-driven state machine with transition validation. Private enum for modes, command per transition, guard conditions for valid transitions.
+```ada
+type Mode_Enum is (Safe, Standby, Science, Calibration);
+-- Private record field: Current_Mode : Mode_Enum := Safe;
+-- Helper: Do_Transition sets mode, increments counter, sends event + DP
+-- Each command handler checks Current_Mode guard before calling Do_Transition
+-- Safe mode always allowed from any mode (no guard)
+```
+
+### Threshold Monitor
+Parameterized sensor monitoring with warning/critical levels and hysteresis. Uses parameters for thresholds, data dependencies for sensor input, faults for limit violations.
+- Init params or parameters.yaml: warning_high, warning_low, critical_high, critical_low, hysteresis_band
+- Data dependency: sensor value from another component's DP
+- Faults: over_limit, under_limit
+- Events: threshold_crossed, returned_to_nominal
+
+### Signal Filter (Deadband / Moving Average / Hysteresis)
+Lightweight passive components with `Input_T_Recv_Sync` + `Tick_T_Recv_Sync` + typed `Output_T_Send`. Init params configure filter behavior (deadband width, window size, on/off thresholds). Process on tick, not on input receipt -- store input, compute on tick, send filtered output.
+
+### Edge Detector
+Digital input monitoring. Store previous sample, compare on tick, emit rising/falling edge events. No commands needed -- purely reactive.

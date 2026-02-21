@@ -323,6 +323,11 @@ with Event_Types; use Event_Types;  -- need 'use' for operator visibility on typ
 -- Do NOT re-with packages already with'd in spec
 -- When comparing framework typed IDs (Event_Id, Command_Id, etc.), you need
 -- 'use <Type_Package>;' to make comparison operators visible.
+
+-- GNAT warning: "modified by call, but value might not be referenced"
+-- Triggered when a data dependency out-parameter is declared in the declarative
+-- region but only used conditionally. Fix: move the Get call into the statements
+-- section, or use the value unconditionally (e.g., store to a record field).
 ```ada
 
 ## Parameter Overrides (ALL abstract IFF parameters.yaml exists)

@@ -576,6 +576,7 @@ Auto-generated from the assembly model:
 - **Arrayed connector indices** must be sequential starting from 1. `Tick_T_Send_Count => 3` needs exactly indices 1, 2, 3.
 - **Every component with `commands.yaml`** MUST have its `Command_T_Recv_Sync` wired to the Command_Router. `Command_T_Send_Count` must include ALL commandable components. Missing wiring = commands never registered.
 - **`map_data_dependencies.data_dependency`** must exactly match a name defined in the component's `.data_dependencies.yaml`. Do not rename or paraphrase -- copy it verbatim.
+- **Data dependencies require matching sources**: Every `map_data_dependencies` entry maps to a `component_name.data_product_name` that MUST exist as a real data product produced by another component in the assembly. Plan the full telemetry data flow before designing data dependency interfaces -- if no component produces the needed DP, the assembly will fail to build.
 - **Event_Text_Logger discriminant** must include assembly name: `Assembly_Name_Event_To_Text.Event_To_Text'Access`.
 - **Splitter component type** is `Splitter` (not `Event_Splitter`) and requires `generic_types: ["T => Event.T"]`.
 - **Active components** (Event_Text_Logger, Command_Router) MUST have priority, stack_size, secondary_stack_size.
