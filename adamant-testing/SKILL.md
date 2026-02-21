@@ -271,6 +271,8 @@ with Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;  -- for 
 
 **Alternative:** `use type Parameter_Enums.Parameter_Validation_Status.E;` or `use Parameter_Enums.Parameter_Validation_Status;` -- both work. Package `use` gives direct name visibility (`Valid` vs `Parameter_Validation_Status.Valid`).
 
+**Custom enum data product assertions:** For enum types defined in project `types/`, auto-generated assertion packages follow the same pattern: `with My_Enum.Assertion; use My_Enum.Assertion;` gives `My_Enum_Assert.Eq(...)`. Use for DP history checks on enum-typed data products (e.g. mode state, operational status).
+
 ## Data Dependency Testing
 
 ### Setting Mock Values and Ticking

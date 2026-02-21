@@ -111,7 +111,7 @@ SkipScriptError     # Mark test SKIP, continue suite
 ```python
 from openc3.script import Suite, Group, cmd, tlm, wait, wait_check, wait_check_expression, \
     wait_check_packet, check, check_expression, check_tolerance, override_tlm, normalize_tlm, \
-    set_limits, enable_limits, disable_limits, cmd_no_range_check
+    set_limits, enable_limits, disable_limits, cmd_no_range_check, get_out_of_limits
 from openc3.script import CheckError, SkipScriptError
 
 class CommandTests(Group):
@@ -463,11 +463,14 @@ disconnect_script()
 # openc3.sh cli script run test.py --disconnect
 ```
 
+**`openc3.script.DISCONNECT`** — boolean flag, True when running in disconnect mode. Use to conditionally set up overrides.
+
 **Behavior in disconnect mode:**
 - Commands: parsed and validated against definitions, NOT sent
 - Checks: print ERROR instead of raising CheckError
 - Limits methods: silently ignored
 - Telemetry reads: still need API_SERVER (use `override_tlm` to pre-set expected values)
+- `tlm()` on an item with no prior `override_tlm` returns the default/zero value from the definition
 
 ### Simulating telemetry for offline tests
 ```python
