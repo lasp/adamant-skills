@@ -538,6 +538,8 @@ def test_overvoltage_detection(self):
 - **Command_Response:** Standard Adamant pattern -- every command produces a response data product. Always verify STATUS after commanding.
 - **Fault injection:** Assembly-specific. Requires test commands built into the assembly (not all assemblies have these).
 - **Packet names:** Must match COSMOS plugin cmd.txt/tlm.txt definitions exactly (TARGET PACKET ITEM).
+- **`wait_check_expression` evaluates strings:** Only `tlm()`, `cmd()`, and built-in Python are available inside the expression string. User-defined functions (e.g., `seq_delta()`) are NOT visible. Use `wait_check_packet` or manual polling loops instead.
+- **CCSDS standard items:** COSMOS auto-generates `CCSDS_VERSION`, `CCSDS_TYPE`, `CCSDS_SEC_HDR_FLG`, `CCSDS_APID`, `CCSDS_SEQ_FLAGS`, `CCSDS_SEQ_COUNT`, `CCSDS_LENGTH` for every packet with a CCSDS header. Read with `type="RAW"` to get integer values.
 - **Python vs Ruby:** Both APIs have identical method names and behavior. Python recommended for Adamant since tooling is Python-based.
 - **Performance:** Use `disable_instrumentation()` context manager for tight loops:
   ```python
