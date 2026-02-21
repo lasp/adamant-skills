@@ -347,6 +347,8 @@ openc3.sh cli script stop <id>           # Stop a running script
 
 Scripts use the COSMOS Scripting API (`cmd()`, `tlm()`, etc.) and live in `procedures/` within a plugin target. `script run` supports `--disconnect` mode, `--wait N` timeout, and `ENV=VALUE` args.
 
+**Using Adamant Python in COSMOS scripts:** Use `pydep` to build Adamant's generated Python dependencies (packed record types, CRC16, packing/unpacking utilities) into a version-controlled plugin configuration. Include the output in the plugin's `procedures/` path and copy built packages to the plugin `lib/` path. This lets test scripts use real Adamant records and tools instead of raw byte manipulation.
+
 ### Interactive and Debug
 ```bash
 openc3.sh cli irb                        # Interactive Ruby console with COSMOS API
