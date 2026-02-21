@@ -207,6 +207,20 @@ services:
 - `sleep infinity` keeps container running for `exec` commands
 - `network_mode: host` gives container access to host networking
 - Container naming convention: `<project_name>_container`
+- **Multi-repo projects**: Add extra volume mounts for external dependencies (C/C++ libraries, algorithm repos). Example with 5 repos:
+  ```yaml
+  volumes:
+      - type: bind
+        source: ../../adamant
+        target: /home/user/adamant
+      - type: bind
+        source: ../../<project>
+        target: /home/user/<project>
+      - type: bind
+        source: ../../external_algorithms
+        target: /home/user/external_algorithms
+  ```
+- Projects with C/C++ dependencies often use a **custom Docker image** (`adamant_env.sh build`) that pre-installs toolchains
 
 #### adamant_env.sh Commands
 
@@ -218,6 +232,10 @@ The helper script auto-detects project name from its parent directory.
 | `bash docker/adamant_env.sh stop` | Stop container |
 | `bash docker/adamant_env.sh login` | Interactive bash shell as `user` |
 | `bash docker/adamant_env.sh pull` | Pull latest image |
+| `bash docker/adamant_env.sh push` | Push image to registry |
+| `bash docker/adamant_env.sh build` | Build custom Docker image from `docker/Dockerfile` |
+| `bash docker/adamant_env.sh buildx` | Multi-platform build (arm64/amd64) |
+| `bash docker/adamant_env.sh pushx` | Multi-platform build + push |
 | `bash docker/adamant_env.sh remove` | Remove container, network, volumes (destructive!) |
 
 **First `start`** runs env/activate inside the container, which:
@@ -252,7 +270,13 @@ docker exec -u user <project_name>_container bash -c \
 
 **Why login is preferred over raw `docker exec`:**
 - The base adamant image's `.bashrc` sources `adamant/env/activate`, which sets `ADAMANT_ENVIRONMENT_SET`. This guard variable prevents the project's activate from re-running adamant's activate with the project as an extra build root.
-- A custom Dockerfile that overrides `.bashrc` to source the project's activate instead solves this. The `adamant_env.sh start` script also handles first-time activation.
+- A custom Dockerfile that overrides `.bashrc` to source the project's activate instead solves this:
+  ```dockerfile
+  FROM ghcr.io/lasp/adamant:0.1
+  RUN echo 'source /home/user/<project>/env/activate 2>/dev/null' >> /home/user/.bashrc
+  ```
+  Build with `adamant_env.sh build`, then update `docker-compose.yml` to use the custom image (`ghcr.io/<org>/<project>:0.1`).
+- The `adamant_env.sh start` script also handles first-time activation.
 - Raw `docker exec` with `source project/env/activate` works IF the environment hasn't been previously activated in that shell session. But login shells may have already sourced `.bashrc`.
 - **Bottom line:** `adamant_env.sh login` handles all edge cases. Use it.
 
@@ -370,7 +394,9 @@ Test directories do NOT have `.all_path` -- they use `env.py` (`from environment
 
 ## Hardware Target Configuration
 
-The Docker image includes cross-compilers for ARM and RISC-V. Targets are selected via GPR files in `redo/targets/gpr/`:
+The Docker image includes cross-compilers for ARM and RISC-V. Targets are selected via GPR files in `redo/targets/gpr/`.
+
+**Project-specific target overrides**: Projects can have their own `redo/targets/` directory with custom `linux.py` (target class definitions) and `gpr/` files that override or extend the framework's targets. This is how projects add custom GPR flags, linker options, or `PROJECT_DIR` references.
 
 | Target | GPR | Output |
 |--------|-----|--------|
