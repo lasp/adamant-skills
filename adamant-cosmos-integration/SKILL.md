@@ -305,9 +305,33 @@ raw   = tlm_raw("TARGET PKT ITEM")          # Raw binary
 | Packet length wrong | `Length 32 16 7` offset incorrect | The `7` = 6-byte primary header + 1 (CCSDS length field semantics) |
 | Product packets empty | Product_Packetizer not connected to DB | Wire `Data_Product_Fetch_T_Request` → `Product_Database.Data_Product_Fetch_T_Service` |
 
+## Operational Behavior
+
+### Socket Connection Lifecycle
+- Socket **auto-reconnects**: On each send/receive attempt, if `not Is_Connected`, calls `Connect` again. No crash on disconnect.
+- Events emitted: `Socket_Connected` on successful connect, `Socket_Not_Connected` on failure or disconnect.
+- If COSMOS is not running at assembly startup, the socket logs `Socket_Not_Connected` and retries on next data send.
+- **No data is lost silently** -- send failures when disconnected are visible through dropped packet events.
+
+### Packet Size Limits
+- CCSDS `Packet_Length` field is 16-bit (`Unsigned_16`), theoretical max ~65KB per packet.
+- Practical limit set by `ccsds_packet_buffer_size` in project `configuration.yaml` (typically 512-1274 bytes).
+- Socket `Queue_Size` (init_base) limits total buffered data, not individual packet size.
+
+### Incremental Plugin Updates
+- `redo cosmos_config` **regenerates everything** from assembly model. There is no incremental update.
+- For quick prototyping, you CAN manually edit cmd.txt/tlm.txt, but changes will be overwritten on next `redo cosmos_config`.
+- After manual edits, rebuild the gem and reload: `openc3.sh cli load <gem>`.
+
+### Event Subpacket Format
+- Event_Packetizer batches multiple events into a single CCSDS packet as variable-length subpackets.
+- Each subpacket contains: event header (ID, timestamp) + serialized event data.
+- COSMOS parses these using the generated tlm.txt `Subpacket.Data` block definition.
+- `Num_Internal_Packets` init param controls max events per batch; `Partial_Packet_Timeout` forces send of partial batches.
+
 ## Key Gotchas
 
-1. Socket is a TCP CLIENT -- COSMOS server must be running first
+1. Socket is a TCP CLIENT -- COSMOS server must be running first (but assembly won't crash if it's not -- it retries)
 2. Socket address: `"127.0.0.1"` same host, `"host.docker.internal"` in Docker
 3. Product_Packetizer needs `init_base` with `Queue_Size` (has async command connector)
 4. Event_Packetizer `Packet_Id_Base` must avoid collision with auto-assigned product packet IDs
