@@ -45,7 +45,10 @@ export BUILD_PATH="/explicit/path"     # Override: skip scanning, use this direc
 export SCHEMAPATH=$ADAMANT_DIR/gen/schemas
 export TEMPLATEPATH=$ADAMANT_DIR/gen/templates
 export ADAMANT_TMP_DIR=<auto>          # Session temp dir for SQLite caches
+export PROJECT_DIR=/path/to/project    # Project root (set by project env/activate)
 ```
+
+`PROJECT_DIR` is set by the project's `env/activate` script and used by target GPR files to locate project-local `.gpr` files. Without it, target builds fail.
 
 Default BUILD_ROOTS: Adamant repo root + project root (both auto-detected via `.git`).
 
@@ -285,7 +288,7 @@ Prove always uses the `Linux_Prove` target internally. Sets `SAFE_COMPILE=True` 
 |-------------|-----------|------|-------------|
 | `Linux` (default) | `.all_path`, `.Linux_path`, `.64bit_path` | x86-64 | Alias for Linux_Debug |
 | `Linux_Debug` | same | x86-64 | -O0, debug, Ravenscar, validity checks |
-| `Linux_Test` | `.all_path`, `.Linux_path`, `.Linux_Test_path`, `.64bit_path` | x86-64 | Debug without Ravenscar, links AUnit |
+| `Linux_Test` | `.all_path`, `.Linux_path`, `.64bit_path` | x86-64 | Debug without Ravenscar, links AUnit |
 | `Linux_Coverage` | same as Test | x86-64 | Test + gcov flags |
 | `Linux_Prove` | same as Debug | x86-64 | For GNATprove SPARK analysis |
 | `Linux_Analyze` | same as Debug | x86-64 | GNAT SAS deep mode |

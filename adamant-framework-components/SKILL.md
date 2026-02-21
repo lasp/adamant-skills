@@ -42,6 +42,10 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **ccsds_socket_interface** (active)
 - Purpose: CCSDS over TCP/IP socket with listener task
 - Use: Connect assembly to ground system via network
+- init_base: `Queue_Size`
+- init: `Addr` (String access), `Port` (Natural)
+- subtasks: `Listener` (with priority/stack for recv task)
+- Connectors: `Ccsds_Space_Packet_T_Send`, `Ccsds_Space_Packet_T_Recv_Async`, `Event_T_Send`, `Sys_Time_T_Get`
 
 **ccsds_subpacket_extractor** (either)
 - Purpose: Extract CCSDS subpackets from larger packets
@@ -60,7 +64,9 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **command_router** (active)
 - Purpose: Route commands by ID to destination components
 - Use: Central command distribution hub for assembly
-- Init: `max_Number_Of_Commands` (required). Self-loopback: Command_Response_T_To_Forward_Send -> own Command_Response_T_Recv_Async
+- init_base: `Queue_Size`, `Command_T_Send_Count`, `Command_Response_T_To_Forward_Send_Count`
+- init: `Max_Number_Of_Commands`
+- Connectors: `Command_T_To_Route_Recv_Async` (input), `Command_T_Send` (arrayed), `Command_Response_T_Recv_Async` (self-loopback from Forward), `Command_Response_T_To_Forward_Send`, `Event_T_Send`, `Data_Product_T_Send`, `Sys_Time_T_Get`
 
 **command_sequencer** (active)
 - Purpose: Execute LASEL sequences with multiple engines
@@ -221,14 +227,23 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **rate_group** (active)
 - Purpose: Execute components at periodic rate with timing
 - Use: Fundamental scheduling providing tasks for passive components
+- init_base: `Queue_Size`, `Tick_T_Send_Count`
+- init: `Ticks_Per_Timing_Report`
+- Connectors: `Tick_T_Recv_Async`, `Tick_T_Send` (arrayed), `Pet_T_Send`, `Event_T_Send`, `Sys_Time_T_Get`
 
 **tick_divider** (passive)
 - Purpose: Divide tick rate into multiple subrates
 - Use: Multi-rate scheduling from single tick source
+- init_base: `Tick_T_Send_Count`
+- init: `Dividers` (access to preamble-defined `Divider_Array_Type`)
+- preamble: Define `Divider_Array_Type` as array of Natural
+- Connectors: `Tick_T_Recv_Sync`, `Tick_T_Send` (arrayed), `Event_T_Send`, `Sys_Time_T_Get`
 
 **ticker** (active)
 - Purpose: Generate periodic ticks at microsecond intervals
 - Use: Primary tick source for assembly scheduling
+- discriminant: `Period_Us` (microseconds between ticks)
+- Connectors: `Tick_T_Send`, `Sys_Time_T_Get`
 
 **tick_listener** (passive)
 - Purpose: Count ticks since last invocation
@@ -237,6 +252,9 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **splitter** (passive)
 - Purpose: Split single connector into arrayed outputs
 - Use: Fan-out distribution for any data type
+- generic_types: `T => Event.T` (or any connector type)
+- init_base: `T_Send_Count`
+- Connectors: `T_Recv_Sync`, `T_Send` (arrayed)
 
 ## Time Synchronization (4 components)
 
