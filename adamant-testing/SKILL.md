@@ -133,6 +133,8 @@ Testers are **reciprocal components** with inverted connectors:
 
 **Set_Up DP history pollution**: If component overrides `Set_Up` and sends initial data products (e.g., zeroed counters), typed DP histories will have entries BEFORE any test stimuli. Clear typed histories before your assertion window, or account for the offset in `Get` indices.
 
+**History buffer limits**: Default tester history buffers hold ~100 entries. Tests that send many ticks (e.g., 50+ in a loop) can overflow them, causing lost entries and wrong assertion indices. Keep tick counts per test under 50, or clear histories between test phases with `T.Event_T_Recv_Sync_History.Clear` etc.
+
 ## Test Lifecycle
 
 ```ada
