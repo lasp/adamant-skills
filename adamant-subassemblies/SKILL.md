@@ -143,7 +143,9 @@ Could not load model for subassembly 'core'. Make sure the model exists in the p
 
 ⚠️ **CRITICAL CONSTRAINT**: ID base keys must be **globally unique**. The same key name (e.g., `Event_Id_Base`) CANNOT appear in multiple subassemblies. This means you cannot give each subassembly its own `Event_Id_Base`.
 
-**SOLUTION**: Define ALL id_bases in the parent assembly only. Do NOT define id_bases in subassemblies. Values must be positive (>= 1, NOT 0).
+**Primary pattern**: Omit `id_bases` entirely and let auto-assignment handle it. Use `set_id_bases` on individual components when you need specific values (e.g., `set_id_bases: ["Packet_Id_Base => 98"]` on Event_Packetizer).
+
+**If you need explicit id_bases**: Define them in the parent assembly only. Do NOT define id_bases in subassemblies -- duplicate key names across files cause fatal errors. Values must be positive (>= 1, NOT 0).
 
 ```yaml
 # WRONG: Same id_base key in multiple subassemblies
@@ -155,13 +157,18 @@ id_bases:
 id_bases:
   - "Event_Id_Base => 500"      # FATAL ERROR: duplicate key
 
-# CORRECT: All id_bases in parent only
+# CORRECT: Omit id_bases (auto-assignment) with per-component overrides
+# safe_mode.assembly.yaml
+components:
+  - type: Ccsds_Event_Packetizer
+    name: Event_Packetizer_Instance
+    set_id_bases: ["Packet_Id_Base => 98"]   # Override specific component
+
+# ALSO CORRECT: All id_bases in parent only
 # parent.assembly.yaml
 id_bases:
   - "Event_Id_Base => 1"
   - "Command_Id_Base => 1"
-  - "Data_Product_Id_Base => 1"
-  - "Fault_Id_Base => 1"
 
 subassemblies:
   - core
@@ -274,6 +281,38 @@ components:
   - type: Sensor_Reader
     # ...
 ```ada
+
+### Parent With No Components
+A parent assembly can omit `components:` entirely when ALL components live in subassemblies. The parent then contains only `subassemblies:`, `with:`, and `connections:` (cross-subassembly wiring):
+
+```yaml
+# Parent with no direct components
+description: Full assembly
+with:
+  - Assembly_Commands
+subassemblies:
+  - path: safe_mode.assembly.yaml    # Foundation -- all infrastructure
+  - path: nominal.assembly.yaml      # Application components
+  - path: degraded.assembly.yaml     # Active observation + GNC
+connections:
+  # Cross-subassembly wiring only
+  - from_component: Command_Router_Instance   # in safe_mode
+    from_connector: Command_T_Send
+    to_component: Temp_Limit_Checker_Instance  # in nominal
+    to_connector: Command_T_Recv_Async
+```
+
+### Foundation Subassembly Pattern
+One subassembly owns ALL infrastructure (ticker, rate groups, command router, CCSDS, events, product database). Other subassemblies contain only application components. The foundation subassembly defines arrayed connector counts (e.g., `Tick_T_Send_Count`) large enough to cover all subassemblies, then indices are split across files:
+
+```yaml
+# safe_mode.assembly.yaml -- foundation, owns Fast_Rate_Group
+# Wires indices 6-8 to its own components internally
+
+# parent.assembly.yaml -- wires remaining indices
+# Fast_Rate_Group indices 1-5 -> nominal components
+# Fast_Rate_Group indices 9-22 -> degraded components
+```
 
 ### Minimal Subassemblies Are Valid
 A subassembly can contain only `description:` and `components:` with no connections, id_bases, or preamble. This is common for leaf subsystems where all wiring is cross-subassembly and done in the parent:
@@ -453,6 +492,7 @@ connections:
 | Where should intra-subsystem connections go? | In the subassembly file |
 | Can two subassemblies define the same component name? | No -- fatal error |
 | Can two subassemblies set the same id_base? | No -- fatal error |
+| Is bare `init:` (null) valid? | Yes -- equivalent to `init: []`, both mean no init params |
 | Do views know about subassembly boundaries? | No -- views see the flattened assembly |
 | Can a subassembly be built standalone? | No -- it needs a parent with `main/` |
 
