@@ -62,10 +62,16 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **command_protector** (passive)
 - Purpose: Protect hazardous commands with arm/disarm + timeout
 - Use: Prevent accidental execution of dangerous commands
+- Preamble: Defines `Command_Id_List` (array of Command_Types.Command_Id)
+- Init: `protected_Command_Id_List` (Command_Id_List) -- list of command IDs to protect
+- Connectors: `Tick_T_Recv_Sync` (arm timeout), `Command_T_To_Forward_Recv_Sync` (commands to check), `Command_T_Recv_Sync`, `Command_T_Send` (forwarded commands), `Command_Response_T_Send`, `Data_Product_T_Send`, `Event_T_Send`, `Packet_T_Send` (rejected commands), `Sys_Time_T_Get`
 
 **command_rejector** (passive)
 - Purpose: Block commands based on ID blacklist
 - Use: Prevent unwanted commands from specific sources
+- Preamble: Defines `Command_Id_List` (array of Command_Types.Command_Id)
+- Init: `command_Id_Reject_List` (Command_Id_List) -- list of command IDs to reject
+- Connectors: `Command_T_To_Forward_Recv_Sync` (commands to check), `Command_T_Send` (forwarded commands), `Data_Product_T_Send`, `Event_T_Send`, `Packet_T_Send` (error packets), `Sys_Time_T_Get`
 
 **command_router** (active)
 - Purpose: Route commands by ID to destination components
@@ -105,6 +111,10 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **connector_queuer** (active)
 - Purpose: Add FIFO queue to synchronous connectors
 - Use: Convert sync connectors to async with ordering
+- Generic:
+  - `T` -- generic data type passed through the queue
+  - `Serialized_Length` -- function to get serialized length of T (for variable-length types)
+- Connectors: `T_Recv_Async` (queued input), `T_Send` (FIFO output), `Sys_Time_T_Get`, `Event_T_Send`
 
 **forwarder** (passive)
 - Purpose: Enable/disable control switch for data streams
@@ -209,10 +219,19 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **memory_manager** (active)
 - Purpose: Manage single memory location with loan/return IDs
 - Use: Thread-safe memory region access control
+- Init: 
+  - `bytes` (Basic_Types.Byte_Array_Access, default null) -- pointer to preallocated memory region; if null, heap allocation used
+  - `size` (Integer, default -1) -- bytes to allocate on heap if bytes=null; must be negative if bytes not null
+- Connectors: `Memory_Region_Request_T_Return` (memory requests), `Ided_Memory_Region_T_Release` (memory returns), `Command_T_Recv_Async`, `Command_Response_T_Send`, `Memory_Dump_Send`, `Data_Product_T_Send`, `Event_T_Send`, `Sys_Time_T_Get`
 
 **memory_packetizer** (active)
 - Purpose: Packetize memory regions with sequence tracking
 - Use: Background memory downlink with multiple packet IDs
+- Init:
+  - `Max_Packets_Per_Time_Period` (Natural) -- max packets per time period to throttle output
+  - `Time_Period_In_Seconds` (Positive, default 1) -- time period for throttling
+  - `Max_Packet_Ids` (Positive, default 10) -- max unique packet IDs for sequence count tracking
+- Connectors: `Packet_T_Send`, `Memory_Dump_Recv_Async` (memory regions to packetize), `Command_T_Recv_Async`, `Command_Response_T_Send`, `Data_Product_T_Send`, `Event_T_Send`, `Sys_Time_T_Get`
 
 **memory_packetizer_fixed_id** (active)
 - Purpose: Packetize memory regions with single packet ID
