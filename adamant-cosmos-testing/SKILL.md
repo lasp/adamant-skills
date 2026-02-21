@@ -579,12 +579,18 @@ Early boot phases need `wait_packet` (not `wait_check`) because telemetry may no
 ```python
 def test_01_assembly_alive(self):
     """First contact -- wait for ANY packet before checking values."""
-    wait_packet("ASSEMBLY", "System_Status_Packet", timeout=10)  # blocks until first packet
+    wait_packet("ASSEMBLY", "System_Status_Packet", 1, timeout=10)  # blocks until first packet
     # NOW safe to use wait_check/check
     check("ASSEMBLY System_Status_Packet CCSDS_SEQ_COUNT > 0")
 ```
 
 Order boot tests numerically (`test_01` through `test_0N`) to enforce sequential verification: POST -> init -> rate groups -> command link -> telemetry flow -> nominal mode.
+
+**No-faults health gate** (use after boot or before ops procedures):
+```python
+fault_count = int(tlm(f"{target} System_Status_Packet Fault_Count.Value"))
+assert fault_count == 0, f"Assembly has {fault_count} active faults"
+```
 
 ## Operational Procedure Patterns
 
