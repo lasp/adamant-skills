@@ -23,6 +23,7 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **ccsds_echo** (passive)
 - Purpose: Echo CCSDS packets as Adamant packets
 - Use: Loop back uplink as downlink
+- Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (CCSDS in), `Packet_T_Send` (Adamant packets out), `Sys_Time_T_Get`
 
 **ccsds_packetizer** (passive)
 - Purpose: Adamant packets -> CCSDS packets with CRC/timestamp
@@ -33,6 +34,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **ccsds_product_extractor** (passive)
 - Purpose: Extract data products from CCSDS packet data
 - Use: Parse telemetry from CCSDS packets into typed data
+- Init: `Data_Product_Extraction_List` (Product_Extractor_Types.Extracted_Product_List_Access, not_null) -- list of data products to extract from packets with APID/offset mapping
+- Connectors: `Ccsds_Space_Packet_T_Recv_Sync` (CCSDS in), `Data_Product_T_Send` (extracted products), `Event_T_Send`, `Sys_Time_T_Get`
 
 **ccsds_router** (either)
 - Purpose: Route CCSDS packets by APID lookup table
@@ -112,6 +115,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **connector_protector** (passive)
 - Purpose: Thread-safe protected object for connectors
 - Use: Add thread safety to non-thread-safe components
+- Generic: `T` -- generic data type for protected pass-through (atomic T_Send call within protected object)
+- Connectors: `T_Recv_Sync` (input), `T_Send` (atomic protected output)
 
 **connector_queuer** (active)
 - Purpose: Add FIFO queue to synchronous connectors
@@ -198,6 +203,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **last_chance_manager** (passive)
 - Purpose: Manage non-volatile exception data from LCH
 - Use: Exception debugging and system recovery
+- Init: `Exception_Data` (Packed_Exception_Occurrence.T_Access, not_null) -- nonvolatile memory region for LCH data, `Dump_Exception_Data_At_Startup` (Boolean) -- auto-dump exception data at startup
+- Connectors: `Command_T_Recv_Sync`, `Command_Response_T_Send`, `Packet_T_Send` (exception dumps), `Data_Product_T_Send`, `Event_T_Send`, `Sys_Time_T_Get`
 
 ## Interrupt Handling (3 components)
 
@@ -224,6 +231,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **memory_dumper** (active)
 - Purpose: Dump memory regions or compute CRC by command
 - Use: Memory inspection and verification
+- Init: `memory_Regions` (Memory_Manager_Types.Memory_Region_Array_Access, not_null) -- list of allowed memory regions for dumping/CRC
+- Connectors: `Command_T_Recv_Async`, `Command_Response_T_Send`, `Memory_Dump_Send` (to Memory_Packetizer), `Data_Product_T_Send`, `Event_T_Send`, `Sys_Time_T_Get`
 
 **memory_manager** (active)
 - Purpose: Manage single memory location with loan/return IDs
