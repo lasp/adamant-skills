@@ -350,6 +350,51 @@ export BUILD_ROOTS="$ADAMANT_DIR:$SHARED_LIB_DIR:$PROJECT_DIR"
 
 The order matters: later paths override earlier ones for Python configuration. Adamant is always prepended if not already present.
 
+## Adding Components
+
+1. Create `src/components/<name>/` with empty `.all_path`
+2. Create `<name>.component.yaml` (model definition)
+3. Run `redo` from the component dir -- generates Ada specs/bodies in `build/`
+4. Copy generated templates to create your implementation
+
+For full component model syntax, connector types, and implementation patterns: see [adamant-component-dev](../adamant-component-dev/SKILL.md).
+
+## Running Unit Tests
+
+```bash
+cd src/components/<name>/test && redo test   # Single component
+cd src/components && redo test_all           # All components
+```
+
+Test directories do NOT have `.all_path` -- they use `env.py` (`from environments import test`). Test harness files are generated via `redo templates` and copied into the test dir. For test writing patterns: see [adamant-testing](../adamant-testing/SKILL.md).
+
+## Hardware Target Configuration
+
+The Docker image includes cross-compilers for ARM and RISC-V. Targets are selected via GPR files in `redo/targets/gpr/`:
+
+| Target | GPR | Output |
+|--------|-----|--------|
+| Linux (native) | `Linux.gpr` | `build/bin/Linux/main.elf` |
+| Linux_Test | `Linux_Test.gpr` | Test binaries |
+| Pico (RP2040) | `Pico.gpr` | `build/bin/Pico/main.elf` + `.uf2` |
+| ARM_Bare_Board | `ARM_Bare_Board.gpr` | `build/bin/ARM_Bare_Board/main.elf` |
+| RISC-V | `RISC_V.gpr` | `build/bin/RISC_V/main.elf` |
+
+Pico and ARM targets subclass the base GPR and set `Target`, `Runtime`, and linker flags. The `default.uf2.do` script converts ELF to UF2 format for Pico flashing.
+
+To build for a specific target, set `TARGET` in your main `.do` file or build directly:
+```bash
+redo build/bin/Pico/main.elf               # Cross-compile for Pico
+```
+
+Cross-compilation requires the matching alire crate pins in `alire.toml` (the Docker image has ARM toolchains pre-installed).
+
+For build system internals and target subclassing: see [adamant-build-system](../adamant-build-system/SKILL.md).
+
+## COSMOS Ground System Integration
+
+To connect your assembly to COSMOS for telemetry and commanding, see [adamant-cosmos-integration](../adamant-cosmos-integration/SKILL.md). Key steps: add CCSDS components to assembly, generate plugin via `redo cosmos_config`, build and load the gem.
+
 ## Common Setup Errors and Fixes
 
 | Error | Cause | Fix |
@@ -378,4 +423,6 @@ The order matters: later paths override earlier ones for Python configuration. A
 
 - **Build system**: [adamant-build-system](../adamant-build-system/SKILL.md)
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)
+- **Testing**: [adamant-testing](../adamant-testing/SKILL.md)
+- **COSMOS**: [adamant-cosmos-integration](../adamant-cosmos-integration/SKILL.md)
 - **Style**: [adamant-style](../adamant-style/SKILL.md) -- run `redo style_all` to validate entire project
