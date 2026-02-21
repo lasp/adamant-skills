@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 16 Adamant skills totaling ~15300 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 17 Adamant skills totaling ~16000 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -106,6 +106,17 @@ You have 16 Adamant skills totaling ~15300 lines (with references). Loading all 
 
 **Also load:** `adamant-assembly-dev` (for assembly YAML patterns and validation rules)
 
+### COSMOS integration test scripts
+**Load:** `adamant-cosmos-testing`
+- Test script patterns for exercising a running assembly via COSMOS
+- Command acceptance, telemetry verification, mode transitions, fault injection
+- Parameter update lifecycle, rate verification, stress/edge cases
+- Suite organization (Group/Suite hierarchy), wait/check API patterns
+- pydep integration for using Adamant packed records in test scripts
+- Disconnect mode for offline script validation
+
+**Also load:** `adamant-cosmos-integration` (for plugin structure, CCSDS wiring, cmd/tlm definitions)
+
 ### Debugging framework code generation bugs
 **Load:** `adamant-framework-internals`
 - Python model object identity pitfall (`is` vs `==`, `base.__eq__` by filename)
@@ -146,6 +157,7 @@ You have 16 Adamant skills totaling ~15300 lines (with references). Loading all 
 | SPARK verification | build-system (prove section) | component-dev |
 | Wrap C++ algorithm into Adamant component | algorithm-wrapping | component-dev |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
+| COSMOS integration test scripts | cosmos-testing | cosmos-integration |
 | Memory-mapped register interface | type-system | component-dev |
 | Split assembly into subassemblies | subassemblies | assembly-dev |
 | Create system architecture from scratch | assembly-dev | framework-components |

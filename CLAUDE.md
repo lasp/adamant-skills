@@ -6,7 +6,7 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (17 skills, ~15500 lines with refs)
+## Skill Inventory (18 skills, ~16000 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
@@ -19,6 +19,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-build-system` | 808 | Redo commands, code gen, build paths, SPARK prove |
 | `adamant-type-system` | 542 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-cosmos-integration` | 510 | CCSDS pipeline, COSMOS plugin build/load |
+| `adamant-cosmos-testing` | 450 | Integration test scripts via COSMOS scripting API |
 | `adamant-framework-components` | 477 | Catalog of all 58 built-in components + audit |
 | `adamant-subassemblies` | 463 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
 | `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
@@ -28,13 +29,13 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-tools` | 1688 | API inspector, component scaffolder, YAML validator (Python scripts) |
 | `high-assurance-design` | 304 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~15500 lines (includes tool scripts)
+**Total:** ~16000 lines (includes tool scripts)
 
 ## Key Principles
 
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
 - **Compiler-validated.** 30+ rounds of build-test-fix cycles across 100+ components + unit tests. Components compile clean on first try when skills are followed.
-- **Selector-driven.** Load 1-2 skills per task, not all 16.
+- **Selector-driven.** Load 1-2 skills per task, not all 18.
 - **Three-tier prompt strategy:** This file (CLAUDE.md) -> skill-selector -> deep skills.
 - **~300-500 line SKILL.md target.** Dense patterns in SKILL.md, detailed examples in references/.
 - **No project-specific content.** Generic skills contain zero project names or paths. Project-specific guidance lives in the project repo.
