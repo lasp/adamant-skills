@@ -199,6 +199,17 @@ Templates organized by output type: `array/`, `assembly/`, `base/`, `commands/`,
 
 Generated files live in `build/src/`. Source files with the same name override generated ones.
 
+### File Override Mechanism
+
+GPR Source_Dirs includes both `build/src/` (generated) and the component's source directory. When GNAT finds two files with the same name, the **source directory wins** because it appears earlier in the Source_Dirs list. This is how you override generated base classes or type packages:
+
+1. Run `redo all` to generate the file in `build/src/`
+2. Copy it to your source directory: `cp build/src/my_file.ads ./my_file.ads`
+3. Edit the copy -- your version now takes precedence
+4. Subsequent `redo` regenerates `build/src/` but GNAT uses your copy
+
+**Template stubs** (`build/template/`) work differently -- they are NOT in Source_Dirs. You explicitly copy them to your source directory to create implementation files. They are never auto-included.
+
 ### Jinja2 Template Variables
 YAML files can use Jinja2 syntax to reference configuration values:
 ```yaml
@@ -280,6 +291,8 @@ Prove always uses the `Linux_Prove` target internally. Sets `SAFE_COMPILE=True` 
 | `Linux_Analyze` | same as Debug | x86-64 | GNAT SAS deep mode |
 | ARM bare board | `.all_path`, `.bb_path`, `.32bit_path` | ARM (arm-eabi) | For Cortex-M, etc. |
 | RISC-V bare board | `.all_path`, `.bb_path`, `.32bit_path` | RISC-V (riscv32-elf) | For RISC-V MCUs |
+
+**Note on bare-board targets:** `arm_bare_board` and `riscv_bare_board` are base classes in `redo/targets/`. Projects define concrete targets by subclassing them (e.g., `class Pico(riscv_bare_board)` or `class STM32(arm_bare_board)`). Set `TARGET` to the concrete class name, not the base. Check your project's `redo/targets/` for available concrete targets.
 
 ### Target-Specific Source Bodies
 ```
