@@ -364,12 +364,13 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Connectors: `Data_Product_T_Recv_Sync` (store), `Data_Product_Fetch_T_Service` (fetch by ID), `Event_T_Send`, `Command_T_Recv_Sync`, `Command_Response_T_Send`, `Data_Product_T_Send` (component DPs), `Packet_T_Send` (database dumps), `Sys_Time_T_Get` (8 total)
 - **NOT the same as Ccsds_Packetizer**: Product_Database produces `Packet.T`; Ccsds_Packetizer receives `Packet.T` and produces CCSDS-framed packets
 
-**product_packetizer** (passive)
+**product_packetizer** (passive, but has recv_async -- needs init_base with Queue_Size)
 - Purpose: Request data products and packetize at rates
 - Use: Telemetry packet generation from data products
 - Discriminant: `Packet_List` (Product_Packet_Types.Packet_Description_List_Access_Type, autocoded from product_packets.yaml)
 - Init: `Commands_Dispatched_Per_Tick` (Positive, default 3)
-- Connectors: `Tick_T_Recv_Sync`, `Data_Product_Fetch_T_Request` (request to Product_Database), `Packet_T_Send` (packets out), `Command_T_Recv_Async`, `Event_T_Send`, `Sys_Time_T_Get`, `Command_Response_T_Send`
+- init_base: `Queue_Size` (required -- `Command_T_Recv_Async` creates a queue even though component is passive)
+- Connectors: `Tick_T_Recv_Sync`, `Data_Product_Fetch_T_Request` (request to Product_Database), `Packet_T_Send` (packets out), `Command_T_Recv_Async` (needs queue!), `Event_T_Send`, `Sys_Time_T_Get`, `Command_Response_T_Send` (7 total)
 
 **sequence_store** (active)
 - Purpose: Manage memory slots storing sequences by ID with unique activation control

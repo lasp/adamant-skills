@@ -510,7 +510,7 @@ Common framework components and their REQUIRED configuration in assembly YAML:
 | event_packetizer | `Num_Internal_Packets => N`, `Partial_Packet_Timeout => T` | -- | -- | NO init_base |
 | event_text_logger | -- | `Event_To_Text => Assembly_Name_Event_To_Text.Event_To_Text'Access` | Queue_Size, priority, stack_size, secondary_stack_size | ACTIVE component, requires discriminant |
 | product_database | `Minimum_Data_Product_Id => M`, `Maximum_Data_Product_Id => N` | -- | -- | Use `init:` (NOT init_base) |
-| product_packetizer | `init: []` (empty) | `Packet_List => Assembly_Product_Packets.Packet_List'Access` | -- | Empty init required even when all params optional |
+| product_packetizer | `init: []` (empty) | `Packet_List => Assembly_Product_Packets.Packet_List'Access` | Queue_Size | Has `Command_T_Recv_Async` -- needs Queue_Size even though passive |
 | ticker | -- | -- | -- | Wire Sys_Time_T_Get (easy to forget) |
 | rate_group | -- | -- | Queue_Size | Arrayed Tick_T_Send: count MUST match connections |
 | tick_divider | `Dividers => Dividers'Access` | -- | -- | Preamble defines Divider_Array_Type |
