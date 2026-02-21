@@ -305,7 +305,7 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
   - `initial_Mode` (Logger_Enums.Logger_Mode.E, default Disabled) -- initial logging state (enabled/disabled)
 - Connectors: `T_Recv_Sync` (generic data in), `Memory_Dump_Send` (to memory packetizer), `Command_T_Recv_Sync`, `Command_Response_T_Send`, `Event_T_Send`, `Data_Product_T_Send`, `Sys_Time_T_Get`
 
-**limiter** (passive)
+**limiter** (passive, but has recv_async -- needs init_base with Queue_Size)
 - Purpose: Rate-limit generic data output by tick rate with configurable threshold
 - Use: Queue and meter output of any data type at commandable rates; packet rate in units of periodic tick
 - Generic: `T` (any data type), `Serialized_Length` (function for variable-length packed types)
