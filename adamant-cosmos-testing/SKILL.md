@@ -550,6 +550,25 @@ def test_overvoltage_detection(self):
 - **Thread safety:** COSMOS Python API is NOT guaranteed thread-safe. Avoid concurrent `cmd()`/`tlm()` calls from multiple threads. If testing concurrent command streams, serialize sends or accept race conditions in test results.
 - **Watchdog testing:** Common pattern -- `Pet_Watchdog` keeps healthy, `Force_Timeout` triggers fault state. Verify via watchdog state data product, then recover with another pet command.
 
+## Multi-Target Testing
+
+When testing assemblies that communicate (e.g., flight SW + ground simulator), use separate target names:
+
+```python
+# Configure simulator
+cmd(f"GROUND_SIM Sensor_Sim-Set_Sun_Vector with X {pack_f32(0.5)}, Y {pack_f32(0.5)}, Z {pack_f32(0.707)}")
+# Verify flight SW responds
+wait_check("FLIGHT_FSW Attitude_HK Controller_State.Value == 'TRACKING'", 15)
+# Cross-target consistency
+sim_seq = tlm("GROUND_SIM Sim_Status CCSDS_SEQ_COUNT")
+flight_seq = tlm("FLIGHT_FSW Flight_HK CCSDS_SEQ_COUNT")
+```
+
+For vector commands with multiple F32 fields, pack each independently:
+```python
+cmd(f"TARGET Component-Set_Vector with X {pack_f32(1.0)}, Y {pack_f32(2.0)}, Z {pack_f32(3.0)}")
+```
+
 ## Related Skills
 
 - **adamant-cosmos-integration** -- Plugin structure, CCSDS wiring, cmd/tlm definitions, CLI reference
