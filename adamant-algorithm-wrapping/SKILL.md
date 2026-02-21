@@ -47,12 +47,23 @@ algorithm_source/       # C/C++ algorithms (fp32-fsw-xmera) -- do NOT commit her
 wrapper_components/     # Adamant wrappers + C shims + types (adamant-xmera-components)
 mission_project/        # Assembly + mission-specific components (ceres_fsw)
 
-# Docker mounts all three:
+# Docker mounts all repos (docker-compose.yml volumes):
 volumes:
-  - ../../adamant:/home/user/adamant
-  - ../../algorithm_source:/home/user/algorithm_source
-  - ../../wrapper_components:/home/user/wrapper_components
-  - ../../mission_project:/home/user/mission_project
+  - type: bind
+    source: ../../adamant
+    target: /home/user/adamant
+  - type: bind
+    source: ../../new-project
+    target: /home/user/new-project
+  - type: bind
+    source: ../../adamant-xmera-components
+    target: /home/user/adamant-xmera-components
+  - type: bind
+    source: ../../fp32-fsw-xmera
+    target: /home/user/fp32-fsw-xmera
+  - type: bind
+    source: ../../eigen
+    target: /home/user/eigen
 
 # Mission activate script adds wrapper_components as extra build root:
 . $ADAMANT_DIR/env/activate $MISSION_DIR $WRAPPER_DIR
