@@ -39,7 +39,26 @@ The Ada binding file (`*_h.ads` or `*_c_h.ads`) uses `pragma Import (C, ...)` an
 
 ### External Algorithm Repos
 
-C/C++ algorithms may originate from external repositories (e.g. `fp32-fsw-xmera` for GNC algorithms). Do NOT commit C shims or wrapper components back to the algorithm source repo. Instead, place C shims and Adamant wrapper components in the **mission project** (e.g. `ceres_fsw`, `adamant_bot_station`). The algorithm repo is mounted read-only via Docker volumes; the mission project owns all integration code.
+C/C++ algorithms typically originate from external repositories (e.g. `fp32-fsw-xmera` for GNC algorithms). A **wrapper components repo** (e.g. `adamant-xmera-components`) provides Adamant components, C shims, Ada bindings, and related types that bridge the algorithm source into Adamant. This wrapper repo is included in the mission project's build path.
+
+```
+# Three-repo pattern:
+algorithm_source/       # C/C++ algorithms (fp32-fsw-xmera) -- do NOT commit here
+wrapper_components/     # Adamant wrappers + C shims + types (adamant-xmera-components)
+mission_project/        # Assembly + mission-specific components (ceres_fsw)
+
+# Docker mounts all three:
+volumes:
+  - ../../adamant:/home/user/adamant
+  - ../../algorithm_source:/home/user/algorithm_source
+  - ../../wrapper_components:/home/user/wrapper_components
+  - ../../mission_project:/home/user/mission_project
+
+# Mission activate script adds wrapper_components as extra build root:
+. $ADAMANT_DIR/env/activate $MISSION_DIR $WRAPPER_DIR
+```
+
+The wrapper repo has its own `src/components/` and `src/types/` with `.all_path` markers. The mission project's `env/activate` passes it as an additional build root so redo discovers wrapper components alongside mission components. Mission-specific wrappers can also live directly in the mission project.
 
 ## Step 1: Create C Shim
 
