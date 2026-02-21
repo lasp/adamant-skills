@@ -407,12 +407,47 @@ if event_id == MODE_CHANGED_ID:
 
 **Note:** Direct event subpacket parsing requires knowing the event record layout from generated Python types. When pydep types aren't available, verify events indirectly via data product state changes (e.g., check that Mode data product changed after sending a mode command).
 
-### CRC validation
+### CRC16 validation
 ```python
 from crc16 import Crc16
+
+# Single-shot
 crc = Crc16()
 crc.update(payload_bytes)
 assert crc.value == expected_crc
+
+# Incremental (same result as bulk)
+crc2 = Crc16()
+crc2.update(header_bytes)
+crc2.update(body_bytes)
+# crc2.value == Crc16().update(header_bytes + body_bytes).value
+
+# Cross-validate against COSMOS
+cosmos_crc = int(tlm("ASSEMBLY System_Status_Packet CCSDS_CRC", type="RAW"))
+local_crc = Crc16()
+local_crc.update(packet_bytes_without_crc)
+assert local_crc.value == cosmos_crc
+```
+
+### Raw CCSDS packet construction
+For protocol-level testing, build CCSDS packets manually:
+```python
+import struct
+from crc16 import Crc16
+
+def build_ccsds_cmd(apid, seq_count, payload_bytes):
+    """Build a complete CCSDS command packet with CRC."""
+    data_length = len(payload_bytes) + 2 - 1  # +2 for CRC, -1 per CCSDS convention
+    # Primary header: version=0, type=1(cmd), sec_hdr=1, APID
+    word0 = (0 << 13) | (1 << 12) | (1 << 11) | (apid & 0x7FF)
+    word1 = (0x3 << 14) | (seq_count & 0x3FFF)  # seq_flags=3 (unsegmented)
+    header = struct.pack('>HHH', word0, word1, data_length)
+    # Secondary header (Adamant: 8-byte function code area)
+    # Append payload + CRC
+    packet = header + payload_bytes
+    crc = Crc16()
+    crc.update(packet)
+    return packet + struct.pack('>H', crc.value)
 ```
 
 ## Disconnect Mode (Offline Testing)
