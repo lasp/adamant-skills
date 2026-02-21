@@ -531,12 +531,22 @@ def test_overvoltage_detection(self):
 ## Practical Notes
 
 - **Timeouts:** Tune to assembly rate group config. Examples assume 1 Hz housekeeping.
-- **CCSDS sequence wrap:** 14-bit counter wraps at 16383. Handle in long-running tests.
+- **CCSDS sequence wrap:** 14-bit counter wraps at 16383. Use a helper for delta calculation:
+  ```python
+  def seq_delta(before, after): return (after - before) % 16384
+  ```
 - **Command_Response:** Standard Adamant pattern -- every command produces a response data product. Always verify STATUS after commanding.
 - **Fault injection:** Assembly-specific. Requires test commands built into the assembly (not all assemblies have these).
 - **Packet names:** Must match COSMOS plugin cmd.txt/tlm.txt definitions exactly (TARGET PACKET ITEM).
 - **Python vs Ruby:** Both APIs have identical method names and behavior. Python recommended for Adamant since tooling is Python-based.
-- **Performance:** Use `disable_instrumentation()` context manager for tight loops to avoid Script Runner stepping overhead.
+- **Performance:** Use `disable_instrumentation()` context manager for tight loops:
+  ```python
+  with disable_instrumentation():
+      for _ in range(100):
+          cmd("ASSEMBLY Component-Noop")
+  ```
+- **Thread safety:** COSMOS Python API is NOT guaranteed thread-safe. Avoid concurrent `cmd()`/`tlm()` calls from multiple threads. If testing concurrent command streams, serialize sends or accept race conditions in test results.
+- **Watchdog testing:** Common pattern -- `Pet_Watchdog` keeps healthy, `Force_Timeout` triggers fault state. Verify via watchdog state data product, then recover with another pet command.
 
 ## Related Skills
 
