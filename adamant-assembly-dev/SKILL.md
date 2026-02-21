@@ -498,7 +498,7 @@ Each addition requires correct wiring AND supporting YAML files. Verify `redo al
 
 ### Product Packets Configuration
 
-- **Product_packets entries are dicts not strings**: In `product_packets.yaml`, each `data_products:` entry must be a dict with a `name:` key (e.g., `- name: Component_Instance.Data_Product_Name`), not a bare string.
+- **Product_packets schema**: Each packet entry REQUIRES `name`, `id`, `period`, and `data_products` fields. The `period` field (string, e.g., `"1"`) controls how often the packet is generated (in ticks). Missing `period` causes schema validation failure. Each `data_products` entry is a dict with `name:` key (e.g., `- name: Component_Instance.Data_Product_Name`), not a bare string. Optional: `use_timestamp: True` on individual DPs.
 
 ## Framework Component Init Requirements
 

@@ -117,6 +117,8 @@ redo yaml_sloc         # Count YAML source lines of code
 
 `redo clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed.
 
+**Assembly build order:** For assemblies, `redo all` in the assembly directory generates source in `build/src/`. The ELF binary is built from `main/` (a sibling directory). If building manually: run `redo all` in the assembly dir first, THEN `redo` in `main/`. Or just use `redo run` from `main/` which handles the dependency chain.
+
 **`redo clean_all` is safe on ANY directory, including the adamant framework.** If redo state corrupts (symptom: `No rule to build 'src/core/connector/in_return_connector.adb'`), run `redo clean_all` on BOTH adamant and the project, then rebuild. The usual cause of corruption is concurrent redo processes (e.g. multiple sub-agents building simultaneously). If clean_all doesn't fix it, recover with `adamant_env.sh remove` + `start` (fresh Docker volumes).
 
 **NEVER manually delete build directories or redo state.** This includes `rm -rf build`, `rm -rf .redo`, `rm -rf */build`, `rm -rf */test/build`, or any variant. Always use `redo clean` or `redo clean_all` -- they properly reset state. Do NOT re-clone the adamant repository (destructive, wipes local state).
