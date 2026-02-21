@@ -345,6 +345,19 @@ subassemblies:
 ```
 Subassembly files must be in the build path. Components and connections merge into the parent.
 
+**Cross-file references work**: After merging, all components are in a flat namespace. A subassembly connection can reference a component defined in the parent or another subassembly by name. Infrastructure components (ticker, rate groups, command router, event splitter, product database) typically live in the parent; application components live in subassemblies.
+
+**Index coordination across files**: Arrayed connectors (`Tick_T_Send[N]`, `Command_T_Send[N]`, `T_Send[N]`) use indices that span all files after merge. Plan indices up front to avoid collisions:
+- Assign index ranges per subassembly (e.g., ADCS=1-4, CDH=5-8, Power=9-12)
+- The parent's `*_Count` fields must equal the total across ALL subassemblies
+- Document the index map in a comment at the top of each subassembly file
+
+**id_bases**: Declared in parent only, values >= 1. Each subassembly's components get unique IDs from the parent's `id_bases` section.
+
+**Connection scoping**: ALL connections within a subassembly MUST be in that subassembly's file. A subassembly cannot wire to sibling/parent components that don't exist yet at parse time -- but after merge, cross-references resolve. Don't wire the same send connector in both a subassembly and the parent.
+
+For detailed subassembly patterns (nesting, reuse, state-based decomposition): see [adamant-subassemblies](../adamant-subassemblies/SKILL.md).
+
 ## Main Program Pattern
 
 ```ada

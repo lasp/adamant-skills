@@ -245,6 +245,20 @@ fields:
 
 Only ONE variable-length field allowed, must be LAST field. Cannot nest variable-length types.
 
+**Buffer type definition** -- define the backing array in the preamble:
+```yaml
+preamble: |
+  type Buffer_Type is array (Natural range 0 .. 19) of Interfaces.Unsigned_8;
+with:
+  - Interfaces
+```
+
+The array upper bound = max bytes - 1 (zero-indexed). `variable_length` counts buffer elements (bytes for U8 arrays).
+
+**Multi-record buffers**: To pack N records into a variable-length field, use a byte buffer sized to max_records * record_byte_size. The length field counts bytes, not records -- compute as `record_count * Bytes_Per_Record`. There is no tagged union / discriminated record in the packed type system; use separate message types or a byte buffer with a count field.
+
+**Enum format sizing**: Prefer E8 (byte-aligned) for command arguments and fields where future expansion is likely. Use E2/E4 only in telemetry records where bandwidth is constrained and the enum is stable. E8 avoids padding and simplifies byte alignment.
+
 ## Available Framework Packed Types
 
 Unsigned: `Packed_Byte.T`, `Packed_U16.T`, `Packed_U32.T`, `Packed_U64.T`
