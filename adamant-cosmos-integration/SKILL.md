@@ -428,6 +428,7 @@ CCSDS components in rate groups:
 10. Telemetry packets are identified by APID; commands are identified by `Adamant_Command_Id`
 
 Details & full wiring examples: [references/plugin-setup-and-wiring.md](references/plugin-setup-and-wiring.md)
+Full scripting API, interface management, limits, bridge config, Docker architecture: [references/scripting-api-reference.md](references/scripting-api-reference.md)
 
 ## Related Skills
 
