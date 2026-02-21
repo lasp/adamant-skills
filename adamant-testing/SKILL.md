@@ -327,6 +327,8 @@ T.Tick_T_Send ((Time => (100, 0), Count => 0));   -- Current time is newer
 
 The framework detects that the data product timestamp is older than expected and reports staleness to the component.
 
+**`Data_Dependency_Timestamp_Override` is GLOBAL** -- it applies the same timestamp to ALL data dependency fetches. You cannot selectively make one dep stale while keeping another fresh via this field alone. To test per-dependency staleness, set individual mock values with different staleness characteristics and rely on the component's internal logic to differentiate, or test each dependency in isolation.
+
 **Implementation needs:** `with Data_Product_Enums; use Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;` in the component body for status checks.
 
 ## Test Body With-Clauses
