@@ -372,8 +372,15 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Connectors: `Tick_T_Recv_Sync`, `Data_Product_Fetch_T_Request` (request to Product_Database), `Packet_T_Send` (packets out), `Command_T_Recv_Async`, `Event_T_Send`, `Sys_Time_T_Get`, `Command_Response_T_Send`
 
 **sequence_store** (active)
-- Purpose: Manage memory slots storing sequences by ID
-- Use: Non-volatile sequence storage and management
+- Purpose: Manage memory slots storing sequences by ID with unique activation control
+- Use: Non-volatile sequence storage and management; enforces unique sequence IDs for activated sequences, prevents conflicts
+- With: `Sequence_Store_Types`, `Memory_Region`
+- Preamble: Defines `Sequence_Slot_Array` (array of Memory_Region.T) and `Sequence_Slot_Array_Access`
+- Init:
+  - `sequence_Slots` (Sequence_Slot_Array_Access, not_null) -- array of memory regions (slots) to manage; each slot holds one sequence plus header/metadata; slots must not overlap and be large enough for sequence header
+  - `check_Slots_At_Startup` (Boolean) -- if True, validate sequences in all slots via CRC at startup
+  - `dump_Slot_Summary_At_Startup` (Boolean) -- if True, dump slot summaries at startup
+- Connectors: `Command_T_Recv_Async`, `Command_Response_T_Send`, `Sequence_Store_Memory_Region_Store_T_Recv_Async` (load sequences), `Sequence_Store_Memory_Region_Fetch_T_Service` (fetch by Packed_Sequence_Id.T, returns Sequence_Store_Memory_Region_Fetch.T), `Sequence_Store_Memory_Region_Release_T_Send`, `Packet_T_Send` (slot summaries), `Event_T_Send`, `Sys_Time_T_Get`
 
 ## Rate Group & Scheduling (5 components)
 
@@ -406,8 +413,10 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 - Connectors: `Tick_T_Send` (periodic output), `Sys_Time_T_Get`
 
 **tick_listener** (passive)
-- Purpose: Count ticks since last invocation
-- Use: Software interrupt simulation
+- Purpose: Count ticks since last invocation and return count on demand
+- Use: Software interrupt simulation; useful substitute for interrupt_listener when simulating interrupts with software ticks
+- No init parameters
+- Connectors: `Get_Tick_Count` (returns Packed_Natural.T with tick count since last call), `Tick_T_Recv_Sync` (tick input)
 
 **splitter** (passive)
 - Purpose: Split single connector into arrayed outputs for simultaneous distribution
