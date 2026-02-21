@@ -37,6 +37,10 @@ For **C++ with C shim**, both the original C++ and the C shim go in the same dir
 
 The Ada binding file (`*_h.ads` or `*_c_h.ads`) uses `pragma Import (C, ...)` and `Convention => C_Pass_By_Copy` for struct types. It can be generated via `gcc -fdump-ada-spec` or hand-written.
 
+### External Algorithm Repos
+
+C/C++ algorithms may originate from external repositories (e.g. `fp32-fsw-xmera` for GNC algorithms). Do NOT commit C shims or wrapper components back to the algorithm source repo. Instead, place C shims and Adamant wrapper components in the **mission project** (e.g. `ceres_fsw`, `adamant_bot_station`). The algorithm repo is mounted read-only via Docker volumes; the mission project owns all integration code.
+
 ## Step 1: Create C Shim
 
 **Input:** C++ algorithm class (`FooAlgorithm` in `fooAlgorithm.h/.cpp`)
