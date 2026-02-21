@@ -340,7 +340,7 @@ If a component in the parent has an arrayed connector (e.g., `Tick_T_Send_Count 
 ### Subassembly Files Are Not Independent Assemblies
 A subassembly file can't be built on its own -- it has no `main/` directory and won't generate a standalone binary. It only has meaning when included by a parent assembly.
 
-**Build caveat:** Running `redo all` in the assembly directory may fail when compiling subassembly `*_components.ads` files independently (missing `with` clauses that only the parent's generated code provides). Build from `main/` instead: `cd main && redo run`. The `main/` build compiles everything together with correct visibility.
+**Build note:** `redo all` in the assembly directory generates source code (including subassembly sources) into `build/src/`. The ELF binary is built from `main/`: `cd main && redo run`. If `redo all` fails at the gprbuild step, the generated Ada source may still be fine -- build the ELF from `main/` to verify.
 
 ## Example: Splitting a Monolithic Assembly
 
