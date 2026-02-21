@@ -160,6 +160,8 @@ Use small types like `Packed_U16.T`, `Packed_U32.T`, or custom packed types < 8 
 | `parameters.yaml` | `Parameter_Update.T` modify |
 | `data_dependencies.yaml` | `Data_Product_Fetch.T`/`Data_Product_Return.T` request + `Sys_Time.T` get |
 
+**`Sys_Time.T` get is required by almost every component** -- events, data products, faults, and commands all call `Self.Sys_Time_T_Get`. Always include it in your connector list. The only components that might omit it are pure data-pass-through components with no timestamped outputs.
+
 ## Connector Kind Field Rules
 
 | Kind | `type:` field | `return_type:` field |
