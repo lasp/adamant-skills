@@ -323,41 +323,42 @@ openc3.sh run                            # Start in foreground (Ctrl+C to stop)
 
 ### Plugin Management
 ```bash
-openc3.sh cli load <gem_file>            # Install/update plugin (overwrites existing)
-openc3.sh cli generate plugin <name>     # Generate new empty plugin skeleton
+openc3.sh cli load <gem_file>            # Install/update plugin (auto-detects upgrade)
+openc3.sh cli load <gem> --variables v.json  # Install with variables file
+openc3.sh cli list [SCOPE]               # List installed plugins (default scope: DEFAULT)
+openc3.sh cli unload <plugin_name> [SCOPE]   # Remove a plugin by name
 openc3.sh cli validate <gem_file>        # Validate plugin before loading
-openc3.sh cli pkginstall <gem_file>      # Install Ruby package dependency
-openc3.sh cli pkguninstall <gem_name>    # Remove Ruby package
+openc3.sh cli generate plugin <name>     # Generate new empty plugin skeleton
+openc3.sh cli pkginstall <gem_file>      # Install Ruby/Python package dependency
+openc3.sh cli pkguninstall <pkg_name>    # Remove package
 ```
 
-To update a plugin: rebuild the gem, then `openc3.sh cli load <gem>` again (overwrites in-place).
-
-To remove a plugin: use the COSMOS Admin web UI (no CLI command for removal).
-
-To list loaded plugins: use the COSMOS Admin web UI Plugins tab.
+`cli load` auto-detects existing plugins: same version = skip, different version = upgrade. Pass `force` as last arg to force reinstall. `cli unload` takes the plugin name from `cli list` output.
 
 ### Scripting and Testing
 ```bash
 openc3.sh cli script list                # List available scripts
-openc3.sh cli script run <script>        # Execute a script (blocking)
-openc3.sh cli script spawn <script>      # Execute a script (background)
-openc3.sh cli script running             # Show currently running scripts
+openc3.sh cli script run <script>        # Execute a script (blocking, prints output)
+openc3.sh cli script spawn <script>      # Execute a script (background, returns ID)
+openc3.sh cli script running [LIMIT]     # Show currently running scripts
 openc3.sh cli script status <id>         # Check script execution status
 openc3.sh cli script stop <id>           # Stop a running script
 ```
 
-Scripts use the COSMOS Scripting API (`cmd()`, `tlm()`, etc.) and live in `procedures/` within a plugin target.
+Scripts use the COSMOS Scripting API (`cmd()`, `tlm()`, etc.) and live in `procedures/` within a plugin target. `script run` supports `--disconnect` mode, `--wait N` timeout, and `ENV=VALUE` args.
 
 ### Interactive and Debug
 ```bash
 openc3.sh cli irb                        # Interactive Ruby console with COSMOS API
-openc3.sh cli rake <task>                # Run Rake tasks
-openc3.sh cli bridge <config>            # Start protocol bridge (e.g., serial-to-TCP)
-openc3.sh cli xtce_converter <file>      # Convert XTCE XML to COSMOS config
-openc3.sh cli cstol_converter <file>     # Convert CSTOL to COSMOS scripts
+openc3.sh cli rake <task>                # Run Rake tasks (needs Rakefile in cwd)
+openc3.sh cli bridge [config]            # Start protocol bridge (default: bridge.txt)
+openc3.sh cli bridgesetup [filename]     # Generate default bridge config file
+openc3.sh cli bridgegem <gem> [VAR=val]  # Run bridge from a gem's bridge.txt
+openc3.sh cli xtce_converter             # Convert to/from XTCE format (--help for options)
+openc3.sh cli cstol_converter            # Convert CSTOL to COSMOS scripts
+openc3.sh cli redis keys                 # List all Redis keys (debug)
+openc3.sh cli redis hget <hash> <key>    # Read Redis hash value (debug)
 ```
-
-The `irb` console is useful for ad-hoc telemetry queries and command sends during development.
 
 ### Data Export
 Telemetry data export is done through the COSMOS web UI (Data Extractor tool) or by writing scripts that use `tlm()` / `tlm_raw()` to query and log values programmatically.
