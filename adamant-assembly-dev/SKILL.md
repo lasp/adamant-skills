@@ -498,7 +498,7 @@ Each addition requires correct wiring AND supporting YAML files. Verify `redo al
 
 ### Product Packets Configuration
 
-- **Product_packets schema**: Each packet entry REQUIRES `name`, `id`, `period`, and `data_products` fields. The `period` field (string, e.g., `"1"`) controls how often the packet is generated (in ticks). Missing `period` causes schema validation failure. Each `data_products` entry is a dict with `name:` key (e.g., `- name: Component_Instance.Data_Product_Name`), not a bare string. Optional: `use_timestamp: True` on individual DPs.
+- **Product_packets schema**: Each packet entry REQUIRES `name`, `id` (int), `period` (string, e.g., `"1"`), and `data_products` (list). Missing `period` causes schema validation failure. Each `data_products` entry is a dict with `name: Component_Instance.Data_Product_Name`. Optional packet fields: `enabled` (True/False/On_Change -- default True), `offset` (string, stagger ticks to distribute load), `use_tick_timestamp` (bool). Optional DP fields: `use_timestamp` (bool, use this DP's timestamp as packet timestamp), `include_timestamp` (bool, embed DP timestamp in packet), `event_on_missing` (bool), `pad_bytes` (int, insert spacing).
 
 ## Framework Component Init Requirements
 

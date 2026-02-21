@@ -44,6 +44,8 @@ description: What this component does
 execution: passive|active|either
 with:                              # ONLY for preamble code visibility
   - "Interfaces"                   # Only include if preamble uses the package
+without:                           # Remove auto-deduced with statements (rare)
+  - "Some_Package"                 # Use when generator adds unwanted dependency
 preamble: |
   use Interfaces;
   subtype Custom_Type is Unsigned_8 range 1 .. 100;
