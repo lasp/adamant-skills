@@ -553,6 +553,60 @@ def test_overvoltage_detection(self):
 - **Thread safety:** COSMOS Python API is NOT guaranteed thread-safe. Avoid concurrent `cmd()`/`tlm()` calls from multiple threads. If testing concurrent command streams, serialize sends or accept race conditions in test results.
 - **Watchdog testing:** Common pattern -- `Pet_Watchdog` keeps healthy, `Force_Timeout` triggers fault state. Verify via watchdog state data product, then recover with another pet command.
 
+## Negative Assertion Patterns
+
+Sometimes you need to verify something does NOT happen (e.g., downstream stops updating after disabling a component). COSMOS has no built-in "assert unchanged" -- use a polling stability check:
+
+```python
+def wait_for_stable(target, packet, item, duration_s=5, poll_s=0.5):
+    """Assert a telemetry value does NOT change over duration_s seconds."""
+    baseline = tlm(f"{target} {packet} {item}")
+    elapsed = 0
+    while elapsed < duration_s:
+        time.sleep(poll_s)
+        elapsed += poll_s
+        current = tlm(f"{target} {packet} {item}")
+        if current != baseline:
+            raise RuntimeError(f"{item} changed from {baseline} to {current} after {elapsed}s")
+```
+
+Use for interruption tests (disable component, verify downstream freezes) and quiescent state checks.
+
+## Boot Sequence Testing
+
+Early boot phases need `wait_packet` (not `wait_check`) because telemetry may not have arrived yet:
+
+```python
+def test_01_assembly_alive(self):
+    """First contact -- wait for ANY packet before checking values."""
+    wait_packet("ASSEMBLY", "System_Status_Packet", timeout=10)  # blocks until first packet
+    # NOW safe to use wait_check/check
+    check("ASSEMBLY System_Status_Packet CCSDS_SEQ_COUNT > 0")
+```
+
+Order boot tests numerically (`test_01` through `test_0N`) to enforce sequential verification: POST -> init -> rate groups -> command link -> telemetry flow -> nominal mode.
+
+## Operational Procedure Patterns
+
+For ops scripts (not test assertions), use `script_*` or `op_*` naming (COSMOS discovers but doesn't assert):
+
+```python
+# script_daily_pass.py -- not test_daily_pass.py
+def pre_pass_check(target):
+    """Gate on health before proceeding."""
+    soc = float(tlm(f"{target} Power_HK Battery_SOC.Value"))
+    if soc < 30.0:
+        raise RuntimeError(f"SOC too low for pass: {soc}%")
+    return {"soc": soc, "faults": int(tlm(f"{target} System_Status_Packet Fault_Count.Value"))}
+
+def abort_pass(target, criteria):
+    """Check abort criteria between steps."""
+    soc = float(tlm(f"{target} Power_HK Battery_SOC.Value"))
+    return soc < criteria.get("min_soc", 20.0)
+```
+
+Key differences from test scripts: no assertions (use explicit if/raise), operator-facing print output, abort/contingency checks between steps, structured pass reports at end.
+
 ## Multi-Target Testing
 
 When testing assemblies that communicate (e.g., flight SW + ground simulator), use separate target names:
