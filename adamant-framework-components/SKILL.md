@@ -130,6 +130,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **queue_monitor** (passive)
 - Purpose: Monitor queue usage for all queued components
 - Use: System health monitoring for queue utilization
+- Init: `Queued_Component_List` (Component.Component_List_Access, not_null), `Packet_Period` (Unsigned_16, default "1")
+- Connectors: Tick.T recv_sync, Packet.T send, Sys_Time.T get, Command.T recv_sync, Command_Response.T send, Data_Product.T send, Event.T send (7 total)
 
 **stack_monitor** (passive)
 - Purpose: Monitor stack usage for all assembly tasks
@@ -200,6 +202,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **parameter_store** (active)
 - Purpose: Store parameter table in non-volatile memory
 - Use: Persistent parameter storage and backup
+- Init: `bytes` (Basic_Types.Byte_Array_Access, not_null -- must match parameter table size exactly), `dump_Parameters_On_Change` (Boolean, default "False")
+- Connectors: Command.T recv_async, Command_Response.T send, Parameters_Memory_Region.T recv_async, Parameters_Memory_Region_Release.T send, Packet.T send, Event.T send, Sys_Time.T get (7 total)
 
 ## Control Systems (1 component)
 
@@ -288,6 +292,8 @@ Quick-lookup catalog of all 58 built-in Adamant components organized by subsyste
 **fault_correction** (active)
 - Purpose: Automated fault response via command correction
 - Use: Fault response and recovery
+- Init: `Fault_Response_Configurations` (Fault_Correction_Types.Fault_Response_Config_List)
+- Connectors: Command.T recv_async, Command_Response.T send, Fault.T recv_async, Command.T send (correction output), Data_Product.T send, Event.T send, Sys_Time.T get (7 total)
 
 **zero_divider** (passive)
 - Purpose: Safe divide-by-zero to trigger Last Chance Handler
