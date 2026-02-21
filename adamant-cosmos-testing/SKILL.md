@@ -558,15 +558,20 @@ def test_overvoltage_detection(self):
 Sometimes you need to verify something does NOT happen (e.g., downstream stops updating after disabling a component). COSMOS has no built-in "assert unchanged" -- use a polling stability check:
 
 ```python
-def wait_for_stable(target, packet, item, duration_s=5, poll_s=0.5):
-    """Assert a telemetry value does NOT change over duration_s seconds."""
+def wait_for_stable(target, packet, item, duration_s=5, poll_s=0.5, tolerance=None):
+    """Assert a telemetry value does NOT change over duration_s seconds.
+    Use tolerance for float values (e.g., tolerance=0.01)."""
     baseline = tlm(f"{target} {packet} {item}")
     elapsed = 0
     while elapsed < duration_s:
         time.sleep(poll_s)
         elapsed += poll_s
         current = tlm(f"{target} {packet} {item}")
-        if current != baseline:
+        if tolerance is not None:
+            changed = abs(float(current) - float(baseline)) > tolerance
+        else:
+            changed = current != baseline
+        if changed:
             raise RuntimeError(f"{item} changed from {baseline} to {current} after {elapsed}s")
 ```
 
