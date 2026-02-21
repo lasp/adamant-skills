@@ -13,6 +13,30 @@ Seven deterministic steps. Each step has one correct output given the inputs. Fo
 
 **Pure C shortcut:** If the algorithm is already pure C (not C++), skip Step 1 entirely -- the C header IS the shim. Go directly to Step 2 (Ada Bindings) using `pragma Import (C, ...)` on the C function signatures. No `extern "C"` or `reinterpret_cast` needed.
 
+## Project Directory Layout
+
+C/C++ libraries live in subdirectories within or alongside the component directory. Each directory containing source files needs an `.all_path` marker (0-byte file) so redo discovers it.
+
+```
+src/components/my_component/
+  my_component.component.yaml
+  component-my_component-implementation.ads/.adb
+  c_lib/                        # C/C++ source + C shim
+    .all_path                   # Required for redo discovery
+    algorithm.h / algorithm.c   # Pure C algorithm (or C++ original)
+    algorithm_c.h / algorithm_c.cpp  # C shim (if wrapping C++)
+    algorithm_c_h.ads           # Ada binding (hand-written or -fdump-ada-spec)
+    c_dep/                      # Optional: C/C++ dependencies
+      .all_path
+      dependency.h / dependency.c
+```
+
+For **pure C** algorithms, the C source IS the library -- no shim needed. Place `.h`, `.c`, and `.ads` binding directly in the lib directory.
+
+For **C++ with C shim**, both the original C++ and the C shim go in the same directory. The Ada binding imports from the C shim only.
+
+The Ada binding file (`*_h.ads` or `*_c_h.ads`) uses `pragma Import (C, ...)` and `Convention => C_Pass_By_Copy` for struct types. It can be generated via `gcc -fdump-ada-spec` or hand-written.
+
 ## Step 1: Create C Shim
 
 **Input:** C++ algorithm class (`FooAlgorithm` in `fooAlgorithm.h/.cpp`)

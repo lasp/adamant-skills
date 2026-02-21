@@ -309,6 +309,64 @@ Filter types: `component_name`, `component_type`, `component_execution`, `connec
 
 Build: `redo build/svg/assembly.svg` (full) or `redo views/build/svg/<view_name>.svg`.
 
+## Assembly-Level Configuration Files
+
+Beyond the main `.assembly.yaml` and `.product_packets.yaml`, assemblies can use three additional YAML files for system-level configuration.
+
+### Fault Response Table (`<name>.<assembly>.fault_responses.yaml`)
+
+Maps faults to corrective commands. Used by the `fault_correction` framework component.
+
+```yaml
+---
+description: Fault response table for the assembly.
+fault_responses:
+  - fault: Task_Watchdog_Instance.Rate_Group_Fault     # Component_Instance.Fault_Name
+    latching: True                                      # True = fire once until cleared; False = fire every occurrence
+    startup_state: enabled                              # enabled | disabled
+    command_response: Command_Router_Instance.Noop_Arg  # Component_Instance.Command_Name
+    command_arg: "(Value => 1)"                         # Ada aggregate for command args (optional)
+    description: Execute noop with value 1 on fault.
+```
+
+Fields: `fault` (required), `latching` (required, bool), `startup_state` (required, enabled/disabled), `command_response` (required), `command_arg` (optional, Ada aggregate string), `description` (optional).
+
+### Parameter Table (`<name>.<assembly>.parameter_table.yaml`)
+
+Defines the parameter table layout for the `parameters` framework component.
+
+```yaml
+---
+description: Parameter table for the assembly.
+parameters_instance_name: Parameters_Instance     # MUST match the Parameters component instance name in assembly
+parameters:
+  - Oscillator_A.Frequency                         # Component_Instance.Parameter_Name
+  - Oscillator_A.Amplitude
+  - Oscillator_B                                   # All parameters from this component
+  - [Sensor_A.Gain, Sensor_B.Gain]                 # Grouped: share one table entry (must be same type)
+```
+
+Fields: `parameters_instance_name` (required), `parameters` (required, list of strings or lists for grouped params).
+
+### Task Watchdog List (`<name>.<assembly>.task_watchdog_list.yaml`)
+
+Configures the `task_watchdog` framework component's pet monitoring.
+
+```yaml
+---
+description: Task watchdog configuration.
+petters:
+  - name: Slow_Rate_Group                          # Optional, used for fault/DP naming
+    connector_name: Slow_Rate_Group.Pet_T_Send      # Component_Instance.Connector_Name
+    description: Monitor slow rate group.
+    limit: 3                                        # Ticks without pet before action (1-65534)
+    action: error_fault                             # disabled | warn | error_fault
+    critical: False                                 # True = stop HW watchdog petting on failure
+    fault_id: 1                                     # Required when action = error_fault
+```
+
+Fields: `connector_name` (required), `limit` (required, 1-65534), `critical` (required, bool), `name`/`description`/`action`/`fault_id` (optional).
+
 ## Multi-Assembly Projects
 
 A project can have multiple independent assemblies sharing the same component library. Example: a project might have `primary_assembly` (full CCSDS ground system) and `mini_assembly` (minimal standalone).
