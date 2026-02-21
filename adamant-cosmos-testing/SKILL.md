@@ -109,7 +109,10 @@ SkipScriptError     # Mark test SKIP, continue suite
 ### Python (recommended for Adamant -- tooling is Python-based)
 
 ```python
-from openc3.script import Suite, Group
+from openc3.script import Suite, Group, cmd, tlm, wait, wait_check, wait_check_expression, \
+    wait_check_packet, check, check_expression, check_tolerance, override_tlm, normalize_tlm, \
+    set_limits, enable_limits, disable_limits, cmd_no_range_check
+from openc3.script import CheckError, SkipScriptError
 
 class CommandTests(Group):
     def setup(self):
