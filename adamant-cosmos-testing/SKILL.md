@@ -8,6 +8,21 @@ Use when writing COSMOS test scripts (Ruby or Python) that exercise a running Ad
 
 **Prerequisites:** Assembly running (hardware or Linux ELF), COSMOS plugin deployed with correct cmd/tlm definitions, CCSDS link established.
 
+## Real Assembly Conventions
+
+Examples in this skill use generic short names for clarity. Real Adamant COSMOS plugins differ:
+
+- **Target name:** Use the actual target from plugin.txt (e.g., `STATION_ASSEMBLY`), not `ASSEMBLY`
+- **Command names:** Adamant COSMOS commands use `Component_Instance-Command_Name` format (hyphen-separated), e.g., `cmd("STATION_ASSEMBLY Heater_Controller_Instance-Force_Heater_On")`
+- **Telemetry item names:** Use dotted paths: `Component_Instance.Data_Product_Name.Field.Value`, e.g., `tlm("STATION_ASSEMBLY System_Status_Packet Command_Router_Instance.Command_Success_Count.Value")`
+- **Command_Response:** May not be a separate CCSDS packet. Some assemblies embed response status in the System_Status_Packet (e.g., `Last_Failed_Command.Status`). Check your tlm.txt.
+- **Mode commands:** May be individual commands (`Enter_Safe_Mode`, `Enter_Science_Mode`) rather than a parameterized `SET_MODE`. Check cmd.txt for actual command names.
+- **Parameter updates:** The 3-step Stage/Validate/Update is one pattern. Many assemblies use direct Set commands (e.g., `Set_Thresholds with Value <packed_u32>`). Check your assembly's command definitions.
+- **Fault injection:** Most assemblies do NOT have `INJECT_FAULT` test commands. Alternative patterns: override data products to fault-triggering values, use force commands (Force_Heater_Off), or manipulate system state through normal commands.
+- **Packed parameters:** Commands may pack multiple values into a single integer (e.g., two U16 thresholds packed into one U32 Value field). Check the command's arg_type in cmd.txt.
+
+**Always read your cmd.txt and tlm.txt first** to get exact command names, packet names, and item paths before writing tests.
+
 ## Scripting API Quick Reference
 
 ### Commands
