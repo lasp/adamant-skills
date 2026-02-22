@@ -335,6 +335,8 @@ The framework detects that the data product timestamp is older than expected and
 
 **Implementation needs:** `with Data_Product_Enums; use Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;` in the component body for status checks.
 
+**Side-effect events from Invalid_Data_Dependency:** When a `Get_*` call returns a non-Success status, the framework automatically calls the component's `Invalid_Data_Dependency` override DURING the Get call (before control returns to the caller). If that override sends events, those events appear in the history BEFORE any events the caller sends afterward. Account for these extra events in assertion counts -- e.g., if testing staleness and the override sends a Sensor_Stale event, that event fires inside Get, not after it.
+
 ## Test Body With-Clauses
 
 Add `with` for every type referenced in tests: `Basic_Assertions`, `Packed_F32.Assertion`, `Command_Enums`, `Interfaces`, custom types from `src/types/`. Only `with` what you use -- `redo style` flags unused imports.
