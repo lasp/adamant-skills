@@ -231,6 +231,22 @@ end loop;
 Natural_Assert.Gt (T.Async_Data_Send_Dropped_Count, 0);
 ```
 
+**⚠️ CRITICAL -- Variable-Length Types Must Be Initialized Before Queue Push**: Types with `variable_length:` fields (Packet.T, Command.T, etc.) MUST have their length field explicitly set before sending to an async queue. Ada does NOT zero-initialize record fields. An uninitialized `Buffer_Length` causes `Serialization_Failure` or `Too_Full` from the queue push, triggering `*_Send_Dropped`.
+```ada
+-- WRONG: Buffer_Length is uninitialized garbage
+Pkt : Packet.T;
+Pkt.Header.Sequence_Count := 42;
+T.Packet_T_Send (Pkt);  -- FAILS: queue push error
+
+-- CORRECT: Always set Buffer_Length (and other header fields)
+Pkt : Packet.T;
+Pkt.Header.Time := (0, 0);
+Pkt.Header.Id := 0;
+Pkt.Header.Sequence_Count := 42;
+Pkt.Header.Buffer_Length := 0;  -- REQUIRED for queue serialization
+T.Packet_T_Send (Pkt);  -- Works
+```
+
 ## Command Response Verification
 
 **Active components (recv_async commands):** You MUST call `T.Dispatch_All` after sending commands before checking responses. Commands sit in the queue until dispatched. Without this, all command response assertions silently pass with count=0.
