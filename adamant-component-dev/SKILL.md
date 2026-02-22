@@ -465,6 +465,22 @@ param_type: Packed_Byte.T
 
 - **Record type fields vs packed type fields**: Custom record types defined in `*.record.yaml` with plain Ada types (Short_Float, Interfaces.Unsigned_16, etc.) produce record fields that are accessed directly (e.g., `My_Record.Temperature`). Only Packed_* types (Packed_F32.T, Packed_U16.T, etc.) have a `.Value` accessor. Do NOT use `.Value` on plain record fields.
 
+## Named Connectors (Custom Names)
+
+When `name:` is specified on a connector, it **replaces the entire auto-generated name** (NOT just a prefix):
+```yaml
+  - name: High_Priority       # Custom name
+    kind: send
+    type: Packet.T
+```
+Generated API uses the custom name directly:
+- Send method: `Self.High_Priority(Arg)` / `Self.High_Priority_If_Connected(Arg)`
+- Dropped handler: `High_Priority_Dropped(Self, Arg)`
+- Tester history: `High_Priority_Recv_Sync_History`
+- Connection check: `Self.Is_High_Priority_Connected`
+
+**NOT** `High_Priority_T_Send_If_Connected` -- the `_T_Send` suffix only appears on auto-named connectors.
+
 ## Connector Count (Array Connectors)
 
 `count: 0` or N = one-to-many fan-out with index:
