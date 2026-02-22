@@ -249,7 +249,7 @@ T.Packet_T_Send (Pkt);  -- Works
 
 ## Command Response Verification
 
-**Active components (recv_async commands):** You MUST call `T.Dispatch_All` after sending commands before checking responses. Commands sit in the queue until dispatched. Without this, all command response assertions silently pass with count=0.
+**⚠️ Dispatch_All is ONLY for recv_async connectors.** Commands on `recv_sync` connectors execute immediately when `T.Command_T_Send` is called -- do NOT call `Dispatch_All` for them (it will return 0). Only call `Dispatch_All` after sending to `recv_async` connectors (e.g., `Packet_T_Send` for async packet input). Check the component YAML to determine which connectors are sync vs async.
 
 ```ada
 -- Active component command test pattern:
