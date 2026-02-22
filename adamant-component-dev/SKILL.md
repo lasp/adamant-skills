@@ -476,7 +476,7 @@ When `name:` is specified on a connector, it **replaces the entire auto-generate
 Generated API uses the custom name directly:
 - Send method: `Self.High_Priority(Arg)` / `Self.High_Priority_If_Connected(Arg)`
 - Dropped handler: `High_Priority_Dropped(Self, Arg)`
-- Tester history: `High_Priority_Recv_Sync_History`
+- Tester history: `High_Priority_Reciprocal_History` (named connectors use `_Reciprocal_History`, NOT `_Recv_Sync_History`)
 - Connection check: `Self.Is_High_Priority_Connected`
 
 **NOT** `High_Priority_T_Send_If_Connected` -- the `_T_Send` suffix only appears on auto-named connectors.
