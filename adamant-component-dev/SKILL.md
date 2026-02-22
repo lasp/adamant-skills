@@ -481,6 +481,16 @@ Generated API uses the custom name directly:
 
 **NOT** `High_Priority_T_Send_If_Connected` -- the `_T_Send` suffix only appears on auto-named connectors.
 
+Named `return` connectors follow the same pattern -- the override is just the name:
+```yaml
+  - name: Channel_Count        # Custom name
+    kind: return
+    type: Packed_U16.T
+```
+Generated override: `overriding function Channel_Count (Self : in out Instance) return Packed_U16.T;`
+
+**Direction reminder**: `return` = your component PROVIDES data to others. `get` = your component FETCHES data from others. Compatibility: `get` wires to `return`.
+
 ## Connector Count (Array Connectors)
 
 `count: 0` or N = one-to-many fan-out with index:
