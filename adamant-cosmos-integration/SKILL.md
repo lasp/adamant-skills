@@ -434,6 +434,12 @@ CCSDS components in rate groups:
 Details & full wiring examples: [references/plugin-setup-and-wiring.md](references/plugin-setup-and-wiring.md)
 Full scripting API, interface management, limits, bridge config, Docker architecture: [references/scripting-api-reference.md](references/scripting-api-reference.md)
 
+## Known Limitations
+
+1. **Subassembly incompatibility**: COSMOS generators (`redo build/cosmos/...`) expect flat assemblies with a top-level `components:` key. Assemblies using `subassemblies:` will fail with "Cannot find required key 'components'". Workaround: create a flattened assembly YAML for COSMOS generation, or generate per-subassembly.
+2. **Cross-subassembly product_packets**: If `product_packets.yaml` references components from multiple subassemblies, generation fails when run against a single subassembly. Each subassembly needs its own product_packets referencing only its own components.
+3. **No assembly flattening target**: There is no `redo flatten` or equivalent to merge subassemblies into a single flat file for generation purposes.
+
 ## Related Skills
 
 - **Assembly**: [adamant-assembly-dev](../adamant-assembly-dev/SKILL.md)

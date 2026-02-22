@@ -106,6 +106,10 @@ redo build/pdf/name.pdf     # PDF document
 redo build/html/name.html   # HTML documentation
 ```
 
+Assembly-level generation includes: HTML command/telemetry docs, PDF documentation, SVG/EPS/PNG architecture diagrams, Python binding classes, COSMOS plugin configs, MATLAB interfaces. Use `redo what` in the assembly directory to list all available targets.
+
+**⚠️ Subassembly constraint**: All assembly-level generation targets (docs, diagrams, COSMOS, Python) require a flat assembly with a top-level `components:` key. Assemblies using only `subassemblies:` will fail validation. Generate per-subassembly or create a flattened assembly for doc generation.
+
 ### Maintenance
 ```bash
 redo clean            # Remove build/ in current directory
