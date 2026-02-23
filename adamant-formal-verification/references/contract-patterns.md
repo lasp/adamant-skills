@@ -378,3 +378,41 @@ function Simulated_Voltage
   (Tick : Unsigned_32; Base : Unsigned_16; Period : Unsigned_16) return Unsigned_16
 with Pre => Period > 0;
 ```
+
+## Signed Integer Saturation
+
+For signed offsets/corrections, the postcondition must cover three branches (positive, negative, zero) and both saturation directions:
+
+```ada
+procedure Apply_Correction (
+   Offset_Ms  : in out Integer_32;
+   Correction : in Integer_32
+)
+with
+   Global => null,
+   Post   => (if Correction > 0 and then Offset_Ms'Old <= Integer_32'Last - Correction
+              then Offset_Ms = Offset_Ms'Old + Correction)
+         and then (if Correction < 0 and then Offset_Ms'Old >= Integer_32'First - Correction
+                   then Offset_Ms = Offset_Ms'Old + Correction)
+         and then (if Correction = 0 then Offset_Ms = Offset_Ms'Old);
+```
+
+The implementation checks each branch separately, saturating to `Integer_32'Last` or `Integer_32'First` on overflow. The postcondition only specifies the non-saturating cases -- saturating cases are left as implementation freedom.
+
+## Bitwise Mask Postconditions
+
+The prover can reason about bitwise operations. Two provable patterns:
+
+```ada
+-- Apply_Mask: result has no bits outside mask
+function Apply_Mask (Value : Unsigned_32; Mask : Unsigned_32) return Unsigned_32 is
+   (Value and Mask)
+with Post => (Apply_Mask'Result and (not Mask)) = 0;
+
+-- Changed_Bits: XOR is 0 when inputs are equal
+function Changed_Bits (A : Unsigned_32; B : Unsigned_32) return Unsigned_32 is
+   (A xor B)
+with Post => (if A = B then Changed_Bits'Result = 0);
+```
+
+Both prove automatically at level 2 as expression functions.

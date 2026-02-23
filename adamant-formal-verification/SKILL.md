@@ -329,6 +329,18 @@ Standard Adamant components are Ada 2012, NOT SPARK by default. SPARK is opt-in 
 
 Packed type assertion packages (generated `*-assertion.adb`) are excluded from prove analysis. The prove build rule filters out assertion objects automatically.
 
+## Logic Package Conventions
+
+When creating SPARK logic packages for Adamant components:
+
+1. **`pragma Pure`** on all logic packages -- they must have no state, no side effects. This also enables `Global => null` on everything.
+2. **Expression functions** for predicates and simple computations -- prover inlines them automatically, giving stronger postconditions with zero proof effort.
+3. **Saturation over restrictive Pre** -- prefer `if X < T'Last then X := X + 1` over `Pre => X < T'Last`. Callers should not need to check preconditions for safe counter increments.
+4. **Signed integer saturation** -- for `Integer_32` (offsets, corrections), saturate at both `Integer_32'First` and `Integer_32'Last`. The postcondition needs three branches: positive correction, negative correction, zero.
+5. **Bitwise operation postconditions** -- `Apply_Mask` can prove `(Result and (not Mask)) = 0` (no bits outside mask). XOR proves `Result = 0` when inputs are equal.
+6. **Unconstrained array types** in logic packages when needed -- avoids coupling to specific buffer sizes.
+7. **No framework dependencies** -- logic packages import only `Interfaces` (or nothing). Never `with` Adamant framework packages.
+
 ## Checklist
 
 1. Identify provable surface (pure computation, validation, state transitions)
