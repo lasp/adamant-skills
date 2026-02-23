@@ -227,16 +227,36 @@ Results go to `build/prove/prove.txt`.
 
 ## Build System Integration
 
+### redo prove (Component Directories)
+
+`redo prove` analyzes ALL Ada sources in the directory. For Adamant components, this includes generated base class files that depend on the full framework -- which GNATprove often cannot handle (child package resolution failures).
+
+**Workaround: Prove logic packages directly:**
+
 ```bash
-redo prove    # Run GNATprove on current directory
+# From the component directory:
+gnatprove -j0 --checks-as-errors=on --level=2 --mode=silver \
+  -aP $ADAMANT_DIR/redo/targets/gpr \
+  -P $ADAMANT_DIR/redo/targets/gpr/linux_debug.gpr \
+  -XADAMANT_DIR=$ADAMANT_DIR \
+  -XOBJECT_DIR=build/prove \
+  -XSOURCE_DIRS=$(pwd),$(pwd)/build/src \
+  my_component_logic.ads my_component_logic.adb
+```
+
+This targets only the SPARK logic package, skipping the framework-dependent component implementation.
+
+### redo prove (Standalone Packages)
+
+For directories containing only standalone SPARK packages (not Adamant components), `redo prove` works correctly.
+
+### Other Build Targets
+
+```bash
 redo style    # Style check (includes Ada warnings)
 redo test     # Unit tests
 redo coverage # Coverage analysis
 ```
-
-`redo prove` always uses `Linux_Prove` target internally. Sets `SAFE_COMPILE=True` to analyze all source dependencies. Builds all Ada dependencies recursively before running GNATprove.
-
-No `all.prove.yaml` needed -- defaults apply. But explicit config is recommended for documentation.
 
 ## Common Proof Failures
 
