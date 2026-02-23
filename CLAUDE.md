@@ -6,30 +6,30 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (18 skills, ~15200 lines with refs)
+## Skill Inventory (18 skills, ~18500 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
-| `adamant-skill-selector` | 200 | **Read first.** Maps tasks to skills. |
-| `adamant-testing` | 2221 | Test harness, History API, assertions, coverage, advanced patterns |
-| `adamant-component-dev` | 1581 | Components: YAML models, generated API, implementation patterns, LASEL |
-| `adamant-algorithm-wrapping` | 1487 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
-| `adamant-assembly-dev` | 1071 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
+| `adamant-skill-selector` | 267 | **Read first.** Maps tasks to skills. |
+| `adamant-testing` | 2515 | Test harness, History API, assertions, coverage, advanced patterns |
+| `adamant-tools` | 2216 | API inspector, component scaffolder, YAML validator (Python scripts) |
+| `adamant-component-dev` | 1960 | Components: YAML models, generated API, implementation patterns, LASEL |
+| `adamant-algorithm-wrapping` | 1896 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
+| `adamant-assembly-dev` | 1416 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
+| `adamant-cosmos-integration` | 1254 | CCSDS pipeline, COSMOS plugin build/load |
+| `adamant-style` | 1078 | Ada/YAML/Python style rules enforced by `redo style` |
+| `adamant-build-system` | 973 | Redo commands, code gen, build paths, SPARK prove |
 | `adamant-skill-creation` | 839 | Creating, validating, and refactoring Adamant skills |
-| `adamant-build-system` | 808 | Redo commands, code gen, build paths, SPARK prove |
-| `adamant-type-system` | 542 | YAML type definitions, format codes, Ada type hierarchy |
-| `adamant-cosmos-integration` | 510 | CCSDS pipeline, COSMOS plugin build/load |
-| `adamant-cosmos-testing` | 450 | Integration test scripts via COSMOS scripting API |
-| `adamant-framework-components` | 477 | Catalog of all 58 built-in components + audit |
-| `adamant-subassemblies` | 463 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
+| `adamant-cosmos-testing` | 687 | Integration test scripts via COSMOS scripting API |
+| `adamant-framework-components` | 675 | Catalog of all 58 built-in components + audit |
+| `adamant-type-system` | 567 | YAML type definitions, format codes, Ada type hierarchy |
+| `adamant-subassemblies` | 504 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
+| `adamant-project-setup` | 484 | New project scaffolding, env/activate, Docker, config |
+| `knowledge-acquisition` | 471 | Systematic codebase study with sub-agents |
 | `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
-| `adamant-style` | 426 | Ada/YAML/Python style rules enforced by `redo style` |
-| `adamant-project-setup` | 381 | New project scaffolding, env/activate, Docker, config |
-| `knowledge-acquisition` | 370 | Systematic codebase study with sub-agents |
-| `adamant-tools` | 1688 | API inspector, component scaffolder, YAML validator (Python scripts) |
 | `high-assurance-design` | 304 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~15200 lines (includes tool scripts)
+**Total:** ~18500 lines (includes tool scripts)
 
 ## Key Principles
 
