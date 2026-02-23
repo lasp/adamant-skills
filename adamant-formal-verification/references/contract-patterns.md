@@ -357,6 +357,71 @@ with Global => null,
 
 The prover handles the U32 arithmetic and conversion checks automatically at level 2.
 
+## Sawtooth Wrap Detection via Subtraction
+
+When checking if `Value + Step > Max` with unsigned types, the addition can overflow. Reformulate as a subtraction test:
+
+```ada
+function Should_Wrap (Value, Step, Max : Unsigned_16) return Boolean
+with
+   Global => null,
+   Post   => Should_Wrap'Result = (Step > Max or else Value > Max - Step);
+```
+
+When `Step > Max`, wrapping always occurs. Otherwise `Max - Step` is safe (no underflow) and `Value > Max - Step` is equivalent to `Value + Step > Max` without overflow risk. The prover handles this at level 2.
+
+Use with a `Next_Value` function:
+
+```ada
+function Next_Value (Value, Step, Max : Unsigned_16) return Unsigned_16
+with
+   Global => null,
+   Post   => (if Should_Wrap (Value, Step, Max)
+              then Next_Value'Result = 0
+              else Next_Value'Result = Value + Step);
+```
+
+## Window-Based State Machine Logic
+
+For periodic window logic (watchdog kickers, duty cycle monitors), extract window boundary and action predicates:
+
+```ada
+function Window_Complete (Ticks, Window_Size : Unsigned_16) return Boolean
+with
+   Global => null,
+   Post   => Window_Complete'Result = (Ticks >= Window_Size);
+
+function Should_Act (Enabled : Boolean; Ticks, Window_Size : Unsigned_16) return Boolean
+with
+   Global => null,
+   Post   => Should_Act'Result = (Enabled and then Ticks >= Window_Size);
+
+function Missed_Action (Detection_Enabled : Boolean; Acted_This_Window : Boolean) return Boolean
+with
+   Global => null,
+   Post   => Missed_Action'Result = (Detection_Enabled and then not Acted_This_Window);
+```
+
+These compose naturally: the component calls `Window_Complete` to check boundaries, `Should_Act` for the action decision, and `Missed_Action` at window end. All prove trivially as the bodies mirror the postconditions.
+
+## Bitfield Extraction with Shift_Right
+
+Extracting sub-words from wider types proves cleanly when the mask is explicit:
+
+```ada
+function Low_Word (Status : Unsigned_32) return Unsigned_16
+with
+   Global => null,
+   Post   => Low_Word'Result = Unsigned_16 (Status and 16#FFFF#);
+
+function High_Word (Status : Unsigned_32) return Unsigned_16
+with
+   Global => null,
+   Post   => High_Word'Result = Unsigned_16 (Shift_Right (Status, 16) and 16#FFFF#);
+```
+
+The `and 16#FFFF#` mask ensures the conversion to `Unsigned_16` is always in range. The prover verifies this at level 2 without additional hints.
+
 ## Modular Decimation Pattern
 
 Forward every Nth item:
