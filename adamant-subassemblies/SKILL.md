@@ -441,8 +441,8 @@ connections:
 ```yaml
 description: Command and telemetry communication subsystem
 
-id_bases:
-  - "Event_Id_Base => 500"
+## NOTE: id_bases belong in the PARENT assembly only, not in subassemblies.
+## Subassemblies inherit ID offsets from the parent.
 
 components:
   - type: Command_Router
@@ -466,8 +466,7 @@ connections:
 ```yaml
 description: Guidance, navigation, and control subsystem
 
-id_bases:
-  - "Event_Id_Base => 1000"
+## NOTE: id_bases belong in the PARENT assembly only, not in subassemblies.
 
 components:
   - type: Nav_Filter

@@ -281,7 +281,7 @@ package body Component.<Name>.Implementation is
             Output : constant Out_Type.C.U_C := Algorithm_C.Update (
                Self.Alg, Input => Dep_1_C'Unchecked_Access);
          begin
-            Self.Data_Product_T_Send (Self.Data_Products.Output_Name (
+            Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Output_Name (
                Arg.Time, Out_Type.Pack (Out_Type.C.To_Ada (Output))));
          end;
       end if;

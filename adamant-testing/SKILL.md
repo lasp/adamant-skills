@@ -205,7 +205,7 @@ Packed_U32_Assert.Eq (T.Counter_History.Get (1), (Value => 42));
 T.Event_T_Recv_Sync_History.Clear;
 ```ada
 
-**Named connectors:** `name: Spi_Data` on send → `Spi_Data_T_Recv_Sync_History` in tester.
+**Named connectors:** `name: Spi_Data` on send → `Spi_Data_Reciprocal_History` in tester (NOT `_T_Recv_Sync_History`).
 
 **CRITICAL:** Clearing raw history does NOT clear typed histories. Use cumulative counts or clear typed histories explicitly: `T.My_Event_History.Clear;`
 
@@ -252,10 +252,9 @@ T.Packet_T_Send (Pkt);  -- Works
 **⚠️ Dispatch_All is ONLY for recv_async connectors.** Commands on `recv_sync` connectors execute immediately when `T.Command_T_Send` is called -- do NOT call `Dispatch_All` for them (it will return 0). Only call `Dispatch_All` after sending to `recv_async` connectors (e.g., `Packet_T_Send` for async packet input). Check the component YAML to determine which connectors are sync vs async.
 
 ```ada
--- Active component command test pattern:
-T.Command_T_Send (cmd);                        -- queued, not processed
-Natural_Assert.Eq (T.Dispatch_All, 1);          -- NOW it processes
--- Check response AFTER dispatch:
+-- Command test pattern (commands are recv_sync -- execute immediately):
+T.Command_T_Send (cmd);
+-- Response is available immediately -- no Dispatch_All needed:
 ```
 
 ```ada
