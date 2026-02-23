@@ -1,4 +1,4 @@
-<!-- validated: adamant@46e1a8f 2026-02-23 (main) -->
+<!-- validated: adamant@2928bec 2026-02-23 (main) -->
 # Advanced Contract Patterns
 
 ## Proof Chain Walkthrough
@@ -579,6 +579,21 @@ with
 ```
 
 The postcondition fully specifies the mapping. The body is a direct if/elsif/else chain that mirrors the postcondition. Proves trivially at level 2. Works for any number of thresholds -- just extend the enum and add branches.
+
+## Constrained Subtype for Mux/Router Source Selection
+
+When routing based on a small set of valid source IDs, define a constrained subtype rather than using raw unsigned. The prover reasons about the subtype's range to prove completeness:
+
+```ada
+subtype Source_Id is Unsigned_16 range 0 .. 2;
+Both_Sources : constant Source_Id := 0;
+
+function Should_Forward (Packet_Source : Source_Id; Active : Source_Id) return Boolean
+with Global => null,
+     Post => Should_Forward'Result = (Active = Both_Sources or else Active = Packet_Source);
+```
+
+The subtype constraint means the prover knows there are only 3 possible values, making exhaustive reasoning tractable at level 2.
 
 ## Saturating Addition via U64 Widening
 

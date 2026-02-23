@@ -269,6 +269,32 @@ redo test     # Unit tests
 redo coverage # Coverage analysis
 ```
 
+### GNAT Body Discovery: Pure Packages Must Have Bodies
+
+When `gnatprove` scans source directories, GNAT's naming convention infers that `foo_logic.ads` should have a corresponding `foo_logic.adb`. If the package contains ONLY expression functions and `pragma Pure`, Ada semantics say no body is allowed -- but GNAT still looks for one by naming convention and reports:
+
+```
+error: package "Foo_Logic" does not allow a body
+error: remove incorrect body in file "foo_logic.adb"
+```
+
+This error appears even when the `.adb` file does not exist. The fix: **always provide at least one non-expression-function subprogram** so a body is required. Move expression functions to non-expression form with matching postconditions:
+
+```ada
+-- Spec: non-expression function forces body requirement
+function Should_Forward (Channel : Index; Active : Index; Broadcast : Boolean) return Boolean
+with Global => null,
+     Post => Should_Forward'Result = (Broadcast or else Channel = Active);
+
+-- Body: trivial implementation matching postcondition
+function Should_Forward (Channel : Index; Active : Index; Broadcast : Boolean) return Boolean is
+begin
+   return Broadcast or else Channel = Active;
+end Should_Forward;
+```
+
+Expression functions that remain in the spec (alongside the non-expression ones) are still auto-inlined by the prover.
+
 ## Common Proof Failures
 
 | Message | Cause | Fix |
