@@ -481,3 +481,84 @@ with Post => (if A = B then Changed_Bits'Result = 0);
 ```
 
 Both prove automatically at level 2 as expression functions.
+
+## Bounded Array Index for Circular Buffers
+
+Unconstrained arrays with `Natural range <>` cause proof failures because `Buffer'Length` can overflow `Natural`. Use a bounded index subtype:
+
+```ada
+Max_Buffer_Size : constant := 256;
+subtype Buffer_Index is Natural range 0 .. Max_Buffer_Size - 1;
+type Id_Array is array (Buffer_Index range <>) of Unsigned_16;
+
+procedure Insert (
+   Item    : in Unsigned_16;
+   Buffer  : in out Id_Array;
+   Head    : in Buffer_Index;
+   Count   : in Natural;
+   New_Head  : out Buffer_Index;
+   New_Count : out Natural
+)
+with
+   Global => null,
+   Pre    => Buffer'Length > 0
+      and then Head in Buffer'Range
+      and then Count <= Buffer'Length,
+   Post   => New_Head in Buffer'Range
+      and then New_Count <= Buffer'Length
+      and then Buffer (Head) = Item;
+```
+
+The bounded subtype ensures `Buffer'Length` fits in `Natural`, eliminating the overflow class.
+
+## Conditional Conservation with Saturation
+
+When counters saturate, exact arithmetic conservation breaks. Gate conservation on the non-saturation case:
+
+```ada
+procedure Record_Result (
+   Is_Good      : in Boolean;
+   Good_Count   : in Unsigned_32;
+   Bad_Count    : in Unsigned_32;
+   Total        : in Unsigned_32;
+   New_Good     : out Unsigned_32;
+   New_Bad      : out Unsigned_32;
+   New_Total    : out Unsigned_32
+)
+with
+   Global => null,
+   Post   =>
+      New_Total >= Total
+      and then (if Is_Good then New_Good >= Good_Count and then New_Bad = Bad_Count
+                else New_Bad >= Bad_Count and then New_Good = Good_Count)
+      -- Conservation holds when no saturation occurs:
+      and then (if Good_Count < Unsigned_32'Last and then Bad_Count < Unsigned_32'Last
+                   and then Total < Unsigned_32'Last then
+                  (New_Good - Good_Count) + (New_Bad - Bad_Count) = New_Total - Total);
+```
+
+## Rate Calculation with 64-bit Intermediate
+
+For percentage or permille calculations, use `Unsigned_64` to avoid intermediate overflow:
+
+```ada
+function Error_Rate_Permille (Errors : Unsigned_32; Total : Unsigned_32) return Unsigned_32
+with
+   Global => null,
+   Post   => (if Total = 0 then Error_Rate_Permille'Result = 0
+              else Error_Rate_Permille'Result <= 1000);
+
+-- Body:
+function Error_Rate_Permille (Errors : Unsigned_32; Total : Unsigned_32) return Unsigned_32 is
+begin
+   if Total = 0 then return 0; end if;
+   declare
+      N : constant Unsigned_64 := Unsigned_64 (Errors) * 1000;
+      R : constant Unsigned_64 := N / Unsigned_64 (Total);
+   begin
+      if R > 1000 then return 1000; else return Unsigned_32 (R); end if;
+   end;
+end Error_Rate_Permille;
+```
+
+The `<= 1000` postcondition proves cleanly because of the explicit clamp.

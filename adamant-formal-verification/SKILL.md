@@ -338,8 +338,11 @@ When creating SPARK logic packages for Adamant components:
 3. **Saturation over restrictive Pre** -- prefer `if X < T'Last then X := X + 1` over `Pre => X < T'Last`. Callers should not need to check preconditions for safe counter increments.
 4. **Signed integer saturation** -- for `Integer_32` (offsets, corrections), saturate at both `Integer_32'First` and `Integer_32'Last`. The postcondition needs three branches: positive correction, negative correction, zero.
 5. **Bitwise operation postconditions** -- `Apply_Mask` can prove `(Result and (not Mask)) = 0` (no bits outside mask). XOR proves `Result = 0` when inputs are equal.
-6. **Unconstrained array types** in logic packages when needed -- avoids coupling to specific buffer sizes.
+6. **Unconstrained array types** in logic packages when needed -- avoids coupling to specific buffer sizes. BUT: if the array index is `Natural range <>`, the prover cannot bound `Buffer'Length` (it could be `Natural'Last + 1` which overflows). Fix: define a bounded index subtype (e.g., `subtype Buffer_Index is Natural range 0 .. 255`) and use that as the array index range. This gives the prover a concrete upper bound.
 7. **No framework dependencies** -- logic packages import only `Interfaces` (or nothing). Never `with` Adamant framework packages.
+8. **Float arithmetic stays outside SPARK** -- float addition/subtraction can overflow (`Short_Float'Last + Short_Float'Last`), and the prover's guard-condition analysis for saturation clamping is weak. Prefer: keep float accumulation in the Ada component body, prove only integer logic and float-to-integer conversions (e.g., safe division with zero check). If you must prove float operations, use bounded float subtypes (see "Float Overflow in Subtraction" above).
+9. **Conditional conservation postconditions** -- when saturation breaks exact arithmetic (e.g., `delta_valid + delta_invalid = delta_total`), gate the conservation clause on the non-saturation case: `if all inputs < T'Last then exact_equality`. The prover can verify this conditional form.
+10. **64-bit intermediate for rate calculations** -- for percentage/permille (e.g., `errors * 1000 / total`), cast to `Unsigned_64` before multiplying to avoid overflow. Clamp result to the valid range (0..100 or 0..1000) and the postcondition `Result <= Bound` proves cleanly.
 
 ## Checklist
 
