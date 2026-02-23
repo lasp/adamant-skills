@@ -311,3 +311,70 @@ end Compute_HMAC;
 - Assuming inputs are in range (use Pre instead)
 - Assuming external state hasn't changed (use Global/Depends)
 - Anything that could be proven with a stronger invariant or loop invariant
+
+## Bounded Float Subtype Pattern
+
+When proving float arithmetic (subtraction, negation), full-range floats cause overflow. Define bounded subtypes:
+
+```ada
+-- Guarantee a - b fits in Short_Float for any a, b in Bounded_Float
+subtype Bounded_Float is Short_Float range -1.0E+37 .. 1.0E+37;
+subtype Positive_Float is Short_Float range Short_Float'Succ (0.0) .. 1.0E+37;
+
+procedure Step_Toward
+  (Current : in Bounded_Float;
+   Target  : in Bounded_Float;
+   Step    : in Positive_Float;
+   Result  : out Bounded_Float)
+with Global => null,
+     Post =>
+       (if Current < Target then
+          (if Target - Current <= Step then Result = Target
+           else Result = Current + Step)
+        elsif Current > Target then
+          (if Current - Target <= Step then Result = Target
+           else Result = Current - Step)
+        else Result = Target);
+```
+
+Key: the subtype range (1E37 vs 3.4E38) provides enough headroom that `a - b` and `a + step` stay within Short_Float range without explicit Pre.
+
+## Linear Calibration with Saturation Pattern
+
+Widen to U32 intermediate, saturate back to U16:
+
+```ada
+function Calibrate
+  (Raw : Unsigned_16; Gain : Unsigned_16; Offset : Unsigned_16) return Unsigned_16
+with Global => null,
+     Post =>
+       (if Unsigned_32 (Raw) * Unsigned_32 (Gain) / 100 + Unsigned_32 (Offset)
+           > Unsigned_32 (Unsigned_16'Last)
+        then Calibrate'Result = Unsigned_16'Last
+        else Calibrate'Result = Unsigned_16 (
+               Unsigned_32 (Raw) * Unsigned_32 (Gain) / 100 + Unsigned_32 (Offset)));
+```
+
+The prover handles the U32 arithmetic and conversion checks automatically at level 2.
+
+## Modular Decimation Pattern
+
+Forward every Nth item:
+
+```ada
+function Should_Forward (Count : Unsigned_32; Factor : Unsigned_16) return Boolean
+with Global => null,
+     Pre => Factor > 0,
+     Post => Should_Forward'Result = (Count mod Unsigned_32 (Factor) = 0);
+```
+
+## Type Width Matching for mod-then-convert
+
+When converting `X mod Period` to a narrower type, make Period the same width as the target:
+
+```ada
+-- Period : Unsigned_16 guarantees (Tick mod U32(Period)) fits in U16
+function Simulated_Voltage
+  (Tick : Unsigned_32; Base : Unsigned_16; Period : Unsigned_16) return Unsigned_16
+with Pre => Period > 0;
+```

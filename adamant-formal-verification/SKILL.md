@@ -270,6 +270,36 @@ redo coverage # Coverage analysis
 | "loop invariant not preserved" | Invariant doesn't hold after iteration | Strengthen invariant or add intermediate assertions |
 | "loop invariant not established" | Invariant doesn't hold on first iteration | Fix initial condition or invariant expression |
 
+### Float Overflow in Subtraction
+
+Float subtraction `A - B` overflows when operands have opposite signs near type extremes. Fix: define a bounded float subtype that guarantees `A - B` fits:
+
+```ada
+-- Max range / 4 ensures a-b never overflows Short_Float
+subtype Bounded_Float is Short_Float range -1.0E+37 .. 1.0E+37;
+subtype Positive_Float is Short_Float range Short_Float'Succ (0.0) .. 1.0E+37;
+
+function Abs_Error (Target : Bounded_Float; Current : Bounded_Float) return Short_Float
+  with Global => null,
+       Post => Abs_Error'Result >= 0.0;
+```
+
+This is saturation-by-subtype: narrower input range eliminates the overflow class entirely, no restrictive Pre needed.
+
+### Integer Conversion Range in mod Expressions
+
+`Unsigned_16 (X mod Period)` fails when Period is Unsigned_32 -- the mod result can exceed U16 range. Fix: make Period the same width as the target type:
+
+```ada
+-- BAD: Period is U32, mod result can be up to U32'Last-1
+function F (Tick : Unsigned_32; Period : Unsigned_32) return Unsigned_16
+  with Pre => Period > 0;  -- mod result still can exceed U16
+
+-- GOOD: Period is U16, mod result guaranteed <= U16'Last
+function F (Tick : Unsigned_32; Period : Unsigned_16) return Unsigned_16
+  with Pre => Period > 0;
+```
+
 ### Escalation Strategy
 
 1. Read counterexample (level >= 2 enables them)
