@@ -1,4 +1,4 @@
-<!-- validated: adamant@bda1ae3 2026-02-23 (main) -->
+<!-- validated: adamant@d9cd178 2026-02-23 (main) -->
 # Advanced Contract Patterns
 
 ## State Record Return Pattern
@@ -655,3 +655,75 @@ end Saturating_Add;
 ```
 
 The prover verifies the `Unsigned_32` conversion is safe because the if-check guarantees `Sum_64 <= Unsigned_32'Last`. Generalizes to any width pair (U16 via U32, etc.).
+
+## Linear Search with Postcondition on Unconstrained Arrays
+
+For route table lookup or any linear search returning an index or sentinel, use an unconstrained array type in the logic package and a sentinel constant:
+
+```ada
+type Route_Entry is record
+   Active    : Boolean;
+   Packet_Id : Unsigned_16;
+   Channel   : Unsigned_8;
+end record;
+
+type Route_Table is array (Natural range <>) of Route_Entry;
+No_Route : constant Natural := Natural'Last;
+
+function Lookup (Table : Route_Table; Packet_Id : Unsigned_16) return Natural
+with
+   Global => null,
+   Post   =>
+      (if Lookup'Result /= No_Route
+       then Lookup'Result in Table'Range
+            and then Table (Lookup'Result).Active
+            and then Table (Lookup'Result).Packet_Id = Packet_Id);
+```
+
+The body is a simple for loop. The prover verifies:
+- Return value is always a valid index or the sentinel
+- When found, the entry matches the search key and is active
+- No array bounds violations in the loop
+
+Key: the postcondition only specifies the "found" case. The "not found" case (returns `No_Route`) is unconstrained -- callers check `Result /= No_Route` before indexing. This avoids needing a universal quantifier (`for all`) which can be expensive at level 2.
+
+Similarly, `Find_Empty_Slot` uses `not Table(Result).Active` in the postcondition.
+
+## Multi-Metric State Determination
+
+When determining a system state from multiple independent metrics, structure the postcondition as a cascade of implications matching the if/elsif chain:
+
+```ada
+type System_State is (Idle, Active, Degraded, Emergency);
+
+function Determine_State (
+   Error_Count : Unsigned_16;
+   Error_Threshold : Unsigned_16;
+   Cpu_Load : Unsigned_16;
+   Degraded_Cpu_Threshold : Unsigned_16
+) return System_State
+with
+   Global => null,
+   Post =>
+      (if Error_Count >= Error_Threshold then Determine_State'Result = Emergency)
+      and then
+      (if Error_Count < Error_Threshold and then Cpu_Load >= Degraded_Cpu_Threshold
+       then Determine_State'Result = Degraded);
+```
+
+The postcondition specifies the two "deterministic" branches (Emergency, Degraded) but leaves the default (Active) unspecified -- it follows by elimination. This is intentional: specifying only the critical transitions keeps the contract readable and provable. Adding a third clause for Active would work but adds no safety value.
+
+## Completion Percentage with Constant Threshold
+
+When computing progress percentage against a constant, the prover can inline the constant value to verify bounds:
+
+```ada
+Completion_Threshold : constant Unsigned_32 := 1_000;
+
+function Completion_Percentage (Pages_Scrubbed : Unsigned_32) return Unsigned_8
+with
+   Global => null,
+   Post   => Completion_Percentage'Result <= 100;
+```
+
+Body uses `Unsigned_64` widening: `(Pages_64 * 100) / Threshold_64`, clamped to 100. The constant threshold eliminates the need for a `Pre => Threshold > 0` guard -- the prover knows the divisor is 1000 by inlining the constant. This pattern applies to any fixed-denominator percentage calculation.

@@ -370,7 +370,7 @@ Packed type assertion packages (generated `*-assertion.adb`) are excluded from p
 
 When creating SPARK logic packages for Adamant components:
 
-1. **`pragma Pure`** on all logic packages -- they must have no state, no side effects. This also enables `Global => null` on everything.
+1. **Pure** on all logic packages -- they must have no state, no side effects. This also enables `Global => null` on everything. Use the **aspect form** on the package declaration: `package Foo_Logic with SPARK_Mode => On, Pure is` -- do NOT use a standalone `pragma Pure;` before the package declaration (it must come after the package name, and the aspect form is cleaner).
 2. **Expression functions** for predicates and simple computations -- prover inlines them automatically, giving stronger postconditions with zero proof effort.
 3. **Saturation over restrictive Pre** -- prefer `if X < T'Last then X := X + 1` over `Pre => X < T'Last`. Callers should not need to check preconditions for safe counter increments.
 4. **Signed integer saturation** -- for `Integer_32` (offsets, corrections), saturate at both `Integer_32'First` and `Integer_32'Last`. The postcondition needs three branches: positive correction, negative correction, zero.
