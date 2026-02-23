@@ -1,4 +1,4 @@
-<!-- validated: adamant@b27ba13 2026-02-23 (main) -->
+<!-- validated: adamant@a6d841b 2026-02-23 (main) -->
 # Advanced Contract Patterns
 
 ## State Record Return Pattern
@@ -846,3 +846,66 @@ with
 ```
 
 This pattern proves cleanly because the `Passed` output is defined by the same expression function used in the if-branch, so the prover can substitute directly.
+
+## Capped Increment with Capacity Detection
+
+When a counter has a configurable maximum and callers need to know when it transitions to full:
+
+```ada
+procedure Log_Entry (Count : in out Unsigned_32; Max_Entries : in Unsigned_32; Became_Full : out Boolean)
+with
+   Global => null,
+   Post   => (if Count'Old < Max_Entries
+              then Count = Count'Old + 1
+                   and Became_Full = (Count'Old + 1 = Max_Entries)
+              else Count = Count'Old
+                   and Became_Full = False);
+```
+
+The postcondition specifies exact behavior in both branches: below capacity (increment + detect full transition) and at capacity (no change, no false alarm). The `Became_Full` output detects the exact transition tick -- useful for one-shot "log full" events. Proves at level 2 because the body mirrors the if/else structure directly.
+
+Key: `Count'Old + 1 = Max_Entries` is the transition test, not `Count = Max_Entries`, because Count has already been incremented when the comparison evaluates in the postcondition.
+
+## Multi-Output Flush with Saturating Accumulation
+
+When flushing a buffer resets one counter and accumulates into another with saturation:
+
+```ada
+procedure Flush_Buffer (
+   Buffered_Count : out Unsigned_32;
+   Total_Flushed  : in out Unsigned_32;
+   Packets_Flushed : out Unsigned_32;
+   Old_Buffered   : in Unsigned_32
+)
+with
+   Global => null,
+   Post   => Buffered_Count = 0
+         and Packets_Flushed = Old_Buffered
+         and (if Total_Flushed'Old <= Unsigned_32'Last - Old_Buffered
+              then Total_Flushed = Total_Flushed'Old + Old_Buffered
+              else Total_Flushed = Unsigned_32'Last);
+```
+
+The `Old_Buffered` parameter captures the pre-flush count as an explicit input -- this avoids needing `Buffered_Count'Old` in the postcondition (which would refer to the in-out parameter's old value, complicating the contract). The saturation clause on `Total_Flushed` proves cleanly because the if-condition exactly matches the overflow check in the body.
+
+Pattern: when a procedure both resets and accumulates, pass the "amount to transfer" as a separate `in` parameter rather than relying on `'Old` values of `out` parameters.
+
+## Case Expression Postcondition for Classification
+
+When classifying an input into discrete categories by value, a case-expression postcondition gives complete specification:
+
+```ada
+type Severity_Level is (Info, Warning, Error_Level);
+
+function Classify_Severity (Severity_Code : Unsigned_8) return Severity_Level
+with
+   Global => null,
+   Post   => (case Severity_Code is
+                when 0 => Classify_Severity'Result = Info,
+                when 1 => Classify_Severity'Result = Warning,
+                when others => Classify_Severity'Result = Error_Level);
+```
+
+The `case` expression in the postcondition is exhaustive by Ada rules, so the prover gets a complete specification for free. The body uses a matching `case` statement. This is strictly stronger than an if/elsif chain because the compiler enforces that all values are covered.
+
+Works well for: severity codes, mode IDs, state machine inputs, any small-domain classification. For larger domains, use range-based classification (see Enum Classification by Threshold pattern above).
