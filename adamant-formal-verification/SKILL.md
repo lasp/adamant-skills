@@ -246,6 +246,17 @@ gnatprove -j0 --checks-as-errors=on --level=2 --mode=silver \
 
 This targets only the SPARK logic package, skipping the framework-dependent component implementation.
 
+**CRITICAL: SOURCE_DIRS must include the directory containing the logic files.** If running from the project root (not the component directory), use the component subdirectory path:
+
+```bash
+# From project root:
+gnatprove ... \
+  "-XSOURCE_DIRS=$(pwd)/src/components/my_component" \
+  my_component_logic.ads my_component_logic.adb
+```
+
+The `$(pwd),$(pwd)/build/src` form only works when `pwd` IS the component directory. From project root, the files are not in `$(pwd)` and gnatprove will report "not a file or compilation unit of any project".
+
 ### redo prove (Standalone Packages)
 
 For directories containing only standalone SPARK packages (not Adamant components), `redo prove` works correctly.

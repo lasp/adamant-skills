@@ -1,4 +1,4 @@
-<!-- validated: adamant@80c1f5f 2026-02-23 (main) -->
+<!-- validated: adamant@46e1a8f 2026-02-23 (main) -->
 # Advanced Contract Patterns
 
 ## Proof Chain Walkthrough
@@ -562,3 +562,46 @@ end Error_Rate_Permille;
 ```
 
 The `<= 1000` postcondition proves cleanly because of the explicit clamp.
+
+## Enum Classification by Threshold
+
+When routing or classifying values into discrete categories based on thresholds, return an enumeration with a complete postcondition:
+
+```ada
+type Priority_Level is (High, Normal, Low);
+
+function Classify_Priority (Seq_Count : Unsigned_16; High_Threshold : Unsigned_16; Low_Threshold : Unsigned_16) return Priority_Level
+with
+   Global => null,
+   Post   => (if Seq_Count >= High_Threshold then Classify_Priority'Result = High
+              elsif Seq_Count < Low_Threshold then Classify_Priority'Result = Low
+              else Classify_Priority'Result = Normal);
+```
+
+The postcondition fully specifies the mapping. The body is a direct if/elsif/else chain that mirrors the postcondition. Proves trivially at level 2. Works for any number of thresholds -- just extend the enum and add branches.
+
+## Saturating Addition via U64 Widening
+
+For adding two `Unsigned_32` values without overflow, widen to `Unsigned_64` and clamp:
+
+```ada
+function Saturating_Add (A : Unsigned_32; B : Unsigned_32) return Unsigned_32
+with
+   Global => null,
+   Post   => (if Unsigned_64 (A) + Unsigned_64 (B) > Unsigned_64 (Unsigned_32'Last)
+              then Saturating_Add'Result = Unsigned_32'Last
+              else Saturating_Add'Result = A + B);
+
+-- Body:
+function Saturating_Add (A : Unsigned_32; B : Unsigned_32) return Unsigned_32 is
+   Sum_64 : constant Unsigned_64 := Unsigned_64 (A) + Unsigned_64 (B);
+begin
+   if Sum_64 > Unsigned_64 (Unsigned_32'Last) then
+      return Unsigned_32'Last;
+   else
+      return Unsigned_32 (Sum_64);
+   end if;
+end Saturating_Add;
+```
+
+The prover verifies the `Unsigned_32` conversion is safe because the if-check guarantees `Sum_64 <= Unsigned_32'Last`. Generalizes to any width pair (U16 via U32, etc.).
