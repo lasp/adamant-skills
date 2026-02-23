@@ -298,17 +298,9 @@ Style: `-gnaty3aABbdDefhiklL12nOprStux` (see adamant-style skill for full flag r
 Linux_Test: no Ravenscar, links AUnit. Bareboard: Ravenscar enforced, dead code elimination.
 Full flag details: [references/build-commands.md](references/build-commands.md)
 
-## SPARK Prove Configuration
+## SPARK Prove
 
-Place `all.prove.yaml` in component directory:
-```yaml
-level: 2          # 0-4 (timeout/prover escalation)
-mode: "gold"      # check|flow|prove|all|stone|bronze|silver|gold
-```yaml
-
-Override: `PROVE_SWITCHES="--level=4" redo prove`
-
-Prove always uses the `Linux_Prove` target internally. Sets `SAFE_COMPILE=True` to ensure all source dependencies are analyzed.
+`redo prove` runs GNATprove. See `adamant-formal-verification` skill for full SPARK/prove workflow, `all.prove.yaml` configuration, and contract patterns.
 
 ## Cross-Compilation Targets
 
@@ -371,7 +363,7 @@ More errors and project structure: [references/build-commands.md](references/bui
 - [references/build-commands.md](references/build-commands.md) -- All redo targets and build commands
 - [references/build-system-audit.md](references/build-system-audit.md) -- Undocumented targets and audit findings
 - [references/internals-and-generation.md](references/internals-and-generation.md) -- Code generation internals, template database, generator architecture
-- [references/spark-prove-guide.md](references/spark-prove-guide.md) -- Complete SPARK prove setup, configuration, and contract patterns
+- **SPARK prove**: See `adamant-formal-verification` skill (supersedes spark-prove-guide.md)
 
 ## Related Skills
 

@@ -6,7 +6,7 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (18 skills, ~18500 lines with refs)
+## Skill Inventory (19 skills, ~19100 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
@@ -18,7 +18,8 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-assembly-dev` | 1416 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
 | `adamant-cosmos-integration` | 1254 | CCSDS pipeline, COSMOS plugin build/load |
 | `adamant-style` | 1078 | Ada/YAML/Python style rules enforced by `redo style` |
-| `adamant-build-system` | 973 | Redo commands, code gen, build paths, SPARK prove |
+| `adamant-formal-verification` | 609 | SPARK contracts, GNATprove, ghost lemmas, proof chains |
+| `adamant-build-system` | 973 | Redo commands, code gen, build paths |
 | `adamant-skill-creation` | 839 | Creating, validating, and refactoring Adamant skills |
 | `adamant-cosmos-testing` | 687 | Integration test scripts via COSMOS scripting API |
 | `adamant-framework-components` | 675 | Catalog of all 58 built-in components + audit |
@@ -29,7 +30,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
 | `high-assurance-design` | 304 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~18500 lines (includes tool scripts)
+**Total:** ~19100 lines (includes tool scripts)
 
 ## Key Principles
 
@@ -49,6 +50,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 - **Coverage:** 89%+ aggregate across 100+ components
 - **Invalid_Command tests:** 63/63 components passing
 - **Cold-start:** Fresh agents produce compiling components with 0 errors (stress-tested 2026-02-20)
+- **Formal verification:** SPARK proof chain pattern, ghost lemma discipline, GNATprove integration
 - **Component lifecycle:** New component from YAML to passing tests validated 19+ times
 - **Convergence:** Systematic stress testing across all generative skills -- 0 cold-start errors
 - **Subassemblies:** 10-round iteration, R10 achieved zero errors from cold-start agent

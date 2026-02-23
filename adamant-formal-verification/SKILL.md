@@ -1,0 +1,296 @@
+---
+name: adamant-formal-verification
+description: SPARK formal verification for Adamant components and standalone packages. Use when adding SPARK contracts, running GNATprove, writing preconditions/postconditions, proving absence of runtime errors, or integrating formal verification into the Adamant build pipeline.
+---
+
+# SPARK Formal Verification in Adamant
+
+SPARK is a subset of Ada with contracts (preconditions, postconditions, data dependencies) that enables mathematical proof of program correctness. Adamant integrates GNATprove through `redo prove`.
+
+## Quick Start
+
+1. Add `SPARK_Mode => On` to package spec and body
+2. Write contracts (Pre, Post, Global, Depends)
+3. Create `all.prove.yaml` in the component/package directory (optional -- defaults: level 2, mode gold)
+4. Run `redo prove` from that directory
+
+## SPARK Mode
+
+### Enabling SPARK
+
+Apply to entire package:
+
+```ada
+package My_Package with SPARK_Mode => On is
+   -- All declarations here are SPARK-checked
+end My_Package;
+
+package body My_Package with SPARK_Mode => On is
+   -- All bodies here are SPARK-checked
+end My_Package;
+```
+
+### Selective SPARK Mode
+
+Disable for specific subprograms that can't satisfy SPARK restrictions:
+
+```ada
+package body My_Component with SPARK_Mode => On is
+
+   procedure Pure_Computation (X : in out Integer) is
+   begin
+      X := X + 1;  -- Provable
+   end Pure_Computation;
+
+   procedure Handle_Command (Self : in out Instance; Cmd : in Command.T)
+      with SPARK_Mode => Off  -- Complex command handling
+   is
+   begin
+      -- Access types, exception handlers, etc.
+   end Handle_Command;
+
+end My_Component;
+```
+
+### What SPARK Disallows
+- Access types (pointers) -- use in `SPARK_Mode => Off` regions
+- Exception handlers -- use preconditions instead
+- Tasking beyond Ravenscar profile
+- Side effects in functions (functions must be pure)
+- General aliasing
+
+## Contract Patterns
+
+### Preconditions and Postconditions
+
+```ada
+procedure Increment (X : in out Integer)
+   with Pre  => X < Integer'Last,       -- Caller must guarantee
+        Post => X = X'Old + 1;          -- Implementation must guarantee
+
+function Clamp (Val, Lo, Hi : Integer) return Integer
+   with Pre  => Lo <= Hi,
+        Post => Clamp'Result >= Lo and then Clamp'Result <= Hi;
+```
+
+### Data Dependencies (Global and Depends)
+
+```ada
+procedure Process (Input : Integer; Output : out Integer)
+   with Global  => (Input  => Config_Table,       -- Reads global
+                    In_Out => Statistics_Counter), -- Reads and writes global
+        Depends => (Output             => (Input, Config_Table),
+                    Statistics_Counter => Statistics_Counter);
+```
+
+`Global => null` means no global state accessed. Prefer this -- it makes proofs simpler.
+
+### Expression Functions
+
+Expression functions are automatically inlined by the prover -- no ghost lemma needed:
+
+```ada
+function Is_Valid (X : Integer) return Boolean is
+   (X >= 0 and then X <= 1000);
+
+procedure Use_Valid (X : Integer)
+   with Pre => Is_Valid (X);  -- Prover inlines the definition
+```
+
+### Ghost Code
+
+Ghost entities exist only for proof -- compiled away in production:
+
+```ada
+function Is_Sorted (Arr : Array_Type) return Boolean
+   with Ghost;
+
+Original : constant Array_Type := Data with Ghost;  -- Ghost variable
+
+pragma Assert (Is_Sorted (Data));  -- Ghost assertion
+```
+
+### Loop Invariants
+
+Required for loops -- the prover cannot reason about loops without them:
+
+```ada
+for I in Arr'Range loop
+   Arr (I) := Arr (I) + 1;
+   pragma Loop_Invariant (I >= Arr'First);
+   pragma Loop_Invariant
+      (for all J in Arr'First .. I => Arr (J) = Arr'Loop_Entry (J) + 1);
+end loop;
+```
+
+### Ghost Lemma Pattern
+
+When the prover cannot deduce that `f(A) = f(B)` when `A = B` for non-expression functions, use a ghost lemma with confined `pragma Assume`:
+
+```ada
+procedure Lemma_Substitution (A : String; B : String)
+   with Ghost,
+        Pre  => A = B and then <bounds>,
+        Post => My_Predicate (A) = My_Predicate (B)
+is
+begin
+   -- Expression functions prove automatically (inlined).
+   -- Non-expression functions need confined assumes:
+   pragma Assume (My_Predicate (A) = My_Predicate (B),
+                  "Pure function determinism: A = B implies f(A) = f(B)");
+end Lemma_Substitution;
+```
+
+Rules:
+- 0 assumes in business logic -- confine all to ghost lemmas
+- Each assume must be mathematically sound and documented
+- Ghost lemmas are compiled away -- zero runtime cost
+
+## Proof Strategy for Adamant Components
+
+### Typical SPARK Scope in an Adamant Component
+
+Most Adamant component code touches framework types (tagged records, access types, protected objects) that are outside SPARK. The provable surface is:
+
+1. **Pure computation procedures** -- arithmetic, validation, transformation
+2. **Type invariants** -- range checks, state machine transitions
+3. **Algorithm correctness** -- pre/post on domain-specific logic
+4. **Absence of runtime errors** -- overflow, division by zero, index out of range
+
+### What to Prove vs What to Test
+
+| Prove (SPARK) | Test (AUnit) |
+|---------------|--------------|
+| No overflow in arithmetic | Correct functional behavior |
+| Array indices in bounds | Command/response sequences |
+| State machine transitions valid | Integration with framework |
+| Preconditions satisfiable | Timing and scheduling |
+| Data dependency correctness | Coverage of error paths |
+
+### Proof Chain Pattern
+
+Used when validation in one function must be visible to callers through an opaque type:
+
+1. Define shared predicates as expression functions (auto-inlined by prover)
+2. Validation function checks predicates, returns on failure
+3. Constructor's postcondition guarantees `Accessor(Result) = Input`
+4. Query functions call same predicates on `Accessor(Value)`
+5. Ghost lemma bridges non-expression predicate substitution
+6. Caller's postcondition follows by substitution
+
+## GNATprove Configuration
+
+### all.prove.yaml
+
+Place in the component or package directory:
+
+```yaml
+---
+description: GNATprove configuration for <component_name>
+level: 2
+mode: "silver"
+```
+
+All fields are optional. Defaults: level 2, mode gold.
+
+### Level (0-4)
+
+| Level | Timeout | Provers | Counterexamples |
+|-------|---------|---------|-----------------|
+| 0 | 1s | cvc4 | off |
+| 1 | 1s | cvc4, z3, altergo | off |
+| 2 | 5s | cvc4, z3, altergo | on |
+| 3 | 20s | cvc4, z3, altergo | on |
+| 4 | 60s | cvc4, z3, altergo | on |
+
+### Mode
+
+| Mode | What It Checks |
+|------|----------------|
+| `check` / `stone` | Basic syntax/type checking |
+| `check_all` | Extended checking (unused variables) |
+| `flow` / `bronze` | Data and control flow analysis |
+| `silver` | Flow + proof of easy conditions |
+| `prove` / `all` / `gold` | Comprehensive analysis |
+
+Start with `silver` level 1-2. Escalate to `gold` level 3-4 for critical paths.
+
+### Environment Override
+
+```bash
+PROVE_SWITCHES="--level=4 --mode=gold" redo prove
+```
+
+### Output
+
+Results go to `build/prove/prove.txt`.
+
+## Build System Integration
+
+```bash
+redo prove    # Run GNATprove on current directory
+redo style    # Style check (includes Ada warnings)
+redo test     # Unit tests
+redo coverage # Coverage analysis
+```
+
+`redo prove` always uses `Linux_Prove` target internally. Sets `SAFE_COMPILE=True` to analyze all source dependencies. Builds all Ada dependencies recursively before running GNATprove.
+
+No `all.prove.yaml` needed -- defaults apply. But explicit config is recommended for documentation.
+
+## Common Proof Failures
+
+| Message | Cause | Fix |
+|---------|-------|-----|
+| "precondition might fail" | Caller doesn't guarantee Pre | Add check before call, or strengthen caller's Pre |
+| "postcondition might fail" | Implementation doesn't satisfy Post | Add assertions, strengthen implementation, or weaken Post |
+| "overflow check might fail" | Arithmetic may exceed type range | Add range Pre, use wider intermediate type, or add assertion |
+| "divide by zero might fail" | Divisor could be 0 | Add `Divisor /= 0` Pre |
+| "index check might fail" | Array index may be out of bounds | Add bounds Pre or assertion |
+| "loop invariant not preserved" | Invariant doesn't hold after iteration | Strengthen invariant or add intermediate assertions |
+| "loop invariant not established" | Invariant doesn't hold on first iteration | Fix initial condition or invariant expression |
+
+### Escalation Strategy
+
+1. Read counterexample (level >= 2 enables them)
+2. Add `pragma Assert` before the failing point to narrow the gap
+3. Add loop invariants for any loop the prover must reason through
+4. Try higher level (`--level=3` or `--level=4`)
+5. If a non-expression function blocks proof, consider ghost lemma
+6. Last resort: `pragma Assume` with documented justification (confine to ghost code)
+
+## Adamant-Specific SPARK Notes
+
+### Memory Maps and Register Maps
+
+Framework auto-generates memory/register map packages with `SPARK_Mode => On`. This detects bit-constrained types that would be dangerous in hardware-mapped memory (corrupted value outside range = mission-ending failure). These are analyzed by GNATprove during `redo prove` on the generated packages.
+
+### Component Implementation
+
+Standard Adamant components are Ada 2012, NOT SPARK by default. SPARK is opt-in per package or per subprogram. The typical pattern:
+
+1. Factor provable logic into a separate package (e.g., `my_component_logic.ads/.adb`)
+2. Apply `SPARK_Mode => On` to that package
+3. Call from the component implementation (which may be `SPARK_Mode => Off`)
+4. Create `all.prove.yaml` in the component directory
+5. `redo prove` analyzes all SPARK-mode sources in that directory
+
+### Packed Types
+
+Packed type assertion packages (generated `*-assertion.adb`) are excluded from prove analysis. The prove build rule filters out assertion objects automatically.
+
+## Checklist
+
+1. Identify provable surface (pure computation, validation, state transitions)
+2. Factor into separate package if component implementation uses non-SPARK features
+3. Add `SPARK_Mode => On` to spec and body
+4. Write contracts: Pre, Post, Global (prefer `Global => null`)
+5. Add loop invariants for every loop
+6. Create `all.prove.yaml` (start: level 2, mode silver)
+7. Run `redo prove`
+8. Fix failures using escalation strategy
+9. Escalate to gold mode when silver passes clean
+10. Document any `pragma Assume` with mathematical justification
+
+## References
+- `references/contract-patterns.md` -- Advanced contract patterns, ghost code examples, and proof chain walkthrough

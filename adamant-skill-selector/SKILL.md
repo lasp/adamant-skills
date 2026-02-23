@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 17 Adamant skills totaling ~16000 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 18 Adamant skills totaling ~18500 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -127,6 +127,20 @@ You have 17 Adamant skills totaling ~16000 lines (with references). Loading all 
 
 **Also load:** `adamant-build-system` (for generator dispatch and code gen pipeline context)
 
+### SPARK formal verification
+**Load:** `adamant-formal-verification`
+- Adding SPARK contracts (Pre, Post, Global, Depends) to components or standalone packages
+- Running GNATprove via `redo prove`
+- `all.prove.yaml` configuration (level, mode)
+- Ghost code, loop invariants, ghost lemma pattern
+- Proof chain pattern for opaque type boundaries
+- Absence-of-runtime-errors proofs
+- Memory map / register map SPARK analysis
+
+**Also load if needed:**
+- `adamant-component-dev` -- if adding SPARK to a component's logic
+- `adamant-build-system` -- if debugging prove build path issues
+
 ### Code style checking and compliance
 **Load:** `adamant-style`
 - Ada style rules (gnat warnings, whitespace, short-circuit operators, casing)
@@ -154,7 +168,7 @@ You have 17 Adamant skills totaling ~16000 lines (with references). Loading all 
 | Define new packed types | type-system | -- |
 | Choose components for a subsystem | framework-components | assembly-dev |
 | Full component lifecycle (build+test) | component-dev | testing |
-| SPARK verification | build-system (prove section) | component-dev |
+| SPARK verification | formal-verification | component-dev |
 | Wrap C++ algorithm into Adamant component | algorithm-wrapping | component-dev |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | COSMOS integration test scripts | cosmos-testing | cosmos-integration |
