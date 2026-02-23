@@ -1,4 +1,4 @@
-<!-- validated: adamant@42b7d75 2026-02-23 (main) -->
+<!-- validated: adamant@b27ba13 2026-02-23 (main) -->
 # Advanced Contract Patterns
 
 ## State Record Return Pattern
@@ -749,3 +749,100 @@ with
 ```
 
 The postcondition is exhaustive -- it covers activation, deactivation, and the deadband hold region. The Pre requires strict ordering (not `<=`) because equal thresholds would make the deadband zero-width, defeating the purpose. The prover verifies all three branches with zero effort because the implementation is a direct if/elsif/else chain matching the contract.
+
+## SPARK `implies` Keyword Availability
+
+The `implies` keyword is NOT available in all GNAT/SPARK versions (notably the Adamant Docker image gnat). Use the logical equivalence instead:
+
+```ada
+-- WRONG (may not compile):
+Post => (not New_State.Enabled) implies (not New_State.Output_State);
+
+-- CORRECT:
+Post => New_State.Enabled or else not New_State.Output_State;
+```
+
+The transformation: `A implies B` = `(not A) or else B`. Always use this form in postconditions for portability.
+
+## Circular Buffer with Constrained Subtypes
+
+For fixed-size circular buffers, define constrained subtypes for the index and count. This gives the prover tight bounds and eliminates overflow concerns:
+
+```ada
+Max_Commands : constant := 20;
+subtype Queue_Index is Positive range 1 .. Max_Commands;
+subtype Queue_Count_Type is Natural range 0 .. Max_Commands;
+
+type Queue_State is record
+   Count : Queue_Count_Type;
+   Head  : Queue_Index;
+   Tail  : Queue_Index;
+   Total_Dispatched : Unsigned_32;
+end record;
+
+function Next_Index (Idx : Queue_Index) return Queue_Index is
+   (if Idx = Max_Commands then 1 else Idx + 1)
+with Global => null;
+
+procedure Enqueue (State : in Queue_State; New_State : out Queue_State)
+with
+   Global => null,
+   Pre    => State.Count < Max_Commands,
+   Post   => New_State.Count = State.Count + 1
+         and then New_State.Tail = Next_Index (State.Tail)
+         and then New_State.Head = State.Head;
+```
+
+Key: `Queue_Count_Type` (0..Max) means `Count + 1` is provably in range when `Count < Max`. The Pre uses `< Max_Commands` which the prover translates to `Count_Type'Last - 1` range check.
+
+## Conditional Counter Update (Change Detection)
+
+When a transition only increments a counter if something actually changed, use an expression function predicate and a two-branch postcondition:
+
+```ada
+function Is_New_Mode (Current, Target : Mode_Id_Type) return Boolean is
+   (Current /= Target)
+with Global => null;
+
+procedure Transition (
+   State     : in     Mode_State;
+   Target    : in     Mode_Id_Type;
+   New_State : out    Mode_State;
+   Changed   : out    Boolean
+)
+with
+   Global => null,
+   Post   => New_State.Current_Mode = Target
+         and then Changed = Is_New_Mode (State.Current_Mode, Target)
+         and then (if Changed then
+                     New_State.Transition_Count = Sat_Inc (State.Transition_Count)
+                   else
+                     New_State.Transition_Count = State.Transition_Count);
+```
+
+The prover handles both branches because the body mirrors the postcondition structure (if Changed then ... else ...). The `Changed` out parameter appearing in both the `Changed =` clause and the conditional clause is fine -- the prover evaluates left to right with `and then`.
+
+## Severity/Threshold Filter with Dual Counter Tracking
+
+When filtering events by severity (or any comparison), track both pass and block counts in a single procedure with a complete postcondition:
+
+```ada
+procedure Process_Event (
+   State          : in     Filter_State;
+   Event_Severity : in     Severity_Type;
+   New_State      : out    Filter_State;
+   Passed         : out    Boolean
+)
+with
+   Global => null,
+   Post   => New_State.Min_Severity = State.Min_Severity
+         and then Passed = (Event_Severity >= State.Min_Severity)
+         and then (if Passed then
+                     New_State.Passed_Count = Sat_Inc (State.Passed_Count)
+                     and then New_State.Blocked_Count = State.Blocked_Count
+                   else
+                     New_State.Blocked_Count = Sat_Inc (State.Blocked_Count)
+                     and then New_State.Passed_Count = State.Passed_Count);
+```
+
+This pattern proves cleanly because the `Passed` output is defined by the same expression function used in the if-branch, so the prover can substitute directly.
