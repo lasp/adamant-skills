@@ -1,5 +1,40 @@
-<!-- validated: adamant@2928bec 2026-02-23 (main) -->
+<!-- validated: adamant@bda1ae3 2026-02-23 (main) -->
 # Advanced Contract Patterns
+
+## State Record Return Pattern
+
+When a function transforms multiple related fields (e.g., a tick handler updating both a counter and a mode flag), return a record containing the new state. This lets the postcondition relate all output fields to input fields in a single contract:
+
+```ada
+type My_State is record
+   Counter : Unsigned_32;
+   Active  : Boolean;
+end record;
+
+type Tick_Result is record
+   New_State     : My_State;
+   Action_Needed : Boolean;
+end record;
+
+function Evaluate_Tick (State : My_State; Limit : Unsigned_16) return Tick_Result
+with
+   Global => null,
+   Post   =>
+      -- Counter always increments (saturating)
+      (if State.Counter < Unsigned_32'Last
+       then Evaluate_Tick'Result.New_State.Counter = State.Counter + 1
+       else Evaluate_Tick'Result.New_State.Counter = Unsigned_32'Last)
+      and then
+      -- Action only triggers on transition (not already active, at limit)
+      (if Evaluate_Tick'Result.Action_Needed then
+          not State.Active and then Evaluate_Tick'Result.New_State.Active = True
+       else
+          Evaluate_Tick'Result.New_State.Active = State.Active);
+```
+
+The body uses `or` for conditional flag update: `Active => State.Active or Should_Act`. The prover handles the boolean algebra at level 2.
+
+Key: keep the record fields as simple scalar types (Boolean, Unsigned_N). No access types, no tagged types, no controlled types.
 
 ## Proof Chain Walkthrough
 
