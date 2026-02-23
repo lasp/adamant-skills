@@ -1,4 +1,4 @@
-<!-- validated: adamant@d9cd178 2026-02-23 (main) -->
+<!-- validated: adamant@42b7d75 2026-02-23 (main) -->
 # Advanced Contract Patterns
 
 ## State Record Return Pattern
@@ -727,3 +727,25 @@ with
 ```
 
 Body uses `Unsigned_64` widening: `(Pages_64 * 100) / Threshold_64`, clamped to 100. The constant threshold eliminates the need for a `Pre => Threshold > 0` guard -- the prover knows the divisor is 1000 by inlining the constant. This pattern applies to any fixed-denominator percentage calculation.
+
+## Hysteresis Control Pattern
+
+Three-branch postcondition for bang-bang controllers with deadband:
+
+```ada
+function Hysteresis_Control
+  (Heater_On : Boolean;
+   Temperature : Unsigned_16;
+   Low_Threshold : Unsigned_16;
+   High_Threshold : Unsigned_16) return Boolean
+with
+   Pre    => Low_Threshold < High_Threshold,
+   Global => null,
+   Post   => (if not Heater_On and then Temperature < Low_Threshold
+              then Hysteresis_Control'Result = True
+              elsif Heater_On and then Temperature > High_Threshold
+              then Hysteresis_Control'Result = False
+              else Hysteresis_Control'Result = Heater_On);
+```
+
+The postcondition is exhaustive -- it covers activation, deactivation, and the deadband hold region. The Pre requires strict ordering (not `<=`) because equal thresholds would make the deadband zero-width, defeating the purpose. The prover verifies all three branches with zero effort because the implementation is a direct if/elsif/else chain matching the contract.
