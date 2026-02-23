@@ -1,4 +1,4 @@
-<!-- validated: adamant@120f584 2026-02-23 (main) -->
+<!-- validated: adamant@959a357 2026-02-23 (main) -->
 # Advanced Contract Patterns
 
 ## State Record Return Pattern
