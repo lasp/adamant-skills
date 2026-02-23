@@ -1,4 +1,4 @@
-<!-- validated: adamant@b49d216 2026-02-23 (main) -->
+<!-- validated: adamant@faeedbb 2026-02-23 (main) -->
 # Advanced Contract Patterns
 
 ## State Record Return Pattern
@@ -965,3 +965,146 @@ with Global => null,
 The body increments a local counter for each True field. The prover verifies the upper bound (number of fields) and the two corner cases (all true, all false). The intermediate cases (exactly one true = 1) follow by elimination but specifying them explicitly is optional -- the `<= 2` bound is the safety-critical property.
 
 Scales to N fields: upper bound = N, corner cases = all-true and all-false.
+
+## Float Saturation: Avoid Arithmetic in Guards
+
+SPARK's float model cannot prove `A + B` won't overflow even when the guard checks `A <= Short_Float'Last - B`, because `Short_Float'Last - B` itself may overflow and the prover doesn't trust float arithmetic monotonicity. Three approaches:
+
+### Approach 1: Avoid float addition entirely (preferred)
+Replace `Saturating_Add` with `Clamp_Float` that operates on pre-computed values:
+
+```ada
+function Clamp_Float (V : Short_Float; Lo : Short_Float; Hi : Short_Float) return Short_Float
+with
+   Global => null,
+   Pre    => Lo <= Hi,
+   Post   => Clamp_Float'Result >= Lo
+         and then Clamp_Float'Result <= Hi;
+```
+
+The caller computes the sum outside SPARK (in the component body, which is not SPARK_Mode => On) and passes the result to Clamp_Float for bounding. This is the cleanest pattern because ALL float arithmetic proof obligations are eliminated.
+
+### Approach 2: Bounded float subtypes
+Restrict the domain so `A + B` provably fits (see Bounded Float Subtype Pattern above). Works when values are naturally bounded (e.g., temperatures, percentages).
+
+### Approach 3: pragma Annotate (last resort)
+When the guard IS mathematically sound but SPARK can't prove it:
+
+```ada
+if B > 0.0 then
+   if A > Short_Float'Last - B then
+      return Short_Float'Last;
+   else
+      return A + B;
+      pragma Annotate (GNATprove, False_Positive,
+         "float overflow check might fail",
+         "Guard A <= Last - B with B > 0 ensures A + B <= Last");
+   end if;
+```
+
+Note: `pragma Annotate` goes AFTER the statement generating the check. For `return` statements, place it on the line after. This approach leaves 2 justified checks -- acceptable but not ideal.
+
+## State Machine Transition via Expression Function
+
+For mode/state machines with deterministic transition rules, define the transition predicate as an expression function and use it in postconditions:
+
+```ada
+type Mode_Id is (Safe, Standby, Science, Maneuver);
+
+function Is_Transition_Allowed (Current : Mode_Id; Target : Mode_Id) return Boolean is
+   (case Target is
+      when Safe     => True,
+      when Standby  => True,
+      when Science  => Current = Standby,
+      when Maneuver => Current = Standby)
+with Global => null;
+
+procedure Try_Transition (
+   Current_Mode     : in Mode_Id;
+   Target_Mode      : in Mode_Id;
+   Transition_Count : in Unsigned_16;
+   New_Mode         : out Mode_Id;
+   New_Count        : out Unsigned_16;
+   Succeeded        : out Boolean
+)
+with
+   Global => null,
+   Post   => (if Is_Transition_Allowed (Current_Mode, Target_Mode)
+              then New_Mode = Target_Mode and then Succeeded
+              else New_Mode = Current_Mode and then not Succeeded);
+```
+
+The expression function inlines in the prover, making the case-split trivial. The body is a single `if Is_Transition_Allowed(...) then ... else ...`. Proves at level 2 with zero effort.
+
+Key: keep the transition table as a `case` expression (exhaustive by Ada rules) rather than nested if/elsif. The prover handles case expressions more efficiently.
+
+## Packet Validation with Enumerated Reject Reasons
+
+When validating inputs against multiple criteria, return an enumeration rather than Boolean. This gives the postcondition full coverage:
+
+```ada
+type Validation_Result is (Valid, Too_Short, Too_Long);
+
+function Validate_Packet_Length (
+   Packet_Length : Natural;
+   Min_Length    : Natural;
+   Max_Length    : Natural
+) return Validation_Result
+with
+   Global => null,
+   Pre    => Max_Length >= Min_Length,
+   Post   => (if Packet_Length < Min_Length then Validate_Packet_Length'Result = Too_Short)
+         and then (if Packet_Length > Max_Length then Validate_Packet_Length'Result = Too_Long)
+         and then (if Packet_Length >= Min_Length and then Packet_Length <= Max_Length
+                   then Validate_Packet_Length'Result = Valid);
+```
+
+Pair with a `Reject_Reason_Code` function mapping results to numeric codes:
+
+```ada
+function Reject_Reason_Code (Result : Validation_Result) return Unsigned_8
+with
+   Global => null,
+   Pre    => Result /= Valid,
+   Post   => (if Result = Too_Short then Reject_Reason_Code'Result = 0)
+         and then (if Result = Too_Long then Reject_Reason_Code'Result = 1);
+```
+
+The Pre excludes the Valid case, which the prover uses to verify the body's case statement covers only the rejection branches.
+
+## Watchdog Timeout Detection (Two-Phase Pattern)
+
+Watchdog logic has two phases: tick counting and pet processing. Separate them into distinct subprograms with complementary postconditions:
+
+```ada
+-- Phase 1: Check if timeout just triggered (transition detection)
+procedure Check_Timeout_Transition (
+   Ticks_Since_Pet  : in Unsigned_16;
+   Timeout_Limit    : in Unsigned_16;
+   Currently_Active : in Boolean;
+   New_Active       : out Boolean;
+   Just_Triggered   : out Boolean
+)
+with
+   Global => null,
+   Post   => (if Ticks_Since_Pet >= Timeout_Limit and then not Currently_Active
+              then New_Active and then Just_Triggered)
+         and then (if Ticks_Since_Pet < Timeout_Limit or else Currently_Active
+                   then not Just_Triggered);
+
+-- Phase 2: Process pet event (reset + clear)
+procedure Process_Pet (
+   Pet_Count       : in Unsigned_32;
+   Timeout_Active  : in Boolean;
+   New_Pet_Count   : out Unsigned_32;
+   New_Ticks       : out Unsigned_16;
+   Timeout_Cleared : out Boolean
+)
+with
+   Global => null,
+   Post   => New_Ticks = 0
+         and then New_Pet_Count >= Pet_Count
+         and then (Timeout_Cleared = Timeout_Active);
+```
+
+The two-phase split lets the prover reason about each independently. The component calls Phase 1 on tick, Phase 2 on pet. The `Just_Triggered` output is the "rising edge" -- it fires exactly once when the timeout transitions from inactive to active.
