@@ -1,4 +1,4 @@
-<!-- validated: adamant@a6d841b 2026-02-23 (main) -->
+<!-- validated: adamant@958353e 2026-02-23 (main) -->
 # Advanced Contract Patterns
 
 ## State Record Return Pattern
@@ -909,3 +909,59 @@ with
 The `case` expression in the postcondition is exhaustive by Ada rules, so the prover gets a complete specification for free. The body uses a matching `case` statement. This is strictly stronger than an if/elsif chain because the compiler enforces that all values are covered.
 
 Works well for: severity codes, mode IDs, state machine inputs, any small-domain classification. For larger domains, use range-based classification (see Enum Classification by Threshold pattern above).
+
+## Toggle/Flip State Record with Conditional Branches
+
+When a function flips between two states (on/off, active/idle) and the postcondition must cover both directions with different logic per direction:
+
+```ada
+type Toggle_Result is record
+   New_Current  : Color_Type;
+   New_Previous : Color_Type;
+   New_Is_Off   : Boolean;
+end record;
+
+function Compute_Toggle
+  (Current  : Color_Type;
+   Previous : Color_Type;
+   Is_Off   : Boolean) return Toggle_Result
+with Global => null,
+     Post =>
+       (if Is_Off then
+          Compute_Toggle'Result.New_Is_Off = False
+          and then (if Previous = Off
+                    then Compute_Toggle'Result.New_Current = Red
+                    else Compute_Toggle'Result.New_Current = Previous))
+       and then
+       (if not Is_Off then
+          Compute_Toggle'Result.New_Is_Off = True
+          and then Compute_Toggle'Result.New_Current = Off
+          and then Compute_Toggle'Result.New_Previous = Current);
+```
+
+Key: the postcondition uses nested `if` for the "toggle on" direction (which has a fallback sub-case) while the "toggle off" direction is flat. The prover handles both branches because the body mirrors the if/else structure. The `and then` between the two top-level `if` clauses works because when `Is_Off = True`, the second clause's antecedent is False (vacuously true), and vice versa.
+
+Pattern generalizes to any bidirectional state flip where the two directions have asymmetric logic.
+
+## Boolean Counting with Tight Upper Bound
+
+When counting how many Boolean fields in a record are True, the postcondition can specify the exact upper bound:
+
+```ada
+type Fault_State is record
+   Over_Temp : Boolean;
+   Sensor_Invalid : Boolean;
+end record;
+
+function Active_Fault_Count (State : Fault_State) return Unsigned_8
+with Global => null,
+     Post => Active_Fault_Count'Result <= 2
+             and then (if State.Over_Temp and State.Sensor_Invalid
+                       then Active_Fault_Count'Result = 2)
+             and then (if not State.Over_Temp and not State.Sensor_Invalid
+                       then Active_Fault_Count'Result = 0);
+```
+
+The body increments a local counter for each True field. The prover verifies the upper bound (number of fields) and the two corner cases (all true, all false). The intermediate cases (exactly one true = 1) follow by elimination but specifying them explicitly is optional -- the `<= 2` bound is the safety-critical property.
+
+Scales to N fields: upper bound = N, corner cases = all-true and all-false.
