@@ -170,6 +170,17 @@ fields:
 
 ### Array → same file set as Record
 
+**Array generated types**: For `my_array.array.yaml` with `length: 8`:
+```ada
+package My_Array is
+   subtype Constrained_Index_Type is Natural range 0 .. 7;  -- 0-based
+   subtype Unconstrained_Index_Type is Natural range Natural'First .. Natural'Last;
+   type T is array (Constrained_Index_Type) of Element_Type.T;
+   -- Plus Pack/Unpack/Serialization same as records
+end My_Array;
+-- Element access: My_Arr (0), My_Arr (My_Array.Constrained_Index_Type'Last)
+```
+
 ### Enums → 7 files
 | File | Contents |
 |------|----------|
@@ -193,7 +204,15 @@ package My_Type is
    function Unpack (Src : in T) return U;
    function Swap_Endianness (Src : in T) return T_Le;  -- and reverse
    package Serialization is new Serializer (T);
+   -- Serialization is a CHILD instantiation, NOT a standalone package.
+   -- Access via My_Type.Serialization, NEVER `with Serialization;`
 end My_Type;
+
+-- Serialization API (from Serializer generic):
+--   function To_Byte_Array (Src : in T) return Basic_Types.Byte_Array;
+--   procedure To_Byte_Array (Src : in T; Dst : out Basic_Types.Byte_Array);
+--   function From_Byte_Array (Src : in Basic_Types.Byte_Array) return T;
+-- Usage: My_Type.Serialization.To_Byte_Array (Packed_Val)
 
 -- Enum: my_enums.ads (multiple enums per file)
 package My_Enums is
