@@ -202,8 +202,11 @@ For custom packed types on connectors: construct unpacked (.U) then `Pack`: `T.C
 Natural_Assert.Eq (T.Event_T_Recv_Sync_History.Get_Count, 3);
 -- Typed (specific event/DP/fault)
 Natural_Assert.Eq (T.My_Event_History.Get_Count, 1);
--- Access (1-indexed)
+-- Access (1-indexed) -- typed histories store PACKED type (.T), not unpacked (.U)
 Packed_U32_Assert.Eq (T.Counter_History.Get (1), (Value => 42));
+-- For custom types: Get returns My_Type.T (packed). Unpack before comparing with .U:
+--   declare Result : constant My_Type.U := My_Type.Unpack (T.My_Dp_History.Get (1));
+--   begin Natural_Assert.Eq (Result.Field, Expected_Value); end;
 -- Clear between phases
 T.Event_T_Recv_Sync_History.Clear;
 ```ada
@@ -301,6 +304,8 @@ with Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;  -- for 
 **Alternative:** `use type Parameter_Enums.Parameter_Validation_Status.E;` or `use Parameter_Enums.Parameter_Validation_Status;` -- both work. Package `use` gives direct name visibility (`Valid` vs `Parameter_Validation_Status.Valid`).
 
 **Custom enum data product assertions:** For enum types defined in project `types/`, auto-generated assertion packages follow the same pattern: `with My_Enum.Assertion; use My_Enum.Assertion;` gives `My_Enum_Assert.Eq(...)`. Use for DP history checks on enum-typed data products (e.g. mode state, operational status).
+
+**Array type assertions:** Array types generate assertion packages with `_U_Assert` / `_Assert` / `_Le_Assert` suffixes (NOT `_Assert_Eq`). Usage: `with My_Array.Assertion; use My_Array.Assertion;` gives `My_Array_U_Assert.Eq(...)` for unpacked, `My_Array_Assert.Eq(...)` for packed `.T`.
 
 ## Data Dependency Testing
 
