@@ -456,7 +456,7 @@ Do NOT invent fields. Key types:
 - `Packet.Header.Id` is `Packet_Types.Packet_Id` (Natural subtype, NOT Unsigned_16). Need `with Packet_Types; use type Packet_Types.Packet_Id;` for operators. Cast to `Unsigned_16` for packed params.
 - `Command.Header.Id` is `Command_Types.Command_Id` (distinct type). Need `with Command_Types; use Command_Types;`
 - `Packet_Header.T`: Time, Id, Sequence_Count (mod 2**14), Buffer_Length (Natural). NO Priority.
-- `Event_Header.T`: Time, Id (U16), Param_Buffer_Length (U8). NO Severity.
+- `Event_Header.T`: Time (Sys_Time.T), Id (`Event_Types.Event_Id`, distinct type -- cast to `Unsigned_16` for packed params), Param_Buffer_Length (`Natural` subtype, NOT U8 -- cast to `Unsigned_8` if needed). NO Severity. Need `with Event_Types;` for `Event_Id`.
 - `Fault_Header.T`: Time (Sys_Time.T), Id (Fault_Types.Fault_Id, U16), Param_Buffer_Length (U8). Access via `Arg.Header.Id`, `Arg.Header.Time`.
 - `Fault.T`: Header (Fault_Header.T) + Param_Buffer (variable-length byte buffer). Need `with Fault_Types;` for `Fault_Id`.
 

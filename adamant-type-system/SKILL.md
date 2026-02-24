@@ -266,6 +266,8 @@ Only ONE variable-length field allowed, must be LAST field. Cannot nest variable
 
 **Variable-length types CANNOT be used as data products** -- Adamant's DP system requires fixed-size serialization. If you need a DP for data that is conceptually variable-length, create a parallel fixed-size record type (max-sized payload, no `variable_length` field) for the DP, and use the variable-length type only for connector transport.
 
+**DP buffer size constraint** -- ALL data product types must serialize to <= `data_product_buffer_size` bytes (configured in assembly YAML, typically 32). A record with total packed size exceeding this limit will fail at build time. Design DP record sizes accordingly (e.g., U8x23 payload + 9-byte header = 32 bytes for a 32-byte buffer).
+
 **Buffer type definition** -- define the backing array in the preamble:
 ```yaml
 preamble: |
