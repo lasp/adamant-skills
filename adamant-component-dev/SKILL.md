@@ -506,6 +506,7 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 - **Indices are 1-based** (`Connector_Index_Type'First = 1`). Map from 0-based with offset.
 - Send: `Self.Packet_T_Send_If_Connected(Index, Arg)`
 - **Arrayed recv_async handler signature**: `(Self : in out Instance; Index : in <Type>_T_Recv_Async_Index; Arg : in <Type>.T)` -- **Index comes BEFORE Arg**
+- **Arrayed recv_sync handler signature**: Same pattern -- single procedure with Index parameter: `(Self : in out Instance; Index : in <Type>_T_Recv_Sync_Index; Arg : in <Type>.T)` -- NOT separate _1, _2, _3 procedures
 - Loop: `for I in Packet_T_Send_Index'Range loop`
 - **Arrayed send dropped handler signature**: `(Self : in out Instance; Index : in <Type>_T_Send_Index; Arg : in <Type>.T)` -- same Index-before-Arg pattern as recv_async
 - Arrayed recv_async dropped also takes Index: `(Self : in out Instance; Index : in <Type>_T_Recv_Async_Index; Arg : in <Type>.T)`
