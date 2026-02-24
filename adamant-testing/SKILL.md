@@ -159,7 +159,7 @@ begin
 end Test_Name;
 ```ada
 
-**Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`. Both Init and Set_Up are optional -- only call them if YAML declares `init:` or component overrides Set_Up. For per-test init params, defer Init/Set_Up to each test body (see [setup-variants.md](references/setup-variants.md) for deferred init patterns).
+**Order:** `Init_Base` → `Connect` → `Component_Instance.Init` → `Set_Up`. Init params go to `Component_Instance.Init`, NOT `Init_Base`. Both Init and Set_Up are optional -- only call them if YAML declares `init:` or component overrides Set_Up. **If the component YAML has NO `init:` section, do NOT call `Component_Instance.Init` or `Set_Up` -- they won't exist and won't compile.** For components without init, Set_Up_Test is just `Init_Base` + `Connect`. For per-test init params, defer Init/Set_Up to each test body (see [setup-variants.md](references/setup-variants.md) for deferred init patterns).
 
 **Re-init mid-test (full):** To fully reset, call `Final_Base` then repeat: `Final_Base` → `Init_Base` → `Connect` → `Component_Instance.Init(new_params)` → `Set_Up`. This resets all histories and reconnects.
 
@@ -360,6 +360,7 @@ Add `with` for every type referenced in tests: `Basic_Assertions`, `Packed_F32.A
 
 Top errors that waste time:
 
+0. **Speculative assertions:** Only assert on behavior you can verify from the YAML model + implementation. If you don't know whether a tick sends an event, don't assert on event counts. Write minimal, correct tests first -- you can always add assertions after observing actual behavior.
 1. **Wrong stimulus API:** `T.*_T_Send` to stimulate, NOT `T.*_T_Recv_Sync`
 2. **Init params → `Component_Instance.Init`**, NOT `Init_Base`
 3. **Typed histories don't auto-clear** when raw history cleared
