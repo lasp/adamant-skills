@@ -431,9 +431,9 @@ Failure to override these results in abstract subprogram compile errors.
 
 ## Auto-Provided Packages (Do NOT `with` these)
 
-`Command_Execution_Status`, `Command_Response_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces` (when commands/features use it).
+`Command_Execution_Status`, `Command_Response_Status`, `Unsigned_32`, `Parameter_Validation_Status`, `Command_Response`, `Event`, `Data_Product`, `Fault`, `Sys_Time`, `Basic_Types`, `Interfaces` (when the generated base class references Interfaces types -- e.g., command args use Unsigned_32, or data deps use Interfaces types).
 
-Exception: If your component has no commands but needs Unsigned types, add `with Interfaces; use Interfaces;`.
+Exception: `Interfaces` is NOT auto-provided merely because `init:` exists. It is only auto-provided when the generated base class actually references Interfaces types (commands with Unsigned args, certain features). If your component has no commands but needs Unsigned types (including init with only `Natural` params), add `with Interfaces; use Interfaces;`.
 
 **CRITICAL -- Math Functions**: Ada's `Interfaces` package has NO math functions (Sqrt, Sin, Cos, etc.). Use:
 - `Ada.Numerics.Elementary_Functions` for `Long_Float` (64-bit) math
@@ -554,7 +554,7 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 28. [ ] Use `[]` for array aggregates: `[others => 0]` not `(others => 0)` (Ada 2022 syntax). Record aggregates MUST use `()`. Nested array-of-records: `[others => (others => <>)]`
 29. [ ] Space before `(` in type conversions: `Unsigned_32 (X)` not `Unsigned_32(X)`
 30. [ ] `then` on its own line for multi-line if conditions
-31. [ ] Ada child packages DO inherit parent `with`/`use` visibility. If the generated base class spec has `with Interfaces; use Interfaces;`, then `Interfaces` types ARE visible in your implementation child package. Do NOT add redundant `with Interfaces; use Interfaces;` -- it causes a `-gnatwr` style warning. Only add `with Interfaces;` if the base class does NOT have it (simple components without commands/init/data deps).
+31. [ ] Ada child packages DO inherit parent `with`/`use` visibility. If the generated base class spec has `with Interfaces; use Interfaces;`, then `Interfaces` types ARE visible in your implementation child package. Do NOT add redundant `with Interfaces; use Interfaces;` -- it causes a `-gnatwr` style warning. Only add `with Interfaces;` if the base class does NOT have it. Rule: `Interfaces` is auto-provided when the base class references Interfaces types (command args, certain features) -- NOT merely because `init:` exists. Components with only `Natural` init params and no commands need explicit `with Interfaces;`.
 31a. [ ] When doing arithmetic on `Interfaces` types (`Unsigned_32`, etc.), add `use Interfaces;` in the body to make operators (`+`, `-`, etc.) visible. Otherwise use qualified calls: `Interfaces."+"(Self.Count, 1)`.
 32. [ ] Use `Ignore : Type renames Arg;` pattern for unused connector handler parameters (preferred for new code; `pragma Unreferenced (Arg);` is also valid and common in existing code):
     ```ada
