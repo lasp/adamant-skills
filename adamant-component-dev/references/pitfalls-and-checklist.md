@@ -32,6 +32,7 @@ Some active components produce 0% coverage even with passing tests due to GNAT A
 `Self.<Param_Name>` returns `.U` -- convert to `.T` for events: `My_Type.T (Self.My_Param)`.
 `Validate_Parameters` takes INDIVIDUAL args (one per parameter), NOT a combined record.
 Param type package must NOT match param name (collision).
+Data product/event/fault type packages must NOT match dp/event/fault names either (same collision: generated function hides the `with`'d package). Since types used only via `Self.Data_Products.Name(...)` are already auto-visible, do NOT `with` them -- this avoids the collision entirely.
 `Parameter_Update_Status` lives in `Parameter_Enums.Parameter_Update_Status`.
 
 ### No Packed_U8
