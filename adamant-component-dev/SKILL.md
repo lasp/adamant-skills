@@ -507,7 +507,8 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 - Send: `Self.Packet_T_Send_If_Connected(Index, Arg)`
 - **Arrayed recv_async handler signature**: `(Self : in out Instance; Index : in <Type>_T_Recv_Async_Index; Arg : in <Type>.T)` -- **Index comes BEFORE Arg**
 - Loop: `for I in Packet_T_Send_Index'Range loop`
-- Dropped: takes extra `Index` parameter
+- **Arrayed send dropped handler signature**: `(Self : in out Instance; Index : in <Type>_T_Send_Index; Arg : in <Type>.T)` -- same Index-before-Arg pattern as recv_async
+- Arrayed recv_async dropped also takes Index: `(Self : in out Instance; Index : in <Type>_T_Recv_Async_Index; Arg : in <Type>.T)`
 - Two connectors of same type get numbered: `Event_T_Send` (1st), `Event_T_Send_2` (2nd)
 - **⚠️ Each numbered send connector needs its own `*_Dropped` handler**: `Event_T_Send_Dropped` AND `Event_T_Send_2_Dropped` -- missing either causes "type must be declared abstract" error
 
