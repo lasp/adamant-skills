@@ -30,8 +30,10 @@ Setup: `bash scripts/mk_test_env.sh [test_names...]` (from component directory)
 
 **⚠️ CRITICAL -- NEVER write tester .ads/.adb or test.adb from scratch.** These files are ~500 lines of generated code with complex reciprocal connector wiring, History API instantiation, and AUnit scaffolding. ALWAYS generate them:
 
+**⚠️ ALL redo commands for tests MUST run from inside the test/ directory.** Running from the project root uses the `Linux` target (no AUnit). The test `env.py` sets `TARGET=Linux_Test` which includes AUnit, but this only takes effect when redo is invoked from within test/.
+
 ```bash
-# From the test/ directory:
+# From the test/ directory (MANDATORY -- do NOT run from project root):
 cd test/
 redo templates                              # Generate ALL tester stubs
 cp build/template/component-*-tester.ads .  # Tester spec (generated)
