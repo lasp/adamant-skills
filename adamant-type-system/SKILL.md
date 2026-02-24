@@ -274,7 +274,7 @@ The array upper bound = max bytes - 1 (zero-indexed). `variable_length` counts b
 Unsigned: `Packed_Byte.T`, `Packed_U16.T`, `Packed_U32.T`, `Packed_U64.T`
 Signed: `Packed_I8.T`, `Packed_I16.T`, `Packed_I32.T`, `Packed_I64.T`
 Float: `Packed_F32.T`, `Packed_F64.T`
-Special: `Packed_Boolean.T` (E8 format, 8 bits -- NOT 1 bit), `Packed_Natural.T`
+Special: `Packed_Boolean.T` (E8 format, 8 bits -- NOT 1 bit; unpacked `.Value` field is Ada `Boolean`, not an enum), `Packed_Natural.T`
 Arrays: `Packed_F32x3.T`, `Packed_F64x3.T`
 
 **No Packed_U8** -- use `Packed_Byte.T`.
