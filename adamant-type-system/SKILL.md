@@ -214,6 +214,15 @@ end My_Enums;
 -- .all_path and is in a BUILD_ROOTS path (via env/activate).
 ```ada
 
+## Initializing Packed Types
+
+To create a zero/default `.T` value (e.g., for clearing a data product):
+```ada
+-- Build a .T by packing an unpacked aggregate:
+Empty : constant My_Type.T := My_Type.Pack ((Field_1 => 0, Field_2 => 0.0, Field_3 => My_Enum.Idle));
+-- Do NOT leave .T variables uninitialized -- GNAT warns (-gnatwv)
+```
+
 ## Assertion Package Usage
 
 Auto-generated `-assertion.ads` provides type-safe test helpers:
@@ -255,6 +264,8 @@ fields:
 
 Only ONE variable-length field allowed, must be LAST field. Cannot nest variable-length types.
 
+**Variable-length types CANNOT be used as data products** -- Adamant's DP system requires fixed-size serialization. If you need a DP for data that is conceptually variable-length, create a parallel fixed-size record type (max-sized payload, no `variable_length` field) for the DP, and use the variable-length type only for connector transport.
+
 **Buffer type definition** -- define the backing array in the preamble:
 ```yaml
 preamble: |
@@ -293,7 +304,7 @@ byte_image: True         # Print as byte array instead of typed Image
 3. Every primitive field MUST have `format:` -- missing = build error
 4. Packed type fields (`.T`) must NOT have `format:` -- the size comes from the type
 5. `Natural` needs 31 bits -- does NOT fit U16. Use `Unsigned_16` instead
-6. Field names must NOT shadow package names in `with` list or match their own type name
+6. Field names must NOT shadow package names in `with` list, AND must not match their own enum type name (e.g., a field named `Msg_Type` of type `Msg_Type.E` collides -- rename to `Message_Type`)
 7. Enum names must differ from parent package name
 8. Do NOT use `Boolean` as packed field -- use `mod 2**1`/U1 or enum E1
 9. Sub-byte fields MUST use `mod` or `subtype range` types defined in preamble
@@ -309,7 +320,7 @@ byte_image: True         # Print as byte array instead of typed Image
 | Missing `with` | Field references external package | Add to `with:` list |
 | "does not fit" | Type too large for format (e.g., `Unsigned_8` in U3) | Use `mod 2**3` in preamble |
 | Unused `with Interfaces` warning | Preamble uses only `mod` types | Remove `Interfaces` from `with:` (or ignore) |
-| Field name collision | Field named same as `with`'d package | Rename the field |
+| Field name collision | Field named same as `with`'d package or own enum type | Rename the field |
 | Enum `E` not found | Using `.enums.yaml` but forgot `.E` suffix | Type is `Pkg.Enum_Name.E` |
 | "overlayable" violation | Variable-length field not last | Move to last position |
 

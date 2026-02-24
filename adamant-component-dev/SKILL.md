@@ -112,6 +112,9 @@ events:
 data_products:
   - name: Current_Value
     type: Packed_U32.T
+# CONSTRAINT: DP types must be FIXED-SIZE and their serialized byte size must fit
+# within `data_product_buffer_size` (set in assembly config, typically 32 bytes).
+# Variable-length packed types CANNOT be used as data products.
 
 # data_dependencies.yaml -- requires Data_Product_Fetch.T/Return.T request + Sys_Time.T get
 data_dependencies:
