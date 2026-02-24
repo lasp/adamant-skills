@@ -389,6 +389,8 @@ src/types/
 
 Each type directory needs its own `.all_path`. File names must be **globally unique** across the entire build path (all `BUILD_ROOTS`). Two `.record.yaml` files with the same base name (e.g., `sensor_reading.record.yaml`) in different directories WILL conflict at build time — both produce the same Ada spec file (`sensor_reading-c.ads`). Prefix with project or component name if needed (e.g., `bot_station_sensor_reading.record.yaml`).
 
+**CRITICAL**: An `.enums.yaml` and `.record.yaml` with the **same base name** in the same directory also collide — both generate the same `.ads` package. For example, `bitfield_config.enums.yaml` and `bitfield_config.record.yaml` both try to produce `bitfield_config.ads`. Solution: give the enums file a distinct name (e.g., `bitfield_config_enums.enums.yaml`).
+
 ## Style
 
 Type YAML files must start with `---`. Generated Ada files may produce style warnings (e.g., `with Interfaces` unreferenced) -- all warnings are fixable. See [adamant-style](../adamant-style/SKILL.md).
