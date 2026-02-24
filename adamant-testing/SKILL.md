@@ -130,7 +130,7 @@ Testers are **reciprocal components** with inverted connectors:
 - `T.Commands.My_Command(...)` -- constructs command with correct ID (ALWAYS use this)
 - `T.Parameters.My_Param(...)` -- constructs parameter with correct ID
 - **Named recv_async connectors**: For `name: Foo_T_Recv_Async` in component YAML, the tester send method is `T.Foo_T_Send()` (strips `_Recv_Async`, adds `_Send`). NOT `T.Foo_T_Recv_Async_Send()`.
-- **Named recv_sync connectors**: Same pattern. For `name: Foo_T_Recv_Sync` in component YAML, the tester send method is `T.Foo_T_Send(Arg)` (strips `_Recv_Sync`, adds `_Send`). For unnamed typed connectors (e.g., `type: Interfaces.Unsigned_16`), the tester method is `T.Interfaces_Unsigned_16_T_Send(Arg)` based on the connector type name.
+- **Named recv_sync connectors**: Same pattern. For `name: Foo_T_Recv_Sync` in component YAML, the tester send method is `T.Foo_T_Send(Arg)` (strips `_Recv_Sync`, adds `_Send`). For unnamed typed connectors (e.g., `type: Interfaces.Unsigned_16`), the tester method is `T.Interfaces_Unsigned_16_Send(Arg)` -- NO `_T_` infix for raw Ada types. The `_T_` infix only appears for framework `.T` types (e.g., `Tick.T` -> `Tick_T_Send`).
 
 **NEVER use `T.Command_T_Send_History`** -- that doesn't exist. The tester SENDS commands (no history for sends). It RECEIVES responses (history for receives).
 
