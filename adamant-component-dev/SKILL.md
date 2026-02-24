@@ -557,7 +557,7 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
        -- Arg is used by Process_Parameter_Update, so no Ignore needed here
     ```
 32a. [ ] Avoid redundant type conversions -- `Unsigned_32 (X)` when X is already `Unsigned_32` triggers `-gnatwr`
-32b. [ ] Use `constant` on `renames` for `in` mode parameters: `Cfg : Foo renames Arg;` is wrong for `in` params -- must be `Cfg : Foo renames Arg;` with `constant` qualifier when the parameter is mode `in`: `Cfg : constant Foo renames Arg;`
+32b. [ ] Ada does NOT allow `constant` in renames declarations. For `in` mode parameters, just use `Cfg : Foo renames Arg;` -- the `in` mode already makes it read-only. Do NOT write `constant` in a renames.
 33. [ ] See `adamant-style` skill for full style reference
 34. [ ] `Packed_F32.T.Value` is `Short_Float` (Ada 32-bit float), NOT `Interfaces.IEEE_Float_32` -- use `Short_Float` for F32 record fields and arithmetic
 
