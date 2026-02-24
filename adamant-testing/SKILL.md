@@ -251,6 +251,7 @@ T.Packet_T_Send (Pkt);  -- Works
 
 When a component has arrayed connectors (`count: N` in YAML):
 - **Tester send (arrayed recv_async)**: `T.Packed_F32_T_Send (Index, Arg)` -- pass index as first arg
+- **Tester send (arrayed recv_sync)**: Same pattern -- `T.Packed_F32_T_Send (Index, Arg)` (tester sends to component's recv_sync)
 - **Index type visibility**: Import `Component.<Name>_Reciprocal` in test body for the tester's index type: `with Component.<Name>_Reciprocal; use Component.<Name>_Reciprocal;`
 - **Connector_Count_Type arithmetic**: If using arithmetic on indices, add `with Connector_Types; use type Connector_Types.Connector_Count_Type;`
 - **Dispatch_All does NOT invoke Cycle**: For active components, `Dispatch_All` only dispatches queued async messages. If periodic logic is in `Cycle`, it is not exercised by `Dispatch_All`. Prefer adding a `Tick.T recv_sync` connector for testable periodic computation.
