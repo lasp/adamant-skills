@@ -200,6 +200,14 @@ get  → return                    provide → modify
 ```ada
 with Tick;        -- Only with connector/custom types you actually use
 with Command;     -- Only if component has commands
+with My_Enums;    -- Custom enum packages need explicit with
+
+-- ⚠️ ENUM TYPE PATTERN: Adamant enums use nested package + .E suffix.
+-- Declaration: `My_Enums.My_State.E` (NOT `My_Enums.My_State`)
+-- Pos/Val: `My_Enums.My_State.E'Pos(X)`, `My_Enums.My_State.E'Val(N)`
+-- Use clause: `use My_Enums.My_State;` makes literals (Off, On) visible unqualified
+-- Record field type: `My_Enums.My_State.E := My_Enums.My_State.Off`
+
 package Component.My_Component.Implementation is
    type Instance is new My_Component.Base_Instance with private;  -- PUBLIC: opaque
    overriding procedure Init (Self : in out Instance; Param : in Natural);  -- IFF YAML has init:
@@ -507,7 +515,7 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 1. [ ] Spec uses `with private` / private full record pattern
 2. [ ] `Init` override present IFF YAML has `init:` section
 2a. [ ] Active components: `Cycle` override MUST be present (abstract in base class)
-3. [ ] `Set_Up` override (optional) -- called AFTER `Start_Components` in assembly. Use for post-init registration (e.g., command registration). Defined as `is null` in Core_Instance.
+3. [ ] `Set_Up` override (optional but RECOMMENDED) -- include `overriding procedure Set_Up (Self : in out Instance) is null;` in spec unless you need real logic. Generated base class always has it; overriding as `is null` is idiomatic. Called AFTER `Start_Components` in assembly.
 4. [ ] `Invalid_Command` (procedure, 4 params) present IFF `commands.yaml` exists
 4. [ ] `Command_T_Recv_Sync` present IFF `commands.yaml` exists
 5. [ ] ALL `*_Send_Dropped` handlers overridden for every send connector
