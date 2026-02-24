@@ -166,7 +166,7 @@ end Test_Name;
 **Re-init mid-test (simple):** For passive components, you can often just call `T.Component_Instance.Init(new_params)` directly without the full teardown cycle. This changes init config without resetting histories. Used in real code (e.g., bot_station PID controller tests).
 
 **⚠️ History Depth**: Generated `Init_Base` initializes all histories with `Depth => 100`. If a test sends more than 100 events/data products/commands, the history overflows and the test fails with "History is full." Solutions:
-- **Increase depth in tester .adb Init_Base**: After copying templates from `build/template/`, edit the tester `.adb` file and change any `Depth => 100` to whatever you need (500, 1000, even 10000 -- there is no practical upper limit). The Init calls are in `Init_Base` in the `.adb`. Example: `Self.Event_T_Recv_Sync_History.Init (Depth => 500);`.
+- **Increase depth in tester .adb Init_Base**: After copying templates from `build/template/`, edit the tester `.adb` file and change any `Depth => 100` to whatever you need (500, 1000, even 10000 -- there is no practical upper limit). The Init calls are in `Init_Base` in the `.adb`. Canonical example: `adamant_example/src/components/oscillator/test/component-oscillator-implementation-tester.adb` -- shows both raw connector histories and typed event histories with Depth parameters.
 - Clear histories mid-test: `Self.Tester.Event_T_Recv_Sync_History.Clear;`
 - Design tests to use fewer iterations (preferred -- keep tests small and focused)
 
