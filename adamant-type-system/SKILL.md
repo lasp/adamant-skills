@@ -130,6 +130,24 @@ Both work. `mod` types do NOT need `with: [Interfaces]`. `subtype ... is Interfa
 - Generator produces `.T` (big-endian packed record), `.T_Le` (little-endian), and `.U` (unpacked record with native-typed fields)
 - `.T` is a **record type** with named fields -- NOT a byte array. Initialize with named aggregates: `(Field_1 => X, Field_2 => Y)`, never `(others => 0)`
 - `.U` fields use **unpacked** subtypes: nested packed types become their `.U` equivalent (e.g., a `Packed_F32.T` field becomes `Packed_F32.U` in the parent `.U`, accessed via `.Value`). Nested enums become the enum type directly. Primitive fields (e.g., `Unsigned_16`) become their Ada type directly.
+- **Nested field access on `.U` is direct** -- no secondary `Unpack` call needed:
+  ```ada
+  -- Given: Outer contains Middle contains Inner (all packed records)
+  Outer_U : Outer_Record.U := Outer_Record.Unpack (Packed_Val);
+  -- Access nested fields directly on .U:
+  Status : Inner_Enums.Status_Type.E := Outer_U.Middle.Inner.Status;
+  Seq    : Unsigned_16 := Outer_U.Middle.Sequence;
+  -- WRONG: Middle_Record.Unpack(Outer_U.Middle) -- .U fields are already unpacked
+  ```
+- **Building nested `.U` aggregates for `Pack()`**: nested record fields must be `.U` type:
+  ```ada
+  Val : Outer_Record.T := Outer_Record.Pack ((
+     Middle    => (Inner => (Flag_Bits => 5, Status => Active),
+                   Mode  => Normal, Sequence => 42),
+     Timestamp => 1000,
+     Counter   => 1));
+  -- Each nested level uses the inner .U aggregate syntax, NOT .T values
+  ```
 - For `=` on packed types in Ada, need `use type My_Type.T;` to get operator visibility
 - Nested packed types (e.g., `Packed_F32.T` as a field) inherit the parent's bit position
 - No implicit padding -- you must add explicit padding fields for alignment
