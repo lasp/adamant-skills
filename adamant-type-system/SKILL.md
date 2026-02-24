@@ -214,6 +214,38 @@ end My_Enums;
 -- .all_path and is in a BUILD_ROOTS path (via env/activate).
 ```ada
 
+## Validation Child Package
+
+**Always generated** for every record type -- no special YAML key needed. Provides:
+```ada
+package My_Type.Validation is
+   function Valid (R : in My_Type.T; Errant_Field : out Natural) return Boolean;
+end My_Type.Validation;
+```
+- Returns `True` if all fields are in range (uses Ada `'Valid` on constrained subtypes)
+- `Errant_Field` is set to the 1-based field index of the first failing field (0 if all valid)
+- Constrained subtypes are generated from preamble range types and enum ranges
+- There is no `valid_ranges` YAML key -- validation is automatic from field type constraints
+
+### Testing with Invalid Packed Records
+
+To test `Validation.Valid`, inject out-of-range values via `Unchecked_Conversion`:
+```ada
+with Ada.Unchecked_Conversion;
+-- Create a byte array matching the packed size:
+subtype Raw_Bytes is Basic_Types.Byte_Array (0 .. My_Type.Size_In_Bytes - 1);
+function To_Packed is new Ada.Unchecked_Conversion (Raw_Bytes, My_Type.T);
+-- Construct bytes with an invalid field value:
+Bad_Bytes : Raw_Bytes := (0 => 255, others => 0);  -- e.g., 255 exceeds Throttle range 0..100
+Bad_Record : constant My_Type.T := To_Packed (Bad_Bytes);
+-- Now test:
+Valid : Boolean;
+Field : Natural;
+Valid := My_Type.Validation.Valid (Bad_Record, Field);
+-- Valid = False, Field = 1 (first errant field)
+```
+This is the standard pattern for validation testing since `Pack()` enforces valid values.
+
 ## Initializing Packed Types
 
 To create a zero/default `.T` value (e.g., for clearing a data product):
