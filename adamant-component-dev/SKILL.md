@@ -502,9 +502,10 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 ## Connector Count (Array Connectors)
 
 `count: 0` or N = one-to-many fan-out with index:
-- Generated index type: `<Type>_T_Send_Index`
+- Generated index type: `<Type>_T_Send_Index` (send) or `<Type>_T_Recv_Async_Index` (recv_async)
 - **Indices are 1-based** (`Connector_Index_Type'First = 1`). Map from 0-based with offset.
 - Send: `Self.Packet_T_Send_If_Connected(Index, Arg)`
+- **Arrayed recv_async handler signature**: `(Self : in out Instance; Index : in <Type>_T_Recv_Async_Index; Arg : in <Type>.T)` -- **Index comes BEFORE Arg**
 - Loop: `for I in Packet_T_Send_Index'Range loop`
 - Dropped: takes extra `Index` parameter
 - Two connectors of same type get numbered: `Event_T_Send` (1st), `Event_T_Send_2` (2nd)

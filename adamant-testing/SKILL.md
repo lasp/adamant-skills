@@ -247,6 +247,14 @@ Pkt.Header.Buffer_Length := 0;  -- REQUIRED for queue serialization
 T.Packet_T_Send (Pkt);  -- Works
 ```
 
+## Arrayed Connector Testing
+
+When a component has arrayed connectors (`count: N` in YAML):
+- **Tester send (arrayed recv_async)**: `T.Packed_F32_T_Send (Index, Arg)` -- pass index as first arg
+- **Index type visibility**: Import `Component.<Name>_Reciprocal` in test body for the tester's index type: `with Component.<Name>_Reciprocal; use Component.<Name>_Reciprocal;`
+- **Connector_Count_Type arithmetic**: If using arithmetic on indices, add `with Connector_Types; use type Connector_Types.Connector_Count_Type;`
+- **Dispatch_All does NOT invoke Cycle**: For active components, `Dispatch_All` only dispatches queued async messages. If periodic logic is in `Cycle`, it is not exercised by `Dispatch_All`. Prefer adding a `Tick.T recv_sync` connector for testable periodic computation.
+
 ## Command Response Verification
 
 **⚠️ Dispatch_All is ONLY for recv_async connectors.** Commands on `recv_sync` connectors execute immediately when `T.Command_T_Send` is called -- do NOT call `Dispatch_All` for them (it will return 0). Only call `Dispatch_All` after sending to `recv_async` connectors (e.g., `Packet_T_Send` for async packet input). Check the component YAML to determine which connectors are sync vs async.
