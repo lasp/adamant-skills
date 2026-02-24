@@ -526,7 +526,7 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 9. [ ] Entity names unique across events, data products, commands, faults, parameters
 10. [ ] `use Command_Execution_Status;` INSIDE package body, not before it
 11. [ ] `get` connectors: `return_type:` only. `request`: both `type:` and `return_type:`
-12. [ ] Custom record fields have `format:` specified (see adamant-type-system)
+12. [ ] Custom record fields have `format:` specified (see adamant-type-system). Enum fields use `E8`/`E16` (NOT `U8`); primitives use `U8`/`U16`/`F32`/etc.
 13. [ ] Qualify ambiguous literals: `Command_Execution_Status.Success`
 14. [ ] No `Packed_U8` (use `Packed_Byte.T`); no `Packed_Bool` (use `Packed_Boolean.T`)
 15. [ ] No dynamic allocation (Ravenscar profile)
