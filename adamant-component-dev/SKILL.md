@@ -156,6 +156,8 @@ Error: Size of parameter buffer exceeds Fault.T buffer size
 ```ada
 Use small types like `Packed_U16.T`, `Packed_U32.T`, or custom packed types < 8 bytes.
 
+**CRITICAL -- Event Param Size Limit**: Event `param_type` types must serialize to <= the event buffer size (typically ~32 bytes). Large packed records will cause a compile error similar to faults. Use a smaller summary type or omit `param_type` for events that would exceed the buffer.
+
 ## Required Connectors for Feature Models
 
 | Feature YAML | Required Connectors |
