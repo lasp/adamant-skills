@@ -147,7 +147,7 @@ components:
 
 ### Connector Count Parameters (init_base)
 
-Arrayed connectors require a `_Count` in `init_base` matching the number of wired connections:
+Arrayed connectors with `count: 0` (assembly-sized) require a `_Count` in `init_base` matching the number of wired connections. **Fixed-count connectors (`count: N` where N>0) do NOT generate `_Count` params and must NOT appear in `init_base`**:
 
 ```yaml
 init_base:

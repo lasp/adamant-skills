@@ -55,6 +55,8 @@ connectors:
     type: Ada_Type
     return_type: Ada_Return_Type   # For service/request/get
     count: 0                       # 0=assembly-sized, 1=single (default), N=fixed
+    # count: 0 → generates init_base *_Count param (assembly sets size)
+    # count: N (N>0) → fixed at compile time, NO init_base param, NO *_Count in assembly
     priority: 0-255                # recv_async only
 generic:
   parameters:
