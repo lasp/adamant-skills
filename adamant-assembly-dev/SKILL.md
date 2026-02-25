@@ -36,7 +36,7 @@ Every field from the schema (`gen/schemas/assembly.yaml`):
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `description` | str | No | Human-readable description of the assembly |
-| `with` | str[] | No | Additional Ada `with` packages (many are auto-deduced) |
+| `with` | str[] | No | Additional Ada `with` packages (see note below) |
 | `with_adb` | str[] | No | Packages to `with` only in the `.adb` (not `.ads`) |
 | `prepreamble` | str | No | Inline Ada inserted BEFORE the package spec definition |
 | `preamble` | str | No | Inline Ada inserted AFTER the package spec definition |
@@ -44,6 +44,8 @@ Every field from the schema (`gen/schemas/assembly.yaml`):
 | `id_bases` | str[] | No | Assembly-wide ID base overrides (e.g. `"event_Id_Base => 1280"`) |
 | `components` | map[] | **Yes** | List of component instances (min 1) |
 | `connections` | map[] | No | List of connector wiring between components |
+
+**CRITICAL -- `with:` for assembly-generated packages**: The code generator auto-deduces `with` clauses for component packages but does NOT auto-deduce assembly-generated packages. If your `init:` expressions reference assembly-generated packages (e.g. `Assembly_Name_Data_Products`, `Assembly_Name_Commands`, `Assembly_Name_Enums`), you MUST list them explicitly in `with:`. Without this, the assembly body will fail with "undefined" errors. Check the existing project assemblies for examples.
 
 ### Component Fields
 
