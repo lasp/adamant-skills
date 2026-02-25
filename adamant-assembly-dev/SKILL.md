@@ -439,6 +439,8 @@ end Main;
 
 **CRITICAL**: `Init_Base` and `Start_Components` are ONLY generated for assemblies with active components (tasks/queues). All-passive assemblies only generate `Set_Id_Bases`, `Connect_Components`, `Init_Components`, `Set_Up_Components`. If your assembly has no active components, omit `Init_Base` and `Start_Components` from main, and omit the infinite loop (passive assembly exits after setup).
 
+**CRITICAL**: `Init_Components` is ONLY generated when at least one component in the assembly has an `init:` section in its component YAML. If no component has `init:`, omit the `Init_Components` call from main.
+
 **CRITICAL**: The Ada procedure name MUST match the filename (without `.adb` extension). If the file is `my_main.adb`, the procedure must be `procedure My_Main`. Ada enforces this -- a mismatch is a compile error.
 
 ## Build Commands
