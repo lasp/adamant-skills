@@ -280,6 +280,31 @@ end My_Enums;
 -- .all_path and is in a BUILD_ROOTS path (via env/activate).
 ```ada
 
+## Representation Child Package
+
+`Representation.Image` has **3 overloads** for record types: `Image(U)`, `Image(T)`, `Image(T_Le)`.
+This causes **ambiguity** when calling `Image(Pack(...))` inline because `Pack` returns `T` but the
+compiler sees multiple candidates. Fix: use an intermediate typed variable:
+```ada
+-- WRONG (ambiguous):
+Msg : constant String := My_Type.Representation.Image (My_Type.Pack (Val));
+-- RIGHT:
+Packed_Val : constant My_Type.T := My_Type.Pack (Val);
+Msg : constant String := My_Type.Representation.Image (Packed_Val);
+```
+
+## C Interface Child Package
+
+The `-c.ads/.adb` child package provides `To_C`/`To_Ada` conversion functions.
+These operate on `.U` (unpacked) types, NOT `.T` (packed):
+```ada
+package My_Type.C is
+   function To_C (Src : in My_Type.U) return My_Type.U;    -- returns C-layout .U
+   function To_Ada (Src : in My_Type.U) return My_Type.U;  -- returns Ada-layout .U
+end My_Type.C;
+```
+To convert a packed `.T` value for C, unpack first: `C_Val := My_Type.C.To_C (My_Type.Unpack (Packed_Val));`
+
 ## Validation Child Package
 
 **Always generated** for every record type -- no special YAML key needed. Provides:
