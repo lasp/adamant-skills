@@ -193,10 +193,12 @@ fields:
 package My_Array is
    subtype Constrained_Index_Type is Natural range 0 .. 7;  -- 0-based
    subtype Unconstrained_Index_Type is Natural range Natural'First .. Natural'Last;
-   type T is array (Constrained_Index_Type) of Element_Type.T;
+   type T is array (Constrained_Index_Type) of Element_Type.T;   -- packed
+   type U is array (Constrained_Index_Type) of Element_Type.U;   -- unpacked
    -- Plus Pack/Unpack/Serialization same as records
 end My_Array;
 -- Element access: My_Arr (0), My_Arr (My_Array.Constrained_Index_Type'Last)
+-- .U elements are unpacked: fields accessible directly (e.g., My_Arr_U(0).Field_Name)
 ```
 
 ### Enums → 7 files
