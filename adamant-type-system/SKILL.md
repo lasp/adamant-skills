@@ -228,6 +228,10 @@ package My_Type is
    package Serialization is new Serializer (T);
    -- Serialization is a CHILD instantiation, NOT a standalone package.
    -- Access via My_Type.Serialization, NEVER `with Serialization;`
+   -- For fixed-size types: a separate .ads file IS generated (my_type-serialization.ads)
+   --   so `with My_Type.Serialization;` works but is unnecessary if parent already visible.
+   -- For variable-length types: Serialization is declared INLINE in the parent .ads (NO separate file).
+   --   `with My_Type.Serialization;` will FAIL. Just use `My_Type.Serialization.*` directly.
 end My_Type;
 
 -- Serialization API (from Serializer generic) -- FIXED-SIZE types only:
@@ -250,6 +254,7 @@ end My_Type;
 --      Num_Bytes : out Natural
 --   ) return Serialization_Status;
 -- Returns Serialization_Status (Success/Failure), writes Num_Bytes actually used.
+-- Serialization_Status is in package Serializer_Types: `with Serializer_Types; use Serializer_Types;`
 -- NEVER use fixed-size Serialization API on variable-length types -- it won't compile.
 
 -- Enum: my_enums.ads (multiple enums per file)
