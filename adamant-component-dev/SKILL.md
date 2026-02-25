@@ -264,6 +264,23 @@ end Set_Value;
 
 Commands with `arg_type:` get `Arg : in <arg_type>` parameter; without get no extra parameter.
 
+**Variable-length command args**: When a command's `arg_type` is a variable-length type (has a variable-size field), the generated handler signature changes: instead of `function Handler_Name (Self : in out Instance; Arg : in My_Type.T) return Command_Execution_Status.E`, you get `function Handler_Name (Self : in out Instance; Arg : in Command.T) return Command_Execution_Status.E` with raw `Command.T`. You must deserialize manually:
+```ada
+declare
+   use My_Type.Serialization;
+   Deser_Arg : My_Type.T;
+   Bytes_Used : Natural;
+   Status : constant Serialization_Status := From_Byte_Array (
+      Arg.Arg_Buffer (Arg.Arg_Buffer'First .. Arg.Arg_Buffer'First + Arg.Header.Arg_Buffer_Length - 1),
+      Deser_Arg, Bytes_Used);
+begin
+   if Status /= Success then return Command_Execution_Status.Failure; end if;
+   -- use Deser_Arg...
+end;
+```
+
+**`use Command_Execution_Status` scope**: The generated base class may already `use Command_Execution_Status` in the body scope. If adding `use Command_Execution_Status;` inside your handler causes a "has no effect" warning, remove it -- the parent scope already provides it. When in doubt, qualify: `Command_Execution_Status.Success`.
+
 ## Generated Code API (Quick Reference)
 
 See [references/generated-api.md](references/generated-api.md) for full details.
@@ -535,7 +552,7 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 13. [ ] Qualify ambiguous literals: `Command_Execution_Status.Success`
 14. [ ] No `Packed_U8` (use `Packed_Byte.T`); no `Packed_Bool` (use `Packed_Boolean.T`)
 15. [ ] No dynamic allocation (Ravenscar profile)
-16a. [ ] Component name must NOT match any of ~58 framework built-in names (see adamant-framework-components catalog). E.g., `command_sequencer`, `event_filter`, `fault_counter` are taken.
+16a. [ ] Component name must NOT match any of ~58 framework built-in names (see adamant-framework-components catalog). E.g., `command_sequencer`, `sequence_store`, `event_filter`, `fault_counter` are taken. When in doubt, prefix with project/domain name (e.g., `tst_seq_store`).
 16. [ ] Active + recv_async: override `{Type}_T_Recv_Async_Dropped`
 17. [ ] Parameter overrides: `Parameter_Update_T_Modify`, `Invalid_Parameter`, `Validate_Parameters`, `Update_Parameters_Action`
 18. [ ] Data dependency overrides: `Get_Data_Dependency`, `Invalid_Data_Dependency`
