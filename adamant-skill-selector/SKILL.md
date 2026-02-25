@@ -9,6 +9,10 @@ You have 18 Adamant skills totaling ~18500 lines (with references). Loading all 
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
+## CRITICAL: All Builds Require Docker
+
+Adamant builds MUST run inside the project's Docker container. **Never build locally on the host.** Check for `ADAMANT_ENVIRONMENT_SET=yes` -- if not set, use `docker exec` to run all redo/build/test commands inside the container. See `adamant-build-system` for the Docker exec pattern and `TOOLS.md` for project-specific container names.
+
 ## Task Routing Table
 
 ### Building a new component

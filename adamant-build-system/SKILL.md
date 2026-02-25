@@ -7,6 +7,29 @@ description: Understanding and using the Adamant redo-based build system and cod
 
 Redo-based: YAML models → Python/Jinja2 code generation → Ada compilation, with incremental deps and multi-target cross-compilation.
 
+## CRITICAL: Docker Build Environment
+
+**All Adamant builds MUST run inside the project's Docker container.** Never attempt to build locally on the host -- the GNAT toolchain, Python generators, redo, and Alire dependencies are only available inside the container.
+
+**Detection:** Check for `ADAMANT_ENVIRONMENT_SET=yes` in the environment. If this variable is NOT set, you are on the host and MUST use `docker exec` to run builds:
+```bash
+# From host -- execute build commands inside container:
+docker exec <project>_container bash -c "source /home/user/<project>/env/activate 2>/dev/null && cd /home/user/<project> && redo <target>"
+
+# If already inside the container (ADAMANT_ENVIRONMENT_SET=yes):
+cd /home/user/<project> && redo <target>
+```
+
+**Container setup pattern** (each project has its own Docker environment):
+```bash
+cd <project_dir>/docker
+bash adamant_env.sh start    # Pull image + start container
+bash adamant_env.sh login    # Interactive shell (preferred)
+bash adamant_env.sh stop     # Stop container
+```
+
+See TOOLS.md for project-specific container names and paths.
+
 ## YAML Model Extensions
 
 ```
