@@ -151,6 +151,7 @@ Both work. `mod` types do NOT need `with: [Interfaces]`. `subtype ... is Interfa
   ```
 - For `=` on packed types in Ada, need `use type My_Type.T;` to get operator visibility
 - Nested packed types (e.g., `Packed_F32.T` as a field) inherit the parent's bit position
+- **Reserved/padding fields are EXCLUDED from `.U`**: Fields named `Reserved` (or any padding field) in the YAML are present in `.T` (packed) but **omitted from the `.U` (unpacked) record**. Do NOT include them in `Pack()` aggregates -- only non-padding fields appear in `.U`.
 - No implicit padding -- you must add explicit padding fields for alignment
 
 ### Padding Example
