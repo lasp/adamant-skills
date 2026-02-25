@@ -456,6 +456,16 @@ Failure to override these results in abstract subprogram compile errors.
 
 Exception: `Interfaces` is NOT auto-provided merely because `init:` exists. It is only auto-provided when the generated base class actually references Interfaces types (commands with Unsigned args, certain features). If your component has no commands but needs Unsigned types (including init with only `Natural` params), add `with Interfaces; use Interfaces;`.
 
+**Decision table -- when is `Interfaces` auto-provided?**
+| Has commands with Unsigned args? | Has data deps using Interfaces types? | Has features referencing Interfaces? | Auto-provided? |
+|---|---|---|---|
+| Yes | any | any | YES |
+| No | Yes | any | YES |
+| No | No | Yes | YES |
+| No | No | No | **NO** -- add `with Interfaces; use Interfaces;` manually |
+
+If your component has NONE of {commands, init with typed Interfaces params, data dependencies using Interfaces types, features referencing Interfaces}, then `Interfaces` is NOT auto-provided.
+
 **CRITICAL -- Math Functions**: Ada's `Interfaces` package has NO math functions (Sqrt, Sin, Cos, etc.). Use:
 - `Ada.Numerics.Elementary_Functions` for `Long_Float` (64-bit) math
 - `Ada.Numerics.Generic_Elementary_Functions` instantiated for `Short_Float` (32-bit)
