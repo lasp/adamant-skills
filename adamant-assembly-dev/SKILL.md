@@ -437,7 +437,7 @@ end Main;
 
 **CRITICAL**: `Start_Components` BEFORE `Set_Up_Components`. Use `delay until` (Ravenscar -- no `delay 0.1`).
 
-**CRITICAL**: `Init_Base` and `Start_Components` are ONLY generated for assemblies with active components (tasks/queues). All-passive assemblies only generate `Set_Id_Bases`, `Connect_Components`, `Init_Components`, `Set_Up_Components`. If your assembly has no active components, omit `Init_Base` and `Start_Components` from main, and omit the infinite loop (passive assembly exits after setup).
+**CRITICAL**: `Init_Base` and `Start_Components` are ONLY generated for assemblies with active components (tasks/queues). All-passive assemblies only generate `Set_Id_Bases`, `Connect_Components`, `Init_Components`, `Set_Up_Components`. If your assembly has no active components, omit `Init_Base` and `Start_Components` from main, and omit the infinite loop (passive assembly exits after setup). **Edge case**: If an all-passive assembly has ONLY `ignore` connections (no real wiring), `Connect_Components` may not be generated either -- check the generated spec before calling it.
 
 **CRITICAL**: `Init_Components` is ONLY generated when at least one component in the assembly has an `init:` section in its component YAML. If no component has `init:`, omit the `Init_Components` call from main.
 
@@ -498,7 +498,7 @@ Each addition requires correct wiring AND supporting YAML files. Verify `redo al
 
 ### Connection Rules
 
-- **`to_component: ignore` is valid**: Use it to explicitly mark send connectors as intentionally unwired. Generates dropped handlers. Equivalent to leaving the connector unwired but makes intent explicit in the YAML.
+- **`to_component: ignore` is valid**: Use it to explicitly mark send connectors as intentionally unwired. Generates dropped handlers. Equivalent to leaving the connector unwired but makes intent explicit in the YAML. **Both `to_component: ignore` AND `to_connector: ignore` are required** -- the schema mandates `to_connector` when `to_component` is present.
 
 - **Don't wire same send connector in both subassembly and parent**: A send connector can only connect to one target. If a subassembly already wires a component's send connector internally, the parent cannot wire it again. Choose one location for the connection.
 
