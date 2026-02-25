@@ -261,25 +261,25 @@ cd src/components && redo test_all
 
 #### Non-interactive command execution
 
-For scripted/automated commands, use `docker exec` with the project's activate:
+For scripted/automated commands, use `adamant_env.sh exec` (fast snapshot-based activation):
 
 ```bash
-docker exec -u user <project_name>_container bash -c \
-  "source /home/user/<project_name>/env/activate 2>/dev/null && \
-  cd /home/user/<project_name> && redo <target>"
-```ada
+bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project_name> && redo <target>"
+```
 
-**Why login is preferred over raw `docker exec`:**
-- The base adamant image's `.bashrc` sources `adamant/env/activate`, which sets `ADAMANT_ENVIRONMENT_SET`. This guard variable prevents the project's activate from re-running adamant's activate with the project as an extra build root.
-- A custom Dockerfile that overrides `.bashrc` to source the project's activate instead solves this:
-  ```dockerfile
-  FROM ghcr.io/lasp/adamant:0.1
-  RUN echo 'source /home/user/<project>/env/activate 2>/dev/null' >> /home/user/.bashrc
-  ```
-  Build with `adamant_env.sh build`, then update `docker-compose.yml` to use the custom image (`ghcr.io/<org>/<project>:0.1`).
-- The `adamant_env.sh start` script also handles first-time activation.
-- Raw `docker exec` with `source project/env/activate` works IF the environment hasn't been previously activated in that shell session. But login shells may have already sourced `.bashrc`.
-- **Bottom line:** `adamant_env.sh login` handles all edge cases. Use it.
+This uses a cached environment snapshot (`/tmp/.<project>_env_snapshot`) created by the first full activation. Subsequent calls restore the snapshot in milliseconds instead of re-running the multi-second activation. The `/tmp` location means container restart auto-invalidates the cache.
+
+**How it works:**
+- `env/activate` saves `export -p` to `/tmp/.<project>_env_snapshot` after setup
+- `env/activate_from_snapshot` loads the snapshot or falls back to full activate if none exists
+- `env/container_run.sh` sources `activate_from_snapshot` and runs the command
+- `adamant_env.sh exec` calls `container_run.sh` inside the container
+
+**Why `exec` is preferred over raw `docker exec`:**
+- Fast: snapshot activation is milliseconds vs seconds for full activate
+- Correct: handles the `ADAMANT_ENVIRONMENT_SET` guard variable properly
+- The base adamant image's `.bashrc` sources `adamant/env/activate`, which sets `ADAMANT_ENVIRONMENT_SET`. This guard variable prevents the project's activate from re-running. The `exec` command bypasses this issue.
+- **Bottom line:** `adamant_env.sh exec` for automated commands, `adamant_env.sh login` for interactive sessions.
 
 ### 5. Set Up .gitignore
 

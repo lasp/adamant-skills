@@ -11,10 +11,13 @@ Redo-based: YAML models → Python/Jinja2 code generation → Ada compilation, w
 
 **All Adamant builds MUST run inside the project's Docker container.** Never attempt to build locally on the host -- the GNAT toolchain, Python generators, redo, and Alire dependencies are only available inside the container.
 
-**Detection:** Check for `ADAMANT_ENVIRONMENT_SET=yes` in the environment. If this variable is NOT set, you are on the host and MUST use `docker exec` to run builds:
+**Detection:** Check for `ADAMANT_ENVIRONMENT_SET=yes` in the environment. If this variable is NOT set, you are on the host and MUST use `adamant_env.sh exec` to run builds:
 ```bash
-# From host -- execute build commands inside container:
-docker exec <project>_container bash -c "source /home/user/<project>/env/activate 2>/dev/null && cd /home/user/<project> && redo <target>"
+# From host -- PREFERRED method (fast snapshot-based activation):
+bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project> && redo <target>"
+
+# Legacy method (slower, sources full activate each time):
+# docker exec <project>_container bash -c "source /home/user/<project>/env/activate 2>/dev/null && cd /home/user/<project> && redo <target>"
 
 # If already inside the container (ADAMANT_ENVIRONMENT_SET=yes):
 cd /home/user/<project> && redo <target>
@@ -87,7 +90,7 @@ source $ADAMANT_DIR/env/activate /path/to/project
 source $ADAMANT_DIR/env/activate "/path/to/project1:/path/to/project2"
 ```yaml
 
-**In Docker containers, prefer `adamant_env.sh login`** over raw `docker exec` with inline `source`. The base image's `.bashrc` may have already activated the adamant environment, blocking the project's activate via the `ADAMANT_ENVIRONMENT_SET` guard. Login handles this correctly. See `adamant-project-setup` for details.
+**For non-interactive commands, use `adamant_env.sh exec`** instead of raw `docker exec` with inline `source`. It uses snapshot-based activation (milliseconds vs seconds) and handles the environment correctly. For interactive sessions, use `adamant_env.sh login`. The base image's `.bashrc` may have already activated the adamant environment, blocking the project's activate via the `ADAMANT_ENVIRONMENT_SET` guard. Both `exec` and `login` handle this correctly. See `adamant-project-setup` for details.
 
 Activation does: set BUILD_ROOTS, create Python venv, install requirements, set GPR_PROJECT_PATH, configure Alire dependencies, set PYTHONPATH for code generators.
 
