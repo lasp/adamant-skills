@@ -258,6 +258,10 @@ package My_Enums is
    end Status_Type;
 end My_Enums;
 -- Usage: My_Enums.Status_Type.E, My_Enums.Status_Type.Ok
+-- CRITICAL: `with My_Enums;` (the PARENT package), NEVER `with My_Enums.Status_Type;`
+-- The child packages are declared inside the parent .ads, not as separate compilation units.
+-- To get operator visibility: `use type My_Enums.Status_Type.E;`
+-- To get literal visibility: `use My_Enums.Status_Type;`
 
 -- Enum child package types ARE supported in YAML models. The framework
 -- uses them extensively (86 YAML files reference Enums.* types).
