@@ -256,11 +256,11 @@ end My_Enums;
 **Always generated** for every record type -- no special YAML key needed. Provides:
 ```ada
 package My_Type.Validation is
-   function Valid (R : in My_Type.T; Errant_Field : out Natural) return Boolean;
+   function Valid (R : in My_Type.T; Errant_Field : out Interfaces.Unsigned_32) return Boolean;
 end My_Type.Validation;
 ```
 - Returns `True` if all fields are in range (uses Ada `'Valid` on constrained subtypes)
-- `Errant_Field` is set to the 1-based field index of the first failing field (0 if all valid)
+- `Errant_Field` is `Interfaces.Unsigned_32` -- set to the 1-based field index of the first failing field (0 if all valid)
 - Constrained subtypes are generated from preamble range types and enum ranges
 - There is no `valid_ranges` YAML key -- validation is automatic from field type constraints
 
@@ -392,6 +392,7 @@ byte_image: True         # Print as byte array instead of typed Image
 | "does not fit" | Type too large for format (e.g., `Unsigned_8` in U3) | Use `mod 2**3` in preamble |
 | Unused `with Interfaces` warning | Preamble uses only `mod` types | Remove `Interfaces` from `with:` (or ignore) |
 | Field name collision | Field named same as `with`'d package or own enum type | Rename the field |
+| DP name vs type collision | Data product named same as type package (e.g., DP `Validation_Counts` + type `Validation_Counts`) | Rename the DP (e.g., `Val_Counts`) |
 | Enum `E` not found | Using `.enums.yaml` but forgot `.E` suffix | Type is `Pkg.Enum_Name.E` |
 | "overlayable" violation | Variable-length field not last | Move to last position |
 

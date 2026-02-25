@@ -51,6 +51,8 @@ redo coverage                                # Coverage analysis via gcov
 
 **Adding tests:** Add to tests.yaml -> `redo templates` -> copy ONLY the `*_tests-implementation.ads` -> add implementation in `.adb` -> `redo test`.
 
+**⚠️ NEVER `cp build/template/*.adb .`** -- this overwrites your handwritten implementation body. Only copy specific files: tester `.ads/.adb`, test spec `.ads`, `test.adb`. Never glob-copy `.adb` files from templates after writing implementation.
+
 ## Test Body `with` Clauses
 
 The test body (`*_tests-implementation.adb`) does NOT inherit visibility from the generated tester. You must explicitly `with` every package you use. Common pattern:
