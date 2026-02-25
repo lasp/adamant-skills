@@ -280,6 +280,17 @@ end My_Enums;
 -- .all_path and is in a BUILD_ROOTS path (via env/activate).
 ```ada
 
+## Representation and Validation Child Packages -- Visibility
+
+`.Representation`, `.Validation`, and `.C` are **separate Ada child packages** (separate compilation units).
+You MUST add explicit `with` clauses to use them:
+```ada
+with My_Type.Representation;  -- required for Image
+with My_Type.Validation;      -- required for Valid, Get_Field
+with My_Type.C;               -- required for To_C, To_Ada
+```
+Dot-notation like `My_Type.Representation.Image(...)` is NOT automatic -- Ada requires the `with`.
+
 ## Representation Child Package
 
 `Representation.Image` has **3 overloads** for record types: `Image(U)`, `Image(T)`, `Image(T_Le)`.
