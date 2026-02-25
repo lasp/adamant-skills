@@ -307,14 +307,17 @@ Msg : constant String := My_Type.Representation.Image (Packed_Val);
 ## C Interface Child Package
 
 The `-c.ads/.adb` child package provides `To_C`/`To_Ada` conversion functions.
-These operate on `.U` (unpacked) types, NOT `.T` (packed):
+These use a separate `U_C` type (C-compatible layout), NOT `.U` or `.T`:
 ```ada
 package My_Type.C is
-   function To_C (Src : in My_Type.U) return My_Type.U;    -- returns C-layout .U
-   function To_Ada (Src : in My_Type.U) return My_Type.U;  -- returns Ada-layout .U
+   type U_C is record ... end record with Convention => C_Pass_By_Copy;
+   function To_C (Src : in U) return U_C;    -- Ada unpacked -> C layout
+   function To_Ada (Src : in U_C) return U;  -- C layout -> Ada unpacked
 end My_Type.C;
 ```
-To convert a packed `.T` value for C, unpack first: `C_Val := My_Type.C.To_C (My_Type.Unpack (Packed_Val));`
+Round-trip: `Ada_Val := My_Type.C.To_Ada (My_Type.C.To_C (Ada_Unpacked));`
+From packed: unpack first: `C_Val := My_Type.C.To_C (My_Type.Unpack (Packed_Val));`
+Nested records: inner `U_C` types are used (e.g. `Inner_Type.C.U_C` for nested fields).
 
 ## Validation Child Package
 
