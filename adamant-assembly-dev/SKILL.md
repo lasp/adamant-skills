@@ -464,7 +464,7 @@ Build assemblies incrementally. Start with the minimum viable assembly (time sou
 
 Each addition requires correct wiring AND supporting YAML files. Verify `redo all` passes before adding the next layer.
 
-**Build phases**: `redo all` runs multiple phases: YAML validation, Ada code generation, compilation, and documentation generation (LaTeX/SVG). Documentation failures (configuration.ads, .tex files) do NOT mean the core assembly failed -- the assembly Ada code may compile fine. Check whether the actual `.ads/.adb` files in `build/src/` were generated before concluding the build failed.
+**Build phases**: `redo all` runs multiple phases: YAML validation, Ada code generation, compilation, and documentation generation (LaTeX/SVG/HTML). Documentation failures (configuration.ads, .tex files, Jinja2 `TemplateNotFound` for HTML docs) do NOT mean the core assembly failed -- the assembly Ada code may compile fine. Check whether the actual `.ads/.adb` files in `build/src/` were generated before concluding the build failed. **Recommended**: build ELF directly from `main/` dir with `redo build/bin/Linux/main.elf` to avoid doc-generation failures blocking the build.
 
 ## Common Assembly Errors
 
