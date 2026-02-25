@@ -93,7 +93,7 @@ with Command_Enums.Assertion; use Command_Enums.Assertion;
 
 **Discarding status**: When a function returns a status you don't need, use `pragma Warnings (Off, "unused"); Ignore := Some_Function; pragma Warnings (On, "unused");` or the `Ignore renames` pattern.
 
-**Package-level `use type`**: Can be placed at package body level (not just inside procedures) for operators needed across multiple test methods.
+**Package-level `use type`**: Can be placed at package body level (not just inside procedures) for operators needed across multiple test methods. Applies to ALL types whose operators you need -- framework types (e.g. `Command_Enums.Command_Response_Status.E`) AND custom preamble types from your own records (e.g. `My_Header.Version_Type`, `My_Header.Packet_Kind_Type`). Sub-byte enum/mod fields generate their own types in the record package.
 
 **Name collisions**: `Tick` can collide with `Ada.Real_Time.Tick`. Always qualify: `Tick.T`, not just `T` when ambiguous. Add `use Tick;` if you reference `Tick.T` frequently.
 
