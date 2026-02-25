@@ -228,11 +228,27 @@ package My_Type is
    -- Access via My_Type.Serialization, NEVER `with Serialization;`
 end My_Type;
 
--- Serialization API (from Serializer generic):
+-- Serialization API (from Serializer generic) -- FIXED-SIZE types only:
 --   function To_Byte_Array (Src : in T) return Basic_Types.Byte_Array;
 --   procedure To_Byte_Array (Src : in T; Dst : out Basic_Types.Byte_Array);
 --   function From_Byte_Array (Src : in Basic_Types.Byte_Array) return T;
 -- Usage: My_Type.Serialization.To_Byte_Array (Packed_Val)
+
+-- Variable-length types use Variable_Serializer (NOT Serializer):
+--   package Serialization is new Variable_Serializer (T, Serialized_Length);
+-- API is fundamentally different:
+--   function To_Byte_Array (
+--      Dest      : out Basic_Types.Byte_Array;
+--      Src       : in T;
+--      Num_Bytes : out Natural
+--   ) return Serialization_Status;
+--   function From_Byte_Array (
+--      Src       : in Basic_Types.Byte_Array;
+--      Dest      : out T;
+--      Num_Bytes : out Natural
+--   ) return Serialization_Status;
+-- Returns Serialization_Status (Success/Failure), writes Num_Bytes actually used.
+-- NEVER use fixed-size Serialization API on variable-length types -- it won't compile.
 
 -- Enum: my_enums.ads (multiple enums per file)
 package My_Enums is
