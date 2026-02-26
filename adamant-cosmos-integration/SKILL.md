@@ -434,6 +434,71 @@ CCSDS components in rate groups:
 Details & full wiring examples: [references/plugin-setup-and-wiring.md](references/plugin-setup-and-wiring.md)
 Full scripting API, interface management, limits, bridge config, Docker architecture: [references/scripting-api-reference.md](references/scripting-api-reference.md)
 
+## End-to-End Workflow
+
+### First-Time Setup (Bot Station Reference)
+
+1. **Build COSMOS config from assembly:**
+   ```bash
+   # In Adamant container, from assembly/main/ dir:
+   redo cosmos_config
+   ```
+
+2. **Install plugin files:**
+   ```bash
+   ./install_cosmos_plugin.sh /path/to/assembly.yaml /path/to/cosmos-project/plugins/openc3-cosmos-assembly/
+   ```
+
+3. **Collect Python dependencies (pydep):**
+   Copy Adamant-generated Python packages (packed record types, CRC16, pack/unpack utilities) into the plugin's `targets/ASSEMBLY_NAME/lib/` directory. These are needed for any COSMOS test scripts that use Adamant records.
+
+4. **Check .env / demo configuration:**
+   - COSMOS ships with a demo plugin enabled by default
+   - Check `cosmos-project/.env` for `OPENC3_DEMO` or similar flags
+   - Disable demo targets if they conflict with your assembly's plugin
+   - Verify `OPENC3_API_PASSWORD` is set (default: `openc3service`)
+
+5. **Build and load plugin gem:**
+   ```bash
+   cd cosmos-project/plugins/openc3-cosmos-assembly/
+   rake build          # or gem build *.gemspec inside COSMOS container
+   ../../openc3.sh cli load openc3-cosmos-assembly-0.0.1.gem
+   ```
+
+6. **Start assembly (in container with exposed port):**
+   ```bash
+   # From project dir, expose TCP port for COSMOS:
+   docker exec -it <container> bash -c "cd /path/to/assembly && ./build/bin/Linux/main.elf"
+   ```
+   Or configure Docker compose to expose port 2003 from the Adamant container.
+
+7. **Start COSMOS:**
+   ```bash
+   cd cosmos-project && ./openc3.sh start
+   ```
+   COSMOS TCP server listens on the configured port. The assembly's socket interface connects as a client.
+
+8. **Verify connectivity:**
+   - COSMOS web UI: check for incoming telemetry packets
+   - CLI: `./openc3.sh cli irb` then `tlm("Assembly Housekeeping_Packet")` to check live values
+   - Send noop: `./openc3.sh cli cmd "Assembly Command_Router_Instance-Noop"`
+
+### Iterating on Plugin Changes
+
+After modifying assembly components (adding commands, events, data products):
+1. `redo cosmos_config` (regenerates cmd.txt/tlm.txt)
+2. Re-run install script to copy updated files
+3. Rebuild gem: `rake build`
+4. Reload: `openc3.sh cli load <gem>` (auto-upgrades if version matches)
+5. No COSMOS restart needed -- plugin hot-reload works
+
+### Docker Networking Notes
+
+- **Assembly in Docker, COSMOS on host:** Assembly uses `Addr => "host.docker.internal"`, COSMOS listens on `127.0.0.1:2003`
+- **Both in Docker:** Use Docker network or `host.docker.internal`. May need `--network host` or shared Docker network.
+- **Assembly on host, COSMOS in Docker:** Assembly uses `Addr => "127.0.0.1"`, expose COSMOS port to host.
+- **Recommended for development:** Assembly in Adamant container with port exposed, COSMOS in its own container stack. Both use host networking or a shared bridge network.
+
 ## Known Limitations
 
 1. **Subassembly incompatibility**: COSMOS generators (`redo build/cosmos/...`) expect flat assemblies with a top-level `components:` key. Assemblies using `subassemblies:` will fail with "Cannot find required key 'components'". Workaround: create a flattened assembly YAML for COSMOS generation, or generate per-subassembly.
