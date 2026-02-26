@@ -37,6 +37,8 @@ For **C++ with C shim**, both the original C++ and the C shim go in the same dir
 
 The Ada binding file (`*_h.ads` or `*_c_h.ads`) uses `pragma Import (C, ...)` and `Convention => C_Pass_By_Copy` for struct types. It can be generated via `gcc -fdump-ada-spec` or hand-written.
 
+**CRITICAL naming convention:** Ada binding files MUST end in `_h.ads` (e.g., `moving_avg_h.ads` for `moving_avg.h`). The Adamant build system uses this suffix to auto-discover the corresponding C source files. Without the `_h` suffix, the C `.o` file won't be linked. Also: if the Ada binding and C source share the same base name (e.g., `moving_avg.ads` and `moving_avg.c`), they produce conflicting `.o` files. The `_h.ads` convention avoids both problems.
+
 ### External Algorithm Repos
 
 C/C++ algorithms typically originate from external repositories (e.g. `fp32-fsw-xmera` for GNC algorithms). A **wrapper components repo** (e.g. `adamant-xmera-components`) provides Adamant components, C shims, Ada bindings, and related types that bridge the algorithm source into Adamant. This wrapper repo is included in the mission project's build path.
