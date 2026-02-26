@@ -354,6 +354,17 @@ Fields: `parameters_instance_name` (required), `parameters` (required, list of s
 
 **WARNING:** The `<name>` portion becomes an Ada package name. It MUST NOT collide with existing package names -- especially the assembly package itself. For assembly `ceres_fsw`, do NOT name the file `ceres_fsw.ceres_fsw.parameter_table.yaml`. Use a distinct prefix like `ceres_fsw_params.ceres_fsw.parameter_table.yaml`.
 
+**`with` reference and Parameters init:** The assembly `with` list and the Parameters component init must reference the Ada package derived from `<name>` (not the assembly name). For file `sensor_fusion_params.sensor_fusion_assembly.parameter_table.yaml`, the package is `Sensor_Fusion_Params`:
+```yaml
+with:
+  - Sensor_Fusion_Params   # <name> portion, not the assembly name
+components:
+  - type: Parameters
+    name: Parameters_Instance
+    init:
+      - "Parameter_Table_Entries => Sensor_Fusion_Params.Parameter_Table_Entries'Access"
+```
+
 ### Task Watchdog List (`<name>.<assembly>.task_watchdog_list.yaml`)
 
 Configures the `task_watchdog` framework component's pet monitoring.
