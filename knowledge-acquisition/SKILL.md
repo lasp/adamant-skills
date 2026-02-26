@@ -130,6 +130,8 @@ After initial skill creation, shift to building real artifacts to discover gaps.
 
 **Study generated output, not just source.** For code generation frameworks, the generated files ARE the API contract. Read `build/src/`, `build/template/`, and every output directory. The generated base class, event/command/data product packages, and template stubs define the exact function signatures, naming conventions, and type paths your implementation must use. Reading only the generator source or YAML schemas gives you the input format but not the output contract.
 
+**Automated campaigns**: For systematic validation at scale, run multi-tier campaigns with escalating complexity, phased execution (to stay within context limits), convergence criteria, and cron-driven orchestration. See the "Automated Refinement Campaigns" section in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
+
 ### 5b. Experience Pool Aggregation
 
 When running multiple study or validation sessions, aggregate discoveries across sessions

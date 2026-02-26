@@ -93,6 +93,107 @@ Metrics to watch:
 - **Rediscovery rate**: How often do new sub-agents hit errors that were already found
   and fixed in other skills? Non-zero means propagation is incomplete.
 
+## Automated Refinement Campaigns
+
+For systematic skill validation at scale, run automated multi-tier campaigns with
+escalating complexity. This extends the manual practice-driven loop into a
+self-driving refinement engine.
+
+### Campaign Structure
+
+Organize scenarios into tiers of increasing difficulty:
+
+| Tier | Focus | Example |
+|------|-------|---------|
+| T1-T8 | Single concern (types, serialization) | Packed record round-trip |
+| T9 | Algorithm wrapping (C -> Ada -> component) | CRC-16 calculator + SPARK |
+| T10 | Multi-component interaction | 3-component command pipeline |
+| T11 | Subassembly + SPARK + algorithm | GNC estimator subsystem |
+| T12 | Adversarial (name collisions, edge cases) | Redundant sensor voter |
+
+Each tier has multiple scenarios (2-3). Each scenario runs iterations until
+convergence (N consecutive clean runs, typically 5).
+
+### Phased Execution (Context Budget Management)
+
+A full pipeline (types + C code + bindings + component + tests + assembly + SPARK)
+can overflow a 200k context window in a single sub-agent session. Split into phases:
+
+- **Phase A**: Types + C code + bindings + component + tests (build + test verification)
+- **Phase B**: Assembly + SPARK proofs (integration verification)
+
+Each phase is a separate sub-agent spawn. Phase B only runs if Phase A is clean.
+This keeps each sub-agent well within context limits.
+
+For simpler scenarios (single component, no C code), a single phase may suffice.
+Match the split to the complexity.
+
+### Convergence Criteria
+
+- **Clean run**: both phases complete with 0 errors (build, style, test, prove all pass)
+- **Convergence**: N consecutive clean runs (default 5) for a given scenario
+- **Skill fix**: if an error reveals a skill gap, fix the skill AND reset the
+  consecutive clean counter to 0
+- **Tier completion**: all scenarios in the tier converged
+
+### Campaign State Tracking
+
+Maintain a state file (JSON) tracking:
+```json
+{
+  "currentTier": 10,
+  "currentScenario": 1,
+  "currentIteration": 3,
+  "consecutiveClean": 2,
+  "totalIterations": 25,
+  "tierHistory": {
+    "T9-S1": {"attempts": 8, "consecutiveClean": 5, "completed": true, "skillFixes": 1}
+  },
+  "skillFixes": ["algorithm-wrapping: _h.ads naming convention"]
+}
+```
+
+Use a cron job (every 5 min) as a campaign driver to check state, process results,
+and spawn the next phase. The driver must check for running sub-agents before
+spawning to avoid concurrent redo conflicts.
+
+### Cleanup Between Iterations
+
+After each complete iteration (both phases), `git rm` all exercise files and commit.
+This ensures each iteration starts from a clean slate -- the sub-agent must
+recreate everything from skills alone, not from leftover files.
+
+### Rate Limit Resilience
+
+Sub-agents that hit API rate limits (429) die mid-run, leaving partial files.
+Before re-spawning:
+1. Check for partial files (`git status`)
+2. Clean up (`git rm` partial files, or `git checkout -- .` + `git clean -fd`)
+3. Re-spawn the failed phase
+
+Rate-limited runs do NOT count as failures -- don't reset the consecutive clean counter.
+
+### Model Tiering as Quality Signal
+
+Running campaigns on different models tests skill robustness:
+- **Opus**: stronger reasoning, can compensate for vague skills
+- **Sonnet**: follows instructions more literally, exposes skill gaps Opus masks
+
+If a campaign converges on Opus but fails on Sonnet, the skills are relying on
+model capability rather than explicit documentation. Fix the skills until Sonnet
+converges too. This is a stronger quality bar.
+
+Consider re-running earlier tiers on Sonnet after initial Opus convergence to
+validate skill quality at the weaker model level.
+
+### Escalation Rules
+
+- If a tier converges with 0 skill fixes across all scenarios, consider designing
+  harder variant scenarios -- the tier may not be testing skill boundaries
+- If a scenario consistently fails on the same error pattern, that's a skill gap --
+  fix immediately rather than burning iterations
+- Track total skill fixes per tier to measure skill maturity
+
 ## Anti-Patterns
 
 - **Don't look at framework source first**: the whole point is to test the skills
