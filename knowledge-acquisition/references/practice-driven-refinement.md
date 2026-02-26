@@ -159,9 +159,17 @@ spawning to avoid concurrent redo conflicts.
 
 ### Cleanup Between Iterations
 
-After each complete iteration (both phases), `git rm` all exercise files and commit.
+During convergence testing, `git rm` all exercise files between iterations and commit.
 This ensures each iteration starts from a clean slate -- the sub-agent must
 recreate everything from skills alone, not from leftover files.
+
+**After convergence**: keep the final clean iteration's output. Do NOT delete
+converged scenario code -- it represents validated, tested artifacts built
+entirely from skills. Commit and retain in the project.
+
+**Restoring across scenarios**: each scenario produces unique components (different
+names, different types). Converged scenarios can coexist in the same project
+without conflicts. Accumulate validated components as the campaign progresses.
 
 ### Rate Limit Resilience
 
