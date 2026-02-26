@@ -182,17 +182,21 @@ T.Tick_T_Send ((Time => (0, 0), Count => 1));
 T.Command_T_Send (T.Commands.My_Command ((Field => Value)));   -- with args
 T.Command_T_Send (T.Commands.My_Noop_Command);                 -- no args
 
--- Parameters (3-step + tick):
-Status := T.Stage_Parameter (T.Parameters.Param_Name ((Field => Value)));
+-- Parameters (3-step + processing trigger):
+Status := T.Stage_Parameter (T.Parameters.Param_Name ((Value => 42.0)));
 pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
 Status := T.Validate_Parameters;
 pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
 Status := T.Update_Parameters;
 pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
-T.Tick_T_Send (The_Tick);  -- component applies in tick handler
-```ada
+-- Active: T.Tick_T_Send (The_Tick);  -- triggers Self.Update_Parameters in tick handler
+-- Passive: T.My_Input_T_Send (Data);  -- triggers Self.Update_Parameters in recv handler
+```
 
 **ALWAYS use `T.Commands` / `T.Parameters`** -- never create local instances (wrong ID bases).
+**ALWAYS read the generated tester .ads** (`build/template/component-*-tester.ads`) to discover
+available helper functions. Do NOT guess the API -- `T.Stage_Parameter`, `T.Validate_Parameters`,
+`T.Update_Parameters`, `T.Parameters.*`, typed history accessors, etc. are all defined there.
 For custom packed types on connectors: construct unpacked (.U) then `Pack`: `T.Cmd_T_Send (My_Type.Pack (unpacked_val));`
 
 ## History Verification
@@ -482,15 +486,22 @@ pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Validation_Error
 
 Source: threshold_monitor. Stage succeeds (just buffers), but Validate rejects because the component's Validate_Parameters override checks cross-parameter constraints (warning >= critical is invalid).
 
-### Parameter Takes Effect on Tick
+### Parameter Takes Effect on Next Processing Call
 
-After Update_Parameters succeeds, the component reads new values in its next tick handler. You must send a tick after updating:
+After Update_Parameters succeeds, the component reads new values in its next processing
+handler. For **active/ticked** components, send a tick. For **passive** components (no tick --
+only recv_sync handlers), send the next data input instead:
 
 ```ada
+-- Active component: tick applies parameters
 Status := T.Update_Parameters;
 T.Tick_T_Send (The_Tick);
--- Now assert the new behavior (output clamped to 5.0)
 Packed_F32_Assert.Eq (T.Output_History.Get (1), (Value => 5.0));
+
+-- Passive component: next recv_sync input applies parameters
+Status := T.Update_Parameters;
+T.My_Input_T_Send (Next_Input);  -- component calls Self.Update_Parameters internally
+-- Now assert new behavior with updated parameters
 ```
 
 ### Update_Parameters_Action Coverage
