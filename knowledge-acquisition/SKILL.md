@@ -132,6 +132,8 @@ After initial skill creation, shift to building real artifacts to discover gaps.
 
 **Automated campaigns**: For systematic validation at scale, run multi-tier campaigns with escalating complexity, phased execution (to stay within context limits), convergence criteria, and cron-driven orchestration. See the "Automated Refinement Campaigns" section in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
 
+**Adaptive phase granularity**: When a phase fails repeatedly due to context exhaustion (not skill errors), split it further rather than retrying at the same granularity. Separating type definitions from component implementation, or component creation from test setup, gives Sonnet enough headroom. Finer phases also improve error attribution. Adjust dynamically based on observed failures.
+
 ### 5b. Experience Pool Aggregation
 
 When running multiple study or validation sessions, aggregate discoveries across sessions

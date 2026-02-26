@@ -125,8 +125,25 @@ can overflow a 200k context window in a single sub-agent session. Split into pha
 Each phase is a separate sub-agent spawn. Phase B only runs if Phase A is clean.
 This keeps each sub-agent well within context limits.
 
-For simpler scenarios (single component, no C code), a single phase may suffice.
-Match the split to the complexity.
+**Adapt granularity to model capability.** Sonnet (~200k context) can handle a single
+component with tests in one phase, but struggles when that component has many features
+(parameters + events + data products + faults) combined with type creation. When phases
+fail repeatedly due to context exhaustion (not skill gaps), split further:
+
+- **Coarse (Opus or simple components)**: Phase A (all components + tests) + Phase B (assembly)
+- **Medium (Sonnet, multi-component)**: A1/A2/A3 (one component per phase) + B (assembly)
+- **Fine (Sonnet, complex components)**: A0 (types only) + A1/A2/A3 (one component per phase) + B (assembly)
+
+Signs you need finer splits:
+- Sub-agent hits 200k tokens before completing tests
+- Tests left incomplete or missing files (env.py, test.adb, tester files)
+- Agent reports "environment issues" that are actually context exhaustion artifacts
+
+Finer phases also improve post-run error attribution -- you know exactly which
+component or type caused a failure without untangling multi-component output.
+
+Match the split to model + complexity, and adjust dynamically when a granularity
+level shows repeated context-limit failures.
 
 ### Convergence Criteria
 
