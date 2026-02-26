@@ -265,3 +265,26 @@ When using this skill within OpenClaw:
 - **Usage tracking**: Run `usage_report.py` before spawning to check cumulative spend.
 - **Session status**: Use `session_status` to check context window fill; sessions at 200k tokens have maxed context.
 - **Model override**: Verify model override takes effect with `session_status` after spawn.
+
+### Sub-Agent Model Configuration
+
+Sub-agents can only use models listed in `agents.defaults.models` in the gateway config (`openclaw.json`). By default, only the main model (e.g., Opus) is listed.
+
+**To enable Sonnet for sub-agents:**
+
+```bash
+# Via config.patch (from agent):
+gateway config.patch '{"agents":{"defaults":{"models":{
+  "anthropic/claude-opus-4-6":{"alias":"opus"},
+  "anthropic/claude-sonnet-4-20250514":{"alias":"sonnet"}
+}}}}'
+```
+
+Then spawn with `model: sonnet` or `model: anthropic/claude-sonnet-4-20250514`.
+
+**Important:** Running `openclaw configure` (the setup wizard) rewrites the config file and will remove manually-patched model entries. After each `openclaw configure` run, re-patch the models allowlist. Coordinate with the user so they notify you before/after running configure.
+
+**Verifying model assignment:** Check `modelApplied` in the spawn response. If `false`, the model was rejected and the sub-agent falls back to the default. Common causes:
+- Model not in `agents.defaults.models` allowlist
+- Typo in model name (use exact provider/model string or configured alias)
+- Config was overwritten by `openclaw configure` since last patch
