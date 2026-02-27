@@ -199,15 +199,34 @@ Use a cron job (every 5 min) as a campaign driver to check state, process result
 and spawn the next phase. The driver must check for running sub-agents before
 spawning to avoid concurrent redo conflicts.
 
+### Commit Strategy: Atomic Iterations
+
+Sub-agents must NOT commit or push. They only build, test, and report results.
+
+The campaign driver owns all git operations:
+
+1. **During phases**: sub-agents create/modify files but do not `git add` or
+   `git commit`. Phase task prompts must NOT include commit instructions.
+2. **After all phases complete clean** (including post-phase test audit):
+   the campaign driver creates a single atomic commit covering the entire
+   iteration's output (types + components + tests + assembly).
+   Commit message: `T10-S3-i5: mode_telemetry (mode_controller + telemetry_selector + packet_builder + assembly)`
+3. **Push only on clean iterations**: `git push` after the atomic commit.
+4. **Failed iterations**: `git checkout -- . && git clean -fd` to reset the
+   working tree. No junk commits from partial work.
+
+This ensures every commit in the repo represents a complete, validated build.
+Per-phase commits are meaningless if a later phase fails -- they create orphaned
+partial state in the history.
+
 ### Cleanup Between Iterations
 
-During convergence testing, `git rm` all exercise files between iterations and commit.
-This ensures each iteration starts from a clean slate -- the sub-agent must
-recreate everything from skills alone, not from leftover files.
+Before each iteration, delete all exercise directories (`rm -rf`) and let the
+sub-agent rebuild from scratch. This tests cold-start skill quality. The A0
+phase task prompt should include the deletion step.
 
-**After convergence**: keep the final clean iteration's output. Do NOT delete
-converged scenario code -- it represents validated, tested artifacts built
-entirely from skills. Commit and retain in the project.
+**After convergence**: keep the final clean iteration's output (it's already
+committed via the atomic commit strategy above).
 
 **Restoring across scenarios**: each scenario produces unique components (different
 names, different types). Converged scenarios can coexist in the same project
@@ -218,8 +237,10 @@ without conflicts. Accumulate validated components as the campaign progresses.
 Sub-agents that hit API rate limits (429) die mid-run, leaving partial files.
 Before re-spawning:
 1. Check for partial files (`git status`)
-2. Clean up (`git rm` partial files, or `git checkout -- .` + `git clean -fd`)
+2. Clean up (`git checkout -- . && git clean -fd`)
 3. Re-spawn the failed phase
+
+Since sub-agents don't commit, cleanup is just resetting the working tree.
 
 Rate-limited runs do NOT count as failures -- don't reset the consecutive clean counter.
 
