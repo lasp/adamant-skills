@@ -219,6 +219,65 @@ validate skill quality at the weaker model level.
   fix immediately rather than burning iterations
 - Track total skill fixes per tier to measure skill maturity
 
+## Token-Efficiency Optimization
+
+Skills affect not just correctness but *efficiency* -- how many tokens a sub-agent
+consumes to complete a known-solvable task. Token count is a measurable, objective
+metric for skill quality: better skills guide agents to solutions faster with less
+exploration, backtracking, and re-reading.
+
+### Methodology
+
+1. **Baseline**: run a known task (one that converges cleanly) and record token usage
+   per phase. This is the baseline cost.
+2. **Hypothesize**: identify skill sections that are verbose, redundant, or poorly
+   organized. Predict which changes will reduce token consumption.
+3. **Refine**: make a targeted skill edit (consolidate examples, reorder sections,
+   add decision trees, remove duplication, front-load critical patterns).
+4. **Measure**: re-run the same task and compare token usage. Record delta.
+5. **Validate**: run the modified skill on *different* task types to confirm no
+   regressions. A skill that's efficient on one task but breaks others is worse,
+   not better.
+6. **Iterate**: repeat until diminishing returns.
+
+### What to Measure
+
+- **Tokens per phase**: prompt/cache + output tokens for each sub-agent run
+- **Total tokens per iteration**: sum across all phases
+- **Token trend across iterations**: should decrease as skills improve
+- **Error rate**: must remain 0 -- efficiency gains that increase errors are invalid
+
+### Optimization Levers
+
+- **Front-load critical patterns**: put the most common error-causing patterns
+  (parameter testing, test template workflow, env.py) at the top of relevant sections
+- **Decision trees over prose**: "if passive, do X; if active, do Y" is faster to
+  parse than a paragraph explaining both
+- **Reduce redundancy across skills**: if component-dev and testing both explain
+  parameter staging, consolidate into one authoritative location
+- **Concrete examples over abstract rules**: agents spend fewer tokens when they can
+  pattern-match against examples
+- **Remove stale content**: outdated patterns that no longer apply cause confusion
+  and wasted exploration
+
+### Validation Protocol
+
+After any efficiency-motivated skill edit:
+1. Re-run the optimized task -- must still converge with 0 errors
+2. Run at least 2 *different* task types that exercise the modified skill section
+3. Compare token usage: optimized task should decrease, others should not increase
+   significantly (< 10% regression tolerance)
+4. If regressions detected, revert and try a different optimization approach
+
+### Integration with Campaigns
+
+Token-efficiency optimization is a natural follow-on to convergence campaigns:
+- **Phase 1** (convergence): fix skills until 5 consecutive clean runs
+- **Phase 2** (efficiency): optimize token usage on converged scenarios
+- **Phase 3** (validation): re-run diverse scenarios to confirm no regressions
+
+This creates a quality ladder: correct -> efficient -> robust.
+
 ## Anti-Patterns
 
 - **Don't look at framework source first**: the whole point is to test the skills
