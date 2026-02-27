@@ -148,10 +148,35 @@ level shows repeated context-limit failures.
 ### Convergence Criteria
 
 - **Clean run**: both phases complete with 0 errors (build, style, test, prove all pass)
+  AND post-phase test audit passes (see below)
 - **Convergence**: N consecutive clean runs (default 5) for a given scenario
 - **Skill fix**: if an error reveals a skill gap, fix the skill AND reset the
   consecutive clean counter to 0
 - **Tier completion**: all scenarios in the tier converged
+
+### Post-Phase Test Audit
+
+After each component phase (A1/A2/A3), the campaign driver should read the test
+`.adb` file and verify test quality before advancing. A phase is not "clean" if
+tests are shallow. Check for:
+
+1. **Value assertions**: tests must assert specific output values, not just that
+   calls didn't crash. Every output connector should have its history checked
+   with concrete expected values.
+2. **Spec coverage**: every behavior listed in the task spec must have a
+   corresponding assertion. If the spec says "verify Mode_Changed event with
+   Science param", the test must assert the event history contains Science.
+3. **Edge case coverage**: where the spec lists edge cases (idempotent behavior,
+   boundary values, mode transitions), tests must exercise them with assertions.
+
+If tests are shallow (e.g., only checking history counts without value assertions,
+or missing spec-required behaviors), treat the phase as failed. Record "shallow
+tests" as the error and reset the iteration. This prevents false convergence on
+components that compile and "pass" but aren't actually validated.
+
+This audit is lightweight -- read one file, check assertion density. Adds ~30s
+per component phase. The cost of NOT doing it is false convergence: 5 "clean"
+iterations that never actually tested the component logic.
 
 ### Campaign State Tracking
 
