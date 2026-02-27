@@ -269,6 +269,35 @@ After any efficiency-motivated skill edit:
    significantly (< 10% regression tolerance)
 4. If regressions detected, revert and try a different optimization approach
 
+### Empirical Results (2026-02-27)
+
+A controlled trial on the Adamant skills tested this methodology on a converged T10-S2
+scenario (Sensor Fusion, 5-phase split). Changes: quick decision tree in component-dev,
+"load only what you need" guidance on references, fast paths in the selector.
+
+**Result: the optimized branch was worse.**
+
+| Metric | Baseline (main) | Optimized | Delta |
+|--------|-----------------|-----------|-------|
+| Output tokens | 53.6k | 65.0k | +21% |
+| Prompt/cache | 379.0k | 385.5k | +2% |
+| Runtime | ~20m | ~26m | +30% |
+| Errors | 0 | 0 | -- |
+
+**Why it failed**: the additions (decision trees, load guidance) increased agent
+verbosity without reducing reference loading. Agents read what they read regardless
+of routing hints. Output variance between runs (~20%) dominates any signal from
+small skill wording changes.
+
+**Lesson**: token micro-optimization at the skill text level does not work. Real
+efficiency gains would require structurally smaller skills or fewer references, which
+risks correctness -- the thing convergence campaigns optimize for. Do not pursue
+token optimization via skill wording changes. The methodology above is theoretically
+sound but practically ineffective at the margin sizes achievable with text edits.
+
+The correct priority order is: **correct > robust > efficient**. Efficiency is a
+third-order concern that should not drive skill edits.
+
 ### Integration with Campaigns
 
 Token-efficiency optimization is a natural follow-on to convergence campaigns:
@@ -277,6 +306,10 @@ Token-efficiency optimization is a natural follow-on to convergence campaigns:
 - **Phase 3** (validation): re-run diverse scenarios to confirm no regressions
 
 This creates a quality ladder: correct -> efficient -> robust.
+
+**Caveat**: Phase 2 may not yield measurable gains (see Empirical Results above).
+Skip it unless structural skill changes are planned (e.g., splitting a large skill
+into smaller focused ones). Do not attempt wording-level token optimization.
 
 ## Anti-Patterns
 
