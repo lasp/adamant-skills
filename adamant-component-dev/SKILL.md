@@ -598,11 +598,16 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 34. [ ] `Packed_F32.T.Value` is `Short_Float` (Ada 32-bit float), NOT `Interfaces.IEEE_Float_32` -- use `Short_Float` for F32 record fields and arithmetic
 
 ## References
-- [references/generated-api.md](references/generated-api.md) -- Full generated code API for all connector types
-- [references/implementation-patterns.md](references/implementation-patterns.md) -- 25 Ada patterns from real component implementations
-- [references/lasel-reference.md](references/lasel-reference.md) -- LASEL command sequence system (46 opcodes, engine states)
-- [references/pitfalls-and-checklist.md](references/pitfalls-and-checklist.md) -- Extended pitfalls and error patterns
-- [references/template-analysis.md](references/template-analysis.md) -- Jinja2 code generation template analysis
+
+**Load selectively based on task complexity.** Not every component needs every reference.
+
+| Reference | When to load |
+|-----------|-------------|
+| [references/generated-api.md](references/generated-api.md) | Always -- generated code API for all connector types |
+| [references/implementation-patterns.md](references/implementation-patterns.md) | Active components, FFI, complex state machines. **Skip for simple passive components** (recv_sync -> send, no queues, no C interop). |
+| [references/lasel-reference.md](references/lasel-reference.md) | Only when building LASEL command sequence components |
+| [references/pitfalls-and-checklist.md](references/pitfalls-and-checklist.md) | Always -- error patterns and checklist |
+| [references/template-analysis.md](references/template-analysis.md) | Only when debugging code generation issues |
 
 ## Related Skills
 

@@ -19,6 +19,10 @@ assembly_name/
 └── views/                                 # Focused diagrams (optional)
 ```
 
+## Connector Discovery
+
+When building an assembly, **read the component YAML files directly** from the build tree (e.g. `src/components/<name>/<name>.component.yaml`) to discover connectors, commands, events, data products, faults, and parameters. Do not rely on connector details being repeated in the task prompt -- the YAML is the source of truth. This reduces prompt size and prevents stale connector specifications.
+
 **CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main procedure file name must be unique across the entire build path. If the project shares build roots with another project that has `main.adb`, use a unique name like `project_main.adb` / `procedure Project_Main`. The build system discovers source files by filename -- collisions are fatal.
 
 ### Required Files for Specific Components

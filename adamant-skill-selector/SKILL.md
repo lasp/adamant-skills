@@ -232,6 +232,50 @@ bash scripts/generate_selector.sh /path/to/skills/
 
 Last generated: 2026-02-19
 
+## Deterministic Read Order (for cache-stable automation)
+
+When tasks specify "read skills in order," use these exact sequences. The order matters for prompt cache stability -- identical read order across spawns enables cache hits.
+
+### Component + Tests (simple passive, no FFI)
+1. `adamant-skill-selector/SKILL.md` (this file)
+2. `adamant-component-dev/SKILL.md`
+3. `adamant-component-dev/references/generated-api.md`
+4. `adamant-component-dev/references/pitfalls-and-checklist.md`
+5. `adamant-testing/SKILL.md`
+
+### Component + Tests (active, commands, complex state)
+1. `adamant-skill-selector/SKILL.md` (this file)
+2. `adamant-component-dev/SKILL.md`
+3. `adamant-component-dev/references/generated-api.md`
+4. `adamant-component-dev/references/implementation-patterns.md`
+5. `adamant-component-dev/references/pitfalls-and-checklist.md`
+6. `adamant-testing/SKILL.md`
+
+### Types only
+1. `adamant-skill-selector/SKILL.md` (this file)
+2. `adamant-type-system/SKILL.md`
+
+### Types + Simple Components + Tests (consolidated phase)
+1. `adamant-skill-selector/SKILL.md` (this file)
+2. `adamant-type-system/SKILL.md`
+3. `adamant-component-dev/SKILL.md`
+4. `adamant-component-dev/references/generated-api.md`
+5. `adamant-component-dev/references/pitfalls-and-checklist.md`
+6. `adamant-testing/SKILL.md`
+
+### Assembly + Subassemblies
+1. `adamant-skill-selector/SKILL.md` (this file)
+2. `adamant-assembly-dev/SKILL.md`
+3. `adamant-subassemblies/SKILL.md`
+
+### Algorithm Wrapping (C/C++ -> Adamant)
+1. `adamant-skill-selector/SKILL.md` (this file)
+2. `adamant-algorithm-wrapping/SKILL.md`
+3. `adamant-component-dev/SKILL.md`
+4. `adamant-component-dev/references/generated-api.md`
+5. `adamant-component-dev/references/implementation-patterns.md`
+6. `adamant-testing/SKILL.md`
+
 ## When NOT to Use This Selector
 
 - **General Ada/SPARK questions**: These skills are Adamant-specific. Generic Ada knowledge is already in the model.
