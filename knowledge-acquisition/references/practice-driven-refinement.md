@@ -344,18 +344,68 @@ sound but practically ineffective at the margin sizes achievable with text edits
 The correct priority order is: **correct > robust > efficient**. Efficiency is a
 third-order concern that should not drive skill edits.
 
+### Structural vs Wording Optimization
+
+The 2026-02-27 trial showed that **wording-level** changes (decision trees, routing
+hints, "load only what you need" guidance) don't reduce tokens -- agents read what
+they read. But **structural** changes produce measurable, reproducible gains:
+
+| Category | Example | Expected Impact |
+|----------|---------|-----------------|
+| **Phase consolidation** | Merge 3 simple phases into 1 agent | -40% spawns, -28% output, -37% prompt |
+| **Deterministic read order** | Skill selector emits exact file list | Stable cache prefix across iterations |
+| **Conditional reference loading** | Skip impl-patterns.md for passive components | -20-40k prompt for simple phases |
+| **Connector discovery** | Assembly agents read YAML files directly | Shorter task prompts, less stale data |
+| **Script-based extraction** | Executable script returns only needed API surface | Potential large prompt reduction (untested) |
+
+**Rule: if a change is structural (fewer files loaded, fewer spawns, different
+pipeline shape), measure it. If it's wording (reordering paragraphs, adding hints),
+don't bother -- variance between runs dominates the signal.**
+
+### Empirical Results (2026-03-01, Structural Optimization)
+
+T12-S2 (Sensor Fusion Controller, maximum difficulty) with structural changes:
+3-phase pipeline (was 5-phase), deterministic read order, conditional reference loading.
+
+| Metric | S2 Baseline (5-phase) | S3 Optimized (3-phase) | Delta |
+|--------|----------------------|----------------------|-------|
+| Spawns | 5 | 3 | -40% |
+| Total output tokens | ~121k avg | 87.2k | -28% |
+| Total prompt/cache | ~421k avg | 266.8k | -37% |
+| Total runtime | ~38m avg | 29m27s | -22% |
+| Skill reads | 17 | 11 | -35% |
+| Error rate | 0% | 0% | same |
+
+Unlike wording changes, these are consistent and reproducible across iterations.
+Prompt token variance < 3% when using deterministic read order.
+
 ### Integration with Campaigns
 
-Token-efficiency optimization is a natural follow-on to convergence campaigns:
-- **Phase 1** (convergence): fix skills until 5 consecutive clean runs
-- **Phase 2** (efficiency): optimize token usage on converged scenarios
-- **Phase 3** (validation): re-run diverse scenarios to confirm no regressions
+**Campaign progression follows a strict ladder:**
 
-This creates a quality ladder: correct -> efficient -> robust.
+1. **Convergence**: fix skills until N consecutive clean cold-start runs (typically 5).
+   This is the only phase that matters. Skills that don't converge are broken.
 
-**Caveat**: Phase 2 may not yield measurable gains (see Empirical Results above).
-Skip it unless structural skill changes are planned (e.g., splitting a large skill
-into smaller focused ones). Do not attempt wording-level token optimization.
+2. **Efficiency**: once converged, optimize token usage via structural changes.
+   Re-run the SAME scenario to measure before/after. Only structural changes
+   (phase consolidation, conditional loading, pipeline shape) are worth testing.
+   Wording changes are not measurable.
+
+3. **Difficulty escalation**: once converged AND efficient, increase task complexity.
+   The goal is skills that enable correct results on harder tasks, not just cheaper
+   results on easy ones. Design new tiers that exercise untested patterns.
+
+**The decision at each tier:**
+- Skills NOT converging? -> Fix skills (correctness gaps).
+- Skills converging but expensive? -> Optimize structure (efficiency).
+- Skills converging AND efficient? -> Increase difficulty (capability).
+
+Never skip ahead. Efficiency without convergence is waste. Difficulty without
+efficiency means you're burning tokens on solved problems while testing new ones.
+
+**Tracking**: maintain a CSV with per-phase metrics (runtime, prompt tokens, output
+tokens, result, notes) across all iterations and optimization variants. This is the
+ground truth for all decisions. Without data, you're guessing.
 
 ## Anti-Patterns
 

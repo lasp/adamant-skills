@@ -134,7 +134,9 @@ After initial skill creation, shift to building real artifacts to discover gaps.
 
 **Adaptive phase granularity**: When a phase fails repeatedly due to context exhaustion (not skill errors), split it further rather than retrying at the same granularity. Separating type definitions from component implementation, or component creation from test setup, gives Sonnet enough headroom. Finer phases also improve error attribution. Adjust dynamically based on observed failures.
 
-**Token-efficiency optimization**: After convergence, optimize skills to reduce token consumption on known-solvable tasks. Measure tokens per phase, make targeted skill edits, re-measure, then validate on diverse tasks to confirm no regressions. See "Token-Efficiency Optimization" in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
+**Token-efficiency optimization**: After convergence, optimize skills to reduce token consumption via **structural changes only** (phase consolidation, deterministic read order, conditional reference loading, pipeline shape). Wording-level changes are not measurable -- run-to-run variance dominates. Re-run the SAME scenario with before/after CSV tracking. See "Token-Efficiency Optimization" and "Structural vs Wording Optimization" in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
+
+**Campaign progression ladder**: Converge -> Optimize -> Escalate. If skills converge, optimize token efficiency on the same tasks. If converged AND efficient, increase difficulty to expand skill capability. Never skip ahead. See "Integration with Campaigns" in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
 
 ### 5b. Experience Pool Aggregation
 
