@@ -171,6 +171,17 @@ Use small types like `Packed_U16.T`, `Packed_U32.T`, or custom packed types < 8 
 
 **`Sys_Time.T` get is required by almost every component** -- events, data products, faults, and commands all call `Self.Sys_Time_T_Get`. Always include it in your connector list. The only components that might omit it are pure data-pass-through components with no timestamped outputs.
 
+## Connector Design Guidelines
+
+When designing a component's connector topology, choose the right connector kind for each data flow:
+
+- **`send` -> `recv_sync`/`recv_async`**: Use for **inter-component data flow**. When component A produces data that component B must process, A needs a `send` connector and B needs a `recv_sync` or `recv_async`. This is the primary mechanism for wiring components together in an assembly.
+- **Data products** (`Data_Product.T send`): Use for **ground observability and telemetry**. Data products are stored in the Product_Database for ground retrieval. They are NOT a substitute for inter-component data flow. If another component needs your output, use a `send` connector.
+- **`request`/`provide`**: Use for **on-demand queries** where the requester controls timing. The provider serves data when asked, not when it changes.
+- **`get`/`return`**: Use for **simple lookups** (typically Sys_Time).
+
+**Common design mistake**: Using data products as the only output mechanism. If your component produces results consumed by another component, you MUST have a `send` connector for that data in addition to any data products. Data products go to the ground; send connectors go to downstream components. A component that only publishes data products cannot be wired to consumers in an assembly.
+
 ## Connector Kind Field Rules
 
 | Kind | `type:` field | `return_type:` field |
