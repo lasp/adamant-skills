@@ -398,10 +398,51 @@ Prompt token variance < 3% when using deterministic read order.
 **The decision at each tier:**
 - Skills NOT converging? -> Fix skills (correctness gaps).
 - Skills converging but expensive? -> Optimize structure (efficiency).
-- Skills converging AND efficient? -> Increase difficulty (capability).
+- Skills converging AND efficient? -> Relax prompts (autonomy).
+- Skills converging with relaxed prompts? -> Increase difficulty (capability).
 
 Never skip ahead. Efficiency without convergence is waste. Difficulty without
 efficiency means you're burning tokens on solved problems while testing new ones.
+
+### Prompt Relaxation
+
+When skills converge with detailed prompts (field-by-field specs, exact connector
+lists, numbered test cases), the next step is NOT increasing difficulty -- it's
+reducing prompt detail. Detailed prompts test whether skills can guide *implementation*.
+Relaxed prompts test whether skills can guide *design*.
+
+**Progression:**
+1. **Detailed prompts**: every field, connector, test case specified (implementation test)
+2. **Relaxed prompts**: high-level description + constraints + quality requirements (design test)
+3. **Minimal prompts**: one-sentence task description (full autonomy test)
+
+**Relaxed prompt template:**
+```
+Build a [system description] using Adamant.
+
+Requirements:
+- [key constraints: SPARK, C FFI, subassemblies, active/passive]
+- [quality: tests with N% coverage, redo style clean, redo test passing]
+
+Use the Adamant skills. Make design decisions for types, connectors,
+fault thresholds, test cases, and assembly topology.
+```
+
+The agent must:
+- Choose appropriate packed record types and field sizes
+- Design connector topology (which connectors, what types)
+- Decide fault detection thresholds and latching behavior
+- Write meaningful test cases (not just the ones listed in a prompt)
+- Wire the assembly with correct infrastructure
+
+**Why this matters**: a user should be able to describe what they want at a
+requirements level and get a correct, well-designed Adamant system. If skills
+only work with field-by-field prompts, they're implementation checklists, not
+engineering knowledge.
+
+**Measuring prompt relaxation**: compare prompt token counts (should drop 50-80%),
+output quality (must remain correct), and error rate (may initially increase --
+that's expected and reveals design-level skill gaps).
 
 **Tracking**: maintain a CSV with per-phase metrics (runtime, prompt tokens, output
 tokens, result, notes) across all iterations and optimization variants. This is the

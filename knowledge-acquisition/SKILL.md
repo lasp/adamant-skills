@@ -136,7 +136,7 @@ After initial skill creation, shift to building real artifacts to discover gaps.
 
 **Token-efficiency optimization**: After convergence, optimize skills to reduce token consumption via **structural changes only** (phase consolidation, deterministic read order, conditional reference loading, pipeline shape). Wording-level changes are not measurable -- run-to-run variance dominates. Re-run the SAME scenario with before/after CSV tracking. See "Token-Efficiency Optimization" and "Structural vs Wording Optimization" in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
 
-**Campaign progression ladder**: Converge -> Optimize -> Escalate. If skills converge, optimize token efficiency on the same tasks. If converged AND efficient, increase difficulty to expand skill capability. Never skip ahead. See "Integration with Campaigns" in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
+**Campaign progression ladder**: Converge -> Optimize -> Relax -> Escalate. If skills converge with detailed prompts, optimize token efficiency. If efficient, relax prompts (high-level descriptions instead of field-by-field specs) to test whether skills guide design, not just implementation. If converged with relaxed prompts, increase difficulty. See "Integration with Campaigns" and "Prompt Relaxation" in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
 
 ### 5b. Experience Pool Aggregation
 
