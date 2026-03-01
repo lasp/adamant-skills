@@ -239,11 +239,12 @@ When tasks specify "read skills in order," use these exact sequences. The order 
 ### Component + Tests (simple passive, no FFI)
 1. `adamant-skill-selector/SKILL.md` (this file)
 2. `adamant-component-dev/SKILL.md`
-3. `adamant-component-dev/references/generated-api.md`
-4. `adamant-component-dev/references/pitfalls-and-checklist.md`
-5. `adamant-testing/SKILL.md`
+3. `adamant-component-dev/references/pitfalls-and-checklist.md`
+4. `adamant-testing/SKILL.md`
 
-### Component + Tests (active, commands, complex state)
+Skip `generated-api.md` and `implementation-patterns.md` for simple passive components (recv_sync + send only). The main SKILL.md covers basic connector patterns.
+
+### Component + Tests (active, commands, request/provide, or complex state)
 1. `adamant-skill-selector/SKILL.md` (this file)
 2. `adamant-component-dev/SKILL.md`
 3. `adamant-component-dev/references/generated-api.md`
@@ -259,9 +260,10 @@ When tasks specify "read skills in order," use these exact sequences. The order 
 1. `adamant-skill-selector/SKILL.md` (this file)
 2. `adamant-type-system/SKILL.md`
 3. `adamant-component-dev/SKILL.md`
-4. `adamant-component-dev/references/generated-api.md`
-5. `adamant-component-dev/references/pitfalls-and-checklist.md`
-6. `adamant-testing/SKILL.md`
+4. `adamant-component-dev/references/pitfalls-and-checklist.md`
+5. `adamant-testing/SKILL.md`
+
+Skip `generated-api.md` for consolidated phases with only simple passive components.
 
 ### Assembly + Subassemblies
 1. `adamant-skill-selector/SKILL.md` (this file)

@@ -603,7 +603,7 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 
 | Reference | When to load |
 |-----------|-------------|
-| [references/generated-api.md](references/generated-api.md) | Always -- generated code API for all connector types |
+| [references/generated-api.md](references/generated-api.md) | Components with request/provide connectors, data dependencies, or async queues. **Skip for simple passive** (recv_sync + send only) -- the main SKILL.md covers basic connector patterns. |
 | [references/implementation-patterns.md](references/implementation-patterns.md) | Active components, FFI, complex state machines. **Skip for simple passive components** (recv_sync -> send, no queues, no C interop). |
 | [references/lasel-reference.md](references/lasel-reference.md) | Only when building LASEL command sequence components |
 | [references/pitfalls-and-checklist.md](references/pitfalls-and-checklist.md) | Always -- error patterns and checklist |

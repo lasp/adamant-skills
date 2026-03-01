@@ -580,11 +580,15 @@ Full coverage workflow, reading reports, and common uncovered patterns: [coverag
 
 ## References
 
-- [references/setup-variants.md](references/setup-variants.md) -- Init/Set_Up patterns, Tear_Down, Tick construction
-- [references/assertion-patterns.md](references/assertion-patterns.md) -- History API, packed type assertions, with-clause sets, extended testing patterns
-- [references/command-test-patterns.md](references/command-test-patterns.md) -- Command dispatch, argument construction, helpers
-- [references/adamant-example-patterns.md](references/adamant-example-patterns.md) -- Advanced patterns: task-based testing, memory regions, packet construction
-- [references/coverage-guide.md](references/coverage-guide.md) -- Coverage analysis, advanced techniques, and anti-patterns
+**Load selectively.** The main SKILL.md covers most testing patterns. Only load references when you need them.
+
+| Reference | When to load |
+|-----------|-------------|
+| [references/setup-variants.md](references/setup-variants.md) | Components with init parameters, custom Set_Up, or Tear_Down. **Skip for simple components** with no init. |
+| [references/assertion-patterns.md](references/assertion-patterns.md) | Complex assertion chains, packed type field comparisons, or when tests need extended History API patterns. **Skip for basic tests** (count + simple value checks). |
+| [references/command-test-patterns.md](references/command-test-patterns.md) | Only when testing components with commands. **Skip for passive components without commands.** |
+| [references/adamant-example-patterns.md](references/adamant-example-patterns.md) | Only for task-based testing, memory regions, or advanced packet construction. Rarely needed. |
+| [references/coverage-guide.md](references/coverage-guide.md) | Only when measuring or improving test coverage (`redo coverage`). |
 
 ## Related Skills
 
