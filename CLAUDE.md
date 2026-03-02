@@ -55,6 +55,14 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 - **Convergence:** Systematic stress testing across all generative skills -- 0 cold-start errors
 - **Subassemblies:** 10-round iteration, R10 achieved zero errors from cold-start agent
 
+## Multi-Phase Workflow Rules
+
+When building as part of a phased pipeline (types -> components -> assembly):
+- **Read prior-phase artifacts, don't rewrite them.** If types and components already exist, use them as-is. Your job is to wire them, not redesign them.
+- **Respect read-only boundaries.** If the task lists directories as read-only, do not modify, rename, or delete files in those directories.
+- **Delete before creating from scratch.** If the task says "create from scratch" but files already exist from a prior iteration, delete them first (only in YOUR phase's directory, never prior phases).
+- **Don't delete unrelated files.** Other scenarios' components in the same repo are not yours to touch.
+
 ## Critical Build Rules
 
 - **`redo clean` is always safe** on any directory (framework or project). If redo state corrupts (STORAGE_ERROR), run `redo clean_all` on BOTH adamant and project dirs.
