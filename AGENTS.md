@@ -39,7 +39,8 @@ to reduce context consumption. Use these patterns:
 
 ### Strip ANSI + noise filter (use for ALL redo commands)
 ```bash
-FILTER="sed 's/\x1b\[[0-9;]*m//g' | grep -vE '^redo |^warning:.*should be recompiled|^$|^Any style messages'"
+# Note: use `grep ... || true` to avoid grep exit code 1 when no lines match
+FILTER="sed 's/\x1b\[[0-9;]*m//g' | { grep -vE '^redo |^warning:.*should be recompiled|^$|^Any style messages' || true; }"
 ```
 
 ### Style check
