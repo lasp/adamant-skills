@@ -2,6 +2,13 @@
 
 Skills for AI-assisted development with the [Adamant](https://github.com/lasp/adamant) embedded software framework. Every pattern validated by compilation against a real GNAT/GNATprove toolchain.
 
+## Agent Configuration Files
+
+This repo contains three agent prompt files. Copy them to your project root:
+- **CLAUDE.md** -- Claude Code CLI system prompt (build rules, skill inventory)
+- **AGENTS.md** -- OpenClaw subagent workspace rules (task scope, docker exec, quality gates)
+- **SOUL.md** -- OpenClaw subagent voice and disposition (technical, no filler, scoped)
+
 ## Quick Start
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
