@@ -239,6 +239,9 @@ To create a view showing only one subassembly's components, use a component name
 ### Deep Nesting (3+ levels) and event_to_text
 Nesting is structurally supported but deeply nested assemblies (3+ levels) can trigger `event_to_text` code generation failures -- the generated event-to-text function may reference undefined packages or produce `None` values. The assembly YAML and wiring are correct; it's a code generator limitation. **Recommendation:** Limit nesting to 2 levels (parent + subassembly) for production use. If 3+ levels are needed, avoid Event_Text_Logger and be prepared to work around event_to_text compilation errors.
 
+### Subassembly _components.ads Missing With Clauses
+The code generator produces a `<subassembly>_components.ads` file for each subassembly, but it may not auto-generate the necessary `with` clauses for component packages used within that subassembly. This causes compilation failures (missing package references). **Workaround:** Move components into the parent assembly. This limitation makes subassemblies unreliable for assemblies where the generated Ada needs direct visibility of component packages. Flat assemblies avoid this entirely.
+
 ### Duplicate Component Names
 Component instance names must be unique across ALL subassemblies and the parent. If `core.assembly.yaml` and `comm.assembly.yaml` both define a component named `Rate_Group_Instance`, you get:
 
