@@ -32,6 +32,57 @@ bash docker/adamant_env.sh exec "cd /home/user/<project> && <command>"
 
 Use `adamant_env.sh exec` for non-interactive commands. Use `adamant_env.sh login` only if you need an interactive shell.
 
+## Build Output Filtering
+
+Redo produces verbose output (target lists, recompilation warnings). Filter it
+to reduce context consumption. Use these patterns:
+
+### Strip ANSI + noise filter (use for ALL redo commands)
+```bash
+FILTER="sed 's/\x1b\[[0-9;]*m//g' | grep -vE '^redo |^warning:.*should be recompiled|^$|^Any style messages'"
+```
+
+### Style check
+```bash
+bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <path>/style 2>&1; echo EXIT=\$?" | eval "$FILTER"
+```
+On success: only `EXIT=0`. On failure: compiler errors + `EXIT=N`.
+Also check the style log for errors: `cat <path>/build/style/style.log`
+
+### Test
+```bash
+bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <path>/test/test 2>&1; echo EXIT=\$?" | eval "$FILTER"
+```
+On success: `OK <test_name>` lines + summary. On failure: `FAIL` lines + assertion messages.
+
+### Assembly ELF build
+```bash
+bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <path>/main/build/bin/Linux/main.elf 2>&1; echo EXIT=\$?" | eval "$FILTER"
+```
+On success: only `EXIT=0`. On failure: compiler/linker errors.
+
+### ELF size
+```bash
+bash docker/adamant_env.sh exec "stat -c %s <path>/main/build/bin/Linux/<name>.elf"
+```
+
+### Fallback on failure
+If a filtered command shows EXIT != 0 but no error lines, re-run WITHOUT the
+filter to see the full output. Errors may appear in redo's stderr formatting
+that the filter strips. Always check exit code first, then look for errors.
+
+```bash
+# Full output fallback:
+bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <path>/style 2>&1 | tail -40"
+```
+
+### Do NOT paste full build logs
+In your final report, include only:
+- Pass/fail status and exit code
+- Specific error messages (if any)
+- Test result summary (OK/FAIL lines + totals)
+- ELF size (for assembly phases)
+
 ## Quality Gates
 
 Every phase must pass before reporting success:
