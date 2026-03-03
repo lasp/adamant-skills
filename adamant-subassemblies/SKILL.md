@@ -16,7 +16,7 @@ Subassemblies split a large assembly YAML into smaller, reusable pieces. Each su
 - **Team workflow** -- different engineers own different subsystems in separate files
 - **Incremental integration** -- build and validate subsystems independently before combining
 
-Subassemblies are a **modeling construct** for breaking assemblies into manageable pieces. The final output is one binary with no runtime distinction between subassembly boundaries. However, the code generator DOES produce per-subassembly intermediate files (e.g., `<subassembly>_components.ads`, per-subassembly `event_to_text`). The parent assembly's `with:` list must reference the TOP-LEVEL assembly's generated packages (e.g., `Parent_Assembly_Commands`, `Parent_Assembly_Event_To_Text`), NOT per-subassembly ones. Components in subassemblies get their IDs from the parent assembly's ID allocation.
+Subassemblies are a **modeling construct** for breaking assemblies into manageable pieces. Per the user guide: "subassemblies are purely a modeling concept. A subassembly is not reflected in any of the output products including the autocode." The final output is one binary with no runtime distinction between subassembly boundaries. The build system does produce per-subassembly intermediate files (e.g., `<subassembly>_components.ads`) but these are build artifacts, not architectural boundaries. The parent assembly's `with:` list must reference the TOP-LEVEL assembly's generated packages (e.g., `Parent_Assembly_Commands`, `Parent_Assembly_Event_To_Text`), NOT per-subassembly ones. Components in subassemblies get their IDs from the parent assembly's ID allocation.
 
 **Key properties:**
 - Allow sharing component groups between different build targets (e.g., a common telemetry pipeline used by multiple assemblies)
@@ -240,7 +240,16 @@ To create a view showing only one subassembly's components, use a component name
 Nesting is structurally supported but deeply nested assemblies (3+ levels) can trigger `event_to_text` code generation failures -- the generated event-to-text function may reference undefined packages or produce `None` values. The assembly YAML and wiring are correct; it's a code generator limitation. **Recommendation:** Limit nesting to 2 levels (parent + subassembly) for production use. If 3+ levels are needed, avoid Event_Text_Logger and be prepared to work around event_to_text compilation errors.
 
 ### Subassembly _components.ads Missing With Clauses
-The code generator produces a `<subassembly>_components.ads` file for each subassembly, but it may not auto-generate the necessary `with` clauses for component packages used within that subassembly. This causes compilation failures (missing package references). **Workaround:** Move components into the parent assembly. This limitation makes subassemblies unreliable for assemblies where the generated Ada needs direct visibility of component packages. Flat assemblies avoid this entirely.
+The code generator produces a `<subassembly>_components.ads` file for each subassembly, but the `with` clause population (`components_ads_includes`) is gated behind `if not self.is_subassembly:` in `gen/models/assembly.py` (L768). This means the subassembly's `_components.ads` is generated with NO component `with` clauses (the list stays empty). The `with:` field in the subassembly YAML does NOT fix the subassembly's own `_components.ads` -- the template gates the entire include block on `components_ads_includes` being non-empty, and the YAML `with:` entries (`self.includes`) are inside that same guard.
+
+**Why it usually works anyway:** The `with:` entries propagate to the parent assembly via `self.includes.extend(subassembly.includes)` (L728). The parent's `_components.ads` includes all component packages from all subassemblies. Since the final binary compiles through the parent, the subassembly's empty `_components.ads` is not a problem -- all visibility comes from the parent.
+
+**When it fails:** Style checking (`redo style`) may process the subassembly before the parent, hitting the empty includes. Building the ELF first (which processes the parent) populates the model cache, making subsequent `redo style` runs succeed.
+
+**Workarounds (in order of preference):**
+1. Build the ELF first, then run `redo style` (model cache resolves it)
+2. Use `with:` in the subassembly YAML (propagates to parent, does not fix subassembly `_components.ads` directly but ensures parent compilation succeeds)
+3. Move all components into a flat parent assembly (avoids the issue entirely)
 
 ### Duplicate Component Names
 Component instance names must be unique across ALL subassemblies and the parent. If `core.assembly.yaml` and `comm.assembly.yaml` both define a component named `Rate_Group_Instance`, you get:
@@ -340,8 +349,8 @@ Subassemblies are loaded as `assembly(is_subassembly=True)` which runs the full 
 ### Connector Count Coordination
 If a component in the parent has an arrayed connector (e.g., `Tick_T_Send_Count => 5`), some of those connections may target components in subassemblies. The count must match the total number of wired connections regardless of which file defines the target components.
 
-### Subassembly Files Are Not Independent Assemblies
-A subassembly file can't be built on its own -- it has no `main/` directory and won't generate a standalone binary. It only has meaning when included by a parent assembly.
+### Subassembly Standalone Constraint
+Per the user guide: "each subassembly must also be able to act as a standalone assembly. Specifically, any connections defined in an assembly must be between components defined in that assembly or one of that assembly's subassemblies." This is a **model validity** constraint -- a subassembly's connections can only reference its own components. It does NOT mean a subassembly can produce a standalone binary (it has no `main/` directory).
 
 **Build note:** `redo all` in the assembly directory generates source code (including subassembly sources) into `build/src/`. The ELF binary is built from `main/`: `cd main && redo run`. If `redo all` fails at the gprbuild step, the generated Ada source may still be fine -- build the ELF from `main/` to verify.
 
@@ -498,7 +507,7 @@ connections:
 | Can two subassemblies set the same id_base? | No -- fatal error |
 | Is bare `init:` (null) valid? | Yes -- equivalent to `init: []`, both mean no init params |
 | Do views know about subassembly boundaries? | No -- views see the flattened assembly |
-| Can a subassembly be built standalone? | No -- it needs a parent with `main/` |
+| Can a subassembly be built standalone? | No binary (no `main/`), but must be model-valid standalone (connections only reference own components) |
 
 ## Related Skills
 
