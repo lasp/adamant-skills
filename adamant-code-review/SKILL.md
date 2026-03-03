@@ -58,6 +58,19 @@ A review covers one or more of these artifact types:
 - [ ] Subtypes used to constrain ranges where appropriate
 - [ ] Pure logic separated from connector dispatch where feasible (SPARK candidate)
 
+### Active Component Patterns
+- [ ] `recv_async` connectors have explicit `priority` when multiple exist (higher = dequeued first)
+- [ ] Tick input is `recv_async` for active components (not `recv_sync` -- sync runs in caller's task, not component's)
+- [ ] `init_base` queue depth matches expected load (sum of all async connector depths)
+- [ ] Priority ordering is intentional (e.g., tick > data, or data > tick depending on design)
+- [ ] No blocking operations in async handlers (would block the component's task)
+
+### Common Naming Issues (campaign-observed)
+- [ ] `Abort` is an Ada reserved word -- use `Abort_Sequence`, `Cancel`, or `Seq_Abort`
+- [ ] Fault names in fault_responses.yaml match component YAML exactly (not `_Fault` suffix if not declared)
+- [ ] Named connector accessor: `{Name}_T_Send` for typed, just `{Name}` for named connectors (check generated API)
+- [ ] Command arg type field is `arg_type` not `type`
+
 ## Test Review Checklist
 
 ### Structure
@@ -111,6 +124,14 @@ A review covers one or more of these artifact types:
 - [ ] `init` parameters match component's Init procedure signature
 - [ ] Linux target specified (or correct target for the project)
 - [ ] Main procedure uses correct assembly package name
+
+### Assembly Anti-Patterns (campaign-observed)
+- [ ] Agent did NOT flatten assembly when subassembly was required (flattening to avoid event_to_text bug is a scope violation if task says "use a subassembly")
+- [ ] Agent did NOT omit Parameter_Store when component has parameters (Parameter_Store requires companion Parameters component)
+- [ ] Agent did NOT modify read-only prior-phase artifacts (types, components)
+- [ ] Agent did NOT delete unrelated scenarios' files
+- [ ] Fault response commands reference valid command names on the target instance (e.g., `Noop` on Command_Router, not a nonexistent command)
+- [ ] `Queue_Size` vs `Priority_Queue_Depth` -- use `Priority_Queue_Depth` when component has multiple recv_async with different priorities
 
 ## Review Output Format
 
