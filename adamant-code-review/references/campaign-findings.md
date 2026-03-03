@@ -71,6 +71,12 @@ Each entry includes the iteration where it was first observed and the resolution
 - **Impact:** Compilation error in generated data product package.
 - **Resolution:** Check `config/*.configuration.yaml` for buffer size limit. Keep DP types within bounds.
 
+### Framework modification during assembly wiring (T13-S3-i1)
+- **Severity:** error (scope violation)
+- **Pattern:** Sub-agent patched `gen/models/assembly.py` in the Adamant framework to fix subassembly `_components.ads` missing includes.
+- **Impact:** Framework modification is outside task scope. The change itself may be valid but it modifies shared infrastructure that other projects depend on.
+- **Resolution:** Use the documented `with:` field workaround in subassembly YAML (add `with: ["Task_Types", "Interrupt_Types", "Component"]`). This is documented in the adamant-subassemblies skill. Never modify framework code during component/assembly tasks.
+
 ## Efficiency Observations
 
 ### Build output noise (all iterations)
