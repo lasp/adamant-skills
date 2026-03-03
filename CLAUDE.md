@@ -13,7 +13,7 @@ This repo contains three agent prompt files. Copy them to your project root:
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (19 skills, ~19100 lines with refs)
+## Skill Inventory (20 skills, ~19300 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
@@ -34,6 +34,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-subassemblies` | 504 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
 | `adamant-project-setup` | 484 | New project scaffolding, env/activate, Docker, config |
 | `knowledge-acquisition` | 471 | Systematic codebase study with sub-agents |
+| `adamant-code-review` | ~170 | Component, test, type, assembly review checklists, design assessment |
 | `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
 | `high-assurance-design` | 304 | Design-by-invariant, non-goals, formal verification |
 

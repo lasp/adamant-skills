@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 18 Adamant skills totaling ~18500 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 19 Adamant skills totaling ~19300 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -178,6 +178,8 @@ Adamant builds MUST run inside the project's Docker container. **Never build loc
 | Define new packed types | type-system | -- |
 | Choose components for a subsystem | framework-components | assembly-dev |
 | Full component lifecycle (build+test) | component-dev | testing |
+| Review generated or hand-written code | code-review | component-dev |
+| PR review (Adamant artifacts) | code-review | testing |
 | SPARK verification | formal-verification | component-dev |
 | Wrap C++ algorithm into Adamant component | algorithm-wrapping | component-dev |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
@@ -208,6 +210,17 @@ These patterns cause compilation errors if violated:
 - `adamant_validate_yaml.py` -- pre-flight YAML validation without Docker
 
 **Use alongside:** `adamant-component-dev` and `adamant-testing`
+
+### Reviewing Adamant code (PR review, post-generation audit, design assessment)
+**Load:** `adamant-code-review`
+- Component, test, type, and assembly review checklists
+- Assertion quality and coverage assessment
+- Design review (decomposition, connector topology, SPARK candidacy)
+- Finding severity levels (error/warning/info) and structured output format
+
+**Also load if needed:**
+- `adamant-component-dev` -- for generated API reference when reviewing implementations
+- `adamant-testing` -- for test pattern reference when reviewing test quality
 
 ### Creating or improving Adamant skills
 **Load:** `adamant-skill-creation`
