@@ -77,6 +77,18 @@ Each entry includes the iteration where it was first observed and the resolution
 - **Impact:** Framework modification is outside task scope. The change itself may be valid but it modifies shared infrastructure that other projects depend on.
 - **Resolution:** Use the documented `with:` field workaround in subassembly YAML (add `with: ["Task_Types", "Interrupt_Types", "Component"]`). This is documented in the adamant-subassemblies skill. Never modify framework code during component/assembly tasks.
 
+### Subassembly model cache workaround (T13-S3-i3)
+- **Severity:** info
+- **Pattern:** Sub-agent pre-generates subassembly source files (`redo build/src/<subasm>_components.ads`) before `redo style` to work around framework model caching that produces empty `with` clauses when subassembly is first loaded by parent.
+- **Impact:** Adds build time but avoids compilation failures. The `with:` field in subassembly YAML is the cleaner fix.
+- **Resolution:** Use `with: ["Task_Types", "Interrupt_Types", "Component"]` in subassembly YAML instead of build-order workarounds.
+
+### Infrastructure failures during multi-phase pipeline (T13-S3-i4)
+- **Severity:** info (process)
+- **Pattern:** API capacity issues caused sub-agent crashes (1m runtime with no tokens), SIGTERM on in-progress exec processes, and mid-commit interruptions.
+- **Impact:** Dirty git state requiring manual cleanup. Uncommitted work lost.
+- **Resolution:** Always verify git state before spawning next iteration. `git checkout -- . && git clean -fd` to recover. Never trust that a failed sub-agent left clean state.
+
 ## Efficiency Observations
 
 ### Build output noise (all iterations)

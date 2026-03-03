@@ -60,7 +60,7 @@ A review covers one or more of these artifact types:
 
 ### Active Component Patterns
 - [ ] `recv_async` connectors have explicit `priority` when multiple exist (higher = dequeued first)
-- [ ] Tick input is `recv_async` for active components (not `recv_sync` -- sync runs in caller's task, not component's)
+- [ ] Tick input is `recv_async` for active components (not `recv_sync` -- sync runs in caller's task, not component's). Exception: tick that ONLY publishes data products is acceptable as recv_sync (lightweight, no queuing needed)
 - [ ] `init_base` queue depth matches expected load (sum of all async connector depths)
 - [ ] Priority ordering is intentional (e.g., tick > data, or data > tick depending on design)
 - [ ] No blocking operations in async handlers (would block the component's task)
@@ -132,6 +132,17 @@ A review covers one or more of these artifact types:
 - [ ] No unrelated files deleted or renamed
 - [ ] Fault response commands reference valid command names on the target instance (e.g., `Noop` on Command_Router)
 - [ ] `Queue_Size` vs `Priority_Queue_Depth` -- use `Priority_Queue_Depth` when component has multiple recv_async with different priorities
+
+## Scope Compliance Checklist (Multi-Phase Pipelines)
+
+When reviewing artifacts built in a phased pipeline (e.g., Phase A = component, Phase B = assembly):
+
+- [ ] No files modified outside the current phase's directories
+- [ ] No framework code modified (gen/, adamant/ repo)
+- [ ] Prior-phase artifacts untouched (read-only dirs respected)
+- [ ] No git operations performed (commit, push, branch)
+- [ ] Workarounds use documented approaches (e.g., YAML `with:` field), not patches to framework internals
+- [ ] Assembly phase reads component YAML to discover connectors (doesn't invent connector names)
 
 ## Review Output Format
 
