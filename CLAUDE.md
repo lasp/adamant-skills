@@ -46,6 +46,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 - **Selector-driven.** Load 1-2 skills per task, not all 18.
 - **Three-tier prompt strategy:** This file (CLAUDE.md) -> skill-selector -> deep skills.
 - **~300-500 line SKILL.md target.** Dense patterns in SKILL.md, detailed examples in references/.
+- **Cache-optimized structure.** Stable content (skills) forms a cacheable prefix; variant content (task requests) goes last. Deterministic read order in the skill selector enables cross-call cache hits. See README.md for full analysis.
 - **No project-specific content.** Generic skills contain zero project names or paths. Project-specific guidance lives in the project repo.
 - **No commits/push instructions.** Skills are agent-level -- orchestrators handle git.
 - **No structural coverage ceiling.** All paths are coverable with proper testing techniques.
