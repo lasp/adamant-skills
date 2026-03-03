@@ -89,6 +89,24 @@ Each entry includes the iteration where it was first observed and the resolution
 - **Impact:** Dirty git state requiring manual cleanup. Uncommitted work lost.
 - **Resolution:** Always verify git state before spawning next iteration. `git checkout -- . && git clean -fd` to recover. Never trust that a failed sub-agent left clean state.
 
+### prepreamble vs with for subassembly includes (T14-S1-i1, i2)
+- **Severity:** info
+- **Pattern:** Sub-agents use `prepreamble:` YAML field to inject `with Task_Types; with Interrupt_Types; with Component;` into subassembly `_components.ads` instead of the documented `with:` field.
+- **Impact:** Both approaches compile. `prepreamble:` injects raw Ada text before the package declaration. `with:` is the schema-supported field. Sub-agent claims `with:` doesn't work for passive-only subassemblies due to a template guard on `components_ads_includes`.
+- **Resolution:** Both work. `with:` is preferred if it works for the component mix. `prepreamble:` is a valid fallback. Neither is an error.
+
+### Service/request connector naming (T14-S1-i2)
+- **Severity:** warning
+- **Pattern:** Connector names in subassembly YAML must exactly match the component YAML's connector `name:` field. i2 fixed `Get_Coeffs` -> `Get_Coefficients` from i1 mismatch.
+- **Impact:** Assembly validation failure if names don't match.
+- **Resolution:** Always read the component YAML to discover exact connector names. Don't abbreviate.
+
+### Multi-component test isolation with service connectors (T14-S1)
+- **Severity:** info
+- **Pattern:** Components with `request` connectors need tester mock return values. Sub-agents add `Get_Coefficients_Return_Value` fields to generated tester stubs.
+- **Impact:** Without mock return values, request connectors return uninitialized data (Fetch_Status may not be Success).
+- **Resolution:** Override the `*_T_Service` return handler in the tester to set both Fetch_Status.Success and the desired return value. Skills document this pattern.
+
 ## Efficiency Observations
 
 ### Build output noise (all iterations)

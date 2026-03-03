@@ -133,6 +133,34 @@ A review covers one or more of these artifact types:
 - [ ] Fault response commands reference valid command names on the target instance (e.g., `Noop` on Command_Router)
 - [ ] `Queue_Size` vs `Priority_Queue_Depth` -- use `Priority_Queue_Depth` when component has multiple recv_async with different priorities
 
+## Multi-Component Interaction Checklist
+
+When reviewing systems with 2+ custom components that interact:
+
+### Connector Consistency
+- [ ] Service/request connector pairs use the same type on both sides
+- [ ] Connector names match exactly between provider and requester YAML
+- [ ] Shared types are in a common types directory (not duplicated per component)
+- [ ] Request connectors have corresponding service connectors (not dangling)
+
+### Cross-Component Data Flow
+- [ ] Data passed between components is correctly typed (no implicit conversions)
+- [ ] Timestamp fields use consistent units across all components (seconds vs milliseconds)
+- [ ] Default/initial values are consistent (e.g., calibration store defaults match what consumers expect)
+- [ ] Error propagation: what happens if a service request returns stale/invalid data?
+
+### Assembly Wiring
+- [ ] All service/request pairs actually connected in assembly YAML
+- [ ] Connection direction correct: `from_component` is the requester, `to_component` is the provider
+- [ ] No circular dependencies (A requests from B which requests from A)
+- [ ] Multiple requesters to one provider: verify the provider is reentrant or protected
+
+### Test Coverage for Interactions
+- [ ] Each component tested in isolation with mock service responses
+- [ ] Tester overrides `*_T_Service` return to provide controlled test data
+- [ ] Fetch_Status verified (Success vs error conditions)
+- [ ] Edge cases: what if service returns default/zero values? Stale timestamps?
+
 ## Scope Compliance Checklist (Multi-Phase Pipelines)
 
 When reviewing artifacts built in a phased pipeline (e.g., Phase A = component, Phase B = assembly):
