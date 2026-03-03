@@ -5,7 +5,7 @@ description: Review Adamant components, tests, types, and assemblies for correct
 
 # Adamant Code Review
 
-Structured review of Adamant artifacts -- components, tests, types, assemblies. Produces actionable findings categorized by severity. Works on both generated (cold-start agent) and hand-written code.
+Structured review of Adamant artifacts -- components, tests, types, assemblies. Produces actionable findings categorized by severity. Works on any Adamant code: hand-written, AI-generated, or mixed. Use for PR reviews, design assessments, pre-merge quality gates, or post-build audits.
 
 ## Review Scope
 
@@ -65,7 +65,7 @@ A review covers one or more of these artifact types:
 - [ ] Priority ordering is intentional (e.g., tick > data, or data > tick depending on design)
 - [ ] No blocking operations in async handlers (would block the component's task)
 
-### Common Naming Issues (campaign-observed)
+### Common Naming Issues
 - [ ] `Abort` is an Ada reserved word -- use `Abort_Sequence`, `Cancel`, or `Seq_Abort`
 - [ ] Fault names in fault_responses.yaml match component YAML exactly (not `_Fault` suffix if not declared)
 - [ ] Named connector accessor: `{Name}_T_Send` for typed, just `{Name}` for named connectors (check generated API)
@@ -125,12 +125,12 @@ A review covers one or more of these artifact types:
 - [ ] Linux target specified (or correct target for the project)
 - [ ] Main procedure uses correct assembly package name
 
-### Assembly Anti-Patterns (campaign-observed)
-- [ ] Agent did NOT flatten assembly when subassembly was required (flattening to avoid event_to_text bug is a scope violation if task says "use a subassembly")
-- [ ] Agent did NOT omit Parameter_Store when component has parameters (Parameter_Store requires companion Parameters component)
-- [ ] Agent did NOT modify read-only prior-phase artifacts (types, components)
-- [ ] Agent did NOT delete unrelated scenarios' files
-- [ ] Fault response commands reference valid command names on the target instance (e.g., `Noop` on Command_Router, not a nonexistent command)
+### Common Assembly Mistakes
+- [ ] Subassembly used when design requires it (flattening to avoid event_to_text style warnings is not a valid reason -- the ELF is unaffected)
+- [ ] Parameter_Store included when any component has parameters (requires companion Parameters component)
+- [ ] Prior-phase artifacts (types, components) not modified during assembly wiring
+- [ ] No unrelated files deleted or renamed
+- [ ] Fault response commands reference valid command names on the target instance (e.g., `Noop` on Command_Router)
 - [ ] `Queue_Size` vs `Priority_Queue_Depth` -- use `Priority_Queue_Depth` when component has multiple recv_async with different priorities
 
 ## Review Output Format
@@ -171,14 +171,18 @@ For higher-level assessment beyond checklist items:
 
 ## Using This Skill
 
-### Post-generation audit (campaign or CI)
-Read the generated artifacts, run through the relevant checklists, produce findings.
-Focus on errors and warnings. Info-level findings are optional.
-
 ### PR review
 Read the diff, identify which artifact types changed, run the relevant checklists.
 Note what the diff changes and whether it introduces new issues or resolves existing ones.
 
+### Post-build audit (CI, agent output, or manual build)
+Read the built artifacts, run through the relevant checklists, produce findings.
+Focus on errors and warnings. Info-level findings are optional.
+
 ### Design assessment
 Read component YAML and implementation. Run the design review section.
 Produce recommendations, not just findings.
+
+### Self-review before commit
+Run the relevant checklists against your own changes before committing.
+Catch naming issues, missing tests, and wiring mistakes before they reach review.
