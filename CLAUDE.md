@@ -44,7 +44,11 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
 - **Compiler-validated.** 30+ rounds of build-test-fix cycles across 100+ components + unit tests. Components compile clean on first try when skills are followed.
 - **Selector-driven.** Load 1-2 skills per task, not all 18.
-- **Three-tier prompt strategy:** This file (CLAUDE.md) -> skill-selector -> deep skills.
+- **Three-tier prompt strategy:** This file (CLAUDE.md) -> skill-selector -> deep skills. Load order matters for cache efficiency:
+  1. This file -- loaded automatically as system prompt
+  2. `adamant-skill-selector/SKILL.md` -- always the first skill read
+  3. Task-specific skills -- in the order the selector specifies
+  4. Task request / user content -- always last
 - **~300-500 line SKILL.md target.** Dense patterns in SKILL.md, detailed examples in references/.
 - **Cache-optimized structure.** Stable content (skills) forms a cacheable prefix; variant content (task requests) goes last. Deterministic read order in the skill selector enables cross-call cache hits. See README.md for full analysis.
 - **No project-specific content.** Generic skills contain zero project names or paths. Project-specific guidance lives in the project repo.
