@@ -153,6 +153,8 @@ redo yaml_sloc         # Count YAML source lines of code
 
 **NEVER manually delete build directories or redo state.** This includes `rm -rf build`, `rm -rf .redo`, `rm -rf */build`, `rm -rf */test/build`, or any variant. Always use `redo clean` or `redo clean_all` -- they properly reset state. Do NOT re-clone the adamant repository (destructive, wipes local state).
 
+**After deleting source files, run `redo clean` before rebuilding.** When you `rm -rf` a source directory and recreate it with different files, redo's database still tracks the old output files. This causes phantom build errors like "No rule to build 'deleted_file.ads'". Fix: `redo clean` (or `redo clean_all`) on the affected directory clears stale DB entries. This is especially common when iterating on types directories (deleting and recreating packed type YAML files with different names).
+
 ### Inspect
 ```bash
 redo what             # List all buildable targets in current directory

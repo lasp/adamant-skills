@@ -275,8 +275,10 @@ Router <%= assembly_target_name %>_Router tcpip_server_interface.rb 7779 7779 10
 Gem::Specification.new do |s|
   s.name = "openc3-cosmos-<assembly_name>"
   s.summary = "COSMOS plugin for <Assembly_Name>"
+  s.description = "OpenC3 COSMOS plugin for <Assembly_Name> Adamant assembly"  # REQUIRED -- missing description causes silent load failure
   s.version = "0.0.1"
   s.authors = ["Your Name"]
+  s.license = "MIT"
   s.files = Dir["{targets,lib,procedures,plugin.txt}/**/*"]
 end
 ```
