@@ -657,6 +657,11 @@ wait(seconds)
 packet names, and item names. Names are derived from the assembly YAML component
 instance names and their YAML model definitions.
 
+**COSMOS naming rules:**
+- Enum state names are normalized to UPPERCASE (e.g., `Safe` becomes `SAFE` in telemetry)
+- Command arg parameter names include the type prefix (e.g., `T17_Instrument_Mode.Value` not just `Value`)
+- Enum types used in commands/events/data products need a separate `.record.yaml` packed wrapper
+
 ## Known Limitations
 
 1. **Subassembly incompatibility**: COSMOS generators (`redo build/cosmos/...`) expect flat assemblies with a top-level `components:` key. Assemblies using `subassemblies:` will fail with "Cannot find required key 'components'". Workaround: create a flattened assembly YAML for COSMOS generation, or generate per-subassembly.
