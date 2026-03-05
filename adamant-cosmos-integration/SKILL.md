@@ -559,17 +559,61 @@ openc3cli unload openc3-cosmos-station-assembly-0.0.1.gem__0
 ### Assembly Launch for Live Testing
 
 ```bash
-# Launch assembly ELF in background with timeout:
+# Launch assembly ELF in background with timeout (capture BOTH stdout and stderr):
 adamant_env.sh exec "cd /home/user/project && nohup timeout 300 path/to/main.elf > /tmp/assembly.log 2>&1 &"
 
 # Wait for connection, then check log:
-sleep 10
+sleep 15
 adamant_env.sh exec "cat /tmp/assembly.log"
 # Look for Socket_Connected event (NOT Socket_Not_Connected)
+# Look for "Init_Base...", "Running..." lines confirming startup sequence
 
 # Kill when done:
 adamant_env.sh exec "pkill -f main.elf || true"
 ```
+
+**IMPORTANT:** Always do a clean rebuild before live testing to avoid stale .o file issues:
+```bash
+adamant_env.sh exec "cd /home/user/project/src/assembly/<name>/main && redo clean && redo build/bin/Linux/main.elf"
+```
+
+**Main procedure pattern** (reference: adamant_example linux assembly):
+```ada
+with Ada.Real_Time; use Ada.Real_Time;
+with Ada.Text_IO; use Ada.Text_IO;
+with Assembly_Name;
+procedure Main is
+begin
+   Put_Line ("Init_Base...");
+   Assembly_Name.Init_Base;
+   Put_Line ("Set_Id_Bases...");
+   Assembly_Name.Set_Id_Bases;
+   Put_Line ("Connect_Components...");
+   Assembly_Name.Connect_Components;
+   Put_Line ("Init_Components...");
+   Assembly_Name.Init_Components;
+   delay until Clock + Milliseconds (1000);
+   Put_Line ("Start_Components...");
+   Assembly_Name.Start_Components;
+   Put_Line ("Set_Up_Components...");
+   Assembly_Name.Set_Up_Components;
+   Put_Line ("Running...");
+   loop
+      delay until Clock + Milliseconds (1000);
+   end loop;
+end Main;
+```
+
+### Command Uplink Debugging
+
+If commands are not reaching the assembly (COSMOS txcnt increments but assembly command counters stay at 0):
+
+1. **Check assembly stderr** for `Invalid_Packet_Checksum` or `Packet_Recv_Failed` events from the depacketizer
+2. **Verify the Listener subtask** is configured with `disabled: False` (or simply not set, which defaults to enabled)
+3. **Check the cmd.txt** command definitions match the assembly's registered command IDs
+4. **Verify APID=8** for all commands in cmd.txt (commands identified by `Adamant_Command_Id`, not APID)
+5. **Check plugin.txt** has `Protocol Write cmd_checksum.rb` (XOR-8 checksum required by depacketizer)
+6. **Ensure clean build** -- stale framework .o files can cause silent failures
 
 ### Test Script Execution
 
