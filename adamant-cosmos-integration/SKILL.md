@@ -83,7 +83,7 @@ Downlink: Components -> Event/Product_Packetizer -> Ccsds_Packetizer -> Socket -
 - Depacketizer `Command_T_Send` → Router's `Command_T_To_Route_Recv_Async` (NOT indexed array)
 - ALL `Packet_T_Send` sources must wire to `Ccsds_Packetizer`
 - `Ccsds_Packetizer` has NO `Sys_Time_T_Get` -- it reads timestamps from packet headers
-- Wire `Sys_Time_T_Get` for Socket, Depacketizer, Event_Packetizer, Product_Packetizer
+- Wire `Sys_Time_T_Get` for Socket, Depacketizer, Event_Packetizer, Product_Packetizer, Product_Database
 - Product_Packetizer `Data_Product_Fetch_T_Request` → `Product_Database.Data_Product_Fetch_T_Service`
 - Depacketizer `Command_Response_T_Send` → Router `Command_Response_T_Recv_Async`
 - Depacketizer `Packet_T_Send` → `Ccsds_Packetizer` (for error/status packets)
@@ -498,6 +498,118 @@ After modifying assembly components (adding commands, events, data products):
 - **Both in Docker:** Use Docker network or `host.docker.internal`. May need `--network host` or shared Docker network.
 - **Assembly on host, COSMOS in Docker:** Assembly uses `Addr => "127.0.0.1"`, expose COSMOS port to host.
 - **Recommended for development:** Assembly in Adamant container with port exposed, COSMOS in its own container stack. Both use host networking or a shared bridge network.
+
+## Live Testing with COSMOS
+
+### COSMOS Port Exposure
+
+COSMOS runs in Docker. The `tcpip_server_interface` listens inside the operator container.
+To reach it from the Adamant container (or host), expose the port in `compose.yaml`:
+
+```yaml
+openc3-operator:
+  ports:
+    - "127.0.0.1:2003:2003"  # Adamant CCSDS socket interface
+```
+
+Restart COSMOS after adding port mapping. Verify with `ss -tlnp | grep 2003` on host.
+
+### Plugin Gem Build and Load (Non-Interactive)
+
+```bash
+# Build gem (from cosmos-project dir, mount plugin dir):
+cd /path/to/cosmos-project
+docker compose -f compose.yaml run -T --rm \
+  -v "$(pwd):/openc3/local:z" \
+  -v "/path/to/plugin:/plugin:z" \
+  -w /plugin \
+  -e OPENC3_API_PASSWORD=openc3service \
+  --no-deps openc3-cosmos-cmd-tlm-api \
+  gem build *.gemspec
+
+# Load into COSMOS:
+docker compose -f compose.yaml run -T --rm \
+  -v "$(pwd):/openc3/local:z" \
+  -v "/path/to/plugin:/plugin:z" \
+  -w /plugin \
+  -e OPENC3_API_PASSWORD=openc3service \
+  --no-deps openc3-cosmos-cmd-tlm-api \
+  ruby /openc3/bin/openc3cli load *.gem
+```
+
+If volume mount causes permissions issues with `/gems/cosmoscache/`, use `docker cp` instead:
+```bash
+# Copy gem into running API container, load from inside:
+docker cp plugin.gem cosmos-project-openc3-cosmos-cmd-tlm-api-1:/tmp/
+docker exec cosmos-project-openc3-cosmos-cmd-tlm-api-1 ruby /openc3/bin/openc3cli load /tmp/plugin.gem
+```
+
+### Plugin Management
+
+```bash
+# List installed plugins:
+openc3cli list
+
+# Unload a plugin (use exact name from list output):
+openc3cli unload openc3-cosmos-station-assembly-0.0.1.gem__0
+
+# Only one plugin can bind to a given port. Unload existing plugins before loading new ones on the same port.
+```
+
+### Assembly Launch for Live Testing
+
+```bash
+# Launch assembly ELF in background with timeout:
+adamant_env.sh exec "cd /home/user/project && nohup timeout 300 path/to/main.elf > /tmp/assembly.log 2>&1 &"
+
+# Wait for connection, then check log:
+sleep 10
+adamant_env.sh exec "cat /tmp/assembly.log"
+# Look for Socket_Connected event (NOT Socket_Not_Connected)
+
+# Kill when done:
+adamant_env.sh exec "pkill -f main.elf || true"
+```
+
+### Test Script Execution
+
+```bash
+# Run a COSMOS test script via CLI:
+cd /path/to/cosmos-project
+docker compose -f compose.yaml run -T --rm \
+  -v "$(pwd):/openc3/local:z" \
+  -e OPENC3_API_PASSWORD=openc3service \
+  --no-deps openc3-cosmos-cmd-tlm-api \
+  ruby /openc3/bin/openc3cli script run TARGET/procedures/test_script.py
+```
+
+Scripts live in `targets/TARGET_NAME/procedures/` within the plugin.
+Use `from openc3.script import *` for the scripting API.
+
+### Test Script Patterns (Reference)
+
+```python
+from openc3.script import *
+
+# Send command (hyphen between instance name and command name):
+cmd("Target Component_Instance-Command_Name")
+cmd("Target Component_Instance-Command_Name with Param1 value1, Param2 value2")
+
+# Check telemetry (use wait_check with generous timeouts for live systems):
+wait_check("Target Packet_Name Item_Name.Value == expected", 30)
+check("Target Packet_Name Item_Name.Value == expected")
+value = tlm("Target Packet_Name Item_Name.Value")
+
+# Get raw buffer for parameter table comparison:
+buffer = get_tlm_buffer("Target Packet_Name")
+
+# Wait between operations:
+wait(seconds)
+```
+
+**IMPORTANT:** Read the generated cmd.txt and tlm.txt to get exact command names,
+packet names, and item names. Names are derived from the assembly YAML component
+instance names and their YAML model definitions.
 
 ## Known Limitations
 
