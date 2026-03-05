@@ -662,6 +662,13 @@ instance names and their YAML model definitions.
 - Command arg parameter names include the type prefix (e.g., `T17_Instrument_Mode.Value` not just `Value`)
 - Enum types used in commands/events/data products need a separate `.record.yaml` packed wrapper
 
+**Ground-testable component design:**
+- For components that will be verified via COSMOS scripts, make state changes COMMAND-DRIVEN ONLY
+- Do NOT auto-increment counters or auto-trigger faults on tick -- this creates race conditions with test scripts
+- Tick handlers should only send data products / update telemetry, not change fault/mode/alarm state
+- Use `wait_check()` (not raw `tlm()`) in test scripts -- it polls until condition met or timeout
+- Keep test scripts simple: cmd() + wait_check() + print(). No complex logic.
+
 ## Known Limitations
 
 1. **Subassembly incompatibility**: COSMOS generators (`redo build/cosmos/...`) expect flat assemblies with a top-level `components:` key. Assemblies using `subassemblies:` will fail with "Cannot find required key 'components'". Workaround: create a flattened assembly YAML for COSMOS generation, or generate per-subassembly.
