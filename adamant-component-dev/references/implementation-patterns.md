@@ -164,6 +164,12 @@ Key points:
 - Return `Invalid` on first failed check (short-circuit). Framework blocks the update.
 - Emit rejection events with enough context to identify which parameter failed.
 - Cross-parameter constraints (e.g., min < max) also go here.
+- The framework comment says "range checking is performed during staging" -- this is
+  true only for types with Ada-level range constraints (e.g., a subtype of Integer
+  range 1..100). Generic packed types like `Packed_F32.U` (Short_Float) and
+  `Packed_U16.U` (Unsigned_16) have no application-level subrange, so staging
+  accepts ANY valid value. Use `Validate_Parameters` for application-specific
+  bounds on these unconstrained types.
 
 ### Update_Parameters_Action with Side Effects
 
