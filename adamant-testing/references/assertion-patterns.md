@@ -173,11 +173,11 @@ condition (latch behavior). Test that additional triggers don't duplicate.
 for I in 1 .. 10 loop
    T.Packet_T_Send (Pkt);
 end loop;
-pragma Assert (T.Fault_T_Recv_Sync_History.Get_Count = 0);
+Natural_Assert.Eq (T.Fault_T_Recv_Sync_History.Get_Count, 0);
 
 -- 11th crosses threshold:
 T.Packet_T_Send (Pkt);
-pragma Assert (T.Fault_T_Recv_Sync_History.Get_Count >= 1);
+Natural_Assert.Ge (T.Fault_T_Recv_Sync_History.Get_Count, 1);
 ```
 
 Source: telemetry_filter. Faults can trigger after N occurrences.
@@ -296,16 +296,18 @@ Assert (T.Switch_State_History.Get (1).Value = Unsigned_8'(1), "Should be ON");
 Source: power_switch. Works but less precise error messages. Requires
 `with AUnit.Assertions; use AUnit.Assertions;`.
 
-### 17c. pragma Assert (simple checks)
+### 17c. Smart_Assert for simple checks
 
 ```ada
-pragma Assert (T.Packet_T_Recv_Sync_History.Get_Count = 1, "Expected 1 forwarded packet");
-pragma Assert (T.Command_Response_T_Recv_Sync_History.Get (1).Status =
+Natural_Assert.Eq (T.Packet_T_Recv_Sync_History.Get_Count, 1);
+Command_Response_Status_Assert.Eq (
+   T.Command_Response_T_Recv_Sync_History.Get (1).Status,
    Command_Enums.Command_Response_Status.Success);
 ```
 
-Source: telemetry_filter. Simple boolean checks. No import needed.
-Note: bare `pragma Assert` gives poor error messages on failure.
+Source: telemetry_filter. Use typed Smart_Assert calls even for simple checks --
+they print both expected and actual values on failure. Requires:
+`with Command_Enums.Assertion; use Command_Enums.Assertion;`
 
 ---
 

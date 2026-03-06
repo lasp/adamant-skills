@@ -184,11 +184,11 @@ T.Command_T_Send (T.Commands.My_Noop_Command);                 -- no args
 
 -- Parameters (3-step + processing trigger):
 Status := T.Stage_Parameter (T.Parameters.Param_Name ((Value => 42.0)));
-pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+Parameter_Update_Status_Assert.Eq (Status, Parameter_Enums.Parameter_Update_Status.Success);
 Status := T.Validate_Parameters;
-pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+Parameter_Update_Status_Assert.Eq (Status, Parameter_Enums.Parameter_Update_Status.Success);
 Status := T.Update_Parameters;
-pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+Parameter_Update_Status_Assert.Eq (Status, Parameter_Enums.Parameter_Update_Status.Success);
 -- Active: T.Tick_T_Send (The_Tick);  -- triggers Self.Update_Parameters in tick handler
 -- Passive: T.My_Input_T_Send (Data);  -- triggers Self.Update_Parameters in recv handler
 ```
@@ -294,20 +294,24 @@ Need `use type Command_Enums.Command_Response_Status.E;` for `=` operator visibi
 
 1. **Packed type assertions:** `Packed_U32_Assert.Eq(...)` -- type-safe, clear errors
 2. **Basic_Assertions:** `Natural_Assert.Eq(...)`, `Boolean_Assert.Eq(...)` -- counts, flags
-3. **pragma Assert:** `pragma Assert (condition);` -- simple checks
-4. **AUnit Assert:** `Assert(condition, "message")` -- fallback
+3. **Enum assertion packages:** `Parameter_Update_Status_Assert.Eq(...)`, `Command_Response_Status_Assert.Eq(...)` -- from `*.Assertion` child packages
+4. **AUnit Assert:** `Assert(condition, "message")` -- last resort fallback
 
-Do NOT call `Smart_Assert.Eq(...)` directly -- requires generic instantiation first.
+**NEVER use `pragma Assert` in tests.** Smart_Assert-based assertions (items 1-3) print both expected and actual values on failure. `pragma Assert` only says "failed" with no context, making debugging painful. Every `pragma Assert` can be replaced with a typed Smart_Assert call.
+
+Do NOT call `Smart_Assert.Eq(...)` directly -- requires generic instantiation first. Use the pre-instantiated packages from `Basic_Assertions`, `*.Assertion` child packages, or instantiate your own for project-specific types.
 
 ```ada
 with Basic_Assertions; use Basic_Assertions;
 with Packed_U32.Assertion; use Packed_U32.Assertion;
 with Command_Enums; use type Command_Enums.Command_Response_Status.E;
-with Parameter_Enums; use Parameter_Enums.Parameter_Validation_Status;  -- for parameter tests
+with Command_Enums.Assertion; use Command_Enums.Assertion;  -- Command_Response_Status_Assert
+with Parameter_Enums;
+with Parameter_Enums.Assertion; use Parameter_Enums.Assertion;  -- Parameter_Update_Status_Assert, Parameter_Validation_Status_Assert
 with Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;  -- for data dep tests
 ```
 
-**Alternative:** `use type Parameter_Enums.Parameter_Validation_Status.E;` or `use Parameter_Enums.Parameter_Validation_Status;` -- both work. Package `use` gives direct name visibility (`Valid` vs `Parameter_Validation_Status.Valid`).
+**Parameter status assertions:** Use `Parameter_Update_Status_Assert.Eq(Status, Parameter_Enums.Parameter_Update_Status.Success)` instead of `pragma Assert`. The `.Assertion` child package provides Smart_Assert instantiations for all enum types in that package.
 
 **Custom enum data product assertions:** For enum types defined in project `types/`, auto-generated assertion packages follow the same pattern: `with My_Enum.Assertion; use My_Enum.Assertion;` gives `My_Enum_Assert.Eq(...)`. Use for DP history checks on enum-typed data products (e.g. mode state, operational status).
 
@@ -462,26 +466,27 @@ The complete parameter update flow requires three steps plus a tick:
 
 ```ada
 Status := T.Stage_Parameter (T.Parameters.Output_Limit ((Value => 5.0)));
-pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+Parameter_Update_Status_Assert.Eq (Status, Parameter_Enums.Parameter_Update_Status.Success);
 Status := T.Validate_Parameters;
-pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+Parameter_Update_Status_Assert.Eq (Status, Parameter_Enums.Parameter_Update_Status.Success);
 Status := T.Update_Parameters;
-pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+Parameter_Update_Status_Assert.Eq (Status, Parameter_Enums.Parameter_Update_Status.Success);
 T.Tick_T_Send (The_Tick);  -- New parameter values take effect
 ```
 
 Declare Status as `Parameter_Enums.Parameter_Update_Status.E`. Requires:
 ```ada
-with Parameter_Enums; use type Parameter_Enums.Parameter_Update_Status.E;
+with Parameter_Enums;
+with Parameter_Enums.Assertion; use Parameter_Enums.Assertion;
 ```
 
 ### Validation Rejection Testing
 
 ```ada
 Status := T.Stage_Parameter (T.Parameters.Warning_Threshold ((Value => 95.0)));
-pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Success);
+Parameter_Update_Status_Assert.Eq (Status, Parameter_Enums.Parameter_Update_Status.Success);
 Status := T.Validate_Parameters;
-pragma Assert (Status = Parameter_Enums.Parameter_Update_Status.Validation_Error);
+Parameter_Update_Status_Assert.Eq (Status, Parameter_Enums.Parameter_Update_Status.Validation_Error);
 ```
 
 Source: threshold_monitor. Stage succeeds (just buffers), but Validate rejects because the component's Validate_Parameters override checks cross-parameter constraints (warning >= critical is invalid).

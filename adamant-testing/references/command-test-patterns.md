@@ -107,12 +107,13 @@ word, use bit shifting to construct the value.
 ### 4e. Lightweight response check (just status)
 
 ```ada
-pragma Assert (T.Command_Response_T_Recv_Sync_History.Get (1).Status =
+Command_Response_Status_Assert.Eq (
+   T.Command_Response_T_Recv_Sync_History.Get (1).Status,
    Command_Enums.Command_Response_Status.Success);
 ```
 
 Source: threshold_monitor, telemetry_filter. Simpler when you only care
-about success/failure. Requires `use type Command_Enums.Command_Response_Status.E;`.
+about success/failure. Requires `with Command_Enums.Assertion; use Command_Enums.Assertion;`.
 
 ### 4f. Multiple commands in sequence (cumulative history)
 
