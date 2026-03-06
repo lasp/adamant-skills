@@ -139,18 +139,18 @@ overriding function Validate_Parameters (Self : in out Instance;
 is
    use Parameter_Validation_Status;
 begin
-   -- Range checks on individual parameters
-   if Gain < 0.1 or else Gain > 10.0 then
+   -- .U types are records with .Value field -- use .Value for comparisons
+   if Gain.Value < 0.1 or else Gain.Value > 10.0 then
       Self.Event_T_Send_If_Connected (Self.Events.Parameter_Rejected (
          Self.Sys_Time_T_Get, (Id => 0)));  -- Gain out of range
       return Invalid;
    end if;
-   if Offset < -100.0 or else Offset > 100.0 then
+   if Offset.Value < -100.0 or else Offset.Value > 100.0 then
       Self.Event_T_Send_If_Connected (Self.Events.Parameter_Rejected (
          Self.Sys_Time_T_Get, (Id => 1)));  -- Offset out of range
       return Invalid;
    end if;
-   if Sample_Rate < 1 or else Sample_Rate > 1000 then
+   if Sample_Rate.Value < 1 or else Sample_Rate.Value > 1000 then
       Self.Event_T_Send_If_Connected (Self.Events.Parameter_Rejected (
          Self.Sys_Time_T_Get, (Id => 2)));  -- Sample_Rate out of range
       return Invalid;
@@ -178,17 +178,17 @@ and report current values as data products:
 
 ```ada
 overriding procedure Update_Parameters_Action (Self : in out Instance) is
-   Param : constant My_Parameters.T := Self.Get_Parameters;
    Timestamp : constant Sys_Time.T := Self.Sys_Time_T_Get;
 begin
+   -- Access parameters via Self.<Param_Name> (returns .U record)
    -- Update internal algorithm state from new parameters
-   Self.Current_Gain := Param.Gain;
-   Self.Current_Offset := Param.Offset;
+   Self.Current_Gain := Self.Gain.Value;
+   Self.Current_Offset := Self.Offset.Value;
    -- Report current parameter values as data products
    Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Current_Gain (
-      Timestamp, (Value => Param.Gain)));
+      Timestamp, (Value => Self.Gain.Value)));
    Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Current_Offset (
-      Timestamp, (Value => Param.Offset)));
+      Timestamp, (Value => Self.Offset.Value)));
    -- Emit event
    Self.Event_T_Send_If_Connected (Self.Events.Parameters_Applied (Timestamp));
 end Update_Parameters_Action;

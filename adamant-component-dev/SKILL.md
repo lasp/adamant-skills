@@ -607,6 +607,7 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 32b. [ ] Ada does NOT allow `constant` in renames declarations. For `in` mode parameters, just use `Cfg : Foo renames Arg;` -- the `in` mode already makes it read-only. Do NOT write `constant` in a renames.
 33. [ ] See `adamant-style` skill for full style reference
 34. [ ] `Packed_F32.T.Value` is `Short_Float` (Ada 32-bit float), NOT `Interfaces.IEEE_Float_32` -- use `Short_Float` for F32 record fields and arithmetic
+35. [ ] **Custom type visibility in implementation body**: The generated base spec (`component-<name>.ads`) only `with`s types used in connectors, commands, parameters, etc. If your implementation body (`.adb`) references project-specific types that are NOT in those YAML files (e.g., a packed record type used only for data product formatting or unchecked conversion), you MUST add an explicit `with <Type_Package>;` in the body's context clause. The base spec's `with` clauses do NOT automatically cover all types your body might need.
 
 ## References
 
