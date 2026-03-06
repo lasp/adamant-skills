@@ -124,6 +124,70 @@ is (Parameter_Validation_Status.Valid);  -- Default: accept all
 overriding procedure Update_Parameters_Action (Self : in out Instance) is null;  -- Default: no-op
 ```
 
+### Validate_Parameters with Range Checks
+
+When parameters have valid ranges, override `Validate_Parameters` to enforce them.
+The function receives each parameter as an individual `.U` (unpacked) argument.
+Return `Invalid` to reject the entire staged set; the framework will NOT apply any
+of the staged parameters.
+
+```ada
+overriding function Validate_Parameters (Self : in out Instance;
+   Gain : in Packed_F32.U;
+   Offset : in Packed_F32.U;
+   Sample_Rate : in Packed_U16.U) return Parameter_Validation_Status.E
+is
+   use Parameter_Validation_Status;
+begin
+   -- Range checks on individual parameters
+   if Gain < 0.1 or else Gain > 10.0 then
+      Self.Event_T_Send_If_Connected (Self.Events.Parameter_Rejected (
+         Self.Sys_Time_T_Get, (Id => 0)));  -- Gain out of range
+      return Invalid;
+   end if;
+   if Offset < -100.0 or else Offset > 100.0 then
+      Self.Event_T_Send_If_Connected (Self.Events.Parameter_Rejected (
+         Self.Sys_Time_T_Get, (Id => 1)));  -- Offset out of range
+      return Invalid;
+   end if;
+   if Sample_Rate < 1 or else Sample_Rate > 1000 then
+      Self.Event_T_Send_If_Connected (Self.Events.Parameter_Rejected (
+         Self.Sys_Time_T_Get, (Id => 2)));  -- Sample_Rate out of range
+      return Invalid;
+   end if;
+   return Valid;
+end Validate_Parameters;
+```
+
+Key points:
+- Parameter arguments are `.U` (unpacked) types, NOT packed. Use arithmetic directly.
+- Return `Invalid` on first failed check (short-circuit). Framework blocks the update.
+- Emit rejection events with enough context to identify which parameter failed.
+- Cross-parameter constraints (e.g., min < max) also go here.
+
+### Update_Parameters_Action with Side Effects
+
+Use `Update_Parameters_Action` to apply new parameter values to internal state
+and report current values as data products:
+
+```ada
+overriding procedure Update_Parameters_Action (Self : in out Instance) is
+   Param : constant My_Parameters.T := Self.Get_Parameters;
+   Timestamp : constant Sys_Time.T := Self.Sys_Time_T_Get;
+begin
+   -- Update internal algorithm state from new parameters
+   Self.Current_Gain := Param.Gain;
+   Self.Current_Offset := Param.Offset;
+   -- Report current parameter values as data products
+   Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Current_Gain (
+      Timestamp, (Value => Param.Gain)));
+   Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Current_Offset (
+      Timestamp, (Value => Param.Offset)));
+   -- Emit event
+   Self.Event_T_Send_If_Connected (Self.Events.Parameters_Applied (Timestamp));
+end Update_Parameters_Action;
+```
+
 ## Memory Region Overlay (Zero-Copy)
 
 Access byte arrays without copying using address overlays:
