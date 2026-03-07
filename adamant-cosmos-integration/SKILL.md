@@ -697,6 +697,11 @@ names** -- product_packets.yaml `name:` field determines the COSMOS packet name
 COSMOS uses `SAFE_MODE_THERMAL_PACKET`. Test scripts MUST use the exact names
 from the loaded plugin's tlm.txt, not shortened or assumed variants.
 
+**This applies to telemetry ITEM names too** -- every `PACKET ITEM.NAME` referenced
+in a test script must appear verbatim in tlm.txt. Do not infer item names from
+component YAML, data_products.yaml, or implementation files. If an item is not
+in tlm.txt, it does not exist in COSMOS and referencing it will cause a runtime error.
+
 **COSMOS naming rules:**
 - Enum state names are normalized to UPPERCASE (e.g., `Safe` becomes `SAFE` in telemetry)
 - Command arg parameter names include the type prefix (e.g., `T17_Instrument_Mode.Value` not just `Value`)
