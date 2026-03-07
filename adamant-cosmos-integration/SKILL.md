@@ -698,6 +698,15 @@ instance names and their YAML model definitions.
 - Command arg parameter names include the type prefix (e.g., `T17_Instrument_Mode.Value` not just `Value`)
 - Enum types used in commands/events/data products need a separate `.record.yaml` packed wrapper
 
+**Test verification patterns:**
+- Use POSITIVE verification (check expected telemetry effects) instead of checking Error_Packet.Sequence_Count
+- Error_Packet may increment for reasons unrelated to command failures (assembly startup errors, timing)
+- To verify commands work: send the command, then check that the expected telemetry value changed
+- For NOOP: verify Events_Packet.Sequence_Count increments (NOOP always produces an event)
+- For parameter updates: send Update_Parameter + Dump_Parameters, verify value in Active_Parameters packet
+- For packetizer control: verify packet still flows (Sequence_Count increments over time)
+- Do NOT rely on "no error occurred" assertions -- always verify the positive expected effect
+
 **Ground-testable component design:**
 - For components that will be verified via COSMOS scripts, make state changes COMMAND-DRIVEN ONLY
 - Do NOT auto-increment counters or auto-trigger faults on tick -- this creates race conditions with test scripts
