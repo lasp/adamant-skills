@@ -495,6 +495,8 @@ Each addition requires correct wiring AND supporting YAML files. Verify `redo al
 | `init_base` on simple passive | Adding `init_base` to a passive component without queues | Only use `init_base` for components with arrayed connectors or queues |
 | Command_Response not wired | Component has `Command_Response_T_Send` but no connection | Wire to Command_Router or `ignore` |
 | Missing router self-loop | `Command_Response_T_To_Forward_Send` not connected | Wire back to router's `Command_Response_T_Recv_Async` |
+| Missing router Sys_Time | Command_Router's `Sys_Time_T_Get` unwired | **Task crashes silently** during registration. Wire to time provider. |
+| Missing router command self-loop | Router's own Noop commands not registered | Wire `Command_T_Send[N]` → own `Command_T_Recv_Async` + `Command_Response_T_Send` → own `Command_Response_T_Recv_Async`. Include self in `Command_T_Send_Count`. |
 | Stack too small | Stack size < 2000 bytes | Minimum is 2000; use 50000 for typical components |
 | Event_Splitter count mismatch | `T_Send_Count => 3` but only 2 connections wired | T_Send_Count MUST exactly match number of T_Send connections |
 | Missing map_data_dependencies | Component has data_dependencies.yaml but no mapping | Every component with data_dependencies.yaml MUST have map_data_dependencies in assembly |
@@ -596,7 +598,8 @@ Auto-generated from the assembly model:
 - **ALL Event_T_Send** connectors must wire to Event_Splitter (or directly to Event_Packetizer). Missing = lost events.
 - **ALL Data_Product_T_Send** connectors must wire to Product_Database. Missing = lost telemetry.
 - **Arrayed connector indices** must be sequential starting from 1. `Tick_T_Send_Count => 3` needs exactly indices 1, 2, 3.
-- **Every component with `commands.yaml`** MUST have its `Command_T_Recv_Sync` wired to the Command_Router. `Command_T_Send_Count` must include ALL commandable components. Missing wiring = commands never registered.
+- **Every component with `commands.yaml`** MUST have its `Command_T_Recv_Sync` (or `_Recv_Async`) wired to the Command_Router. `Command_T_Send_Count` must include ALL commandable components **plus the Command_Router itself** (self-loop). Missing wiring = commands never registered.
+- **Command_Router MUST wire**: `Sys_Time_T_Get` (task crashes without it), `Command_T_Send[N]` self-loop to own `Command_T_Recv_Async`, `Command_Response_T_Send` to own `Command_Response_T_Recv_Async`.
 - **`map_data_dependencies.data_dependency`** must exactly match a name defined in the component's `.data_dependencies.yaml`. Do not rename or paraphrase -- copy it verbatim.
 - **Data dependencies require matching sources**: Every `map_data_dependencies` entry maps to a `component_name.data_product_name` that MUST exist as a real data product produced by another component in the assembly. Plan the full telemetry data flow before designing data dependency interfaces -- if no component produces the needed DP, the assembly will fail to build.
 - **Event_Text_Logger discriminant** must include assembly name: `Assembly_Name_Event_To_Text.Event_To_Text'Access`.

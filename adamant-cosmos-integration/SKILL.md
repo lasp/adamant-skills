@@ -83,7 +83,11 @@ Downlink: Components -> Event/Product_Packetizer -> Ccsds_Packetizer -> Socket -
 - Depacketizer `Command_T_Send` → Router's `Command_T_To_Route_Recv_Async` (NOT indexed array)
 - ALL `Packet_T_Send` sources must wire to `Ccsds_Packetizer`
 - `Ccsds_Packetizer` has NO `Sys_Time_T_Get` -- it reads timestamps from packet headers
-- Wire `Sys_Time_T_Get` for Socket, Depacketizer, Event_Packetizer, Product_Packetizer, Product_Database
+- Wire `Sys_Time_T_Get` for Socket, Depacketizer, Event_Packetizer, Product_Packetizer, Product_Database, **Command_Router** (crashes without it!)
+- **Command_Router self-loops (REQUIRED):**
+  - `Command_T_Send[N]` → `Command_T_Recv_Async` (self) — registers its own Noop commands
+  - `Command_Response_T_Send` → `Command_Response_T_Recv_Async` (self) — handles own responses
+  - `Command_T_Send_Count` must include self + Depacketizer (if it has commands)
 - Product_Packetizer `Data_Product_Fetch_T_Request` → `Product_Database.Data_Product_Fetch_T_Service`
 - Depacketizer `Command_Response_T_Send` → Router `Command_Response_T_Recv_Async`
 - Depacketizer `Packet_T_Send` → `Ccsds_Packetizer` (for error/status packets)
