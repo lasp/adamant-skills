@@ -297,6 +297,13 @@ Skip `generated-api.md` for consolidated phases with only simple passive compone
 5. `adamant-component-dev/references/implementation-patterns.md`
 6. `adamant-testing/SKILL.md`
 
+### Large Tasks (5+ deliverables or 10+ components)
+1. `task-planning/SKILL.md` (read FIRST, before any technical skills)
+2. Then follow the appropriate technical sequence above
+
+The task-planning skill teaches time-boxing, progress tracking, and batch
+execution. Read it before technical skills for any task with 5+ items to build.
+
 ## When NOT to Use This Selector
 
 - **General Ada/SPARK questions**: These skills are Adamant-specific. Generic Ada knowledge is already in the model.

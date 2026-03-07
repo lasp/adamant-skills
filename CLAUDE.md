@@ -40,6 +40,14 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 
 **Total:** ~19100 lines (includes tool scripts)
 
+## Meta-Skills
+
+| Skill | Lines | Purpose |
+|-------|-------|---------|
+| `task-planning` | ~180 | Time-boxing, progress tracking, batch execution for large tasks |
+
+**Read `task-planning/SKILL.md` FIRST** for any task with 5+ deliverables or 10+ components. It teaches how to manage time, track progress, and avoid rabbit holes.
+
 ## Key Principles
 
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
