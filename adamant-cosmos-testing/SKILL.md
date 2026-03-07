@@ -8,29 +8,36 @@ Use when writing COSMOS test scripts (Ruby or Python) that exercise a running Ad
 
 **Prerequisites:** Assembly running (hardware or Linux ELF), COSMOS plugin deployed with correct cmd/tlm definitions, CCSDS link established.
 
-## MANDATORY First Step: Derive Names from YAML Models
+## MANDATORY First Step: Read the Interface Spec (cmd.txt / tlm.txt)
 
-**Before writing ANY test code**, derive all COSMOS names from the source models.
-See `references/model-based-test-derivation.md` for the complete derivation rules.
+**Treat the FSW as a black box.** You test through the command and telemetry
+interface, just like a real integration tester. You do NOT need to read
+component source code or implementation details.
 
-**Workflow (model-based, preferred):**
+**Before writing ANY test code**, read the deployed plugin's cmd.txt and tlm.txt:
+
 ```
-1. Read assembly YAML -> extract component instances (name + type)
-2. Read product_packets.yaml -> extract packet names + item mappings
-3. Read each component's commands.yaml + data_products.yaml
-4. Apply deterministic naming rules:
-   - Commands: TARGET Instance_Name-Command_Name
-   - Packets: TARGET Packet_Name (from product_packets.yaml name: field)
-   - Items: Instance_Name.Dp_Name.Value (simple) or Instance_Name.Dp_Name.Field.Value (record)
-5. Write tests using ONLY derived names
+1. Read cmd.txt -> extract all COMMAND lines -> these are your available commands
+   Format: COMMAND TARGET Instance_Name-Command_Name ...
+   Parameters listed below each command with types and ranges
+
+2. Read tlm.txt -> extract all TELEMETRY lines -> these are your packet names
+   Format: TELEMETRY TARGET Packet_Name ...
+   Items listed below each packet with names, sizes, types
+
+3. Write tests using ONLY the names from these files
 ```
 
-**Fallback (if models unavailable):** Read cmd.txt and tlm.txt from the deployed
-plugin. Extract COMMAND/TELEMETRY/ITEM lines. Use exact names as written.
+**If `redo agent-cmd-tlm` is available** (agent-oriented redo target), use it
+instead -- it produces a compact summary optimized for agent consumption.
 
-**NEVER assume or shorten names.** `Safe_Mode_Thermal_Packet` is NOT
-`Safe_Thermal_Packet`. The product_packets.yaml `name:` field is the
-exact COSMOS packet name.
+**Secondary sources (only when needed):**
+- Assembly YAML: when test requires understanding component relationships or wiring
+- `references/model-based-test-derivation.md`: when cmd.txt/tlm.txt are unavailable
+  and you need to derive names from YAML models
+
+**NEVER assume or shorten names.** Use the EXACT names from cmd.txt/tlm.txt.
+`Safe_Mode_Thermal_Packet` is NOT `Safe_Thermal_Packet`.
 
 ## Real Assembly Conventions
 
