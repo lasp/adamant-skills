@@ -704,6 +704,13 @@ instance names and their YAML model definitions.
 - Tick handlers should only send data products / update telemetry, not change fault/mode/alarm state
 - Use `wait_check()` (not raw `tlm()`) in test scripts -- it polls until condition met or timeout
 - Keep test scripts simple: cmd() + wait_check() + print(). No complex logic.
+- **Avoid long wait_check timeouts on on-demand packets** (like Active_Parameters).
+  These only update when explicitly commanded (e.g., DUMP_PARAMETERS). Use a
+  polling loop: send dump command, wait(3), read tlm(), check value, retry if stale.
+- **Test script size**: aim for 50-200 lines. Larger scripts are fragile and hard
+  to debug. Test one concern per function. Print PASS/FAIL per step.
+- **No state machine logic in tests**: if a test requires complex setup sequences,
+  break into smaller independent tests that each set up their own preconditions.
 
 ## Known Limitations
 
