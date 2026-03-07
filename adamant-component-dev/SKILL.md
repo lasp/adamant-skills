@@ -25,7 +25,13 @@ component_name/
 └── test/                                        # See adamant-testing skill
 ```
 
-⚠️ **CRITICAL -- Implementation File Naming**: Files MUST be `component-<name>-implementation.ads/.adb` (with `component-` prefix and hyphens). The package declaration MUST be `Component.<Name>.Implementation`. The `end` statement MUST be `end Component.<Name>.Implementation;`. Getting this wrong is the #1 cold-start error -- the generated base class is `Component.<Name>`, NOT `<Name>`.
+⚠️ **CRITICAL -- Implementation File Naming**: The YAML `name:` field (snake_case) maps to a CamelCase Ada identifier. File names use the **lowered CamelCase** with hyphens as separators:
+- YAML name `safe_survival_heater_ctrl` -> Ada identifier `Safe_Survival_Heater_Ctrl` -> package `Component.Safe_Survival_Heater_Ctrl`
+- File: `component-safe_survival_heater_ctrl-implementation.ads/.adb`
+- Package declaration: `package Component.Safe_Survival_Heater_Ctrl.Implementation is`
+- End statement: `end Component.Safe_Survival_Heater_Ctrl.Implementation;`
+
+**The Ada identifier preserves underscores from the YAML name.** Do NOT remove underscores (e.g., `SafeSurvivalHeaterCtrl` is WRONG -- it becomes a different Ada identifier and the file name won't match). The YAML snake_case name IS the Ada identifier (with first-letter capitalization of each word). Getting this wrong is the #1 cold-start error.
 
 **CRITICAL**: Do NOT create a `build/` directory manually.
 
