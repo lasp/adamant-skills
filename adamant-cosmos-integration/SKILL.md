@@ -636,37 +636,90 @@ docker compose -f compose.yaml run -T --rm \
 Scripts live in `targets/TARGET_NAME/procedures/` within the plugin.
 Use `from openc3.script import *` for the scripting API.
 
-### Test Suite Class Pattern (for Script Runner API execution)
+### Test Script Format (for Script Runner API execution)
 
-When writing test suites that will be executed via the Script Runner REST API
-(`suiteRunner` mode), use the `Suite` and `Group` base classes:
+**Use flat script format**, not the Suite/Group class pattern. The Script Runner
+`/run` endpoint executes the file top-level -- it does NOT invoke test suite
+classes automatically. Class-based suites only work through the Test Runner web UI.
 
 ```python
 from openc3.script import *
-from openc3.script.suite import Suite, Group
 
-class MyTestGroup(Group):
-    def setup(self):
-        pass  # runs before each test in group
-    def test_something(self):
-        cmd("TARGET Instance-Command")
-        wait_check("TARGET Packet Item.Value == expected", 30)
-    def teardown(self):
-        pass  # runs after each test in group
+TARGET = "ASSEMBLY_NAME"
+_pass = 0
+_fail = 0
+_errors = []
 
-class TestSuite(Suite):
-    """The class MUST be named TestSuite -- Script Runner looks for this exact name."""
-    def __init__(self):
-        super().__init__()
-        self.add_group(MyTestGroup)
+def run_test(name, fn):
+    global _pass, _fail
+    try:
+        fn()
+        _pass += 1
+        print(f"PASS: {name}")
+    except Exception as e:
+        _fail += 1
+        _errors.append(f"{name}: {e}")
+        print(f"FAIL: {name} -- {e}")
+
+def test_noop():
+    before = tlm(f"{TARGET} Events_Packet Sequence_Count") or 0
+    cmd(f"{TARGET} Command_Router_Instance-Noop")
+    wait_check(f"{TARGET} Events_Packet Sequence_Count > {before}", 15)
+
+# ... more test functions ...
+
+tests = [test_noop]  # list all test functions
+
+print(f"Running {len(tests)} tests against {TARGET}")
+print("Waiting 10s for telemetry warmup...")
+wait(10)
+for t in tests:
+    run_test(t.__name__, t)
+print(f"TOTAL: {_pass} passed, {_fail} failed out of {len(tests)}")
+if _errors:
+    for e in _errors:
+        print(f"  {e}")
 ```
 
-**CRITICAL:** The suite class MUST be named `TestSuite` (not `MyProjectTestSuite`
-or any other name). The Script Runner API's `suiteRunner.suite` parameter looks up
-classes by name, and the standard invocation uses `"suite":"TestSuite"`.
+**Key patterns:**
+- `tlm()` returns `None` if the packet hasn't been received yet -- always default to 0
+- Add a 10s warmup wait before the first test to let telemetry buffer
+- Use `wait_check()` with 15s timeout for sequence count assertions
+- Print pass/fail summary at end for log parsing
 
-**Do NOT alias imports** like `from openc3.script.suite import Suite as TestSuite` --
-this shadows the name and prevents Script Runner from finding your suite class.
+### Script Runner REST API
+
+**Authentication:** `Authorization: openc3service` header (NOT "password").
+All endpoints require `?scope=DEFAULT` query parameter.
+
+**Upload a test script to COSMOS (required before execution):**
+```bash
+# Scripts live in COSMOS's MinIO storage, NOT the local plugin directory.
+# You MUST upload via API for Script Runner to see your script.
+curl -s -X POST -H "Authorization: openc3service" -H "Content-Type: application/json" \
+  "http://localhost:2900/script-api/scripts/TARGET/procedures/test_suite.py?scope=DEFAULT" \
+  -d '{"text": "<escaped script content>"}'
+```
+
+**Run a script:**
+```bash
+RUN_ID=$(curl -s -X POST -H "Authorization: openc3service" \
+  "http://localhost:2900/script-api/scripts/TARGET/procedures/test_suite.py/run?scope=DEFAULT" \
+  -H "Content-Type: application/json" -d '{}')
+```
+
+**Poll for completion:**
+```bash
+curl -s -H "Authorization: openc3service" \
+  "http://localhost:2900/script-api/running-script/${RUN_ID}?scope=DEFAULT"
+# state: "running" | "waiting" | "completed" | "error" | "completed_errors"
+```
+
+**Retrieve logs from MinIO:**
+```bash
+docker exec <minio-container> find /data/logs -name "*test_suite*"
+docker exec <minio-container> cat /data/logs/DEFAULT/tool_logs/sr/<date>/<timestamp>_sr_test_suite.txt
+```
 
 ### Test Script Patterns (Reference)
 
