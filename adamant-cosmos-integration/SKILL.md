@@ -691,7 +691,11 @@ wait(seconds)
 
 **IMPORTANT:** Read the generated cmd.txt and tlm.txt to get exact command names,
 packet names, and item names. Names are derived from the assembly YAML component
-instance names and their YAML model definitions.
+instance names and their YAML model definitions. **NEVER guess or assume packet
+names** -- product_packets.yaml `name:` field determines the COSMOS packet name
+(converted to UPPER_SNAKE_CASE). If the YAML says `name: Safe_Mode_Thermal_Packet`,
+COSMOS uses `SAFE_MODE_THERMAL_PACKET`. Test scripts MUST use the exact names
+from the loaded plugin's tlm.txt, not shortened or assumed variants.
 
 **COSMOS naming rules:**
 - Enum state names are normalized to UPPERCASE (e.g., `Safe` becomes `SAFE` in telemetry)
