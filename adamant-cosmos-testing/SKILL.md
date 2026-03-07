@@ -8,26 +8,29 @@ Use when writing COSMOS test scripts (Ruby or Python) that exercise a running Ad
 
 **Prerequisites:** Assembly running (hardware or Linux ELF), COSMOS plugin deployed with correct cmd/tlm definitions, CCSDS link established.
 
-## MANDATORY First Step: Read cmd.txt and tlm.txt
+## MANDATORY First Step: Derive Names from YAML Models
 
-**Before writing ANY test code**, read the actual cmd.txt and tlm.txt files from the deployed COSMOS plugin. Extract and record:
+**Before writing ANY test code**, derive all COSMOS names from the source models.
+See `references/model-based-test-derivation.md` for the complete derivation rules.
 
-1. **Target name** from plugin.txt (e.g., `CERES_THERMAL`)
-2. **All packet names** from tlm.txt TELEMETRY lines (e.g., `Safe_Mode_Thermal_Packet`, NOT `Safe_Thermal_Packet`)
-3. **All item names** within each packet (exact dotted paths)
-4. **All command names** from cmd.txt COMMAND lines (exact `Instance-Command` format)
-5. **Command parameter names and types** (especially packed types)
-
-**NEVER assume or shorten packet/item/command names.** The product_packets.yaml `name:` field determines the COSMOS packet name. If tlm.txt says `TELEMETRY CERES_THERMAL Safe_Mode_Thermal_Packet`, use `Safe_Mode_Thermal_Packet` exactly -- not `Safe_Thermal_Packet`, not `SAFE_PACKET`.
-
-**Workflow:**
+**Workflow (model-based, preferred):**
 ```
-1. cat cmd.txt -> extract all COMMAND lines -> these are your available commands
-2. cat tlm.txt -> extract all TELEMETRY lines -> these are your packet names
-3. For each packet, extract ITEM lines -> these are your telemetry items
-4. Write tests using ONLY the names you extracted
-5. If a name isn't in cmd.txt or tlm.txt, you CANNOT use it
+1. Read assembly YAML -> extract component instances (name + type)
+2. Read product_packets.yaml -> extract packet names + item mappings
+3. Read each component's commands.yaml + data_products.yaml
+4. Apply deterministic naming rules:
+   - Commands: TARGET Instance_Name-Command_Name
+   - Packets: TARGET Packet_Name (from product_packets.yaml name: field)
+   - Items: Instance_Name.Dp_Name.Value (simple) or Instance_Name.Dp_Name.Field.Value (record)
+5. Write tests using ONLY derived names
 ```
+
+**Fallback (if models unavailable):** Read cmd.txt and tlm.txt from the deployed
+plugin. Extract COMMAND/TELEMETRY/ITEM lines. Use exact names as written.
+
+**NEVER assume or shorten names.** `Safe_Mode_Thermal_Packet` is NOT
+`Safe_Thermal_Packet`. The product_packets.yaml `name:` field is the
+exact COSMOS packet name.
 
 ## Real Assembly Conventions
 
