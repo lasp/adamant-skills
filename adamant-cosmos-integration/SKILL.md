@@ -636,6 +636,38 @@ docker compose -f compose.yaml run -T --rm \
 Scripts live in `targets/TARGET_NAME/procedures/` within the plugin.
 Use `from openc3.script import *` for the scripting API.
 
+### Test Suite Class Pattern (for Script Runner API execution)
+
+When writing test suites that will be executed via the Script Runner REST API
+(`suiteRunner` mode), use the `Suite` and `Group` base classes:
+
+```python
+from openc3.script import *
+from openc3.script.suite import Suite, Group
+
+class MyTestGroup(Group):
+    def setup(self):
+        pass  # runs before each test in group
+    def test_something(self):
+        cmd("TARGET Instance-Command")
+        wait_check("TARGET Packet Item.Value == expected", 30)
+    def teardown(self):
+        pass  # runs after each test in group
+
+class TestSuite(Suite):
+    """The class MUST be named TestSuite -- Script Runner looks for this exact name."""
+    def __init__(self):
+        super().__init__()
+        self.add_group(MyTestGroup)
+```
+
+**CRITICAL:** The suite class MUST be named `TestSuite` (not `MyProjectTestSuite`
+or any other name). The Script Runner API's `suiteRunner.suite` parameter looks up
+classes by name, and the standard invocation uses `"suite":"TestSuite"`.
+
+**Do NOT alias imports** like `from openc3.script.suite import Suite as TestSuite` --
+this shadows the name and prevents Script Runner from finding your suite class.
+
 ### Test Script Patterns (Reference)
 
 ```python
