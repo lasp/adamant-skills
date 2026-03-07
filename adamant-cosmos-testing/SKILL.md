@@ -8,6 +8,27 @@ Use when writing COSMOS test scripts (Ruby or Python) that exercise a running Ad
 
 **Prerequisites:** Assembly running (hardware or Linux ELF), COSMOS plugin deployed with correct cmd/tlm definitions, CCSDS link established.
 
+## MANDATORY First Step: Read cmd.txt and tlm.txt
+
+**Before writing ANY test code**, read the actual cmd.txt and tlm.txt files from the deployed COSMOS plugin. Extract and record:
+
+1. **Target name** from plugin.txt (e.g., `CERES_THERMAL`)
+2. **All packet names** from tlm.txt TELEMETRY lines (e.g., `Safe_Mode_Thermal_Packet`, NOT `Safe_Thermal_Packet`)
+3. **All item names** within each packet (exact dotted paths)
+4. **All command names** from cmd.txt COMMAND lines (exact `Instance-Command` format)
+5. **Command parameter names and types** (especially packed types)
+
+**NEVER assume or shorten packet/item/command names.** The product_packets.yaml `name:` field determines the COSMOS packet name. If tlm.txt says `TELEMETRY CERES_THERMAL Safe_Mode_Thermal_Packet`, use `Safe_Mode_Thermal_Packet` exactly -- not `Safe_Thermal_Packet`, not `SAFE_PACKET`.
+
+**Workflow:**
+```
+1. cat cmd.txt -> extract all COMMAND lines -> these are your available commands
+2. cat tlm.txt -> extract all TELEMETRY lines -> these are your packet names
+3. For each packet, extract ITEM lines -> these are your telemetry items
+4. Write tests using ONLY the names you extracted
+5. If a name isn't in cmd.txt or tlm.txt, you CANNOT use it
+```
+
 ## Real Assembly Conventions
 
 Examples in this skill use generic short names for clarity. Real Adamant COSMOS plugins differ:
@@ -20,8 +41,6 @@ Examples in this skill use generic short names for clarity. Real Adamant COSMOS 
 - **Parameter updates:** The 3-step Stage/Validate/Update is one pattern. Many assemblies use direct Set commands (e.g., `Set_Thresholds with Value <packed_u32>`). Check your assembly's command definitions.
 - **Fault injection:** Most assemblies do NOT have `INJECT_FAULT` test commands. Alternative patterns: override data products to fault-triggering values, use force commands (Force_Heater_Off), or manipulate system state through normal commands.
 - **Packed parameters:** Commands may pack multiple values into a single integer (e.g., two U16 thresholds packed into one U32 Value field). Check the command's arg_type in cmd.txt.
-
-**Always read your cmd.txt and tlm.txt first** to get exact command names, packet names, and item paths before writing tests.
 
 ## Scripting API Quick Reference
 
