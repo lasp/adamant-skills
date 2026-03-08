@@ -636,56 +636,97 @@ docker compose -f compose.yaml run -T --rm \
 Scripts live in `targets/TARGET_NAME/procedures/` within the plugin.
 Use `from openc3.script import *` for the scripting API.
 
-### Test Script Format (for Script Runner API execution)
+### Test Script Format (Suite/Group pattern for Script Runner)
 
-**Use flat script format**, not the Suite/Group class pattern. The Script Runner
-`/run` endpoint executes the file top-level -- it does NOT invoke test suite
-classes automatically. Class-based suites only work through the Test Runner web UI.
+**Use the Suite/Group class pattern.** Script Runner executes suites via the
+`suiteRunner` API field, which calls `SuiteRunner.start(Suite, Group)` internally.
+Each `test_*` method in a Group runs independently with proper error isolation.
 
 ```python
 from openc3.script import *
+from openc3.script.suite import Suite, Group
 
 TARGET = "ASSEMBLY_NAME"
-_pass = 0
-_fail = 0
-_errors = []
 
-def run_test(name, fn):
-    global _pass, _fail
-    try:
-        fn()
-        _pass += 1
-        print(f"PASS: {name}")
-    except Exception as e:
-        _fail += 1
-        _errors.append(f"{name}: {e}")
-        print(f"FAIL: {name} -- {e}")
+class AssemblyTests(Group):
+    def setup(self):
+        """Runs before all tests in this group. Use for warmup."""
+        print("Waiting 10s for telemetry warmup...")
+        wait(10)
 
-def test_noop():
-    before = tlm(f"{TARGET} Events_Packet Sequence_Count") or 0
-    cmd(f"{TARGET} Command_Router_Instance-Noop")
-    wait_check(f"{TARGET} Events_Packet Sequence_Count > {before}", 15)
+    def test_packets_flowing(self):
+        """Verify telemetry packets are being received."""
+        seq1 = tlm(f"{TARGET} Housekeeping_Packet Sequence_Count") or 0
+        wait(3)
+        seq2 = tlm(f"{TARGET} Housekeeping_Packet Sequence_Count") or 0
+        if seq2 <= seq1:
+            raise RuntimeError(f"Packet not flowing: {seq1} -> {seq2}")
+        print(f"Packet flowing: {seq1} -> {seq2}")
 
-# ... more test functions ...
+    def test_noop_command(self):
+        """Send Noop and verify it was accepted."""
+        cmd(f"{TARGET} Command_Router_Instance-Noop")
+        print("Noop sent successfully")
 
-tests = [test_noop]  # list all test functions
+    def test_disable_enable_packet(self):
+        """Disable a packet, verify it stops, re-enable, verify it resumes."""
+        cmd(f"{TARGET} Product_Packetizer_Instance-Disable_Packet with ID 1")
+        wait(3)
+        seq1 = tlm(f"{TARGET} Housekeeping_Packet Sequence_Count") or 0
+        wait(3)
+        seq2 = tlm(f"{TARGET} Housekeeping_Packet Sequence_Count") or 0
+        if seq2 != seq1:
+            print(f"WARNING: packet still flowing while disabled: {seq1} -> {seq2}")
+        cmd(f"{TARGET} Product_Packetizer_Instance-Enable_Packet with ID 1")
+        wait(3)
+        seq3 = tlm(f"{TARGET} Housekeeping_Packet Sequence_Count") or 0
+        wait(3)
+        seq4 = tlm(f"{TARGET} Housekeeping_Packet Sequence_Count") or 0
+        if seq4 <= seq3:
+            raise RuntimeError(f"Packet not flowing after re-enable: {seq3} -> {seq4}")
+        print(f"Disable/enable OK")
 
-print(f"Running {len(tests)} tests against {TARGET}")
-print("Waiting 10s for telemetry warmup...")
-wait(10)
-for t in tests:
-    run_test(t.__name__, t)
-print(f"TOTAL: {_pass} passed, {_fail} failed out of {len(tests)}")
-if _errors:
-    for e in _errors:
-        print(f"  {e}")
+class AssemblySuite(Suite):
+    def __init__(self):
+        super().__init__()
+        self.add_group(AssemblyTests)
+```
+
+**Imports:** `from openc3.script.suite import Suite, Group` (NOT `from openc3.tools.test_runner.test`).
+
+**Running via Script Runner API:**
+
+```bash
+# Upload the test script:
+curl -s -X POST -H "Authorization: openc3service" -H "Content-Type: application/json" \
+  "http://localhost:2900/script-api/scripts/TARGET/procedures/test_suite.py?scope=DEFAULT" \
+  -d '{"text": "<escaped script content>"}'
+
+# Run the suite (suiteRunner triggers Suite/Group execution):
+RUN_ID=$(curl -s -X POST -H "Authorization: openc3service" \
+  "http://localhost:2900/script-api/scripts/TARGET/procedures/test_suite.py/run?scope=DEFAULT" \
+  -H "Content-Type: application/json" \
+  -d '{"suiteRunner":{"method":"start","suite":"AssemblySuite","group":"AssemblyTests","options":[]}}')
+
+# Poll for completion:
+curl -s -H "Authorization: openc3service" \
+  "http://localhost:2900/script-api/running-script/${RUN_ID}?scope=DEFAULT"
+# state: "running" | "waiting" | "completed" | "error" | "completed_errors"
+```
+
+**The upload response confirms suite discovery:**
+```json
+{"suites": "{\"AssemblySuite\": {\"groups\": {\"AssemblyTests\": {\"scripts\": [\"test_disable_enable_packet\", \"test_noop_command\", \"test_packets_flowing\"]}}}}", "success": true}
 ```
 
 **Key patterns:**
-- `tlm()` returns `None` if the packet hasn't been received yet -- always default to 0
-- Add a 10s warmup wait before the first test to let telemetry buffer
-- Use `wait_check()` with 15s timeout for sequence count assertions
-- Print pass/fail summary at end for log parsing
+- `tlm()` returns `None` if the packet hasn't been received yet -- always default to 0 with `or 0`
+- Add a warmup `wait(10)` in `Group.setup()` before tests run
+- Test methods MUST start with `test_` (or `script_` or `op_`) to be discovered
+- Each test method runs independently -- exceptions in one test don't skip others
+- `raise RuntimeError(...)` to fail a test; returning normally = pass
+- Suite class name and Group class name are passed in the `suiteRunner` API call
+- The `suiteRunner.options` field accepts `["Loop"]`, `["Break Loop On Error"]`, `["Abort After Error"]`
 
 ### Script Runner REST API
 
