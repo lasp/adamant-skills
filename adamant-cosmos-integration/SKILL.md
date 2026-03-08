@@ -807,8 +807,10 @@ in tlm.txt, it does not exist in COSMOS and referencing it will cause a runtime 
 - To verify commands work: send the command, then check that the expected telemetry value changed
 - For NOOP: verify Events_Packet.Sequence_Count increments (NOOP always produces an event)
 - For parameter updates: send Update_Parameter + Dump_Parameters, verify value in Active_Parameters packet
-- For packetizer control: verify packet still flows (Sequence_Count increments over time)
+- For packetizer control: verify packet still flows (RECEIVED_COUNT increments over time)
 - Do NOT rely on "no error occurred" assertions -- always verify the positive expected effect
+- **NEVER use CCSDS Sequence_Count for liveness checks.** Multiple packet sources (Rate_Group timing + Product_Packetizer) can share the same APID with independent sequence counters. A `check(seq >= old)` between two API calls will race: a packet from the OTHER source can arrive between `tlm()` and `check()`, giving a lower counter. Use `RECEIVED_COUNT` (COSMOS-maintained, monotonically increasing) instead of `Sequence_Count` for all "packet still flowing" assertions.
+- **Prefer `wait_check()` over bare `check()` for any telemetry assertion.** `check()` reads the COSMOS cache at one instant -- if a packet arrives between your `tlm()` baseline read and the `check()` call, you get stale or interleaved data. `wait_check("...", 5)` retries for up to N seconds, tolerating transient cache updates.
 
 **Ground-testable component design:**
 - For components that will be verified via COSMOS scripts, make state changes COMMAND-DRIVEN ONLY
