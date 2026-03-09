@@ -796,6 +796,15 @@ in a test script must appear verbatim in tlm.txt. Do not infer item names from
 component YAML, data_products.yaml, or implementation files. If an item is not
 in tlm.txt, it does not exist in COSMOS and referencing it will cause a runtime error.
 
+**COSMOS target name vs assembly name:**
+- The COSMOS **target** is set by plugin.txt `Target` directive (e.g., `CERES_THERMAL`)
+- The cmd.txt/tlm.txt use the **assembly name** (e.g., `Ceres_Thermal_Assembly`) after the target
+- In COSMOS API calls, use the **target name** (the short one from plugin.txt), NOT the assembly name
+- Example: `cmd("CERES_THERMAL Command_Router_Instance-Noop")` -- NOT `cmd("CERES_THERMAL_ASSEMBLY ...")`
+- Example: `tlm("CERES_THERMAL Safe_Thermal_Housekeeping Sequence_Count")`
+- The target name is what appears in `plugin.txt` after the `Target` keyword
+- To find it: `grep "^Target" plugin.txt` or check the COSMOS web UI
+
 **COSMOS naming rules:**
 - Enum state names are normalized to UPPERCASE (e.g., `Safe` becomes `SAFE` in telemetry)
 - Command arg parameter names include the type prefix (e.g., `T17_Instrument_Mode.Value` not just `Value`)
@@ -825,6 +834,11 @@ in tlm.txt, it does not exist in COSMOS and referencing it will cause a runtime 
   to debug. Test one concern per function. Print PASS/FAIL per step.
 - **No state machine logic in tests**: if a test requires complex setup sequences,
   break into smaller independent tests that each set up their own preconditions.
+- **Do NOT restart the assembly ELF during test execution.** If Phase C launched
+  the ELF and it is still running, use it as-is. Restarting can cause rate group
+  queue overflow and partial telemetry loss (some subsystems stall). If the ELF
+  died, re-launch from the CORRECT path: `src/assembly/<name>/main/build/bin/Linux/<name>_main.elf`
+  (built by Phase B), NOT `main/build/bin/Linux/main.elf` or any other variant.
 
 ## Known Limitations
 
