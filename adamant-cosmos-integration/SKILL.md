@@ -355,6 +355,15 @@ Scripts use the COSMOS Scripting API (`cmd()`, `tlm()`, etc.) and live in `proce
 
 **Using Adamant Python in COSMOS scripts:** Use `pydep` to build Adamant's generated Python dependencies (packed record types, CRC16, packing/unpacking utilities) into a version-controlled plugin configuration. Include the output in the plugin's `procedures/` path and copy built packages to the plugin `lib/` path. This lets test scripts use real Adamant records and tools instead of raw byte manipulation.
 
+### Gem Building
+```bash
+# Simplest method -- run rake inside COSMOS container via CLI:
+cd /path/to/plugin/dir
+openc3.sh cli rake build VERSION=1.0.0   # Builds gem in pkg/ subdir
+# Then load:
+openc3.sh cli load pkg/openc3-cosmos-assembly-1.0.0.gem
+```
+
 ### Interactive and Debug
 ```bash
 openc3.sh cli irb                        # Interactive Ruby console with COSMOS API
@@ -839,6 +848,43 @@ in tlm.txt, it does not exist in COSMOS and referencing it will cause a runtime 
   queue overflow and partial telemetry loss (some subsystems stall). If the ELF
   died, re-launch from the CORRECT path: `src/assembly/<name>/main/build/bin/Linux/<name>_main.elf`
   (built by Phase B), NOT `main/build/bin/Linux/main.elf` or any other variant.
+
+## COSMOS JSON-RPC API (Direct Telemetry Queries)
+
+For verifying telemetry without writing a test script (e.g., Phase C plugin verification):
+
+```bash
+# Query a telemetry value:
+curl -s -H "Authorization: openc3service" -H "Content-Type: application/json" \
+  -X POST "http://localhost:2900/openc3-api/api" \
+  -d '{"jsonrpc":"2.0","method":"tlm","params":["TARGET PACKET ITEM"],"id":1,"keyword_params":{"scope":"DEFAULT"}}'
+# Returns: {"jsonrpc":"2.0","id":1,"result":12345}
+
+# List all telemetry packets for a target:
+curl -s -H "Authorization: openc3service" -H "Content-Type: application/json" \
+  -X POST "http://localhost:2900/openc3-api/api" \
+  -d '{"jsonrpc":"2.0","method":"get_all_telemetry","params":["TARGET"],"id":1,"keyword_params":{"scope":"DEFAULT"}}'
+
+# Send a command:
+curl -s -H "Authorization: openc3service" -H "Content-Type: application/json" \
+  -X POST "http://localhost:2900/openc3-api/api" \
+  -d '{"jsonrpc":"2.0","method":"cmd","params":["TARGET Component-Command"],"id":1,"keyword_params":{"scope":"DEFAULT"}}'
+
+# List installed plugins:
+curl -s -H "Authorization: openc3service" \
+  "http://localhost:2900/openc3-api/plugins?scope=DEFAULT"
+
+# List interfaces:
+curl -s -H "Authorization: openc3service" \
+  "http://localhost:2900/openc3-api/interfaces?scope=DEFAULT"
+```
+
+Use `RECEIVED_COUNT` (not `Sequence_Count`) to verify packets are flowing:
+```bash
+curl -s -H "Authorization: openc3service" -H "Content-Type: application/json" \
+  -X POST "http://localhost:2900/openc3-api/api" \
+  -d '{"jsonrpc":"2.0","method":"tlm","params":["TARGET PACKET RECEIVED_COUNT"],"id":1,"keyword_params":{"scope":"DEFAULT"}}'
+```
 
 ## Known Limitations
 
