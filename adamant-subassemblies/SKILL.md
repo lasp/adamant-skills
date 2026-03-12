@@ -26,20 +26,29 @@ Subassemblies are a **modeling construct** for breaking assemblies into manageab
 
 ## File Structure
 
+⚠️ **CRITICAL**: Each subassembly MUST be in its **own directory**, separate from the parent assembly. If a subassembly shares a directory with the parent, its generated `<subassembly>_components.ads` (which intentionally lacks `with` clauses) lands in the parent's `build/src/` and causes compilation errors.
+
 ```
-my_assembly/
-├── .all_path
-├── my_assembly.assembly.yaml        # Parent assembly (references subassemblies)
-├── core.assembly.yaml               # Subassembly: core infrastructure
-├── comm.assembly.yaml               # Subassembly: communication subsystem
-├── gnc.assembly.yaml                # Subassembly: guidance/navigation/control
-├── main/
+src/assembly/
+├── my_assembly/
 │   ├── .all_path
-│   └── main.adb
-└── views/
+│   ├── my_assembly.assembly.yaml    # Parent assembly (references subassemblies)
+│   ├── main/
+│   │   ├── .all_path
+│   │   └── main.adb
+│   └── views/
+├── core/
+│   ├── .all_path
+│   └── core.assembly.yaml           # Subassembly: core infrastructure
+├── comm/
+│   ├── .all_path
+│   └── comm.assembly.yaml           # Subassembly: communication subsystem
+└── gnc/
+    ├── .all_path
+    └── gnc.assembly.yaml            # Subassembly: guidance/navigation/control
 ```
 
-Subassembly files can live in the same directory as the parent or anywhere in the build path. The model loader finds them by name.
+Each subassembly directory needs an `.all_path` marker so the build system can discover it. The model loader finds subassemblies by name anywhere in the build path.
 
 ## Parent Assembly YAML
 
@@ -127,11 +136,10 @@ When the parent assembly loads, each subassembly is loaded and its contents merg
 
 ## Build Path Requirements
 
-Subassembly `.assembly.yaml` files must be discoverable in the build path. Options:
+Subassembly `.assembly.yaml` files must be discoverable in the build path. Each subassembly needs:
 
-1. **Same directory** as the parent assembly (simplest)
-2. **Separate directory** with an `.all_path` marker so the build system includes it
-3. **Shared location** in a common library directory (for cross-project reuse)
+1. **Its own directory** with an `.all_path` marker (required -- do NOT co-locate with the parent)
+2. Or a **shared location** in a common library directory (for cross-project reuse), still in its own directory
 
 The model loader calls `model_loader.try_load_model_by_name(name, "assembly")` to find subassembly files. If the file isn't in any build path directory, you get:
 
@@ -240,16 +248,13 @@ To create a view showing only one subassembly's components, use a component name
 Nesting is structurally supported but deeply nested assemblies (3+ levels) can trigger `event_to_text` code generation failures -- the generated event-to-text function may reference undefined packages or produce `None` values. The assembly YAML and wiring are correct; it's a code generator limitation. **Recommendation:** Limit nesting to 2 levels (parent + subassembly) for production use. If 3+ levels are needed, avoid Event_Text_Logger and be prepared to work around event_to_text compilation errors.
 
 ### Subassembly _components.ads Missing With Clauses
-The code generator produces a `<subassembly>_components.ads` file for each subassembly, but the `with` clause population (`components_ads_includes`) is gated behind `if not self.is_subassembly:` in `gen/models/assembly.py` (L768). This means the subassembly's `_components.ads` is generated with NO component `with` clauses (the list stays empty). The `with:` field in the subassembly YAML does NOT fix the subassembly's own `_components.ads` -- the template gates the entire include block on `components_ads_includes` being non-empty, and the YAML `with:` entries (`self.includes`) are inside that same guard.
+The code generator produces a `<subassembly>_components.ads` file for each subassembly, but the `with` clause population (`components_ads_includes`) is gated behind `if not self.is_subassembly:` in `gen/models/assembly.py` (L768). This means the subassembly's `_components.ads` is generated with NO component `with` clauses (the list stays empty).
 
-**Why it usually works anyway:** The `with:` entries propagate to the parent assembly via `self.includes.extend(subassembly.includes)` (L728). The parent's `_components.ads` includes all component packages from all subassemblies. Since the final binary compiles through the parent, the subassembly's empty `_components.ads` is not a problem -- all visibility comes from the parent.
+**Why it usually works:** The parent's `_components.ads` includes all component packages from all subassemblies. The final binary compiles through the parent, so the subassembly's empty `_components.ads` is harmless -- **as long as it doesn't end up in the parent's build directory**.
 
-**When it fails:** Style checking (`redo style`) may process the subassembly before the parent, hitting the empty includes. Building the ELF first (which processes the parent) populates the model cache, making subsequent `redo style` runs succeed.
+**When it fails:** If the subassembly YAML is **co-located with the parent** (same directory), the subassembly's generated `_components.ads` lands in the parent's `build/src/` and the compiler tries to compile it, producing `"Component" is undefined` errors on every component instance declaration.
 
-**Workarounds (in order of preference):**
-1. Build the ELF first, then run `redo style` (model cache resolves it)
-2. Use `with:` in the subassembly YAML (propagates to parent, does not fix subassembly `_components.ads` directly but ensures parent compilation succeeds)
-3. Move all components into a flat parent assembly (avoids the issue entirely)
+**Fix:** Put each subassembly in its **own directory** with its own `.all_path` marker. This ensures the subassembly's generated files go to a separate `build/` directory that is not compiled as part of the parent assembly. See the File Structure section above. **Never co-locate subassembly YAML with the parent assembly YAML.**
 
 ### Duplicate Component Names
 Component instance names must be unique across ALL subassemblies and the parent. If `core.assembly.yaml` and `comm.assembly.yaml` both define a component named `Rate_Group_Instance`, you get:
@@ -389,38 +394,46 @@ connections:
 
 ### After (split into subassemblies)
 
-**Parent (`flight_sw.assembly.yaml`):**
+Each subassembly lives in its own directory:
+```
+src/assembly/
+├── my_assembly/
+│   ├── .all_path
+│   └── my_assembly.assembly.yaml
+├── core/
+│   ├── .all_path
+│   └── core.assembly.yaml
+├── comm/
+│   ├── .all_path
+│   └── comm.assembly.yaml
+└── gnc/
+    ├── .all_path
+    └── gnc.assembly.yaml
+```
+
+**Parent (`my_assembly/my_assembly.assembly.yaml`):**
 ```yaml
-description: Flight software top-level assembly
-
+description: Top-level assembly
 subassemblies:
-  - flight_sw_core
-  - flight_sw_comm
-  - flight_sw_gnc
-
-with:
-  - Flight_Sw_Commands
+  - core
+  - comm
+  - gnc
 
 # Only cross-subsystem connections here
 connections:
-  - description: Route commands to GNC components
-    from_component: Command_Router_Instance
+  - from_component: Command_Router_Instance    # defined in comm
     from_connector: Command_T_Send
     from_index: 10
-    to_component: Nav_Filter_Instance
+    to_component: Nav_Filter_Instance           # defined in gnc
     to_connector: Command_T_Recv_Async
-  # ... other cross-subsystem wiring
 ```
 
-**Core subassembly (`flight_sw_core.assembly.yaml`):**
+**Core subassembly (`core/core.assembly.yaml`):**
 ```yaml
-description: Core infrastructure -- timing, watchdog, system time
+description: Core infrastructure -- timing and rate groups
 
 preamble: |
   Dividers : aliased Component.Tick_Divider.Divider_Array_Type := [1 => 1, 2 => 10];
-
-id_bases:
-  - "Event_Id_Base => 1"
 
 components:
   - type: Ticker
@@ -428,69 +441,23 @@ components:
     stack_size: 50000
     secondary_stack_size: 10000
   - type: Tick_Divider
-    discriminant:
-      - "Divider_List => Dividers'Access"
     init_base:
       - "Tick_T_Send_Count => 2"
-  - type: Rate_Group
-    name: Fast_Rate_Group_Instance
-    priority: 9
-    stack_size: 50000
-    secondary_stack_size: 10000
-    init_base:
-      - "Queue_Size => 3 * Fast_Rate_Group_Instance.Get_Max_Queue_Element_Size"
-      - "Tick_T_Send_Count => 8"
 
 connections:
   - from_component: Ticker_Instance
     from_connector: Tick_T_Send
     to_component: Tick_Divider_Instance
     to_connector: Tick_T_Recv_Sync
-  # ... internal core connections
 ```
 
-**Comm subassembly (`flight_sw_comm.assembly.yaml`):**
-```yaml
-description: Command and telemetry communication subsystem
-
-## NOTE: id_bases belong in the PARENT assembly only, not in subassemblies.
-## Subassemblies inherit ID offsets from the parent.
-
-components:
-  - type: Command_Router
-    priority: 8
-    stack_size: 50000
-    secondary_stack_size: 10000
-    init_base:
-      - "Queue_Size => 10 * Command_Router_Instance.Get_Max_Queue_Element_Size"
-      - "Command_T_Send_Count => 20"
-      - "Command_Response_T_To_Forward_Send_Count => 1"
-    init:
-      - "Max_Number_Of_Commands => Flight_Sw_Commands.Number_Of_Commands"
-  # ... other comm components
-
-connections:
-  # Internal comm wiring
-  ...
-```
-
-**GNC subassembly (`flight_sw_gnc.assembly.yaml`):**
+**Leaf subassembly with no internal connections (`gnc/gnc.assembly.yaml`):**
 ```yaml
 description: Guidance, navigation, and control subsystem
-
-## NOTE: id_bases belong in the PARENT assembly only, not in subassemblies.
-
 components:
   - type: Nav_Filter
     name: Nav_Filter_Instance
-    priority: 9
-    stack_size: 100000
-    secondary_stack_size: 10000
-  # ... other GNC components
-
-connections:
-  # Internal GNC wiring
-  ...
+# No connections: key -- all wiring is cross-subsystem, done in the parent
 ```
 
 ## Quick Reference
