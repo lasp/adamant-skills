@@ -229,7 +229,7 @@ The helper script auto-detects project name from its parent directory.
 
 | Command | Action |
 |---|---|
-| `bash docker/adamant_env.sh start` | Pull image (if missing) + start container + run first-time env/activate |
+| `bash docker/adamant_env.sh start` | Pull image (if missing) + start container + run first-time initialization |
 | `bash docker/adamant_env.sh stop` | Stop container |
 | `bash docker/adamant_env.sh login` | Interactive bash shell as `user` |
 | `bash docker/adamant_env.sh pull` | Pull latest image |
@@ -239,7 +239,7 @@ The helper script auto-detects project name from its parent directory.
 | `bash docker/adamant_env.sh pushx` | Multi-platform build + push |
 | `bash docker/adamant_env.sh remove` | Remove container, network, volumes (destructive!) |
 
-**First `start`** runs env/activate inside the container, which:
+**First `start`** runs initialization inside the container, which:
 1. Creates Python venv (`~/.py_env`) and installs requirements
 2. Builds alire dependencies (`alr build --release`)
 3. Sets BUILD_ROOTS, GPR paths, etc.
@@ -270,15 +270,14 @@ bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project_name> && r
 This uses a cached environment snapshot (`/tmp/.<project>_env_snapshot`) created by the first full activation. Subsequent calls restore the snapshot in milliseconds instead of re-running the multi-second activation. The `/tmp` location means container restart auto-invalidates the cache.
 
 **How it works:**
-- `env/activate` saves `export -p` to `/tmp/.<project>_env_snapshot` after setup
-- `env/activate_from_snapshot` loads the snapshot or falls back to full activate if none exists
-- `env/container_run.sh` sources `activate_from_snapshot` and runs the command
+- First activation saves `export -p` to `/tmp/.<project>_env_snapshot`
+- `env/container_run.sh` loads the snapshot (or falls back to full activate) and runs the command
 - `adamant_env.sh exec` calls `container_run.sh` inside the container
 
-**Why `exec` is preferred over raw `docker exec`:**
+**Why `exec` is the required method for agents:**
 - Fast: snapshot activation is milliseconds vs seconds for full activate
 - Correct: handles the `ADAMANT_ENVIRONMENT_SET` guard variable properly
-- The base adamant image's `.bashrc` sources `adamant/env/activate`, which sets `ADAMANT_ENVIRONMENT_SET`. This guard variable prevents the project's activate from re-running. The `exec` command bypasses this issue.
+- **NEVER use `source env/activate` directly** -- agents must always use `adamant_env.sh exec`
 - **Bottom line:** `adamant_env.sh exec` for automated commands, `adamant_env.sh login` for interactive sessions.
 
 ### 5. Set Up .gitignore
@@ -427,10 +426,10 @@ To connect your assembly to COSMOS for telemetry and commanding, see [adamant-co
 | Error | Cause | Fix |
 |---|---|---|
 | `Storage_Error` at runtime | Buffer too small for data being serialized | Increase relevant `*_buffer_size` in configuration YAML |
-| Custom types not found during build | Project dir not in BUILD_ROOTS | Ensure env/activate passes `$PROJECT_DIR` to adamant's activate |
+| Custom types not found during build | Project dir not in BUILD_ROOTS | Ensure project is properly configured in docker-compose.yml volumes |
 | `file not found` for generated Ada | Missing `.all_path` in source directory | Add empty `.all_path` file |
 | Duplicate file name error | Two files with same name across BUILD_ROOTS | Rename -- file names must be unique across entire build path |
-| Permission denied in container | SELinux bind mount permissions | adamant/env/activate auto-fixes with `chown`; or run `sudo chown -R user:user /home/user/<project>` |
+| Permission denied in container | SELinux bind mount permissions | Run `sudo chown -R user:user /home/user/<project>` inside the container |
 | Command registrations dropped at init | `command_registration_delay` too low or Command Router queue too small | Increase `command_registration_delay` or enlarge queue |
 | `alr` build fails on first start | Network issue or alire cache corrupted | `rm -rf alire/` and re-run `alr build` |
 | HTML gen fails on framework components | Known issue with some components | Build ELF directly (`redo build/bin/Linux/main.elf`) to bypass |

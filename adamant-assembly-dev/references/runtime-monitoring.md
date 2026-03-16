@@ -214,8 +214,11 @@ Output: total events, rate, unique types, per-component breakdown.
 ## Practical: Running the Demo Assembly
 
 ```bash
-# In Docker:
-source /home/user/adamant/env/activate /home/user/<project_dir>
+# From host (preferred for agents):
+bash docker/adamant_env.sh exec "cd /home/user/<project_dir>/src/assembly/<assembly_name>/main && redo build/bin/Linux/main.elf"
+
+# Or interactively:
+bash docker/adamant_env.sh login
 cd /home/user/<project_dir>/src/assembly/<assembly_name>/main
 
 # Build
