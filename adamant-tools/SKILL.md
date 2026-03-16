@@ -167,20 +167,20 @@ bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo wha
 
 **Sub-agent workflow pattern:**
 ```bash
-# Step 1: Copy tools into container (once)
-docker cp adamant-tools/*.py $CONTAINER:/tmp/
+# Step 1: Copy tools into container (once per container start)
+docker cp adamant-tools/*.py <project>_container:/tmp/
 
-# Step 2: Validate YAML
-bash docker/adamant_env.sh exec "python3 /tmp/adamant_validate_yaml.py $COMP_DIR"
+# Step 2: Validate YAML (e.g. src/components/thermal_controller)
+bash docker/adamant_env.sh exec "python3 /tmp/adamant_validate_yaml.py src/components/thermal_controller"
 
 # Step 3: Build component
-bash docker/adamant_env.sh exec "cd /home/user/<project> && redo $COMP_DIR/build/src/component-$NAME.ads"
+bash docker/adamant_env.sh exec "cd /home/user/<project> && redo src/components/thermal_controller/build/src/component-thermal_controller.ads"
 
 # Step 4: Inspect generated API
-bash docker/adamant_env.sh exec "python3 /tmp/adamant_inspect.py $COMP_DIR"
+bash docker/adamant_env.sh exec "python3 /tmp/adamant_inspect.py src/components/thermal_controller"
 
 # Step 5: Build and test
-bash docker/adamant_env.sh exec "cd $COMP_DIR/test && redo test"
+bash docker/adamant_env.sh exec "cd /home/user/<project>/src/components/thermal_controller/test && redo test"
 ```
 
 ## pykwalify Schema Validation
