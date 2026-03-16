@@ -17,7 +17,14 @@ If your task matches a sequence in "Deterministic Read Order" at the bottom of t
 
 ## CRITICAL: All Builds Require Docker
 
-Adamant builds MUST run inside the project's Docker container. **Never build locally on the host.** Check for `ADAMANT_ENVIRONMENT_SET=yes` -- if not set, use `docker exec` to run all redo/build/test commands inside the container. See `adamant-build-system` for the Docker exec pattern and `TOOLS.md` for project-specific container names.
+Adamant builds MUST run inside the project's Docker container. **Never build locally on the host.** Use `adamant_env.sh exec` to run all redo/build/test commands:
+
+```bash
+bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo what"   # Discover build targets
+bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo <target>"
+```
+
+**Run `redo what` first** in any directory to discover what can be built before attempting builds. **NEVER use `source env/activate` directly** -- `adamant_env.sh exec` handles activation automatically.
 
 ## Task Routing Table
 
@@ -81,7 +88,7 @@ Adamant builds MUST run inside the project's Docker container. **Never build loc
 
 ### Setting up a new Adamant project
 **Load:** `adamant-project-setup`
-- Project directory structure, .do file setup, env/activate script
+- Project directory structure, .do file setup, adamant_env.sh, Docker
 - Configuration YAML (buffer sizes, stack margin)
 - Docker integration (compose override, build commands)
 - .gitignore, .all_path requirements, common pitfalls

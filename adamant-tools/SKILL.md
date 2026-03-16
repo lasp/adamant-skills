@@ -153,21 +153,16 @@ These tools complement the existing skills:
 - **adamant-testing**: Use `adamant_inspect` after first build to see tester API before writing tests
 - **adamant-build-system**: Tools run outside Docker; `redo` still handles all code generation
 
-## Environment Caching: adamant_env.sh
+## Environment Caching: adamant_env.sh exec
 
-Docker activation (`source env/activate`) takes 3-5 seconds due to Alire checks. The `adamant_env.sh` wrapper caches the environment variables on first call and reuses them on subsequent calls (~0.25s total).
+The project's `docker/adamant_env.sh exec` command handles environment activation automatically via a cached snapshot (~0.25s vs 3-5 seconds for full activation). **Always use `adamant_env.sh exec` -- never use `source env/activate` directly.**
 
 ```bash
-# First call (caches env):
-bash adamant_env.sh <container> <activate_path> <command>
+# Run any command inside the container:
+bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <target>"
 
-# Example:
-bash adamant_env.sh adamant_skill_validation_container \
-  /home/user/adamant_skill_validation/env/activate \
-  "python3 /tmp/adamant_validate_yaml.py src/components/foo"
-
-# Force re-cache after container recreation:
-bash adamant_env.sh --refresh <container> <activate_path> <command>
+# Discover what can be built:
+bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo what"
 ```
 
 **Sub-agent workflow pattern:**
@@ -175,17 +170,17 @@ bash adamant_env.sh --refresh <container> <activate_path> <command>
 # Step 1: Copy tools into container (once)
 docker cp adamant-tools/*.py $CONTAINER:/tmp/
 
-# Step 2: Validate YAML (uses pykwalify if SCHEMAPATH set)
-bash adamant_env.sh $CONTAINER $ACTIVATE "python3 /tmp/adamant_validate_yaml.py $COMP_DIR"
+# Step 2: Validate YAML
+bash docker/adamant_env.sh exec "python3 /tmp/adamant_validate_yaml.py $COMP_DIR"
 
 # Step 3: Build component
-bash adamant_env.sh $CONTAINER $ACTIVATE "cd $PROJECT && redo $COMP_DIR/build/src/component-$NAME.ads"
+bash docker/adamant_env.sh exec "cd /home/user/<project> && redo $COMP_DIR/build/src/component-$NAME.ads"
 
 # Step 4: Inspect generated API
-bash adamant_env.sh $CONTAINER $ACTIVATE "python3 /tmp/adamant_inspect.py $COMP_DIR"
+bash docker/adamant_env.sh exec "python3 /tmp/adamant_inspect.py $COMP_DIR"
 
 # Step 5: Build and test
-bash adamant_env.sh $CONTAINER $ACTIVATE "cd $COMP_DIR/test && redo test"
+bash docker/adamant_env.sh exec "cd $COMP_DIR/test && redo test"
 ```
 
 ## pykwalify Schema Validation

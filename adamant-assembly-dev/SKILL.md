@@ -625,11 +625,9 @@ Before building, verify every component has ALL required connections:
 ## Running an Assembly
 
 ```bash
-# In Docker:
-source /home/user/<project>/env/activate
-cd src/assembly/<name>/main
-redo build/bin/Linux/main.elf
-./build/bin/Linux/main.elf 2>&1         # Events to stderr
+# From host:
+bash docker/adamant_env.sh exec "cd /home/user/<project>/src/assembly/<name>/main && redo build/bin/Linux/main.elf"
+bash docker/adamant_env.sh exec "cd /home/user/<project>/src/assembly/<name>/main && ./build/bin/Linux/main.elf 2>&1"
 ```
 
 ## Style

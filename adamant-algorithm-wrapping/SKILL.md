@@ -67,8 +67,8 @@ volumes:
     source: ../../eigen
     target: /home/user/eigen
 
-# Mission activate script adds wrapper_components as extra build root:
-. $ADAMANT_DIR/env/activate $MISSION_DIR $WRAPPER_DIR
+# Mission env/activate adds wrapper_components as extra build root.
+# Agents should use: bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <target>"
 ```
 
 The dependency path is one-directional: the mission project **consumes** types and components from the supporting repos (adamant, adamant-xmera-components, fp32-fsw-xmera, eigen). The wrapper repo has its own `src/components/` and `src/types/` with `.all_path` markers. The mission project's `env/activate` passes supporting repos as additional build roots so redo discovers their components and types alongside mission-specific code. Mission-specific wrappers can also live directly in the mission project.

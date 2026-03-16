@@ -13,15 +13,17 @@ Redo-based: YAML models → Python/Jinja2 code generation → Ada compilation, w
 
 **Detection:** Check for `ADAMANT_ENVIRONMENT_SET=yes` in the environment. If this variable is NOT set, you are on the host and MUST use `adamant_env.sh exec` to run builds:
 ```bash
-# From host -- PREFERRED method (fast snapshot-based activation):
+# From host -- REQUIRED method (fast snapshot-based activation):
 bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project> && redo <target>"
 
-# Legacy method (slower, sources full activate each time):
-# docker exec <project>_container bash -c "source /home/user/<project>/env/activate 2>/dev/null && cd /home/user/<project> && redo <target>"
+# Discover what can be built in any directory:
+bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo what"
 
 # If already inside the container (ADAMANT_ENVIRONMENT_SET=yes):
 cd /home/user/<project> && redo <target>
 ```
+
+**NEVER use `source env/activate` directly.** The `adamant_env.sh exec` function handles environment activation automatically via a cached snapshot.
 
 **Container setup pattern** (each project has its own Docker environment):
 ```bash
@@ -74,23 +76,23 @@ export ADAMANT_TMP_DIR=<auto>          # Session temp dir for SQLite caches
 export PROJECT_DIR=/path/to/project    # Project root (set by project env/activate)
 ```
 
-`PROJECT_DIR` is set by the project's `env/activate` script and used by target GPR files to locate project-local `.gpr` files. Without it, target builds fail.
+`PROJECT_DIR` is set automatically by `adamant_env.sh exec` and used by target GPR files to locate project-local `.gpr` files. Without it, target builds fail.
 
 Default BUILD_ROOTS: Adamant repo root + project root (both auto-detected via `.git`).
 
 ### Environment Activation
+
+**Always use `adamant_env.sh exec` for non-interactive commands** -- it uses snapshot-based activation (milliseconds vs seconds) and handles the environment correctly. For interactive sessions, use `adamant_env.sh login`. **NEVER use `source env/activate` directly.**
+
 ```bash
-# Framework only:
-source $ADAMANT_DIR/env/activate
+# Non-interactive (agents, scripts):
+bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project> && redo <target>"
 
-# Project (passes project dir as extra build root):
-source $ADAMANT_DIR/env/activate /path/to/project
+# Interactive:
+bash <project_dir>/docker/adamant_env.sh login
+```
 
-# Multiple roots:
-source $ADAMANT_DIR/env/activate "/path/to/project1:/path/to/project2"
-```yaml
-
-**For non-interactive commands, use `adamant_env.sh exec`** instead of raw `docker exec` with inline `source`. It uses snapshot-based activation (milliseconds vs seconds) and handles the environment correctly. For interactive sessions, use `adamant_env.sh login`. The base image's `.bashrc` may have already activated the adamant environment, blocking the project's activate via the `ADAMANT_ENVIRONMENT_SET` guard. Both `exec` and `login` handle this correctly. See `adamant-project-setup` for details.
+The `exec` command handles BUILD_ROOTS, Python venv, GPR_PROJECT_PATH, Alire dependencies, and PYTHONPATH automatically. See `adamant-project-setup` for details.
 
 Activation does: set BUILD_ROOTS, create Python venv, install requirements, set GPR_PROJECT_PATH, configure Alire dependencies, set PYTHONPATH for code generators.
 

@@ -9,6 +9,19 @@ This repo contains three agent prompt files. Copy them to your project root:
 - **AGENTS.md** -- OpenClaw subagent workspace rules (task scope, docker exec, quality gates)
 - **SOUL.md** -- OpenClaw subagent voice and disposition (technical, no filler, scoped)
 
+## Running Commands in the Adamant Environment
+
+All adamant and redo commands must be run inside the adamant environment container. Use the `adamant_env.sh exec` function from the project's `docker/` directory:
+
+```bash
+bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo what"
+bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo test"
+```
+
+**`redo what`** lists all available build targets in any directory. Agents should run `redo what` first to discover what can be built before attempting builds.
+
+**NEVER use `source env/activate` or `source project/env/activate`.** The `adamant_env.sh exec` function handles environment activation automatically via a cached snapshot, and is the only supported method for agents.
+
 ## Quick Start
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
@@ -32,7 +45,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-framework-components` | 675 | Catalog of all 58 built-in components + audit |
 | `adamant-type-system` | 567 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-subassemblies` | 504 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
-| `adamant-project-setup` | 484 | New project scaffolding, env/activate, Docker, config |
+| `adamant-project-setup` | 484 | New project scaffolding, adamant_env.sh, Docker, config |
 | `knowledge-acquisition` | 471 | Systematic codebase study with sub-agents |
 | `adamant-code-review` | ~170 | Component, test, type, assembly review checklists, design assessment |
 | `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
@@ -89,5 +102,5 @@ When building as part of a phased pipeline (types -> components -> assembly):
 - **`redo clean` is always safe** on any directory (framework or project). If redo state corrupts (STORAGE_ERROR), run `redo clean_all` on BOTH adamant and project dirs.
 - **NEVER manually delete build directories** (`rm -rf build`, `rm -rf */build`, etc.). Use `redo clean` or `redo clean_all`. Bulk-deleting build dirs corrupts redo state and may require container recreation to recover.
 - **`redo coverage`** runs from the component's `test/` directory. No `redo clean` needed.
-- **`source project/env/activate`** (not `adamant/env/activate`) -- sets BUILD_ROOTS correctly.
+- **Use `bash docker/adamant_env.sh exec "command"`** to run all build commands. Never use `source env/activate` directly.
 - **Never run concurrent redo processes** in the same container -- corrupts redo state.
