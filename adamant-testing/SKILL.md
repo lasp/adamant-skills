@@ -436,17 +436,22 @@ T.Expect_Data_Product_T_Send_Dropped := False;  -- Reset
 
 Send_Dropped fires when connector IS attached but receiver returns `Message_Dropped` -- NOT when unattached (`Send_If_Connected` skips entirely).
 
+**⚠️ CRITICAL -- Tester histories are ALWAYS populated:** When `Message_Dropped` status is set, the tester's invokee handlers (`Event_T_Recv_Sync`, `Data_Product_T_Recv_Sync`, etc.) are still called and push to history. The `Message_Dropped` status only affects what the **invoker** (component under test) sees as a return value, which triggers the `*_Send_Dropped` handler. Do NOT assert `History.Get_Count = 0` -- the tester receives the data regardless of the status value.
+
 ### Sync sends (most common)
 
 ```ada
 -- Set tester connector status to trigger Send_Dropped:
 T.Connector_Event_T_Recv_Sync_Status := Connector_Types.Message_Dropped;
 T.Connector_Data_Product_T_Recv_Sync_Status := Connector_Types.Message_Dropped;
-T.Tick_T_Send ((Time => (0, 0), Count => 1));  -- Triggers sends
+T.Packed_F32_T_Send ((Value => 80.0));  -- Triggers component sends
+-- Tester histories ARE populated (invokee always receives):
+Natural_Assert.Eq (T.Event_T_Recv_Sync_History.Get_Count, 1);  -- NOT 0
+-- The test verifies the *_Send_Dropped handler (null) doesn't crash.
 -- Restore:
 T.Connector_Event_T_Recv_Sync_Status := Connector_Types.Success;
 T.Connector_Data_Product_T_Recv_Sync_Status := Connector_Types.Success;
-```ada
+```
 
 Field names: `Connector_<Type>_Recv_Sync_Status` in generated reciprocal `.ads`.
 

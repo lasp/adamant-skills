@@ -138,6 +138,8 @@ After initial skill creation, shift to building real artifacts to discover gaps.
 
 **Campaign progression ladder**: Converge -> Optimize -> Relax -> Escalate. If skills converge with detailed prompts, optimize token efficiency. If efficient, relax prompts (high-level descriptions instead of field-by-field specs) to test whether skills guide design, not just implementation. If converged with relaxed prompts, increase difficulty. See "Integration with Campaigns" and "Prompt Relaxation" in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
 
+**Decision point analysis**: Beyond error counts, track individual decision points where skills prescribe specific actions. Score agent output against these points to distinguish skill gaps (all agents miss) from unstable guidance (some agents miss) and stable patterns (all agents hit). Apply fixes between iterations, not at the end. See [adamant-skill-creation/references/decision-point-methodology.md](../adamant-skill-creation/references/decision-point-methodology.md) for the full methodology.
+
 ### 5b. Experience Pool Aggregation
 
 When running multiple study or validation sessions, aggregate discoveries across sessions

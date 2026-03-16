@@ -131,12 +131,40 @@ Do NOT use prior Adamant knowledge -- follow the skills exactly."
 | Style violations | 0 | Fix style skill or align code-producing skills |
 | Missing files | 0 | Fix checklist (e.g., missing .all_path, env.py) |
 
+### Decision Point Analysis
+
+Error counts alone don't reveal WHY agents fail. **Decision points** are moments where a skill prescribes a specific action. Track whether the agent's OUTPUT matches the prescription, regardless of whether the skill was explicitly read.
+
+**Classifications:**
+- **HIT**: Agent output matches skill prescription
+- **MISS**: Agent improvised or got it wrong where a skill had the answer
+- **MISS->FIX**: Agent got it wrong, then self-corrected within the same session
+- **GAP**: No skill covers the correct pattern (skill deficiency, not agent deficiency)
+
+**Defining decision points for a task:**
+1. List every moment where the skill prescribes a specific action (build method, file creation order, API usage pattern, naming convention)
+2. Each decision point has: description, skill source, correct action, failure mode
+3. Score each agent iteration against the decision points by examining output artifacts and session history
+
+**Interpreting results:**
+- **Stable HIT** (all agents get it right): Skill is effective here. No action needed.
+- **Stable MISS** (3+ agents get it wrong): This is a SKILL GAP, not agent failure. The skill is missing, unclear, or buried. Fix the skill.
+- **Unstable** (some agents hit, some miss): Skill content exists but may be insufficiently prominent or ambiguous. Restructure for clarity.
+- **MISS->FIX** (agent self-corrects): The skill didn't prevent the error but the agent recovered. Still counts as a skill gap -- prevention beats recovery.
+
+**Critical rule:** Never attribute stable misses to agent quality. If 3+ independent cold-start agents make the same mistake, the skill is wrong. This prevents sycophantic measurement where you blame the agent instead of improving the skill.
+
 ### Convergence Tracking
 
 Track validation rounds:
 - **Round N**: X errors (list each)
 - **Round N+1**: Y errors (should decrease)
 - **Convergence**: 0 errors on cold start = skill is production-ready
+
+Track decision point hit ratios per iteration. Plot the ratio over iterations to distinguish:
+- Skills that converge (hit ratio increases as skills improve)
+- Skills that plateau (hit ratio stays flat -- fundamentally unclear or wrong approach)
+- Skills that regress (new changes break previously-working patterns)
 
 Historical data: Skills went from ~20 errors/round to 0 errors over 19 rounds of iteration.
 
@@ -336,6 +364,7 @@ Based on 14 skills developed over 20+ sessions:
 - [references/validation-history.md](references/validation-history.md) -- Convergence data from 19 rounds of skill validation
 - [references/refinement-methodology.md](references/refinement-methodology.md) -- Stress test design, experience pool, ancestor tracking
 - [references/evolution-plan.md](references/evolution-plan.md) -- Plan for continued improvement beyond per-skill convergence
+- [references/decision-point-methodology.md](references/decision-point-methodology.md) -- Outcome-aligned measurement for skill effectiveness via decision point tracking
 
 ## Related Skills
 - **Skill selector**: [adamant-skill-selector](../adamant-skill-selector/SKILL.md)

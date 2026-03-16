@@ -413,17 +413,38 @@ Gain_Value : Packed_F32.U := Self.Gain;  -- CORRECT: .U (unpacked)
 
 **Parameter lifecycle**: `Process_Parameter_Update` handles staging and validation. However, staged parameters are NOT applied until `Self.Update_Parameters` is called. Components MUST call `Self.Update_Parameters` at the start of their primary processing handler -- Tick handler for active/ticked components, recv_sync handler for passive/tickless components. Without this call, parameter updates will never take effect. `Update_Parameters_Action` is called at the END of the update cycle (use it for side effects like recalculating derived state).
 
-⚠️ **CRITICAL -- Self.Update_Parameters in Tick handler**: Components with parameters MUST call `Self.Update_Parameters` at the START of every Tick handler. Without this call, parameter updates staged via the tester's 3-step protocol (Stage/Validate/Update) will NEVER take effect. This is the #1 missed step in parameter-using components:
+⚠️ **CRITICAL -- Self.Update_Parameters ordering**: Components with parameters MUST call `Self.Update_Parameters` BEFORE reading any parameter values. This applies to Tick handlers, recv_sync handlers, and any handler that uses parameter values. Without this call, parameter updates staged via the tester's 3-step protocol (Stage/Validate/Update) will NEVER take effect. This is the #1 missed step in parameter-using components.
+
+**Ada constraint:** Constants declared in the declarative region (before `begin`) capture values at elaboration time -- BEFORE any statements execute. If you declare `Kp : constant := Self.Kp.Value;` in the declarative region, it captures the STALE pre-update value.
+
 ```ada
+-- WRONG: parameter read in declarative region captures stale value
+overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T) is
+   Kp : constant Short_Float := Self.Kp.Value;  -- STALE!
+begin
+   Self.Update_Parameters;  -- Too late, Kp already captured
+end Tick_T_Recv_Sync;
+
+-- RIGHT: use a declare block AFTER Update_Parameters
 overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T) is
 begin
-   Self.Update_Parameters;  -- MUST be first line. NO arguments.
-   -- Read parameters AFTER this call, not before. Ada constants declared
-   -- before Update_Parameters capture stale values:
-   -- WRONG: Kp : constant Short_Float := Self.Kp; Self.Update_Parameters;
-   -- RIGHT: Self.Update_Parameters; Kp : constant Short_Float := Self.Kp;
+   Self.Update_Parameters;  -- MUST be first statement
+   declare
+      Kp : constant Short_Float := Self.Kp.Value;  -- Fresh value
+   begin
+      -- Use Kp here
+   end;
 end Tick_T_Recv_Sync;
-```ada
+
+-- ALSO RIGHT: read directly in expressions (no constant needed)
+overriding procedure Packed_F32_T_Recv_Sync (Self : in out Instance; Arg : in Packed_F32.T) is
+begin
+   Self.Update_Parameters;
+   if Arg.Value > Self.Pressure_High_Limit.Value then  -- Always fresh
+      -- ...
+   end if;
+end Packed_F32_T_Recv_Sync;
+```
 
 ⚠️ **CRITICAL - Parameter Defaults Use Unpacked Syntax**: Parameter `default:` values use the unpacked record syntax directly (e.g., `"(Kp => (Value => 1.0), Ki => (Value => 0.1))"`), NOT `Type.Pack(...)`. The code generation wraps the packing automatically:
 
