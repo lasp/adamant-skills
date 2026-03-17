@@ -7,6 +7,13 @@ description: Comprehensive testing patterns and infrastructure for Adamant embed
 
 Auto-generated reciprocal testers with history capture and white-box component access.
 
+## ⚠️ Common Pitfalls (Read First)
+
+1. **Send_Dropped histories are ALWAYS populated.** When `Connector_*_Recv_Sync_Status` is set to `Message_Dropped`, the tester's invokee handlers still push to history. Do NOT assert `History.Get_Count = 0` under Message_Dropped. The status only affects the invoker's return value.
+2. **Tester Validate_Parameters returns `Parameter_Update_Status.E`** (values: `Success`, `Id_Error`, `Validation_Error`), NOT `Parameter_Validation_Status.E` (values: `Valid`, `Invalid`). The framework translates: your component's `Invalid` -> tester's `Validation_Error`.
+3. **Unused Self in Validate_Parameters:** Use `pragma Unreferenced (Self);` -- do NOT copy Self (`Ignore : constant Instance := Self;`) as Instance is a limited type and copying violates Ravenscar.
+4. **NEVER write tester files from scratch.** Run `redo templates` in both component/ and test/ dirs, then `cp build/template/*.ads build/template/*.adb .` in the test dir.
+
 ## Test Structure
 
 ```

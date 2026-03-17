@@ -408,6 +408,9 @@ overriding function Validate_Parameters (Self : in out Instance;
    My_Param_1 : My_Param_1_Type.U; My_Param_2 : My_Param_2_Type.U) return Parameter_Validation_Status.E
    is (Parameter_Validation_Status.Valid);
 -- NOTE: Parameter names match YAML parameter names exactly (not P1/P2). Types are unpacked (.U).
+-- When overriding with a body instead of expression function and Self is unused:
+--   pragma Unreferenced (Self);  -- CORRECT
+--   Ignore : constant Instance := Self;  -- WRONG: Instance is limited, violates Ravenscar
 overriding procedure Update_Parameters_Action (Self : in out Instance) is null;
 ```ada
 
