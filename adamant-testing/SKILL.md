@@ -66,8 +66,11 @@ The test body (`*_tests-implementation.adb`) does NOT inherit visibility from th
 
 ```ada
 -- Required for most test bodies:
-with Interfaces; use Interfaces;          -- Unsigned_16, Unsigned_32, etc.
 with Basic_Assertions; use Basic_Assertions;  -- Natural_Assert, Boolean_Assert
+-- Only add `with Interfaces; use Interfaces;` if your test code directly uses
+-- Unsigned_16, Unsigned_32, etc. Do NOT add it speculatively -- it causes
+-- `-gnatwu` style warnings if unused. The generated tester and base class
+-- already have Interfaces visibility for their own code.
 
 -- For typed assertion packages (match your data product/event param types):
 with Packed_U32.Assertion; use Packed_U32.Assertion;  -- Packed_U32_Assert
