@@ -413,7 +413,11 @@ The framework detects that the data product timestamp is older than expected and
 
 ## Test Body With-Clauses
 
-Add `with` for every type referenced in tests: `Basic_Assertions`, `Packed_F32.Assertion`, `Command_Enums`, `Interfaces`, custom types from `src/types/`. **Only `with` packages you ACTUALLY reference in your code** -- `redo style` flags unused imports as `-gnatwu` warnings. Common mistake: adding `with Command;` or `with Tick;` when only using `T.Commands.*` or `T.Tick_T_Send` (which don't require explicit imports). Before adding any `with`, verify your test body directly names a type from that package.
+Add `with` for every type referenced in tests: `Basic_Assertions`, `Packed_F32.Assertion`, `Command_Enums`, `Interfaces`, custom types from `src/types/`.
+
+**CRITICAL: Only `with` packages you ACTUALLY reference by name in your code.** `redo style` flags unused imports as `-gnatwu` warnings that FAIL the build. Before adding ANY `with` clause, verify your test body directly names a type or entity from that package.
+
+**DO NOT add `with Command;` unless you construct raw `Command.T` values** (e.g., invalid command testing). The tester package `T.Commands.*` and `T.Command_T_Send` do NOT require `with Command;` -- the tester package already provides command dispatch. Adding `with Command;` without using `Command.T` directly causes a style failure. Same applies to `with Tick;` -- only needed if you reference `Tick.T` by name, not for `T.Tick_T_Send`.
 
 ## Common Errors
 
