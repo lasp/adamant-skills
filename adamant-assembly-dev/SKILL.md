@@ -25,16 +25,16 @@ When building an assembly, **read the component YAML files directly** from the b
 
 **CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main procedure file name must be unique across the entire build path. If the project shares build roots with another project that has `main.adb`, use a unique name like `project_main.adb` / `procedure Project_Main`. The build system discovers source files by filename -- collisions are fatal.
 
-### Pre-Wire Build Check (MANDATORY)
+### Pre-Wire Build Check (MANDATORY -- do this BEFORE writing any assembly YAML)
 
-Before writing assembly YAML, verify that every component you plan to wire actually compiles:
+**You MUST run `redo build` on each project component individually BEFORE writing the assembly YAML.** This is a separate step from the assembly build -- do NOT skip it by relying on `redo all` in the assembly directory. The assembly build will transitively compile components, but by then you have already committed to a wiring design. A broken component discovered during assembly build wastes the entire assembly YAML effort.
 
 ```bash
-# For each component you intend to include:
+# Run this for EACH project component you intend to include (not framework components):
 bash docker/adamant_env.sh exec "cd /home/user/<project>/src/components/<component_name> && redo style && redo build"
 ```
 
-If a component fails to build, do NOT wire it into the assembly. Either fix it first (if it is your component) or exclude it. Wiring a broken component into an assembly produces cascading errors that are much harder to diagnose than a standalone component build failure. This is the most common assembly debugging time sink.
+If a component fails, do NOT wire it into the assembly. Either fix it first (if it is your component) or choose a different component. This is the most common assembly debugging time sink -- agents who skip this step spend 3x longer on assembly errors.
 
 ### Required Files for Specific Components
 
