@@ -81,7 +81,10 @@ with Command_Enums; use Command_Enums;
 
 -- For framework types used directly in test logic:
 with Tick;                                -- qualify as Tick.T in sends
-with Command;                             -- for invalid command construction
+-- with Command;                          -- ONLY if you construct Command.T values directly
+--                                        -- (e.g., invalid command test). T.Commands.* and
+--                                        -- T.Command_T_Send do NOT require this import.
+--                                        -- Adding it without use causes -gnatwu style warning.
 with Sys_Time;                            -- for timestamps
 with Data_Product;                        -- if inspecting raw DPs
 
@@ -410,7 +413,7 @@ The framework detects that the data product timestamp is older than expected and
 
 ## Test Body With-Clauses
 
-Add `with` for every type referenced in tests: `Basic_Assertions`, `Packed_F32.Assertion`, `Command_Enums`, `Interfaces`, custom types from `src/types/`. Only `with` what you use -- `redo style` flags unused imports.
+Add `with` for every type referenced in tests: `Basic_Assertions`, `Packed_F32.Assertion`, `Command_Enums`, `Interfaces`, custom types from `src/types/`. **Only `with` packages you ACTUALLY reference in your code** -- `redo style` flags unused imports as `-gnatwu` warnings. Common mistake: adding `with Command;` or `with Tick;` when only using `T.Commands.*` or `T.Tick_T_Send` (which don't require explicit imports). Before adding any `with`, verify your test body directly names a type from that package.
 
 ## Common Errors
 
