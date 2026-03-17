@@ -408,6 +408,10 @@ overriding function Validate_Parameters (Self : in out Instance;
    My_Param_1 : My_Param_1_Type.U; My_Param_2 : My_Param_2_Type.U) return Parameter_Validation_Status.E
    is (Parameter_Validation_Status.Valid);
 -- NOTE: Parameter names match YAML parameter names exactly (not P1/P2). Types are unpacked (.U).
+-- ⚠️ CRITICAL: Use the EXACT YAML parameter name -- no abbreviations, no prefix stripping.
+-- Example: if YAML names a parameter `Pressure_High_Limit`, the Validate_Parameters argument
+-- MUST be `Pressure_High_Limit : Packed_F32.U`, NOT `High_Limit` or `Limit`. The same exact
+-- name is used to access it in the body: `Self.Pressure_High_Limit` (not `Self.High_Limit`).
 -- When overriding with a body instead of expression function and Self is unused:
 --   pragma Unreferenced (Self);  -- CORRECT
 --   Ignore : constant Instance := Self;  -- WRONG: Instance is limited, violates Ravenscar
@@ -468,14 +472,19 @@ parameters:
     default: "Pid_Gains.Pack((Kp => (Value => 1.0), Ki => (Value => 0.1)))"
 ```ada
 
-**CRITICAL -- Parameter Access Pattern**: Parameters are NOT accessed via `Self.Parameters`. They are accessed via generated getter functions. For each parameter named `Kp` in the YAML, use:
+**CRITICAL -- Parameter Access Pattern**: Parameters are NOT accessed via `Self.Parameters`. They are accessed via generated getter functions. The accessor name is the **exact YAML parameter name** -- no abbreviations, no prefix stripping:
 
 ```ada
 -- WRONG: Parameters record does not exist
 Value := Self.Parameters.Kp;
 
--- CORRECT: Generated getter function
-Value := Self.Kp;
+-- WRONG: Abbreviating a compound name
+-- If YAML says `Pressure_High_Limit`, this is WRONG:
+if Arg.Value > Self.High_Limit.Value then ...
+
+-- CORRECT: Generated getter uses exact YAML name
+Value := Self.Kp;                          -- for param named `Kp`
+Value := Self.Pressure_High_Limit.Value;   -- for param named `Pressure_High_Limit`
 -- OR (alternate form)
 Value := Self.Get_Kp;
 ```ada
