@@ -308,6 +308,8 @@ Need `use type Command_Enums.Command_Response_Status.E;` for `=` operator visibi
 
 **NEVER use `pragma Assert` or AUnit `Assert(condition, "message")` in tests.** Smart_Assert-based assertions (items 1-3) print both expected and actual values on failure. `pragma Assert` and `Assert()` only say "failed" with no context, making debugging painful. Every assertion can be replaced with a typed Smart_Assert call -- use packed type assertions for record/array comparisons, `Basic_Assertions` for scalar values, and enum assertion packages for enum comparisons.
 
+**NEVER use `E'Pos` or `T'Pos` to compare enum values.** The `Natural_Assert.Eq(E'Pos(Status), E'Pos(Expected))` pattern loses type safety and produces confusing failure output (positional integers instead of enum names). Always use the typed enum assertion package directly: `Parameter_Update_Status_Assert.Eq(Status, Parameter_Enums.Parameter_Update_Status.Success)`. For any enum type `Foo.E`, the assertion package is `with Foo.Assertion; use Foo.Assertion;` which provides `Foo_Assert.Eq`.
+
 Do NOT call `Smart_Assert.Eq(...)` directly -- requires generic instantiation first. Use the pre-instantiated packages from `Basic_Assertions`, `*.Assertion` child packages, or instantiate your own for project-specific types.
 
 ```ada
