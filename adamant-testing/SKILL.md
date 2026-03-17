@@ -210,9 +210,9 @@ Natural_Assert.Eq (T.Event_T_Recv_Sync_History.Get_Count, 3);
 Natural_Assert.Eq (T.My_Event_History.Get_Count, 1);
 -- Access (1-indexed) -- typed histories store PACKED type (.T), not unpacked (.U)
 Packed_U32_Assert.Eq (T.Counter_History.Get (1), (Value => 42));
--- For custom types: Get returns My_Type.T (packed). Unpack before comparing with .U:
---   declare Result : constant My_Type.U := My_Type.Unpack (T.My_Dp_History.Get (1));
---   begin Natural_Assert.Eq (Result.Field, Expected_Value); end;
+-- For custom packed record types, use the typed assert with a named aggregate:
+-- My_Status_Assert.Eq (T.My_Status_History.Get (1), ((Field_1 => X, Field_2 => Y)));
+-- No Pack/Unpack needed -- Ada resolves the .T type from context.
 -- Clear between phases
 T.Event_T_Recv_Sync_History.Clear;
 ```ada
@@ -292,12 +292,11 @@ Need `use type Command_Enums.Command_Response_Status.E;` for `=` operator visibi
 
 ## Assertion Hierarchy (Most → Least Preferred)
 
-1. **Packed type assertions:** `Packed_U32_Assert.Eq(...)` -- type-safe, clear errors
-2. **Basic_Assertions:** `Natural_Assert.Eq(...)`, `Boolean_Assert.Eq(...)` -- counts, flags
+1. **Packed type assertions:** `Packed_U32_Assert.Eq(...)`, `My_Record_Assert.Eq(...)`, `My_Array_Assert.Eq(...)` -- type-safe, clear errors, works for framework and custom packed types
+2. **Basic_Assertions:** `Natural_Assert.Eq(...)`, `Boolean_Assert.Eq(...)`, `Integer_Assert.Eq(...)` -- counts, flags, indices (see `adamant/src/util/basic_assertions/basic_assertions.ads` for full list)
 3. **Enum assertion packages:** `Parameter_Update_Status_Assert.Eq(...)`, `Command_Response_Status_Assert.Eq(...)` -- from `*.Assertion` child packages
-4. **AUnit Assert:** `Assert(condition, "message")` -- last resort fallback
 
-**NEVER use `pragma Assert` in tests.** Smart_Assert-based assertions (items 1-3) print both expected and actual values on failure. `pragma Assert` only says "failed" with no context, making debugging painful. Every `pragma Assert` can be replaced with a typed Smart_Assert call.
+**NEVER use `pragma Assert` or AUnit `Assert(condition, "message")` in tests.** Smart_Assert-based assertions (items 1-3) print both expected and actual values on failure. `pragma Assert` and `Assert()` only say "failed" with no context, making debugging painful. Every assertion can be replaced with a typed Smart_Assert call -- use packed type assertions for record/array comparisons, `Basic_Assertions` for scalar values, and enum assertion packages for enum comparisons.
 
 Do NOT call `Smart_Assert.Eq(...)` directly -- requires generic instantiation first. Use the pre-instantiated packages from `Basic_Assertions`, `*.Assertion` child packages, or instantiate your own for project-specific types.
 
@@ -314,6 +313,22 @@ with Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;  -- for 
 **Parameter status assertions:** Use `Parameter_Update_Status_Assert.Eq(Status, Parameter_Enums.Parameter_Update_Status.Success)` instead of `pragma Assert`. The `.Assertion` child package provides Smart_Assert instantiations for all enum types in that package.
 
 **Custom enum data product assertions:** For enum types defined in project `types/`, auto-generated assertion packages follow the same pattern: `with My_Enum.Assertion; use My_Enum.Assertion;` gives `My_Enum_Assert.Eq(...)`. Use for DP history checks on enum-typed data products (e.g. mode state, operational status).
+
+**Packed record and array data product assertions:** For custom packed types (`*.record.yaml` or `*.array.yaml`), use the auto-generated assertion package to compare the full value from the typed DP history. Construct the expected value as an aggregate -- no `Pack` or `Unpack` needed, Ada resolves the `.T` type from context:
+```ada
+with My_Status.Assertion; use My_Status.Assertion;
+-- Packed record: compare with named aggregate
+My_Status_Assert.Eq (T.My_Status_Product_History.Get (1), ((
+   Field_1 => Value_1,
+   Field_2 => Enum_Literal,
+   Field_3 => Other_Value
+)));
+-- Packed array: compare with positional aggregate
+My_Array_Assert.Eq (T.My_Array_Product_History.Get (1), [Val_0, Val_1, Val_2]);
+-- WRONG: Do not unpack and check individual fields/elements with naked Assert:
+-- Status := My_Status.Unpack (T.My_Status_Product_History.Get (1));
+-- Assert (Status.Field_1 = Value_1, "msg");  -- loses typed error output
+```
 
 **Array type assertions:** Array types generate assertion packages with `_U_Assert` / `_Assert` / `_Le_Assert` suffixes (NOT `_Assert_Eq`). Usage: `with My_Array.Assertion; use My_Array.Assertion;` gives `My_Array_U_Assert.Eq(...)` for unpacked, `My_Array_Assert.Eq(...)` for packed `.T`.
 
