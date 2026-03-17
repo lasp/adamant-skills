@@ -25,6 +25,17 @@ When building an assembly, **read the component YAML files directly** from the b
 
 **CRITICAL**: Both `assembly_name/` AND `main/` need `.all_path` files. The main procedure file name must be unique across the entire build path. If the project shares build roots with another project that has `main.adb`, use a unique name like `project_main.adb` / `procedure Project_Main`. The build system discovers source files by filename -- collisions are fatal.
 
+### Pre-Wire Build Check (MANDATORY)
+
+Before writing assembly YAML, verify that every component you plan to wire actually compiles:
+
+```bash
+# For each component you intend to include:
+bash docker/adamant_env.sh exec "cd /home/user/<project>/src/components/<component_name> && redo style && redo build"
+```
+
+If a component fails to build, do NOT wire it into the assembly. Either fix it first (if it is your component) or exclude it. Wiring a broken component into an assembly produces cascading errors that are much harder to diagnose than a standalone component build failure. This is the most common assembly debugging time sink.
+
 ### Required Files for Specific Components
 
 When using certain framework components, the assembly MUST include additional files:
