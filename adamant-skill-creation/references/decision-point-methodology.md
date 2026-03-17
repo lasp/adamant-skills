@@ -2,6 +2,12 @@
 
 Outcome-aligned measurement for skill effectiveness. Measures whether agent OUTPUT matches skill prescriptions, regardless of whether the skill was explicitly read.
 
+## CRITICAL: Define Decision Points BEFORE Running Iterations
+
+Decision points MUST be defined before the first iteration of each scenario. Scoring retroactively is weaker evidence -- you know "it passed" but not "which specific skill prescriptions were followed vs improvised." Retroactive scoring from summaries can't distinguish a clean first attempt from a silent self-correction that wasn't reported.
+
+**Lesson from T-REDO:** S1 had formal decision points and produced actionable skill fixes (D5, D7). S2-S5 were scored pass/fail only and produced zero fixes despite having unstable patterns (S5 D6/D8) that warranted investigation. The methodology works when applied; it's inert when skipped.
+
 ## Defining Decision Points
 
 For any repeatable task (component creation, assembly wiring, test writing):

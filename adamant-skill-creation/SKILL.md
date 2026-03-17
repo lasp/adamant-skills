@@ -141,10 +141,12 @@ Error counts alone don't reveal WHY agents fail. **Decision points** are moments
 - **MISS->FIX**: Agent got it wrong, then self-corrected within the same session
 - **GAP**: No skill covers the correct pattern (skill deficiency, not agent deficiency)
 
-**Defining decision points for a task:**
+**Defining decision points for a task (MUST be done BEFORE first iteration):**
 1. List every moment where the skill prescribes a specific action (build method, file creation order, API usage pattern, naming convention)
 2. Each decision point has: description, skill source, correct action, failure mode
 3. Score each agent iteration against the decision points by examining output artifacts and session history
+
+**Why before, not after:** Retroactive scoring from summaries can't distinguish clean first attempts from unreported self-corrections. Formal upfront decision points produce actionable skill fixes; pass/fail scoring produces nothing. T-REDO S1 (with decision points) found 2 skill gaps; S2-S5 (without) found 0 despite having unstable patterns.
 
 **Interpreting results:**
 - **Stable HIT** (all agents get it right): Skill is effective here. No action needed.
