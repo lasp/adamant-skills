@@ -63,6 +63,32 @@ Rank by **miss frequency across independent agents**:
 
 **Never attribute stable misses to agent quality.** If 3+ independent cold-start agents make the same mistake, the skill is wrong. This is the fundamental rule.
 
+## Skill Fix Convergence
+
+A skill fix is NOT converged just because the next iteration passes. Skill fixes need their own convergence criteria:
+
+**A fix is converged when the targeted decision point shows 0% miss rate across 5 consecutive post-fix iterations.**
+
+Track separately from scenario convergence:
+- Scenario convergence = 5 clean iterations (build/test/style pass)
+- Fix convergence = 5 consecutive HITs on the specific decision point post-fix
+
+If a scenario converges but a fix hasn't (e.g., only 2 post-fix data points), re-run the scenario to accumulate post-fix data. A scenario is truly done only when BOTH conditions are met.
+
+**Fix convergence tracking template:**
+```markdown
+| Fix | DP | Pre-fix miss% | Post-fix iterations | Post-fix misses | Converged? |
+|-----|----|--------------|--------------------|----------------|------------|
+| D5 declare block | D5 | 40% | i4 HIT, i5 MISS | 1/2 = 50% | NO |
+| D7 common pitfalls | D7 | 67% | (no data) | N/A | NO |
+```
+
+**If a fix doesn't converge after 5 post-fix iterations:** The fix is inadequate. The skill content exists but agents still miss it. Options:
+1. Restructure -- move guidance higher, make it more prominent
+2. Add negative examples (WRONG patterns agents actually write)
+3. Add to a "Read First" / "Common Pitfalls" section at skill top
+4. Consider whether the skill is fighting against natural coding patterns (may need architectural change instead)
+
 ## Integration with Campaign Tiers
 
 During campaign validation (T-series):
@@ -70,7 +96,9 @@ During campaign validation (T-series):
 2. Score each iteration against the decision points post-hoc
 3. Apply skill fixes between iterations (not at the end)
 4. Re-score subsequent iterations to confirm fixes are effective
-5. Track the decision-point matrix alongside the standard iteration scratchpad
+5. Track fix convergence separately from scenario convergence
+6. Re-run scenarios if fixes haven't accumulated 5 post-fix data points
+7. Track the decision-point matrix alongside the standard iteration scratchpad
 
 ## Example: Component Creation Task
 
