@@ -252,6 +252,12 @@ private
 end Component.My_Component.Implementation;
 ```
 
+## Implementation Body -- Context Clauses
+
+**⚠️ Do NOT blindly copy `with Interfaces; use Interfaces;` from existing components.** Components with commands or parameters auto-provide `with Interfaces; use Interfaces;` in the generated base class. Adding it again in your body causes a `-gnatwr` redundant use-clause warning that fails style checks.
+
+**Quick rule:** If your component has `commands.yaml` or `parameters.yaml`, `Interfaces` is already visible -- do NOT add it to your implementation body. If your component has NEITHER and needs Unsigned types, add `with Interfaces; use Interfaces;` in the body. See the decision table in "Auto-Provided Packages" below for the full matrix.
+
 ## Command_T_Recv_Sync Pattern (Required IFF commands.yaml)
 
 ```ada
