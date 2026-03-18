@@ -125,6 +125,21 @@ A review covers one or more of these artifact types:
 - [ ] Linux target specified (or correct target for the project)
 - [ ] Main procedure uses correct assembly package name
 
+### Main Procedure Init Sequence
+The `main.adb` init sequence MUST follow this exact order:
+1. `Assembly.Init_Base` (active assemblies only -- allocates queues)
+2. `Assembly.Set_Id_Bases` (assigns event/command/DP IDs)
+3. `Assembly.Connect_Components` (wires connectors)
+4. `Assembly.Init_Components` (calls component Init -- only if any component has `init:` in YAML)
+5. `Assembly.Start_Components` (starts active tasks -- MUST come BEFORE Set_Up)
+6. `Assembly.Set_Up_Components` (registers commands, data products)
+
+- [ ] Sequence matches this exact order (no reordering, no missing steps)
+- [ ] `Start_Components` appears BEFORE `Set_Up_Components`
+- [ ] `Init_Components` only called if at least one component has `init:` in YAML
+- [ ] `Init_Base` and `Start_Components` omitted for all-passive assemblies
+- [ ] Infinite loop present for active assemblies (process would exit otherwise)
+
 ### Common Assembly Mistakes
 - [ ] Subassembly used when design requires it (flattening to avoid event_to_text style warnings is not a valid reason -- the ELF is unaffected)
 - [ ] Parameter_Store included when any component has parameters (requires companion Parameters component)
