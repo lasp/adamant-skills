@@ -150,7 +150,7 @@ Testers are **reciprocal components** with inverted connectors:
 
 **NEVER use `T.Command_T_Send_History`** -- that doesn't exist. The tester SENDS commands (no history for sends). It RECEIVES responses (history for receives).
 
-**Set_Up DP history pollution**: If component overrides `Set_Up` and sends initial data products (e.g., zeroed counters), typed DP histories will have entries BEFORE any test stimuli. Clear typed histories before your assertion window, or account for the offset in `Get` indices.
+⚠️ **Set_Up DP history pollution (recurring #1 test error)**: If component overrides `Set_Up` and sends initial data products (e.g., zeroed counters), typed DP histories will have entries BEFORE any test stimuli. **Always clear ALL typed histories at the start of each test procedure** (after Set_Up_Test), or account for the offset in `Get` indices. Example: `T.Current_State_History.Clear; T.Fault_Count_History.Clear;` -- do this for EVERY typed history you will assert on in that test.
 
 **History buffer limits**: Default tester history buffers hold ~100 entries. Tests that send many ticks (e.g., 50+ in a loop) can overflow them, causing lost entries and wrong assertion indices. Keep tick counts per test under 50, or clear histories between test phases with `T.Event_T_Recv_Sync_History.Clear` etc.
 
