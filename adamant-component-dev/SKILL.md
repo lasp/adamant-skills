@@ -623,6 +623,7 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 14. [ ] No `Packed_U8` (use `Packed_Byte.T`); no `Packed_Bool` (use `Packed_Boolean.T`)
 15. [ ] No dynamic allocation (Ravenscar profile)
 16a. [ ] Component name must NOT match any of ~58 framework built-in names (see adamant-framework-components catalog). E.g., `command_sequencer`, `sequence_store`, `event_filter`, `fault_counter` are taken. When in doubt, prefix with project/domain name (e.g., `tst_seq_store`).
+16b. [ ] Enum literals and type names must NOT collide with framework PACKAGE names that are `with`'d into the generated base class. Dangerous names include: `Fault`, `Event`, `Command`, `Data_Product`, `Parameter_Update`, `Packet`, `Tick`, `Sys_Time`, `Connector_Types`. The compiler error is "`package name cannot be used as operand`". Workaround: use suffixed names (e.g., `Faulted` instead of `Fault`, `Cmd_Event` instead of `Event`).
 16. [ ] Active + recv_async: override `{Type}_T_Recv_Async_Dropped`
 17. [ ] Parameter overrides: `Parameter_Update_T_Modify`, `Invalid_Parameter`, `Validate_Parameters`, `Update_Parameters_Action`
 18. [ ] Data dependency overrides: `Get_Data_Dependency`, `Invalid_Data_Dependency`
