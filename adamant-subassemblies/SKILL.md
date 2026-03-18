@@ -82,6 +82,11 @@ Each entry in `subassemblies:` is a **name**, not a filename. The entry `core` l
 
 ## Subassembly YAML
 
+⚠️ **CRITICAL: There is NO `is_subassembly` field.** The subassembly YAML schema is IDENTICAL to a regular assembly YAML. Subassembly status is determined entirely by the parent's `subassemblies:` list -- it is NOT declared with any field inside the subassembly file itself. Do NOT add `is_subassembly: True` or any similar field -- it does not exist in the schema and will cause an immediate validation error:
+```
+Key 'is_subassembly' was not defined. Path: ''
+```
+
 A subassembly is a normal assembly YAML file. It uses the same schema:
 
 ```yaml
@@ -201,6 +206,8 @@ subassemblies:
 
 1. **Intra-subassembly connections** go in the subassembly file (wiring between components within the same subassembly)
 2. **Cross-subassembly connections** go in the parent assembly (wiring between components in different subassemblies, or between parent components and subassembly components)
+
+**Rule for Event_T_Send and Data_Product_T_Send (bus fan-in):** These connect every component to a central hub (Event_Splitter or Product_Database). If the source component and the hub destination are in DIFFERENT subassemblies, the connection MUST go in the parent assembly. In practice, since Event_Splitter and Product_Database receive inputs from ALL subassemblies, ALL Event_T_Send and Data_Product_T_Send connections belong in the parent assembly (or the subassembly that contains both the source AND the hub). The clearest design: put Event_Splitter and Product_Database in the PARENT assembly alongside the rate groups and system time, then wire everything there.
 
 Since all components merge into a single namespace at the parent level, the parent's connections can reference any component regardless of which subassembly defined it:
 
