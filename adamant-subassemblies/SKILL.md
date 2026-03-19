@@ -388,25 +388,14 @@ One subassembly owns ALL infrastructure (ticker, rate groups, command router, CC
 # Fast_Rate_Group indices 9-22 -> degraded components
 ```
 
-### Passive-Only Subassemblies Need At Least One Connection
+### Passive-Only Subassemblies
 
-⚠️ **CRITICAL**: If a subassembly contains ONLY passive components AND has NO `connections:` section, the generated subassembly `.adb` file uses `<Subassembly>_Components` without a `with` clause, causing `"<Subassembly>_Components" is undefined` compile errors. This is a code generator limitation -- the `with` clause is only generated when `Connect_Components` exists (which requires at least one connection).
+Passive-only subassemblies with no internal connections are valid as long as the `with:` entries for component implementation packages are present (see "Subassembly YAML" section above). The `with:` entries generate proper `_components.ads` with clauses, which is sufficient for compilation. Internal connections are NOT required.
 
-**Fix**: Add at least one `ignore` connection inside the subassembly for a send connector that doesn't need cross-subassembly wiring. If ALL send connectors need cross-subassembly targets, use `ignore` for Event_T_Send or Data_Product_T_Send inside the subassembly, and wire those connectors from the parent for the other components.
+Verified: T4-S1-i5 and T4-S1-i6b both compiled passive-only subassemblies without any `connections:` section, using only `with:` entries.
 
-```yaml
-# Subassembly with passive-only components -- MUST have at least one connection
-connections:
-  - from_component: My_Sensor_Instance
-    from_connector: Event_T_Send
-    to_component: ignore
-    to_connector: ignore
-```
-
-Verified: T4-S1-i4 hit this error. T13/T14 subassemblies avoid it because they all have internal connections.
-
-### Minimal Subassemblies With Connections
-A subassembly should contain `description:`, `with:`, `components:`, and at least one connection (even `ignore`). Pure component-only subassemblies with no connections will fail to compile:
+### Minimal Subassemblies
+A minimal valid subassembly contains `description:`, `with:` (component implementation packages), and `components:`. Connections and other fields are optional:
 
 ```yaml
 # Minimal valid subassembly
