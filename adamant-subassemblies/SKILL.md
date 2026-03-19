@@ -388,8 +388,25 @@ One subassembly owns ALL infrastructure (ticker, rate groups, command router, CC
 # Fast_Rate_Group indices 9-22 -> degraded components
 ```
 
-### Minimal Subassemblies Are Valid
-A subassembly can contain only `description:` and `components:` with no connections, id_bases, or preamble. This is common for leaf subsystems where all wiring is cross-subassembly and done in the parent:
+### Passive-Only Subassemblies Need At Least One Connection
+
+⚠️ **CRITICAL**: If a subassembly contains ONLY passive components AND has NO `connections:` section, the generated subassembly `.adb` file uses `<Subassembly>_Components` without a `with` clause, causing `"<Subassembly>_Components" is undefined` compile errors. This is a code generator limitation -- the `with` clause is only generated when `Connect_Components` exists (which requires at least one connection).
+
+**Fix**: Add at least one `ignore` connection inside the subassembly for a send connector that doesn't need cross-subassembly wiring. If ALL send connectors need cross-subassembly targets, use `ignore` for Event_T_Send or Data_Product_T_Send inside the subassembly, and wire those connectors from the parent for the other components.
+
+```yaml
+# Subassembly with passive-only components -- MUST have at least one connection
+connections:
+  - from_component: My_Sensor_Instance
+    from_connector: Event_T_Send
+    to_component: ignore
+    to_connector: ignore
+```
+
+Verified: T4-S1-i4 hit this error. T13/T14 subassemblies avoid it because they all have internal connections.
+
+### Minimal Subassemblies With Connections
+A subassembly should contain `description:`, `with:`, `components:`, and at least one connection (even `ignore`). Pure component-only subassemblies with no connections will fail to compile:
 
 ```yaml
 # Minimal valid subassembly
