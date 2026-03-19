@@ -26,29 +26,48 @@ Subassemblies are a **modeling construct** for breaking assemblies into manageab
 
 ## File Structure
 
-⚠️ **CRITICAL**: Each subassembly MUST be in its **own directory**, separate from the parent assembly. If a subassembly shares a directory with the parent, its generated `<subassembly>_components.ads` (which intentionally lacks `with` clauses) lands in the parent's `build/src/` and causes compilation errors.
+Two patterns work. Both require `.all_path` in every directory containing YAML files.
+
+### Pattern 1: Co-located (most common in real projects)
+
+Subassembly YAML files live in the SAME directory as the parent assembly. This is how ceres_fsw, titan_fsw, and bot_station organize their subassemblies. The parent directory's `.all_path` covers all files.
+
+```
+src/assembly/
+├── my_assembly/
+│   ├── .all_path                    # Covers ALL yaml in this dir
+│   ├── my_assembly.assembly.yaml    # Parent assembly
+│   ├── core.assembly.yaml           # Subassembly: co-located with parent
+│   ├── comm.assembly.yaml           # Subassembly: co-located with parent
+│   └── main/
+│       ├── .all_path
+│       └── main.adb
+```
+
+### Pattern 2: Separate directories
+
+Subassembly YAML files live in sibling directories. Each directory MUST have its own `.all_path` -- without it, the model loader cannot find the subassembly and you get: `Could not load model for subassembly 'core'. Make sure the model exists in the path.`
 
 ```
 src/assembly/
 ├── my_assembly/
 │   ├── .all_path
-│   ├── my_assembly.assembly.yaml    # Parent assembly (references subassemblies)
-│   ├── main/
-│   │   ├── .all_path
-│   │   └── main.adb
-│   └── views/
+│   ├── my_assembly.assembly.yaml    # Parent assembly
+│   └── main/
+│       ├── .all_path
+│       └── main.adb
 ├── core/
-│   ├── .all_path
-│   └── core.assembly.yaml           # Subassembly: core infrastructure
+│   ├── .all_path                    # REQUIRED -- without this, core is invisible
+│   └── core.assembly.yaml
 ├── comm/
-│   ├── .all_path
-│   └── comm.assembly.yaml           # Subassembly: communication subsystem
+│   ├── .all_path                    # REQUIRED
+│   └── comm.assembly.yaml
 └── gnc/
-    ├── .all_path
-    └── gnc.assembly.yaml            # Subassembly: guidance/navigation/control
+    ├── .all_path                    # REQUIRED
+    └── gnc.assembly.yaml
 ```
 
-Each subassembly directory needs an `.all_path` marker so the build system can discover it. The model loader finds subassemblies by name anywhere in the build path.
+**Verified:** The model loader calls `model_loader.try_load_model_by_name(name, "assembly")` which searches the model database built from `.all_path`-marked directories (`redo/database/_setup.py:105`). Location relative to the parent does not matter -- only `.all_path` presence. Source: T4-S1 hypothesis testing, confirmed by Docker builds.
 
 ## Parent Assembly YAML
 
