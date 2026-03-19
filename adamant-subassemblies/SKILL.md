@@ -175,7 +175,23 @@ Could not load model for subassembly 'core'. Make sure the model exists in the p
 
 ⚠️ **CRITICAL CONSTRAINT**: ID base keys must be **globally unique**. The same key name (e.g., `Event_Id_Base`) CANNOT appear in multiple subassemblies. This means you cannot give each subassembly its own `Event_Id_Base`.
 
-**Primary pattern**: Omit `id_bases` entirely and let auto-assignment handle it. Use `set_id_bases` on individual components when you need specific values (e.g., `set_id_bases: ["Packet_Id_Base => 98"]` on Event_Packetizer).
+**Primary pattern**: When components with data products, events, commands, etc. span MULTIPLE subassemblies, use `set_id_bases` on each component to assign non-overlapping ID ranges. Auto-assignment starts from 1 in each subassembly independently, which causes ID collisions when the parent merges them. This is the most common subassembly build error.
+
+```yaml
+# sensing.assembly.yaml (subassembly)
+components:
+  - type: Sensor_A
+    set_id_bases: ["Data_Product_Id_Base => 1"]
+  - type: Sensor_B
+    set_id_bases: ["Data_Product_Id_Base => 2"]
+
+# processing.assembly.yaml (subassembly)
+components:
+  - type: Data_Processor
+    set_id_bases: ["Data_Product_Id_Base => 3"]
+```
+
+**Alternative**: Omit `id_bases` and `set_id_bases` when ALL data-product-bearing components are in the same subassembly or the parent -- auto-assignment works within a single assembly scope.
 
 **If you need explicit id_bases**: Define them in the parent assembly only. Do NOT define id_bases in subassemblies -- duplicate key names across files cause fatal errors. Values must be positive (>= 1, NOT 0).
 
