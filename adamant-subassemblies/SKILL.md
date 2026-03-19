@@ -162,7 +162,7 @@ When the parent assembly loads, each subassembly is loaded and its contents merg
 
 Subassembly `.assembly.yaml` files must be discoverable in the build path. Each subassembly needs:
 
-1. **Its own directory** with an `.all_path` marker (required -- do NOT co-locate with the parent)
+1. **A directory with `.all_path`** -- either co-located with the parent (same dir) or in its own directory
 2. Or a **shared location** in a common library directory (for cross-project reuse), still in its own directory
 
 The model loader calls `model_loader.try_load_model_by_name(name, "assembly")` to find subassembly files. If the file isn't in any build path directory, you get:
