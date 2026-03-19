@@ -367,6 +367,7 @@ Based on 14 skills developed over 20+ sessions:
 - [references/refinement-methodology.md](references/refinement-methodology.md) -- Stress test design, experience pool, ancestor tracking
 - [references/evolution-plan.md](references/evolution-plan.md) -- Plan for continued improvement beyond per-skill convergence
 - [references/decision-point-methodology.md](references/decision-point-methodology.md) -- Outcome-aligned measurement for skill effectiveness via decision point tracking
+- [references/framework-verified-skill-correction.md](references/framework-verified-skill-correction.md) -- Study -> hypothesize -> build/verify -> fix -> campaign-test -> escalate loop for correcting skills against framework source code
 
 ## Related Skills
 - **Skill selector**: [adamant-skill-selector](../adamant-skill-selector/SKILL.md)
