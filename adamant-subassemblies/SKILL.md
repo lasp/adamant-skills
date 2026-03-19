@@ -106,11 +106,30 @@ Each entry in `subassemblies:` is a **name**, not a filename. The entry `core` l
 Key 'is_subassembly' was not defined. Path: ''
 ```
 
-A subassembly is a normal assembly YAML file. It uses the same schema:
+A subassembly is a normal assembly YAML file. It uses the same schema.
+
+⚠️ **CRITICAL: Subassemblies MUST include explicit `with:` for component packages.** The code generator does NOT auto-populate `with` clauses in the subassembly's generated `_components.ads` (gated behind `is_subassembly` check). Without explicit `with:` entries, you get `"Component" is undefined` errors when the subassembly's generated code compiles. Add these entries for EVERY component in the subassembly:
+
+```yaml
+# Required with: entries for subassembly compilation
+with:
+  - Component.<Component_Name>.Implementation   # One per component
+  - Task_Types                                   # Always needed
+  - Interrupt_Types                              # Always needed
+  - Component                                    # Always needed
+```
+
+This pattern is verified by existing subassemblies (e.g., T13 campaign subassemblies in bot_station). Source: `gen/models/assembly.py` L768 -- `components_ads_includes` population gated by `if not self.is_subassembly:`.
 
 ```yaml
 # core.assembly.yaml
 description: Core infrastructure subsystem
+with:
+  - Component.Ticker.Implementation
+  - Component.Rate_Group.Implementation
+  - Task_Types
+  - Interrupt_Types
+  - Component
 
 preamble: |
   Dividers : aliased Component.Tick_Divider.Divider_Array_Type := [1 => 1, 2 => 5];
