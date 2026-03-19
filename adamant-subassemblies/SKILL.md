@@ -273,14 +273,10 @@ To create a view showing only one subassembly's components, use a component name
 ### Deep Nesting (3+ levels) and event_to_text
 Nesting is structurally supported but deeply nested assemblies (3+ levels) can trigger `event_to_text` code generation failures -- the generated event-to-text function may reference undefined packages or produce `None` values. The assembly YAML and wiring are correct; it's a code generator limitation. **Recommendation:** Limit nesting to 2 levels (parent + subassembly) for production use. If 3+ levels are needed, avoid Event_Text_Logger and be prepared to work around event_to_text compilation errors.
 
-### Subassembly _components.ads Missing With Clauses
-The code generator produces a `<subassembly>_components.ads` file for each subassembly, but the `with` clause population (`components_ads_includes`) is gated behind `if not self.is_subassembly:` in `gen/models/assembly.py` (L768). This means the subassembly's `_components.ads` is generated with NO component `with` clauses (the list stays empty).
+### Subassembly _components.ads Generation
+The code generator produces a `<subassembly>_components.ads` for each subassembly. The `with` clause population is gated behind `if not self.is_subassembly:` in `gen/models/assembly.py`, so the subassembly's `_components.ads` has NO component `with` clauses. This is intentional -- the parent's `_components.ads` includes all component packages from all subassemblies. The subassembly's empty `_components.ads` is harmless because the final binary compiles through the parent's generated code.
 
-**Why it usually works:** The parent's `_components.ads` includes all component packages from all subassemblies. The final binary compiles through the parent, so the subassembly's empty `_components.ads` is harmless -- **as long as it doesn't end up in the parent's build directory**.
-
-**When it fails:** If the subassembly YAML is **co-located with the parent** (same directory), the subassembly's generated `_components.ads` lands in the parent's `build/src/` and the compiler tries to compile it, producing `"Component" is undefined` errors on every component instance declaration.
-
-**Fix:** Put each subassembly in its **own directory** with its own `.all_path` marker. This ensures the subassembly's generated files go to a separate `build/` directory that is not compiled as part of the parent assembly. See the File Structure section above. **Never co-locate subassembly YAML with the parent assembly YAML.**
+**Note:** Co-located subassemblies (in the same directory as the parent) work correctly in practice. The ceres_fsw, titan_fsw, and bot_station projects all use co-located subassemblies without issues. Verified by T4-S1 Docker builds.
 
 ### Duplicate Component Names
 Component instance names must be unique across ALL subassemblies and the parent. If `core.assembly.yaml` and `comm.assembly.yaml` both define a component named `Rate_Group_Instance`, you get:
@@ -334,9 +330,9 @@ description: Full assembly
 with:
   - Assembly_Commands
 subassemblies:
-  - path: safe_mode.assembly.yaml    # Foundation -- all infrastructure
-  - path: nominal.assembly.yaml      # Application components
-  - path: degraded.assembly.yaml     # Active observation + GNC
+  - safe_mode     # Foundation -- all infrastructure
+  - nominal       # Application components
+  - degraded      # Active observation + GNC
 connections:
   # Cross-subassembly wiring only
   - from_component: Command_Router_Instance   # in safe_mode
