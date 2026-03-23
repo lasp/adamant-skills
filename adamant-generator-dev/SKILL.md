@@ -294,6 +294,16 @@ end {{ name }};
 
 **Template naming**: `name` in the template filename is replaced with the model name in the output filename. Example: template `name.ads` with model name `linux_example_my_table` produces `linux_example_my_table.ads`.
 
+**Ada float literals**: YAML float values that are integer-valued (e.g., `85.0` in YAML) may lose their decimal point when formatted in Python (`repr(85.0)` -> `'85.0'` but `"%.6g" % 85` -> `'85'`). Ada requires float literals to always have a decimal point (`85.0` not `85`). Use a helper:
+```python
+def _to_ada_float(value):
+    s = repr(float(value))
+    if "." not in s and "e" not in s and "E" not in s:
+        s = s + ".0"
+    return s
+```
+Store the Ada-formatted string in the model object (e.g., `self.value_ada = _to_ada_float(self.value)`) and reference it in the template.
+
 **Template location**: Templates go in `gen/templates/<template_subdir>/` where `<template_subdir>` matches the model type or a descriptive name.
 
 **Output file placement rules** (from `basic_generator._get_default_build_dir()`):
@@ -366,7 +376,13 @@ error.error_abort("fatal message")
 
 5. **Create empty `__init__.py`** in `gen/`
    - REQUIRED for PYTHONPATH discovery
-   - After adding `__init__.py`, run `adamant_env.sh refresh` to rebuild the PYTHONPATH snapshot
+   - `set_python_path.sh` uses `git ls-files` to find `__init__.py` -- files must be **committed** (not just staged)
+   - After committing, the container's git index may be stale. Resync with:
+     ```bash
+     adamant_env.sh exec "cd /home/user/<project> && git read-tree HEAD"
+     adamant_env.sh refresh
+     ```
+   - Verify discovery: `adamant_env.sh exec "echo \$PYTHONPATH | tr ':' '\n' | grep <component>"`
 
 6. **Create the YAML model file** in the assembly directory
    - Named: `[specific.]assembly_name.<model_type>.yaml`
@@ -447,3 +463,5 @@ The `@throw_exception_with_filename` decorator adds the YAML filename to error m
 - **Do NOT use same `model_type` string as an existing model** -- causes regex collisions
 - **Do NOT forget to add dependencies** -- redo needs `self.dependencies` for incremental builds
 - **Do NOT use `print()` for debugging** -- generators capture stdout as output; use `sys.stderr.write()`
+- **Model .py changes are NOT auto-tracked by redo** -- redo tracks the generator .py file and the input YAML, but NOT the model .py file (loaded dynamically). After modifying model code, run `redo clean` in the component dir or touch the YAML file to force regeneration
+- **Do NOT forget `git commit` before refresh** -- `set_python_path.sh` uses `git ls-files` which only sees committed (or staged) files. Untracked `__init__.py` files are invisible to the Python path builder
