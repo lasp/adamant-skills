@@ -366,6 +366,8 @@ error.error_abort("fatal message")
 
 5. **Create empty `__init__.py`** in `gen/`
    - REQUIRED for PYTHONPATH discovery
+   - After adding `__init__.py`, run `adamant_env.sh refresh` to rebuild the PYTHONPATH snapshot
+   - Then run `redo clear_cache` to invalidate stale model/generator caches
 
 6. **Create the YAML model file** in the assembly directory
    - Named: `[specific.]assembly_name.<model_type>.yaml`
