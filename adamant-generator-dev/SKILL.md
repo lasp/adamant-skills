@@ -453,7 +453,7 @@ def resolve(self):
         )
 ```
 
-The `@throw_exception_with_filename` decorator adds the YAML filename to error messages.
+The `@throw_exception_with_filename` decorator adds the YAML filename to error messages. **Apply it to methods, NOT classes** -- applying it to a class replaces the class with a wrapper function, breaking `model_type` detection and generator discovery.
 
 ## Anti-Patterns
 
