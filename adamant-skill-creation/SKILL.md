@@ -368,6 +368,19 @@ Based on 14 skills developed over 20+ sessions:
 - [references/evolution-plan.md](references/evolution-plan.md) -- Plan for continued improvement beyond per-skill convergence
 - [references/decision-point-methodology.md](references/decision-point-methodology.md) -- Outcome-aligned measurement for skill effectiveness via decision point tracking
 - [references/framework-verified-skill-correction.md](references/framework-verified-skill-correction.md) -- Study -> hypothesize -> build/verify -> fix -> campaign-test -> escalate loop for correcting skills against framework source code
+- [references/framework-extension-methodology.md](references/framework-extension-methodology.md) -- Creating skills for patterns the framework supports but no component demonstrates (post-convergence escalation)
+
+### Framework Extension (Beyond Templates)
+
+Once skills covering existing framework patterns converge (5+ consecutive clean), escalate to EXTENSION scenarios -- patterns the framework's architecture supports but no existing component demonstrates. See `references/framework-extension-methodology.md` for the full methodology.
+
+**Key principle**: The framework's base classes, discovery mechanisms, and dependency infrastructure define a capability space larger than what existing components exercise. Skills should teach agents to reason from architecture, not just follow recipes.
+
+**Difficulty spectrum**:
+- Levels 1-3: Follow/combine/adapt existing patterns (framework-verified correction)
+- Levels 4-6: Infer/compose/design from architecture (framework extension)
+
+Extension scenarios test whether skills teach UNDERSTANDING, not just PROCEDURES.
 
 ## Related Skills
 - **Skill selector**: [adamant-skill-selector](../adamant-skill-selector/SKILL.md)
