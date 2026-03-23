@@ -371,7 +371,9 @@ error.error_abort("fatal message")
    - Named: `[specific.]assembly_name.<model_type>.yaml`
    - Must be in a directory with `.all_path`
 
-7. **Test**: Run `redo` and verify the generated output appears in `build/src/`
+7. **Refresh the environment**: Run `adamant_env.sh refresh` to rebuild the cached PYTHONPATH snapshot (picks up the new `__init__.py`), then `redo clear_cache` to invalidate stale generator registry
+
+8. **Test**: Run `redo` and verify the generated output appears in `build/src/`
 
 ## Common Patterns in Existing Generators
 
@@ -440,6 +442,7 @@ The `@throw_exception_with_filename` decorator adds the YAML filename to error m
 - **Do NOT generate files outside `build/`** -- redo owns the build directory lifecycle
 - **Do NOT hardcode paths** -- use `os.path` and the model's `full_file_dir`
 - **Do NOT forget `__init__.py`** -- without it, generators won't be discovered
+- **Do NOT forget `adamant_env.sh refresh`** -- after adding `__init__.py`, the PYTHONPATH snapshot is stale; refresh rebuilds it without restarting the container. Follow with `redo clear_cache`.
 - **Do NOT use same `model_type` string as an existing model** -- causes regex collisions
 - **Do NOT forget to add dependencies** -- redo needs `self.dependencies` for incremental builds
 - **Do NOT use `print()` for debugging** -- generators capture stdout as output; use `sys.stderr.write()`
