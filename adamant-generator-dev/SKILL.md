@@ -24,18 +24,20 @@ Component-local generators live inside the component directory:
 src/components/<component_name>/
   gen/
     __init__.py              # REQUIRED: empty file, makes gen/ a Python package
-    generators/
+    generators/              # NO __init__.py here!
       <generator_name>.py    # Generator classes
-    models/
+    models/                  # NO __init__.py here!
       <model_name>.py        # Model classes (parse YAML into Python objects)
-    schemas/
+    schemas/                 # NO __init__.py here!
       <schema_name>.yaml     # Pykwalify schemas for YAML validation
-    templates/
+    templates/               # NO __init__.py here!
       <template_dir>/
         name.ads             # Jinja2 templates ("name" is replaced with model name)
     doc/                     # Optional: LaTeX documentation for the generator
       <generator_name>.tex
 ```
+
+**CRITICAL: `__init__.py` goes ONLY in `gen/`, NEVER in subdirectories.** Adding `__init__.py` to `gen/models/` or `gen/generators/` makes them Python packages that shadow the framework's `models` and `generators` packages (which contain `models.base`, `models.exceptions`, `generators.basic`, etc.), causing `ModuleNotFoundError` on any redo build. The framework's 15 existing generators confirm this: none have `__init__.py` in subdirectories.
 
 All 15 framework components with custom generators follow this exact structure.
 
@@ -458,7 +460,8 @@ The `@throw_exception_with_filename` decorator adds the YAML filename to error m
 - **Do NOT use `rm -rf` on build directories** -- use `redo clean` or `redo clean_all`
 - **Do NOT generate files outside `build/`** -- redo owns the build directory lifecycle
 - **Do NOT hardcode paths** -- use `os.path` and the model's `full_file_dir`
-- **Do NOT forget `__init__.py`** -- without it, generators won't be discovered
+- **Do NOT forget `__init__.py` in `gen/`** -- without it, generators won't be discovered
+- **Do NOT put `__init__.py` in `gen/generators/`, `gen/models/`, or other subdirs** -- they shadow the framework's packages and break all imports
 - **Do NOT forget `adamant_env.sh refresh`** -- after adding `__init__.py`, the PYTHONPATH snapshot is stale; refresh rebuilds it without restarting the container. Follow with `redo clear_cache`.
 - **Do NOT use same `model_type` string as an existing model** -- causes regex collisions
 - **Do NOT forget to add dependencies** -- redo needs `self.dependencies` for incremental builds
