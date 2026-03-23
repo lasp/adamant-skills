@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 19 Adamant skills totaling ~19300 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 20 Adamant skills totaling ~20000 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -134,6 +134,19 @@ bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo <ta
 
 **Also load:** `adamant-cosmos-integration` (for plugin structure, CCSDS wiring, cmd/tlm definitions)
 
+### Developing custom component generators
+**Load:** `adamant-generator-dev`
+- Creating new generators for components that need assembly-aware YAML configuration
+- Generator architecture: discovery, model classes, schemas, Jinja2 templates
+- Pattern catalog: basic generator, assembly-aware, assembly extension, ided suite override
+- Directory structure (`gen/__init__.py`, `generators/`, `models/`, `schemas/`, `templates/`)
+- YAML file naming convention (`[specific.]model_name.model_type.yaml`)
+- All 15 framework generator implementations as reference
+
+**Also load if needed:**
+- `adamant-framework-internals` -- for understanding model caching, assembly load sequence
+- `adamant-build-system` -- for generator database and redo integration
+
 ### Debugging framework code generation bugs
 **Load:** `adamant-framework-internals`
 - Python model object identity pitfall (`is` vs `==`, `base.__eq__` by filename)
@@ -181,6 +194,7 @@ bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo <ta
 | Debug build failure | build-system | -- |
 | Debug code generation producing wrong output | framework-internals | build-system |
 | Fix bug in framework Python model | framework-internals | -- |
+| Create custom component generator | generator-dev | framework-internals |
 | Extend framework with custom model override | framework-internals | component-dev |
 | Define new packed types | type-system | -- |
 | Choose components for a subsystem | framework-components | assembly-dev |
