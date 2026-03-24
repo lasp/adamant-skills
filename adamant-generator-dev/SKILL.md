@@ -450,8 +450,21 @@ for idx, c in enumerate(connections):
         connected_components[c.to_component.instance_name] = idx + 1
 ```
 
-### Generating YAML Type Definitions
-Some generators produce YAML type definitions (records, enums) that feed back into the type system. These go to `build/yaml/` and are picked up by the standard type generators:
+### Generating YAML Type Definitions (Cascading Dependency Chain)
+Some generators produce YAML type definitions (records, enums) that feed back into the type system. These go to `build/yaml/` and are picked up by the standard type generators.
+
+When a downstream generator (e.g., Ada spec) needs to USE a type produced by an upstream generator (e.g., YAML enum), the downstream generator must:
+1. Declare the upstream output in `depends_on()` so redo builds it first
+2. The downstream Ada TEMPLATE must `with` and `use` the generated package
+
+Example: enum generator produces `build/yaml/<name>_phases.enums.yaml` which becomes `<Name>_Phases` Ada package with `Phase_Name.E` enum type. The Ada spec template must reference it:
+```ada
+with {{ name }}_Phases; use {{ name }}_Phases;
+-- ...
+Phase : Phase_Name.E;  -- field using the generated enum
+```
+
+The `depends_on()` in the Ada spec generator ensures redo builds the enum YAML first, which triggers the standard enum generator to produce the `.ads`, which is then available for the Ada spec to `with`:
 
 ```python
 class my_record_yaml(basic_generator, generator_base):
