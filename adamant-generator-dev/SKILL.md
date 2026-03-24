@@ -420,11 +420,15 @@ error.error_abort("fatal message")
 5. **Create empty `__init__.py`** in `gen/`
    - REQUIRED for PYTHONPATH discovery
    - `set_python_path.sh` uses `git ls-files` to find `__init__.py` -- files must be **committed** (not just staged)
-   - After committing, the container's git index may be stale. Resync with:
+   - After committing new `gen/__init__.py`, run this EXACT sequence to make the generator discoverable:
      ```bash
-     adamant_env.sh exec "cd /home/user/<project> && git read-tree HEAD"
-     adamant_env.sh refresh
+     # Step 1: Commit the gen/ files on host
+     git add src/components/<name>/gen/ && git commit -m "Add generator"
+     # Step 2: Sync container git index + rebuild PYTHONPATH (SINGLE COMMAND)
+     bash docker/adamant_env.sh exec "cd /home/user/<project> && git read-tree HEAD && rm -f /tmp/.*_env_snapshot"
+     # Step 3: Next exec will do full activation with updated PYTHONPATH
      ```
+   - **Do NOT skip `git read-tree HEAD`** -- the container's git index does not auto-sync from host commits due to the bind mount. Without this, `git ls-files` won't see new files even after commit.
    - Verify discovery: `adamant_env.sh exec "echo \$PYTHONPATH | tr ':' '\n' | grep <component>"`
 
 6. **Create the YAML model file** in the assembly directory
