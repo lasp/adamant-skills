@@ -250,6 +250,11 @@ See [adamant-skill-selector/scripts/](../adamant-skill-selector/scripts/) for th
 
 ## Maintaining Skills
 
+### Fix Isolation Rule
+Apply ONE skill fix per convergence cycle. Run iterations until that specific fix is observed resolved across multiple consecutive clean runs before applying the next fix. This isolates each change and prevents interaction effects where one fix masks a regression from another. Many iterations per task is expected and necessary.
+
+When multiple gaps are found in one iteration, prioritize the most impactful gap, fix it alone, verify convergence, then fix the next.
+
 ### When to Update
 - After every cold-start validation that finds errors
 - After discovering new framework behavior (e.g., generated code changes)
