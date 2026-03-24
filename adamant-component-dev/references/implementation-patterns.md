@@ -204,6 +204,8 @@ Overlay : Safe_Byte_Array with Import, Convention => Ada, Address => Region.Addr
 
 ## Dynamic Allocation with Safe Cleanup
 
+**⚠️ CRITICAL**: Never use `Ada.Unchecked_Deallocation` directly — it violates the Ravenscar `No_Unchecked_Deallocation` restriction. Always use `Safe_Deallocator.Deallocate_If_Testing`, which frees memory in test builds and is a null operation on bareboard targets.
+
 ```ada
 -- Allocate in Init
 Self.Engines := new Engine_Array (Id'First .. Id'First + Num - 1);
@@ -212,6 +214,72 @@ Self.Engines := new Engine_Array (Id'First .. Id'First + Num - 1);
 procedure Free is new Safe_Deallocator.Deallocate_If_Testing (Engine_Array, Engine_Array_Access);
 Free (Self.Engines);
 Self.Engines := null;
+```
+
+## Deserializing Packed Types from Byte Arrays
+
+Use the generated `Serialization.From_Byte_Array` instead of manual byte extraction with `Shift_Left`/`or`:
+
+```ada
+-- CORRECT: Use framework serialization
+declare
+   Id_Packed : constant Packed_U16.T := Packed_U16.Serialization.From_Byte_Array (
+      Data (Data'First .. Data'First + 1)
+   );
+begin
+   Table_Id := Parameter_Types.Parameter_Table_Id (Id_Packed.Value);
+end;
+
+-- WRONG: Manual byte extraction
+Table_Id := Parameter_Types.Parameter_Table_Id (
+   Shift_Left (Unsigned_16 (Data (Data'First)), 8) or Unsigned_16 (Data (Data'First + 1))
+);
+```
+
+Every packed type (`Packed_U16`, `Packed_U32`, custom records, etc.) has a generated `Serialization` child package with `From_Byte_Array` and `To_Byte_Array`. Use these for all serialization/deserialization — they handle endianness correctly and are validated by the framework.
+
+## Standalone Helper Packages
+
+When creating a standalone Ada package with an `Instance` type (e.g., a buffer, state machine, or utility object that lives alongside a component), make the type `tagged limited private` to enable dot-notation method calls:
+
+```ada
+-- In spec:
+type Instance is tagged limited private;
+procedure Create (Self : in out Instance; Size : in Positive);
+function Get_Value (Self : in Instance) return Natural;
+
+-- Caller can use dot notation:
+Self.Buffer.Create (1024);
+Value := Self.Buffer.Get_Value;
+```
+
+Without `tagged`, callers must use package-qualified calls: `My_Package.Create (Self.Buffer, 1024)`.
+
+## Assertion Style
+
+Use `pragma Assert` without string messages — place a comment above the assertion instead. String messages consume space in the final binary on embedded targets:
+
+```ada
+-- CORRECT: Comment explains, no string in assertion
+-- Destinations must not be null:
+pragma Assert (Table_Entry.Destinations /= null);
+
+-- WRONG: String message wastes binary space
+pragma Assert (Table_Entry.Destinations /= null, "Destinations must not be null.");
+```
+
+## Data Product Counter Type
+
+Use `Interfaces.Unsigned_32` for data product counters, not `Natural`. This matches `Packed_U32.T` directly (no type conversion needed) and allows natural wraparound:
+
+```ada
+type Instance is new Base_Instance with record
+   Packet_Count : Interfaces.Unsigned_32 := 0;  -- CORRECT
+   -- Bad_Count : Natural := 0;                  -- WRONG: needs type conversion for DPs
+end record;
+
+-- No conversion needed when sending data product:
+Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Count (Time, (Value => Self.Packet_Count)));
 ```
 
 ## Status Enum Pattern

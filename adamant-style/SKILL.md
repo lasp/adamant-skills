@@ -63,6 +63,14 @@ NOT enforced: `c` (comment formatting), `m`/`M` (max line length), `s` (separate
 - **Space around binary operators**: `A + B`, `2 ** 16`, not `A+B`, `2**16`
 - **No space after `(` or before `)`**: `Foo (X, Y)` not `Foo ( X, Y )`
 - **No unnecessary parentheses** (`-gnatyx`): `return X;` not `return (X);`
+- **Use Ada 2022 `@` syntax** for self-referencing assignments:
+  ```ada
+  -- CORRECT:
+  Self.Counter := @ + 1;
+  Self.Buffer_Index := @ + Data'Length;
+  -- WRONG:
+  Self.Counter := Self.Counter + 1;
+  ```
 
 ## Ada Naming and Casing
 

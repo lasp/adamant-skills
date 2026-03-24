@@ -40,8 +40,11 @@ component_name/
 ```bash
 redo templates && cp build/template/* .   # Generate and copy stubs
 redo all                                  # Build
+redo style                                # Check style (BEFORE committing)
 redo test                                 # Run tests
 ```
+
+**⚠️ CRITICAL -- Always start from generated templates**: Run `redo templates` and copy the generated `.ads/.adb` stubs BEFORE writing any implementation code. The templates contain required comments, formatting, and exact procedure signatures. Never write implementation spec/body files from scratch — always edit the generated stubs. Skipping this step is a common source of missing comments, wrong signatures, and formatting mismatches.
 
 ## Component Model (YAML)
 
@@ -360,6 +363,34 @@ overriding procedure Cycle (Self : in out Instance);
 ```ada
 
 Use `Cycle` for periodic background work (polling, housekeeping). Most active components also receive ticks via `recv_sync` connectors for rate-group-driven work -- `Cycle` is separate from tick handling.
+
+## Implementation Patterns Quick Reference
+
+**Deserializing packed types from byte arrays** -- use the generated `Serialization` package, never manual byte extraction:
+```ada
+-- CORRECT:
+Val : constant Packed_U16.T := Packed_U16.Serialization.From_Byte_Array (Data (0 .. 1));
+-- WRONG: manual Shift_Left/or
+Val := Unsigned_16 (Shift_Left (Unsigned_16 (Data (0)), 8) or Unsigned_16 (Data (1)));
+```
+
+**Memory deallocation** -- never use `Ada.Unchecked_Deallocation` (violates Ravenscar). Use `Safe_Deallocator.Deallocate_If_Testing` which frees in test builds, is null on bareboard:
+```ada
+procedure Free is new Safe_Deallocator.Deallocate_If_Testing (My_Array, My_Array_Access);
+Free (Self.Buffer);
+```
+
+**Standalone helper packages** -- use `tagged limited private` for the Instance type so callers can use dot notation (`Self.Buffer.Create (Size)` vs `My_Pkg.Create (Self.Buffer, Size)`).
+
+**Assertions** -- no string messages (saves binary space). Put explanation in a comment above:
+```ada
+-- Destinations must not be null:
+pragma Assert (Entry.Destinations /= null);
+```
+
+**Data product counters** -- use `Interfaces.Unsigned_32` (matches `Packed_U32.T` directly, no type conversion needed). Use `@` syntax: `Self.Count := @ + 1;`
+
+See `references/implementation-patterns.md` for detailed examples of each pattern.
 
 ## Spec vs Body `with` Clauses
 
