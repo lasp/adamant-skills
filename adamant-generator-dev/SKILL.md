@@ -166,6 +166,47 @@ This reuses standard templates (events/name_events.ads, etc.) but with a custom 
 
 ## Model Class Patterns
 
+### Component Submodel (for component-scoped generators)
+
+Use `component_submodel` when the generator's YAML is scoped to a single component and needs to verify against that component's connectors, parameters, or other features. The YAML filename uses the component name: `component_name.model_type.yaml`.
+
+```python
+from models.component import component_submodel
+from models.exceptions import ModelException
+
+class my_component_config(component_submodel):
+    def __init__(self, filename):
+        this_file_dir = os.path.dirname(os.path.realpath(__file__))
+        schema_dir = os.path.join(this_file_dir, ".." + os.sep + "schemas")
+        super(my_component_config, self).__init__(
+            filename, schema_dir + "/my_schema.yaml"
+        )
+
+    def load(self):
+        """Parse YAML data."""
+        super(my_component_config, self).load()  # sets self.component = None
+        # Parse self.data here...
+
+    def set_component(self, component):
+        """Called when the component model is loaded. Validate against component here."""
+        super(my_component_config, self).set_component(component)
+        # self.component is now set -- verify connectors, features, etc.
+        for connector in self.component.connectors:
+            # connector.name, connector.kind, connector.type, connector.count
+            pass
+        # Raise ModelException if validation fails
+```
+
+The generator calls `load_component()` to trigger the lifecycle:
+```python
+def generate(self, input_filename):
+    m = my_component_config(input_filename)
+    m.load_component()  # triggers set_component() callback
+    print(m.render(self.template, template_path=self.template_dir))
+```
+
+**Do NOT use `base` with manual `model_loader` calls for component-scoped generators** -- use `component_submodel` which handles caching, dependency tracking, and the `set_component()` lifecycle automatically.
+
 ### Assembly Submodel (most component generators use this)
 
 Assembly submodels are loaded by the assembly model during its load process. The assembly calls `set_assembly()` on each submodel, giving it access to the full assembly context.
