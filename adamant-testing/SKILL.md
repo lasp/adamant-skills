@@ -59,6 +59,94 @@ redo coverage                               # Must show 100% on implementation b
 2. `redo style` — zero warnings. Unused imports, unreferenced variables, and style violations are build failures.
 3. `redo coverage` — **100% line coverage on the implementation `.adb` file.** If lines appear unreachable, ask the user what they would like to do about them. Coverage of generated code and test infrastructure is not required.
 
+## Test Assertion Completeness
+
+Every test must verify **what happened**, **how many times**, and **with what values**. This applies uniformly to all Adamant IDed entities (events, data products, faults, packets) and all output connectors.
+
+### IDed Entity Verification
+
+For EVERY IDed entity type the component produces (events, data products, faults, packets):
+
+1. **Total raw history count** — verify the exact total. This catches unexpected extra emissions:
+   ```ada
+   Natural_Assert.Eq (T.Event_T_Recv_Sync_History.Get_Count, 3);
+   Natural_Assert.Eq (T.Data_Product_T_Recv_Sync_History.Get_Count, 5);
+   ```
+2. **Per-type history count** — verify each specific typed history:
+   ```ada
+   Natural_Assert.Eq (T.My_Event_History.Get_Count, 1);
+   ```
+3. **Per-type history values** — verify the FULL record value for every entry via the type's `.Assertion` package. **Always assert the complete record — never check individual fields:**
+   ```ada
+   -- CORRECT: Full record assertion
+   Parameter_Table_Id_Assert.Eq (T.My_Event_History.Get (1), (Id => 10));
+   Packed_U32_Assert.Eq (T.My_Dp_History.Get (1), (Value => 42));
+
+   -- WRONG: Field-level extraction with type conversion
+   Natural_Assert.Eq (Natural (T.My_Event_History.Get (1).Id), 10);
+
+   -- WRONG: Boolean comparison on individual fields
+   Boolean_Assert.Eq (T.My_History.Get (1).Operation = Set, True);
+
+   -- WRONG: pragma Assert on field
+   pragma Assert (T.My_History.Get (1).Status = Success);
+   ```
+4. **Empty histories** — verify histories that SHOULD be empty:
+   ```ada
+   Boolean_Assert.Eq (T.My_Event_History.Is_Empty, True);
+   ```
+
+If the component emits it, the test must verify count AND value. No exceptions.
+
+### Connector Output Verification
+
+For EVERY output connector the component sends on, verify:
+1. **Send count** — exact number of sends via the connector's history.
+2. **Send values** — use the connector type's `.Assertion` package for full record assertion. Assert the complete record in aggregate, not individual fields:
+   ```ada
+   -- CORRECT: Full record assertion of connector output
+   Parameters_Memory_Region_Assert.Eq (T.My_Connector_History.Get (1), (
+      Region => (Address => Expected_Addr, Length => Expected_Len),
+      Operation => Parameter_Enums.Parameter_Table_Operation_Type.Set
+   ));
+
+   -- WRONG: Field-by-field checks
+   Boolean_Assert.Eq (T.My_Connector_History.Get (1).Operation = Set, True);
+   ```
+
+If a field value cannot be predicted (e.g., a buffer address), document why and check it separately. Otherwise, always assert the full record.
+
+### Assertion Rules
+
+Every packed record type has a generated `.Assertion` child package (`with My_Type.Assertion; use My_Type.Assertion;` gives `My_Type_Assert.Eq`). Array types generate `_U_Assert` (unpacked) and `_Assert` (packed `.T`) suffixes.
+
+**NEVER use `pragma Assert` or AUnit `Assert(condition, "message")`.** Smart_Assert prints expected vs actual on failure. `pragma Assert` only says "failed."
+
+**NEVER use `Natural_Assert` for non-Natural values.** Use the typed assertion package. `Natural_Assert` is ONLY for counts (`Get_Count`, loop indices).
+
+**NEVER use `E'Pos` to compare enums.** Use the typed enum assertion: `My_Enum_Assert.Eq(Status, Expected)` not `Natural_Assert.Eq(E'Pos(Status), E'Pos(Expected))`.
+
+Do NOT call `Smart_Assert.Eq(...)` directly — use pre-instantiated packages from `Basic_Assertions`, `*.Assertion` child packages, or instantiate your own.
+
+### Pre-Submission Checklist
+
+Verify every item before declaring tests complete:
+
+- [ ] Every IDed entity history (events, DPs, faults, packets): total raw count checked
+- [ ] Every IDed entity history: per-type count checked
+- [ ] Every IDed entity history: per-type VALUES checked via full record `.Assertion` package
+- [ ] Empty histories verified with `Is_Empty`
+- [ ] Every output connector history: send count checked
+- [ ] Every output connector history: send values checked via full record `.Assertion` package
+- [ ] No `Natural(...)` type conversions on typed history values
+- [ ] No `pragma Assert` or `Boolean_Assert` for record field comparisons
+- [ ] No individual field checks where full record assertion is possible
+- [ ] `redo test` — all pass, zero failures, zero unexpected errors
+- [ ] `redo style` — zero warnings
+- [ ] `redo coverage` — 100% on implementation `.adb`
+
+---
+
 **The ONLY file you write from scratch is `*_tests-implementation.adb`** (the test case bodies). Everything else is generated. You also need `env.py` and `*.tests.yaml`.
 
 **⚠️ Test body package name is `<Component_Name>_Tests.Implementation`** (e.g., `Signal_Processor_Tests.Implementation`), NOT `Component.<Name>.Implementation.Tester.Tests.Implementation`. The file name is `<component_name>_tests-implementation.adb`. Match what `redo templates` generates in `*_tests-implementation.ads`.
@@ -310,51 +398,21 @@ Command_Response_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get (1), (
 Use `Command_Enums.Command_Response_Status.E` for response status (NOT `Command_Execution_Status`).
 Need `use type Command_Enums.Command_Response_Status.E;` for `=` operator visibility.
 
-## Assertion Hierarchy (Most → Least Preferred)
-
-1. **Packed type assertions:** `Packed_U32_Assert.Eq(...)`, `My_Record_Assert.Eq(...)`, `My_Array_Assert.Eq(...)` -- type-safe, clear errors, works for framework and custom packed types
-2. **Basic_Assertions:** `Natural_Assert.Eq(...)`, `Boolean_Assert.Eq(...)`, `Integer_Assert.Eq(...)` -- counts, flags, indices (see `adamant/src/util/basic_assertions/basic_assertions.ads` for full list)
-3. **Enum assertion packages:** `Parameter_Update_Status_Assert.Eq(...)`, `Command_Response_Status_Assert.Eq(...)` -- from `*.Assertion` child packages
-
-**NEVER use `pragma Assert` or AUnit `Assert(condition, "message")` in tests.** Smart_Assert-based assertions (items 1-3) print both expected and actual values on failure. `pragma Assert` and `Assert()` only say "failed" with no context, making debugging painful. Every assertion can be replaced with a typed Smart_Assert call -- use packed type assertions for record/array comparisons, `Basic_Assertions` for scalar values, and enum assertion packages for enum comparisons.
-
-**NEVER use `Natural_Assert` for non-Natural values.** `Natural_Assert` is ONLY for `Natural`/`Integer` count values (e.g., `History.Get_Count`, loop indices). For packed types use the typed assertion (`Packed_F32_Assert.Eq`, `Packed_U16_Assert.Eq`, etc.). For enums use the enum assertion package (`Parameter_Update_Status_Assert.Eq`, etc.). Passing a `Packed_U16.T` or enum to `Natural_Assert.Eq` causes compile errors or type-unsafe comparisons. When asserting a value from a typed DP history (e.g., `T.Regulator_Status_History.Get(1)`), the value's type is the DP's packed type -- use the matching typed assertion, not `Natural_Assert`.
-
-**NEVER use `E'Pos` or `T'Pos` to compare enum values.** The `Natural_Assert.Eq(E'Pos(Status), E'Pos(Expected))` pattern loses type safety and produces confusing failure output (positional integers instead of enum names). Always use the typed enum assertion package directly: `Parameter_Update_Status_Assert.Eq(Status, Parameter_Enums.Parameter_Update_Status.Success)`. For any enum type `Foo.E`, the assertion package is `with Foo.Assertion; use Foo.Assertion;` which provides `Foo_Assert.Eq`.
-
-Do NOT call `Smart_Assert.Eq(...)` directly -- requires generic instantiation first. Use the pre-instantiated packages from `Basic_Assertions`, `*.Assertion` child packages, or instantiate your own for project-specific types.
+## Assertion Import Patterns
 
 ```ada
-with Basic_Assertions; use Basic_Assertions;
-with Packed_U32.Assertion; use Packed_U32.Assertion;
-with Command_Enums; use type Command_Enums.Command_Response_Status.E;
+with Basic_Assertions; use Basic_Assertions;  -- Natural_Assert, Boolean_Assert
+with Packed_U32.Assertion; use Packed_U32.Assertion;  -- Packed_U32_Assert
 with Command_Enums.Assertion; use Command_Enums.Assertion;  -- Command_Response_Status_Assert
-with Parameter_Enums;
-with Parameter_Enums.Assertion; use Parameter_Enums.Assertion;  -- Parameter_Update_Status_Assert, Parameter_Validation_Status_Assert
-with Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;  -- for data dep tests
+with Parameter_Enums.Assertion; use Parameter_Enums.Assertion;  -- Parameter_Update_Status_Assert
+with My_Custom_Record.Assertion; use My_Custom_Record.Assertion;  -- My_Custom_Record_Assert
 ```
 
-**Parameter status assertions:** Use `Parameter_Update_Status_Assert.Eq(Status, Parameter_Enums.Parameter_Update_Status.Success)` instead of `pragma Assert`. The `.Assertion` child package provides Smart_Assert instantiations for all enum types in that package.
-
-**Custom enum data product assertions:** For enum types defined in project `types/`, auto-generated assertion packages follow the same pattern: `with My_Enum.Assertion; use My_Enum.Assertion;` gives `My_Enum_Assert.Eq(...)`. Use for DP history checks on enum-typed data products (e.g. mode state, operational status).
-
-**Packed record and array data product assertions:** For custom packed types (`*.record.yaml` or `*.array.yaml`), use the auto-generated assertion package to compare the full value from the typed DP history. Construct the expected value as an aggregate -- no `Pack` or `Unpack` needed, Ada resolves the `.T` type from context:
+Construct expected records as aggregates — no `Pack`/`Unpack` needed:
 ```ada
-with My_Status.Assertion; use My_Status.Assertion;
--- Packed record: compare with named aggregate
-My_Status_Assert.Eq (T.My_Status_Product_History.Get (1), ((
-   Field_1 => Value_1,
-   Field_2 => Enum_Literal,
-   Field_3 => Other_Value
-)));
--- Packed array: compare with positional aggregate
-My_Array_Assert.Eq (T.My_Array_Product_History.Get (1), [Val_0, Val_1, Val_2]);
--- WRONG: Do not unpack and check individual fields/elements with naked Assert:
--- Status := My_Status.Unpack (T.My_Status_Product_History.Get (1));
--- Assert (Status.Field_1 = Value_1, "msg");  -- loses typed error output
+My_Status_Assert.Eq (T.My_Status_History.Get (1), (Field_1 => Value_1, Field_2 => Literal));
+My_Array_Assert.Eq (T.My_Array_History.Get (1), [Val_0, Val_1, Val_2]);
 ```
-
-**Array type assertions:** Array types generate assertion packages with `_U_Assert` / `_Assert` / `_Le_Assert` suffixes (NOT `_Assert_Eq`). Usage: `with My_Array.Assertion; use My_Array.Assertion;` gives `My_Array_U_Assert.Eq(...)` for unpacked, `My_Array_Assert.Eq(...)` for packed `.T`.
 
 ## Data Dependency Testing
 
@@ -417,14 +475,6 @@ The framework detects that the data product timestamp is older than expected and
 **Implementation needs:** `with Data_Product_Enums; use Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;` in the component body for status checks.
 
 **Side-effect events from Invalid_Data_Dependency:** When a `Get_*` call returns a non-Success status, the framework automatically calls the component's `Invalid_Data_Dependency` override DURING the Get call (before control returns to the caller). If that override sends events, those events appear in the history BEFORE any events the caller sends afterward. Account for these extra events in assertion counts -- e.g., if testing staleness and the override sends a Sensor_Stale event, that event fires inside Get, not after it.
-
-## Test Body With-Clauses
-
-Add `with` for every type referenced in tests: `Basic_Assertions`, `Packed_F32.Assertion`, `Command_Enums`, `Interfaces`, custom types from `src/types/`.
-
-**CRITICAL: Only `with` packages you ACTUALLY reference by name in your code.** `redo style` flags unused imports as `-gnatwu` warnings that FAIL the build. Before adding ANY `with` clause, verify your test body directly names a type or entity from that package.
-
-**DO NOT add `with Command;` unless you construct raw `Command.T` values** (e.g., invalid command testing). The tester package `T.Commands.*` and `T.Command_T_Send` do NOT require `with Command;` -- the tester package already provides command dispatch. Adding `with Command;` without using `Command.T` directly causes a style failure. Same applies to `with Tick;` -- only needed if you reference `Tick.T` by name, not for `T.Tick_T_Send`.
 
 ## Common Errors
 
@@ -603,33 +653,17 @@ Test file calls: `T.Set_Pressure (501.0);`
 
 Use for: simulated sensor values, internal state flags, cooldown counters -- anything the component stores privately that must be set to exercise specific branches.
 
-## Coverage
+## Coverage Patterns
 
-```bash
-redo coverage    # From the component's test/ directory
-```
+Run `redo coverage` from the test/ directory. Focus on `component-*-implementation.adb` in `build/coverage/coverage.txt`. Ignore generated files.
 
-Focus on `component-*-implementation.adb` in `build/coverage/coverage.txt`. Ignore generated files (`build/src/`, `test/build/`).
-
-**Key coverage patterns:**
-- **Invalid_Command** (requires `with Command;` in test body):
-```ada
-declare
-   Cmd : Command.T := T.Commands.My_Command ((Field => 0));
-begin
-   Cmd.Header.Arg_Buffer_Length := 22;  -- corrupt length
-   T.Command_T_Send (Cmd);
-   -- Check command response shows Length_Error:
-   Natural_Assert.Eq (T.Command_Response_T_Recv_Sync_History.Get_Count, 1);
-   Command_Response_Status_Assert.Eq (
-      T.Command_Response_T_Recv_Sync_History.Get (1).Status,
-      Command_Enums.Command_Response_Status.Length_Error);
-end;
-```ada
+Common patterns for reaching 100%:
+- **Invalid_Command:** Corrupt `Cmd.Header.Arg_Buffer_Length := 22;` after constructing via `T.Commands.*`
 - **Send_Dropped (sync):** `T.Connector_*_Recv_Sync_Status := Connector_Types.Message_Dropped;`
+- **Recv_Async_Dropped:** Overflow the queue by sending more messages than capacity
 - **Untested branches:** Map `Missing` line numbers to source with `cat -n`
 
-Full coverage workflow, reading reports, and common uncovered patterns: [coverage-guide.md](references/coverage-guide.md)
+Full coverage workflow: [coverage-guide.md](references/coverage-guide.md)
 
 ## References
 
