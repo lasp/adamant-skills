@@ -145,7 +145,9 @@ redo clean_all        # Recursive clean (all subdirectories)
 redo clear_cache      # Clear model cache (SQLite in $ADAMANT_TMP_DIR)
 redo run               # Build and execute main.elf (from main/ dir only)
 redo yaml_sloc         # Count YAML source lines of code
-```ada
+```
+
+**Refreshing the environment:** After changing `env/activate`, `requirements*.txt`, `alire.toml`, or adding/removing `__init__.py` files, run `adamant_env.sh refresh` to delete and rebuild the cached environment snapshot. This is a subcommand of `adamant_env.sh` (not a redo target). It does NOT clear the model cache -- run `redo clear_cache` separately if needed.
 
 `redo clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed.
 

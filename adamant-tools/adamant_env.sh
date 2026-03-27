@@ -13,8 +13,12 @@
 #     /home/user/adamant_skill_validation/env/activate \
 #     python3 /tmp/adamant_validate.py src/components/foo
 #
-#   # Force re-cache:
+#   # Force re-cache (rebuild cached env snapshot):
 #   adamant_env.sh --refresh <container> <project_activate_path> <command...>
+#
+#   Note: The upstream adamant_env.sh (docker/adamant_env.sh) uses
+#   "adamant_env.sh refresh" as a subcommand. This agent wrapper uses
+#   "--refresh" as a flag before the container/path/command arguments.
 
 set -e
 
