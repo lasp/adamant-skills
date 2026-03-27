@@ -15,6 +15,12 @@ Always read skills in the order listed in the routing table below -- primary ski
 
 If your task matches a sequence in "Deterministic Read Order" at the bottom of this file, use that exact sequence.
 
+## CRITICAL: Sub-Agent Delegation
+
+**Prefer writing code yourself over delegating to sub-agents.** Sub-agents lack your accumulated conversation context — review feedback, coding standard discussions, and framework idiom understanding. Delegating implementation or test code to sub-agents produces non-idiomatic output that requires full rewrites, wasting tokens and time. Use sub-agents for research and exploration (reading files, searching code), not for writing standards-sensitive code.
+
+If you must delegate writing to a sub-agent, it MUST read the relevant skills IN FULL before starting work. Do NOT summarize skills in the prompt — the sub-agent must read the actual skill files. Include explicit instructions like: "Read adamant-testing/SKILL.md completely before writing any test code."
+
 ## CRITICAL: All Builds Require Docker
 
 Adamant builds MUST run inside the project's Docker container. **Never build locally on the host.** Use `adamant_env.sh exec` to run all redo/build/test commands:
@@ -41,7 +47,7 @@ bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo <ta
 - `adamant-testing` -- if writing tests for the component
 
 ### Writing component tests
-**Load:** `adamant-testing`
+**Load:** `adamant-testing` — **read IN FULL before writing any test code.** Skimming is not sufficient. Typed assertion packages, total history count verification, and record-level assertion requirements are throughout the document. Failing to read the complete skill produces non-idiomatic tests that require FULL REWRITES — a massive waste of tokens and time.
 - Reciprocal tester generation, History API, async dispatch
 - Data dependency mocking, error injection, assertion patterns
 

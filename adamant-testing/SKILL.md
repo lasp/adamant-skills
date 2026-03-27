@@ -50,8 +50,14 @@ cp build/template/*_tests-implementation.ads .   # Test spec (generated)
 cp build/template/test.adb .               # AUnit runner (generated)
 # Then write ONLY: *_tests-implementation.adb (test case bodies)
 redo test                                   # Build and run
-redo coverage                                # Coverage analysis via gcov
+redo style                                  # Must pass with ZERO warnings
+redo coverage                               # Must show 100% on implementation body
 ```
+
+**⚠️ Quality gates — tests are NOT done until:**
+1. `redo test` — all tests pass, zero failures, zero unexpected errors
+2. `redo style` — zero warnings. Unused imports, unreferenced variables, and style violations are build failures.
+3. `redo coverage` — **100% line coverage on the implementation `.adb` file.** If lines appear unreachable, ask the user what they would like to do about them. Coverage of generated code and test infrastructure is not required.
 
 **The ONLY file you write from scratch is `*_tests-implementation.adb`** (the test case bodies). Everything else is generated. You also need `env.py` and `*.tests.yaml`.
 
