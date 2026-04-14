@@ -104,6 +104,7 @@ Add `_reset`, `_setX`, `_getX` as needed. For `#define` constants, add getter fu
 - `const` correctness on all input-only parameters
 - Opaque handle: `typedef struct FooAlgorithm FooAlgorithm;`
 - Eigen types: convert to POD (`Vector3f_c { float data[3]; }`) at the boundary
+- **No array pointers**: wrap arrays in bounded structs (e.g., `Vector3fArray3_c { Vector3f_c vec[3]; }`)
 - Message payloads from `msgPayloadDef/`: pass through directly (already POD)
 - Naming: `ClassName_methodName` (PascalCase class, camelCase method)
 - No exception catching in shim layer
@@ -149,6 +150,10 @@ Delete ALL generated files except `<algo>_algorithm_c_h.ads`. Then transform:
 | `access constant <Payload>` | `<Payload>.C.U_C_Access` | same |
 | `Vector3f_C` (POD helper) | `Packed_F32x3_Record.C.U_C` | `with Packed_F32x3_Record.C;` |
 | Algorithm-specific structs | Create packed record (Step 3) | `with <Type>.C;` |
+| Bounded array struct (by-value) | Create `.array.yaml` + `.record.yaml` | `with <Array_Record>.C;` |
+| Bounded array struct (by-ref) | Create `.array.yaml` only | `with <Array>.C;` |
+
+**Calling convention:** `.C.U_C` record types have `C_Pass_By_Copy` -- use directly for by-value, `access constant` for by-reference. Ada arrays always pass by reference; only records support true by-value.
 
 > Full transformation rules and complete example: [references/ada-binding-transforms.md](references/ada-binding-transforms.md)
 
@@ -253,9 +258,12 @@ cp build/template/*.ad[sb] .
 
 ### Implementation body (.adb) pattern
 
+There are two structural variants depending on whether the component has parameters.
+
+**Pattern A -- Without parameters** (flat declarative region):
+
 ```ada
 with <Type_1>.C;
-with Algorithm_Wrapper_Util;
 
 package body Component.<Name>.Implementation is
 
@@ -270,27 +278,55 @@ package body Component.<Name>.Implementation is
    end Destroy;
 
    overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T) is
-      use Data_Product_Enums; use Data_Product_Enums.Data_Dependency_Status;
-      use Algorithm_Wrapper_Util;
+      use Data_Product_Enums;
+      use Data_Product_Enums.Data_Dependency_Status;
+
+      -- Fetch and assert dependencies:
       Dep_1 : Type_1.T;
       Dep_1_Status : constant Data_Dependency_Status.E :=
          Self.Get_Dep_Name (Value => Dep_1, Stale_Reference => Arg.Time);
+      pragma Assert (Dep_1_Status = Success);
+
+      -- Convert and call algorithm:
+      Dep_1_C : aliased Type_1.C.U_C := Type_1.C.To_C (Type_1.Unpack (Dep_1));
+      Output : constant Out_Type.C.U_C := Update (
+         Self.Alg, Input => Dep_1_C'Unchecked_Access);
    begin
-      Self.Update_Parameters;  -- ONLY if component has parameters
-      if Is_Dep_Status_Success (Dep_1_Status) then
-         declare
-            Dep_1_C : aliased Type_1.C.U_C := Type_1.C.To_C (Type_1.Unpack (Dep_1));
-            Output : constant Out_Type.C.U_C := Algorithm_C.Update (
-               Self.Alg, Input => Dep_1_C'Unchecked_Access);
-         begin
-            Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Output_Name (
-               Arg.Time, Out_Type.Pack (Out_Type.C.To_Ada (Output))));
-         end;
-      end if;
+      Self.Data_Product_T_Send (Self.Data_Products.Output_Name (
+         Arg.Time, Out_Type.Pack (Out_Type.C.To_Ada (Output))));
    end Tick_T_Recv_Sync;
 
 end Component.<Name>.Implementation;
+```
+
+**Pattern B -- With parameters** (declare block after Update_Parameters):
+
 ```ada
+   overriding procedure Tick_T_Recv_Sync (Self : in out Instance; Arg : in Tick.T) is
+      use Data_Product_Enums;
+      use Data_Product_Enums.Data_Dependency_Status;
+
+      Dep_1 : Type_1.T;
+      Dep_1_Status : constant Data_Dependency_Status.E :=
+         Self.Get_Dep_Name (Value => Dep_1, Stale_Reference => Arg.Time);
+      pragma Assert (Dep_1_Status = Success);
+   begin
+      Self.Update_Parameters;
+
+      declare
+         Dep_1_C : aliased Type_1.C.U_C := Type_1.C.To_C (Type_1.Unpack (Dep_1));
+         Output : constant Out_Type.C.U_C := Update (
+            Self.Alg, Input => Dep_1_C'Unchecked_Access);
+      begin
+         Self.Data_Product_T_Send (Self.Data_Products.Output_Name (
+            Arg.Time, Out_Type.Pack (Out_Type.C.To_Ada (Output))));
+      end;
+   end Tick_T_Recv_Sync;
+```
+
+### Dependency status checking
+
+Assert on dependency failure -- non-Success status indicates incorrect assembly wiring, not a runtime condition to handle gracefully. Dependencies should always succeed if the component is wired correctly in the assembly execution order.
 
 ### Type conversion chain
 
@@ -448,7 +484,7 @@ When input types contain F64 fields (Packed_F64x3, Long_Float), use **direct get
 Key differences:
 - Component YAML: `return_type: Type.T` + `kind: get` (NOT `type:` + `kind: request`)
 - No `data_dependencies.yaml` file
-- No `Algorithm_Wrapper_Util` or `Data_Product_Fetch.T` connector
+- No `Data_Product_Fetch.T` connector
 - Tester needs manual field + return function override (generated tester returns uninitialized data)
 - Implementation: `Self.Input_T_Get` directly instead of `Self.Get_Input_Name(Value => ...)`
 

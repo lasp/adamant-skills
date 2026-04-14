@@ -89,6 +89,33 @@ Vector3f_c FooAlgorithm_getVector(FooAlgorithm* self) {
 }
 ```
 
+## Bounded Array Structs (CRITICAL)
+
+No array types represented as pointers are allowed in the C shim. Array pointer types are ambiguous -- they could be a pointer to a single element or the first element of an unbounded array. Wrap arrays in a sized struct:
+
+```c
+// Don't use Vector3f_c*, instead use:
+typedef struct {
+    Vector3f_c vec[MIMU_COUNT_C];
+} Vector3fArray3_c;
+```
+
+Pass bounded array structs by pointer for large types, by value for small types:
+
+```c
+// Pass-by-pointer (large arrays):
+OutputPayload FooAlgorithm_update(FooAlgorithm* self, const Vector3fArray3_c* inputs);
+
+// Pass-by-value (small structs):
+OutputPayload FooAlgorithm_update(FooAlgorithm* self, Vector3fArray3_c inputs);
+```
+
+On the Ada side, all types at the C boundary use `.C.U_C` record types with `C_Pass_By_Copy`. The calling convention is explicit in the binding:
+- **Pass-by-value**: binding uses `.C.U_C` type directly
+- **Pass-by-reference**: binding uses `access constant .C.U_C`
+
+**NOTE**: Ada array types with `Convention => C` are always passed by reference, regardless of whether `access` is used. Only record types with `C_Pass_By_Copy` support true pass-by-value. For bounded array structs passed by value, create both an `.array.yaml` (inner array of record elements) and a `.record.yaml` (wrapper for `C_Pass_By_Copy`).
+
 ## Shared Types Header
 
 When the C++ algorithm defines structs or constants used in the public API, create a shared header to eliminate duplication:
