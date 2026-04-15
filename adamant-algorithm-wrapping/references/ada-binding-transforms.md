@@ -188,3 +188,40 @@ end Sunline_Ephem_Algorithm_C;
 pragma Style_Checks (On);
 pragma Warnings (On, "-gnatwu");
 ```
+
+## Bounded Array Struct Bindings
+
+When the C shim uses a bounded array struct, create Adamant YAML types and use their `.C.U_C` in the binding.
+
+### Pass-by-reference (pointer in C)
+
+Create one `.array.yaml`:
+
+```yaml
+# foo_record_xN.array.yaml
+type: Foo_Record.T
+length: N
+```
+
+Binding parameter: `Inputs : Foo_Record_XN.C.U_C` -- Ada passes arrays by reference, matching the C pointer.
+
+### Pass-by-value (struct copy in C)
+
+Create both `.array.yaml` AND `.record.yaml`:
+
+```yaml
+# foo_record_xN.array.yaml
+type: Foo_Record.T
+length: N
+
+# foo_record_xN_record.record.yaml
+fields:
+  - name: Elem
+    type: Foo_Record_XN.T
+```
+
+Binding parameter: `Inputs : Foo_Record_XN_Record.C.U_C` -- the record's `C_Pass_By_Copy` ensures by-value.
+
+### CRITICAL
+
+Do not create ad-hoc array types in the binding or component. Use Adamant-generated types from `.array.yaml` and `.record.yaml` models. Ad-hoc types have no packing guarantees and are not portable.
