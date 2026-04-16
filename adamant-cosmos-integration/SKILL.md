@@ -886,6 +886,27 @@ curl -s -H "Authorization: openc3service" -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"tlm","params":["TARGET PACKET RECEIVED_COUNT"],"id":1,"keyword_params":{"scope":"DEFAULT"}}'
 ```
 
+## COSMOS Container Internals
+
+The COSMOS services have a non-obvious internal architecture that matters when
+debugging script execution failures. The script-runner-api container runs three
+processes (Rails, a Go WebSocket server, and a Ruby gRPC RPC server) managed by
+shoreman. The `openc3cli script run` command holds a single long-lived WebSocket
+connection with no reconnect logic -- any transport disruption kills the run.
+
+When running `openc3cli` via `docker compose exec`, use the `$stdout.sync` pattern
+to prevent Ruby output buffering:
+
+```bash
+docker compose exec -T openc3-cosmos-cmd-tlm-api \
+  ruby -e '$stdout.sync=true; load "/openc3/bin/openc3cli"' \
+  -- script run TARGET/procedures/test_script.py
+```
+
+For the full internal architecture, process model, diagnostic commands,
+troubleshooting table, and the gRPC keepalive/GoAway fix, see
+[references/container-internals-and-troubleshooting.md](references/container-internals-and-troubleshooting.md).
+
 ## Known Limitations
 
 1. **Subassembly incompatibility**: COSMOS generators (`redo build/cosmos/...`) expect flat assemblies with a top-level `components:` key. Assemblies using `subassemblies:` will fail with "Cannot find required key 'components'". Workaround: create a flattened assembly YAML for COSMOS generation, or generate per-subassembly.

@@ -140,6 +140,15 @@ bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo <ta
 
 **Also load:** `adamant-cosmos-integration` (for plugin structure, CCSDS wiring, cmd/tlm definitions)
 
+### COSMOS test execution via Script Runner REST API and MinIO log retrieval
+**Load:** `adamant-cosmos-minio`
+- Launching COSMOS test scripts via curl REST API
+- Polling for script completion
+- Retrieving suite logs from MinIO
+- Parsing pass/fail results
+
+**Also load:** `adamant-cosmos-integration` (for container architecture and troubleshooting)
+
 ### Developing custom component generators
 **Load:** `adamant-generator-dev`
 - Creating new generators for components that need assembly-aware YAML configuration
@@ -211,6 +220,8 @@ bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo <ta
 | Wrap C++ algorithm into Adamant component | algorithm-wrapping | component-dev |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | COSMOS integration test scripts | cosmos-testing | cosmos-integration |
+| COSMOS test execution via REST API / MinIO logs | cosmos-minio | cosmos-integration |
+| Debug COSMOS service failures / script runner | cosmos-integration (internals ref) | -- |
 | Memory-mapped register interface | type-system | component-dev |
 | Split assembly into subassemblies | subassemblies | assembly-dev |
 | Create system architecture from scratch | assembly-dev | framework-components |
