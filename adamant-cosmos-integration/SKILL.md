@@ -642,7 +642,7 @@ non-interactive/CI contexts).
 ```bash
 docker compose exec -T openc3-cosmos-cmd-tlm-api \
   ruby -e '$stdout.sync=true; load "/openc3/bin/openc3cli"' \
-  -- script run TARGET/procedures/my_script.py
+  -- script run TARGET/procedures/my_script.py --scope DEFAULT
 ```
 
 **Run a full test suite:**
@@ -653,12 +653,14 @@ docker compose exec -T openc3-cosmos-cmd-tlm-api \
   -- script run \
   TARGET/procedures/test_suite.py \
   --suite TestSuiteName \
-  --method start
+  --method start \
+  --scope DEFAULT
 ```
 
 - `--suite` names the `Suite` subclass to run (must match the class name in the script)
 - `--method start` runs the entire suite (all groups, all `test_*` methods)
 - `--options "manual"` disables `continueAfterError` (suite stops on first failure)
+- `--scope DEFAULT` specifies the COSMOS scope (always pass explicitly)
 
 **Run a specific group within a suite:**
 
@@ -669,7 +671,8 @@ docker compose exec -T openc3-cosmos-cmd-tlm-api \
   TARGET/procedures/test_suite.py \
   --suite TestSuiteName \
   --group GroupClassName \
-  --method start
+  --method start \
+  --scope DEFAULT
 ```
 
 **Check for running scripts:**
@@ -677,7 +680,7 @@ docker compose exec -T openc3-cosmos-cmd-tlm-api \
 ```bash
 docker compose exec -T openc3-cosmos-cmd-tlm-api \
   ruby -e '$stdout.sync=true; load "/openc3/bin/openc3cli"' \
-  -- script running
+  -- script running --scope DEFAULT
 ```
 
 **Stop a running script by ID:**
@@ -685,7 +688,7 @@ docker compose exec -T openc3-cosmos-cmd-tlm-api \
 ```bash
 docker compose exec -T openc3-cosmos-cmd-tlm-api \
   ruby -e '$stdout.sync=true; load "/openc3/bin/openc3cli"' \
-  -- script stop <ID>
+  -- script stop <ID> --scope DEFAULT
 ```
 
 **Exit codes:** `openc3cli script run` returns 0 on all tests pass, non-zero on
