@@ -88,6 +88,10 @@ docker compose exec -T openc3-cosmos-cmd-tlm-api \
 This matters for any CI pipeline or wrapper script that parses openc3cli output
 in real time (progress reporting, log capture, failure detection).
 
+For the complete set of `docker compose exec` invocation patterns (single script,
+full suite, group, running/stop), see the
+[Test Script Execution section in SKILL.md](../SKILL.md#test-script-execution).
+
 ## Troubleshooting
 
 ### Diagnostic Commands
