@@ -598,6 +598,68 @@ def test_overvoltage_detection(self):
 
 `get_out_of_limits()` returns a list of `[target, packet, item, state]` tuples where state is `"RED"`, `"RED_HIGH"`, `"RED_LOW"`, `"YELLOW"`, `"YELLOW_HIGH"`, or `"YELLOW_LOW"`.
 
+## Large-Subscription Teardown and tlm() Connection Reset
+
+Tests that use `subscribe_packets()` to collect many packets (e.g., streaming
+memory dumps, long capture bursts, bulk data product retrieval) and then
+immediately call `tlm()` against the cmd-tlm-api REST endpoint can hit a
+deterministic HTTP keep-alive race:
+
+1. `get_packets()` returns a large multi-KB response from cmd-tlm-api
+2. Python-side processing of the returned packets takes some time
+3. Puma's idle keep-alive timeout (~20s default) closes the pooled HTTP connection
+4. The Python `requests` connection pool in `openc3.script` has no way to know
+   the server already closed the connection
+5. The next `tlm()` call reuses the stale connection and gets a TCP RST back
+6. Script raises `JsonDRbError: ... ConnectionResetError(104, 'Connection reset by peer')`
+
+The cmd-tlm-api server is healthy throughout -- the failing request never even
+reaches the server. This is purely a client-side connection-pool race.
+
+**Failure signature:**
+
+```
+openc3.io.json_drb_object.JsonDRbError: No response from server: Request:
+{'url': 'http://openc3-cosmos-cmd-tlm-api:2901/openc3-api/api', ...}
+::: Exception: ConnectionError(ProtocolError('Connection aborted.',
+ConnectionResetError(104, 'Connection reset by peer')))
+```
+
+**When to expect this:**
+
+- Tests that do `subscribe_packets()` -> `cmd()` (that generates many packets) ->
+  `wait_check(RECEIVED_COUNT >= target)` -> `get_packets()` -> `tlm()`
+- Particularly when the packets are large (hundreds of bytes each) and numerous
+  (dozens)
+- More likely in CI than interactive use (CI has less idle traffic keeping the
+  connection warm)
+- Highly reproducible on the same line once timing is established; does not
+  appear random
+
+**Mitigation:** Wrap the `tlm()` call that follows `get_packets()` with a
+retry. One retry is sufficient because the second attempt opens a fresh
+connection:
+
+```python
+# Retry tolerates stale HTTP keep-alive connection from the preceding
+# get_packets() large response. One retry re-establishes the connection.
+value = None
+for attempt in range(3):
+    try:
+        value = tlm(f"{TARGET} {PACKET} {ITEM}")
+        break
+    except Exception as e:
+        if attempt == 2:
+            raise
+        print(f"tlm() failed after get_packets() (attempt {attempt + 1}/3): {e}; retrying...")
+        wait(1)
+```
+
+The pattern applies to **any** `tlm()` / `cmd()` / `wait_check()` call that
+immediately follows a large subscription response. The race is not specific
+to any particular packet or test -- it is an OpenC3 Python client library
+limitation that can affect any test making this call sequence.
+
 ## Practical Notes
 
 - **Timeouts:** Tune to assembly rate group config. Examples assume 1 Hz housekeeping.

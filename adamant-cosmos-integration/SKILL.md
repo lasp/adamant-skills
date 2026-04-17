@@ -632,15 +632,70 @@ If commands are not reaching the assembly (COSMOS txcnt increments but assembly 
 
 ### Test Script Execution
 
+All `openc3cli` invocations via `docker compose exec` must use the `$stdout.sync`
+pattern to prevent Ruby output buffering. Without it, no output streams until the
+process exits. The `-T` flag disables pseudo-TTY allocation (required for
+non-interactive/CI contexts).
+
+**Run a single script:**
+
 ```bash
-# Run a COSMOS test script via CLI:
-cd /path/to/cosmos-project
-docker compose -f compose.yaml run -T --rm \
-  -v "$(pwd):/openc3/local:z" \
-  -e OPENC3_API_PASSWORD=openc3service \
-  --no-deps openc3-cosmos-cmd-tlm-api \
-  ruby /openc3/bin/openc3cli script run TARGET/procedures/test_script.py
+docker compose exec -T openc3-cosmos-cmd-tlm-api \
+  ruby -e '$stdout.sync=true; load "/openc3/bin/openc3cli"' \
+  -- script run TARGET/procedures/my_script.py --scope DEFAULT
 ```
+
+**Run a full test suite:**
+
+```bash
+docker compose exec -T openc3-cosmos-cmd-tlm-api \
+  ruby -e '$stdout.sync=true; load "/openc3/bin/openc3cli"' \
+  -- script run \
+  TARGET/procedures/test_suite.py \
+  --suite TestSuiteName \
+  --method start \
+  --scope DEFAULT
+```
+
+- `--suite` names the `Suite` subclass to run (must match the class name in the script)
+- `--method start` runs the entire suite (all groups, all `test_*` methods)
+- `--options "manual"` disables `continueAfterError` (suite stops on first failure)
+- `--scope DEFAULT` specifies the COSMOS scope (always pass explicitly)
+
+**Run a specific group within a suite:**
+
+```bash
+docker compose exec -T openc3-cosmos-cmd-tlm-api \
+  ruby -e '$stdout.sync=true; load "/openc3/bin/openc3cli"' \
+  -- script run \
+  TARGET/procedures/test_suite.py \
+  --suite TestSuiteName \
+  --group GroupClassName \
+  --method start \
+  --scope DEFAULT
+```
+
+**Check for running scripts:**
+
+```bash
+docker compose exec -T openc3-cosmos-cmd-tlm-api \
+  ruby -e '$stdout.sync=true; load "/openc3/bin/openc3cli"' \
+  -- script running --scope DEFAULT
+```
+
+**Stop a running script by ID:**
+
+```bash
+docker compose exec -T openc3-cosmos-cmd-tlm-api \
+  ruby -e '$stdout.sync=true; load "/openc3/bin/openc3cli"' \
+  -- script stop <ID> --scope DEFAULT
+```
+
+**Exit codes:** `openc3cli script run` returns 0 on all tests pass, non-zero on
+failure. Note: `openc3cli` holds a single long-lived WebSocket for the entire
+run with no reconnect logic -- any transport disruption kills the session. See
+[references/container-internals-and-troubleshooting.md](references/container-internals-and-troubleshooting.md)
+for the internal architecture and the gRPC keepalive fix.
 
 Scripts live in `targets/TARGET_NAME/procedures/` within the plugin.
 Use `from openc3.script import *` for the scripting API.
@@ -885,6 +940,27 @@ curl -s -H "Authorization: openc3service" -H "Content-Type: application/json" \
   -X POST "http://localhost:2900/openc3-api/api" \
   -d '{"jsonrpc":"2.0","method":"tlm","params":["TARGET PACKET RECEIVED_COUNT"],"id":1,"keyword_params":{"scope":"DEFAULT"}}'
 ```
+
+## COSMOS Container Internals
+
+The COSMOS services have a non-obvious internal architecture that matters when
+debugging script execution failures. The script-runner-api container runs three
+processes (Rails, a Go WebSocket server, and a Ruby gRPC RPC server) managed by
+shoreman. The `openc3cli script run` command holds a single long-lived WebSocket
+connection with no reconnect logic -- any transport disruption kills the run.
+
+When running `openc3cli` via `docker compose exec`, use the `$stdout.sync` pattern
+to prevent Ruby output buffering:
+
+```bash
+docker compose exec -T openc3-cosmos-cmd-tlm-api \
+  ruby -e '$stdout.sync=true; load "/openc3/bin/openc3cli"' \
+  -- script run TARGET/procedures/test_script.py
+```
+
+For the full internal architecture, process model, diagnostic commands,
+troubleshooting table, and the gRPC keepalive/GoAway fix, see
+[references/container-internals-and-troubleshooting.md](references/container-internals-and-troubleshooting.md).
 
 ## Known Limitations
 
