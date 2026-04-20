@@ -76,6 +76,49 @@ function Get_Current_Value_Id (Self : Instance) return Data_Product_Types.Data_P
 
 **Usage:** `Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Current_Value (The_Time, (Value => N)));`
 
+### Packets Package (`{Name}_Packets`)
+
+Generated from `packets.yaml`. Access via `Self.Packets`. Four packet flavors -- signatures differ:
+
+```ada
+-- 1. Typed fixed-length packet (e.g., type: Status_Data.T where Status_Data is a fixed-size record):
+function Status_Packet (Self : in out Instance; Timestamp : Sys_Time.T; Item : in Status_Data.T) return Packet.T;
+-- Byte array variant -- skip serialization round-trip if you already hold the bytes:
+function Status_Packet_Bytes (Self : in out Instance; Timestamp : Sys_Time.T; Buf : in Status_Data.Serialization.Byte_Array) return Packet.T;
+
+-- 2. Typed variable-length packet (e.g., type: Variable_Payload.T):
+function Variable_Packet (Self : in out Instance; Timestamp : Sys_Time.T; Item : in Variable_Payload.T; Pkt : out Packet.T) return Serialization_Status;
+function Variable_Packet_Truncate (Self : in out Instance; Timestamp : Sys_Time.T; Item : in Variable_Payload.T) return Packet.T;
+-- Byte array variant:
+function Variable_Packet_Bytes (Self : in out Instance; Timestamp : Sys_Time.T; Buf : in Basic_Types.Byte_Array; Pkt : out Packet.T) return Serialization_Status;
+
+-- 3. Typed basic_types packet (e.g., type: Packed_U32.T -- no type model, uses generic Serializer):
+function Counter_Packet (Self : in out Instance; Timestamp : Sys_Time.T; Item : in Packed_U32.T) return Packet.T;
+-- NO _Bytes variant -- only type_model-backed records get one.
+
+-- 4. Typeless packet (no type: key, raw byte buffer):
+function Raw_Packet (Self : in out Instance; Timestamp : Sys_Time.T; Buf : in Basic_Types.Byte_Array; Pkt : out Packet.T) return Serialization_Status;
+function Raw_Packet_Truncate (Self : in out Instance; Timestamp : Sys_Time.T; Buf : in Basic_Types.Byte_Array) return Packet.T;
+function Raw_Packet_Empty (Self : in out Instance; Timestamp : Sys_Time.T) return Packet.T;
+
+-- ID getters (all flavors):
+function Get_Status_Packet_Id (Self : Instance) return Packet_Types.Packet_Id;
+```
+
+**When to use `_Bytes`:** if a caller already holds a serialized payload (e.g., a CCSDS subpacket lifted out of a receive buffer), calling `_Bytes` avoids a `Byte_Array -> T -> Byte_Array` round-trip. The fixed-length `_Bytes` parameter is the constrained subtype `{Type_Package}.Serialization.Byte_Array` (sized exactly to `Size_In_Bytes`), so no runtime length check is needed -- a `Compile_Time_Error` in the generated spec asserts the type fits `Packet.T.Buffer`. The variable-length `_Bytes` takes an unconstrained `Basic_Types.Byte_Array` and returns `Failure` if `Buf'Length > Pkt.Buffer'Length`.
+
+**Usage:**
+```ada
+-- Standard path (serialize from Item):
+Self.Packet_T_Send_If_Connected (Self.Packets.Status_Packet (The_Time, My_Status));
+
+-- Byte-array path (already serialized, e.g., re-wrapping an upstream packet):
+Bytes : Status_Data.Serialization.Byte_Array renames
+   Rx_Buffer (Offset .. Offset + Status_Data.Size_In_Bytes - 1);
+...
+Self.Packet_T_Send_If_Connected (Self.Packets.Status_Packet_Bytes (The_Time, Bytes));
+```
+
 ### Commands Package (`{Name}_Commands`)
 
 ```ada

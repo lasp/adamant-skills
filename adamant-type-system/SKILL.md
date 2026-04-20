@@ -235,10 +235,15 @@ package My_Type is
 end My_Type;
 
 -- Serialization API (from Serializer generic) -- FIXED-SIZE types only:
---   function To_Byte_Array (Src : in T) return Basic_Types.Byte_Array;
+--   subtype Byte_Array_Index is Natural range 0 .. (Serialized_Length - 1);
+--   subtype Byte_Array is Basic_Types.Byte_Array (Byte_Array_Index);
+--   function To_Byte_Array (Src : in T) return Byte_Array;
 --   procedure To_Byte_Array (Src : in T; Dst : out Basic_Types.Byte_Array);
 --   function From_Byte_Array (Src : in Basic_Types.Byte_Array) return T;
 -- Usage: My_Type.Serialization.To_Byte_Array (Packed_Val)
+-- Note: `My_Type.Serialization.Byte_Array` is the constrained (exact-size) subtype.
+-- Use it as the parameter type when calling `{packet_name}_Bytes` packet-creation
+-- subprograms so the compiler enforces the length match statically.
 
 -- Variable-length types use Variable_Serializer (NOT Serializer):
 --   package Serialization is new Variable_Serializer (T, Serialized_Length);
