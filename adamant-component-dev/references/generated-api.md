@@ -105,18 +105,26 @@ function Raw_Packet_Empty (Self : in out Instance; Timestamp : Sys_Time.T) retur
 function Get_Status_Packet_Id (Self : Instance) return Packet_Types.Packet_Id;
 ```
 
-**When to use `_Bytes`:** if a caller already holds a serialized payload (e.g., a CCSDS subpacket lifted out of a receive buffer), calling `_Bytes` avoids a `Byte_Array -> T -> Byte_Array` round-trip. The fixed-length `_Bytes` parameter is the constrained subtype `{Type_Package}.Serialization.Byte_Array` (sized exactly to `Size_In_Bytes`), so no runtime length check is needed -- a `Compile_Time_Error` in the generated spec asserts the type fits `Packet.T.Buffer`. The variable-length `_Bytes` takes an unconstrained `Basic_Types.Byte_Array` and returns `Failure` if `Buf'Length > Pkt.Buffer'Length`.
+**Prefer the `Item`-taking form.** `_Bytes` is a specialist tool for a narrow case: you are handling already-serialized bytes received from an external source (ground uplink, co-processor, peripheral) whose scalar fields may be *invalid*, and you intend to forward the packet anyway (e.g. archive the malformed frame, raise a fault, hand it off for ground-side diagnosis). In that situation, constructing `T` via `with Import` at the bytes' address and then passing it through `Status_Packet (Item)` is unsafe per ARM 13.9.1(12) -- the act of passing an `in T` with out-of-range scalars is implementation-defined and may trigger erroneous execution before any `Valid` check runs. `_Bytes` keeps the untrusted-input path purely in the byte domain. If you hold a valid `T` (or can cheaply produce one), use the `Item` form.
 
-**Usage:**
+Signature details when you do reach for it: the fixed-length `_Bytes` parameter is the constrained subtype `{Type_Package}.Serialization.Byte_Array` (sized exactly to `Size_In_Bytes`), so no runtime length check is needed -- a `Compile_Time_Error` in the generated spec asserts the type fits `Packet.T.Buffer`. The variable-length `_Bytes` takes an unconstrained `Basic_Types.Byte_Array` and returns `Failure` if `Buf'Length > Pkt.Buffer'Length`. The canonical bytes-first idiom pairs `_Bytes` with `Validation.Valid (Bytes, ...)`:
+
 ```ada
--- Standard path (serialize from Item):
+-- Standard path (strongly preferred):
 Self.Packet_T_Send_If_Connected (Self.Packets.Status_Packet (The_Time, My_Status));
 
--- Byte-array path (already serialized, e.g., re-wrapping an upstream packet):
-Bytes : Status_Data.Serialization.Byte_Array renames
-   Rx_Buffer (Offset .. Offset + Status_Data.Size_In_Bytes - 1);
-...
-Self.Packet_T_Send_If_Connected (Self.Packets.Status_Packet_Bytes (The_Time, Bytes));
+-- Rare bytes-first path, for untrusted external payloads you want to forward regardless:
+declare
+   Bytes : Status_Data.Serialization.Byte_Array renames
+      Rx_Buffer (Offset .. Offset + Status_Data.Size_In_Bytes - 1);
+   Errant_Field_Number : Interfaces.Unsigned_32;
+begin
+   Wrapped := Self.Packets.Status_Packet_Bytes (The_Time, Bytes);
+   if not Status_Data.Validation.Valid (Bytes, Errant_Field_Number) then
+      -- Forward Wrapped and raise an Invalid_Packet fault, log Errant_Field_Number, etc.
+      null;
+   end if;
+end;
 ```
 
 ### Commands Package (`{Name}_Commands`)
