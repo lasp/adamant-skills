@@ -76,6 +76,57 @@ function Get_Current_Value_Id (Self : Instance) return Data_Product_Types.Data_P
 
 **Usage:** `Self.Data_Product_T_Send_If_Connected (Self.Data_Products.Current_Value (The_Time, (Value => N)));`
 
+### Packets Package (`{Name}_Packets`)
+
+Generated from `packets.yaml`. Access via `Self.Packets`. Four packet flavors -- signatures differ:
+
+```ada
+-- 1. Typed fixed-length packet (e.g., type: Status_Data.T where Status_Data is a fixed-size record):
+function Status_Packet (Self : in out Instance; Timestamp : Sys_Time.T; Item : in Status_Data.T) return Packet.T;
+-- Byte array variant -- skip serialization round-trip if you already hold the bytes:
+function Status_Packet_Bytes (Self : in out Instance; Timestamp : Sys_Time.T; Buf : in Status_Data.Serialization.Byte_Array) return Packet.T;
+
+-- 2. Typed variable-length packet (e.g., type: Variable_Payload.T):
+function Variable_Packet (Self : in out Instance; Timestamp : Sys_Time.T; Item : in Variable_Payload.T; Pkt : out Packet.T) return Serialization_Status;
+function Variable_Packet_Truncate (Self : in out Instance; Timestamp : Sys_Time.T; Item : in Variable_Payload.T) return Packet.T;
+-- Byte array variant:
+function Variable_Packet_Bytes (Self : in out Instance; Timestamp : Sys_Time.T; Buf : in Basic_Types.Byte_Array; Pkt : out Packet.T) return Serialization_Status;
+
+-- 3. Typed basic_types packet (e.g., type: Packed_U32.T -- no type model, uses generic Serializer):
+function Counter_Packet (Self : in out Instance; Timestamp : Sys_Time.T; Item : in Packed_U32.T) return Packet.T;
+-- NO _Bytes variant -- only type_model-backed records get one.
+
+-- 4. Typeless packet (no type: key, raw byte buffer):
+function Raw_Packet (Self : in out Instance; Timestamp : Sys_Time.T; Buf : in Basic_Types.Byte_Array; Pkt : out Packet.T) return Serialization_Status;
+function Raw_Packet_Truncate (Self : in out Instance; Timestamp : Sys_Time.T; Buf : in Basic_Types.Byte_Array) return Packet.T;
+function Raw_Packet_Empty (Self : in out Instance; Timestamp : Sys_Time.T) return Packet.T;
+
+-- ID getters (all flavors):
+function Get_Status_Packet_Id (Self : Instance) return Packet_Types.Packet_Id;
+```
+
+**Prefer the `Item`-taking form.** `_Bytes` is a specialist tool for a narrow case: you are handling already-serialized bytes received from an external source (ground uplink, co-processor, peripheral) whose scalar fields may be *invalid*, and you intend to forward the packet anyway (e.g. archive the malformed frame, raise a fault, hand it off for ground-side diagnosis). In that situation, constructing `T` via `with Import` at the bytes' address and then passing it through `Status_Packet (Item)` is unsafe per ARM 13.9.1(12) -- the act of passing an `in T` with out-of-range scalars is implementation-defined and may trigger erroneous execution before any `Valid` check runs. `_Bytes` keeps the untrusted-input path purely in the byte domain. If you hold a valid `T` (or can cheaply produce one), use the `Item` form.
+
+Signature details when you do reach for it: the fixed-length `_Bytes` parameter is the constrained subtype `{Type_Package}.Serialization.Byte_Array` (sized exactly to `Size_In_Bytes`), so no runtime length check is needed -- a `Compile_Time_Error` in the generated spec asserts the type fits `Packet.T.Buffer`. The variable-length `_Bytes` takes an unconstrained `Basic_Types.Byte_Array` and returns `Failure` if `Buf'Length > Pkt.Buffer'Length`. The canonical bytes-first idiom pairs `_Bytes` with `Validation.Valid (Bytes, ...)`:
+
+```ada
+-- Standard path (strongly preferred):
+Self.Packet_T_Send_If_Connected (Self.Packets.Status_Packet (The_Time, My_Status));
+
+-- Rare bytes-first path, for untrusted external payloads you want to forward regardless:
+declare
+   Bytes : Status_Data.Serialization.Byte_Array renames
+      Rx_Buffer (Offset .. Offset + Status_Data.Size_In_Bytes - 1);
+   Errant_Field_Number : Interfaces.Unsigned_32;
+begin
+   Wrapped := Self.Packets.Status_Packet_Bytes (The_Time, Bytes);
+   if not Status_Data.Validation.Valid (Bytes, Errant_Field_Number) then
+      -- Forward Wrapped and raise an Invalid_Packet fault, log Errant_Field_Number, etc.
+      null;
+   end if;
+end;
+```
+
 ### Commands Package (`{Name}_Commands`)
 
 ```ada

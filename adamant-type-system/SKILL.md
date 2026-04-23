@@ -235,10 +235,19 @@ package My_Type is
 end My_Type;
 
 -- Serialization API (from Serializer generic) -- FIXED-SIZE types only:
---   function To_Byte_Array (Src : in T) return Basic_Types.Byte_Array;
+--   subtype Byte_Array_Index is Natural range 0 .. (Serialized_Length - 1);
+--   subtype Byte_Array is Basic_Types.Byte_Array (Byte_Array_Index);
+--   function To_Byte_Array (Src : in T) return Byte_Array;
 --   procedure To_Byte_Array (Src : in T; Dst : out Basic_Types.Byte_Array);
 --   function From_Byte_Array (Src : in Basic_Types.Byte_Array) return T;
 -- Usage: My_Type.Serialization.To_Byte_Array (Packed_Val)
+-- Note: `My_Type.Serialization.Byte_Array` is the constrained (exact-size) subtype.
+-- Use it as the parameter type when:
+--   1. Calling `{packet_name}_Bytes` packet-creation subprograms (compiler enforces length statically).
+--   2. Calling `My_Type.Validation.Valid (Bytes, ...)` / `Get_Field (Bytes, ...)` -- the
+--      validation API takes bytes, not typed records (see "Validation Child Package" below).
+-- Also generated: `Serialization_Le.Byte_Array` (little-endian counterpart) when endianness
+-- is "either" or "little". `Valid_Le` / `Get_Field_Le` take that subtype.
 
 -- Variable-length types use Variable_Serializer (NOT Serializer):
 --   package Serialization is new Variable_Serializer (T, Serialized_Length);
@@ -321,35 +330,78 @@ Nested records: inner `U_C` types are used (e.g. `Inner_Type.C.U_C` for nested f
 
 ## Validation Child Package
 
-**Always generated** for every record type -- no special YAML key needed. Provides:
+**Always generated** for every record and packed-array type -- no special YAML key needed. Provides:
 ```ada
 package My_Type.Validation is
-   function Valid (R : in My_Type.T; Errant_Field : out Interfaces.Unsigned_32) return Boolean;
+   -- Big-endian / default (when endianness is "either" or "big"):
+   function Valid     (Bytes : in Serialization.Byte_Array;    Errant_Field : out Interfaces.Unsigned_32) return Boolean;
+   function Get_Field (Bytes : in Serialization.Byte_Array;    Field : in Interfaces.Unsigned_32) return Basic_Types.Poly_Type;
+   -- Little-endian counterparts (when endianness is "either" or "little"):
+   function Valid_Le     (Bytes : in Serialization_Le.Byte_Array; Errant_Field : out Interfaces.Unsigned_32) return Boolean;
+   function Get_Field_Le (Bytes : in Serialization_Le.Byte_Array; Field : in Interfaces.Unsigned_32) return Basic_Types.Poly_Type;
 end My_Type.Validation;
 ```
+
+For packed-array types, `Valid` / `Valid_Le` additionally accept `First_Index` / `Last_Index`
+defaulted to the full range, so you can validate a prefix (used by variable-length records).
+
 - Returns `True` if all fields are in range (uses Ada `'Valid` on constrained subtypes)
 - `Errant_Field` is `Interfaces.Unsigned_32` -- set to the 1-based field index of the first failing field (0 if all valid)
 - Constrained subtypes are generated from preamble range types and enum ranges
 - There is no `valid_ranges` YAML key -- validation is automatic from field type constraints
 
-### Testing with Invalid Packed Records
+### Why the API takes bytes, not `T` or `U`
 
-To test `Validation.Valid`, inject out-of-range values via `Unchecked_Conversion`:
+The typed overloads (`Valid (R : in T, ...)` / `Valid (R : in U, ...)`) were removed; byte
+arrays are now the sole input. Rationale (ARM 13.9.1(12)): passing a packed record with
+invalid scalar representations (e.g. NaN in a constrained float, out-of-range enum) as an
+`in T` parameter is implementation-defined. GNAT block-copies composite parameters (safe),
+but a future compiler that copies field-by-field could trigger erroneous execution
+*before* `Valid` runs. Validating bytes in, then overlaying the record only after
+`Valid = True`, keeps the untrusted-input path purely in the byte domain.
+
+### `Always_Valid` compile-time constant
+
+Every packed record and packed-array type also exposes:
 ```ada
-with Ada.Unchecked_Conversion;
--- Create a byte array matching the packed size:
-subtype Raw_Bytes is Basic_Types.Byte_Array (0 .. My_Type.Size_In_Bytes - 1);
-function To_Packed is new Ada.Unchecked_Conversion (Raw_Bytes, My_Type.T);
+Always_Valid : constant Boolean := ...;   -- root package, next to Size_In_Bytes
+```
+`True` iff every scalar field uses the full bit width of its storage -- i.e. no bit pattern
+can produce an out-of-range value. When `True`, validation is a no-op and safe to skip:
+the generated `Valid` body for higher-level types uses `Always_Valid` to short-circuit
+sub-field checks, and downstream code can guard call sites with:
+```ada
+pragma Compile_Time_Error (not My_Type.Always_Valid,
+   "Expected My_Type to be Always_Valid, but it is not.");
+```
+or the inverse (`Compile_Time_Error (Always_Valid, ...)`) to assert that validation *is*
+required and lock the design against silent codegen changes.
+
+The flag is derived from the field layout:
+- Float field / arrayed primitive -> `False` (cannot be introspected statically)
+- Nested packed type -> delegates to that type's `Always_Valid`
+- `skip_validation: True` on the field/element -> `True` by user decree (use only for
+  byte/poly buffers where validation is meaningless)
+- Scalar that covers its bit width exactly -> `True` (computed via `'Pos ('Last) - 'Pos ('First) = 2**size - 1`)
+
+### Testing with Invalid Packed Bytes
+
+Construct a `Serialization.Byte_Array` with out-of-range content and pass it directly.
+No `Unchecked_Conversion` to `T` is needed (and should be avoided -- see the ARM note
+above):
+```ada
 -- Construct bytes with an invalid field value:
-Bad_Bytes : Raw_Bytes := (0 => 255, others => 0);  -- e.g., 255 exceeds Throttle range 0..100
-Bad_Record : constant My_Type.T := To_Packed (Bad_Bytes);
+Bad_Bytes : My_Type.Serialization.Byte_Array := (0 => 255, others => 0);  -- e.g., 255 exceeds Throttle range 0..100
 -- Now test:
 Valid : Boolean;
-Field : Natural;
-Valid := My_Type.Validation.Valid (Bad_Record, Field);
+Field : Interfaces.Unsigned_32;
+Valid := My_Type.Validation.Valid (Bad_Bytes, Field);
 -- Valid = False, Field = 1 (first errant field)
+-- For the offending field's poly-typed value:
+Bad_Value : constant Basic_Types.Poly_Type := My_Type.Validation.Get_Field (Bad_Bytes, Field);
 ```
-This is the standard pattern for validation testing since `Pack()` enforces valid values.
+This is the standard pattern for validation testing -- `Pack()` enforces valid values,
+so invalid records can only be synthesised at the byte level.
 
 ## Initializing Packed Types
 
