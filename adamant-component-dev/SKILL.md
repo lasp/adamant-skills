@@ -38,10 +38,9 @@ component_name/
 ## Workflow
 
 ```bash
-redo templates && cp build/template/* .   # Generate and copy stubs
-redo all                                  # Build
-redo style                                # Check style (BEFORE committing)
-redo test                                 # Run tests
+admt -y templates                         # Generate stubs + copy (redo templates + admt's copy flow)
+admt build                                # Build (redo all)
+admt test                                 # Run tests (redo test)
 ```
 
 **⚠️ CRITICAL -- Always start from generated templates**: Run `redo templates` and copy the generated `.ads/.adb` stubs BEFORE writing any implementation code. The templates contain required comments, formatting, and exact procedure signatures. Never write implementation spec/body files from scratch — always edit the generated stubs. Skipping this step is a common source of missing comments, wrong signatures, and formatting mismatches.
@@ -669,7 +668,7 @@ Generated override: `overriding function Channel_Count (Self : in out Instance) 
 24a. [ ] Init parameter `default:` values MUST be quoted strings (`"10"` not `10`)
 25. [ ] All YAML files start with `---` document start marker
 26. [ ] Only `with` packages you actually reference -- unused `with` is a style warning
-27. [ ] Verify with `redo style` -- all warnings must be resolved
+27. [ ] Verify with `admt style` -- all warnings must be resolved
 28. [ ] Use `[]` for array aggregates: `[others => 0]` not `(others => 0)` (Ada 2022 syntax). Record aggregates MUST use `()`. Nested array-of-records: `[others => (others => <>)]`
 29. [ ] Space before `(` in type conversions: `Unsigned_32 (X)` not `Unsigned_32(X)`
 30. [ ] `then` on its own line for multi-line if conditions

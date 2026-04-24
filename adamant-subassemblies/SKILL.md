@@ -420,7 +420,7 @@ If a component in the parent has an arrayed connector (e.g., `Tick_T_Send_Count 
 ### Subassembly Standalone Constraint
 Per the user guide: "each subassembly must also be able to act as a standalone assembly. Specifically, any connections defined in an assembly must be between components defined in that assembly or one of that assembly's subassemblies." This is a **model validity** constraint -- a subassembly's connections can only reference its own components. It does NOT mean a subassembly can produce a standalone binary (it has no `main/` directory).
 
-**Build note:** `redo all` in the assembly directory generates source code (including subassembly sources) into `build/src/`. The ELF binary is built from `main/`: `cd main && redo run`. If `redo all` fails at the gprbuild step, the generated Ada source may still be fine -- build the ELF from `main/` to verify.
+**Build note:** `admt build` in the assembly directory generates source code (including subassembly sources) into `build/src/`. The ELF binary is built from `main/`: `cd main && redo run`. If `admt build` fails at the gprbuild step, the generated Ada source may still be fine -- build the ELF from `main/` to verify.
 
 ## Example: Splitting a Monolithic Assembly
 

@@ -26,8 +26,8 @@ PLAN:
 - [ ] Component 2: temperature_watchdog (yaml, impl, test)
 - [ ] ...
 - [ ] Component 20: science_thermal_telemetry (yaml, impl, test)
-- [ ] redo style (all components)
-- [ ] redo test (all components)
+- [ ] admt style --all (all components)
+- [ ] admt test --all (all components)
 Total: 20 components x 3 files = 60 files + 2 verification steps
 ```
 
@@ -66,8 +66,8 @@ Don't build one component end-to-end then the next. Batch by operation:
 - Use the same test structure for each component
 
 **Round 4: Verify**
-- `redo style` on each component
-- `redo test` on each component
+- `admt style` on each component
+- `admt test` on each component
 - Record pass/fail per component
 
 Batching is faster because you stay in the same mental context and can

@@ -15,7 +15,7 @@ Each entry includes the iteration where it was first observed and the resolution
 - **Severity:** error (build failure)
 - **Pattern:** Framework's generated `data_product.ads` uses default 36-byte buffer, but project configures 192 bytes in `config/demo.configuration.yaml`.
 - **Impact:** Components with data products larger than 36 bytes fail to compile.
-- **Resolution:** Run `redo clean_all` to regenerate framework types with project config. Sub-agent patched the generated file directly -- fragile workaround.
+- **Resolution:** Run `admt clean --all` to regenerate framework types with project config. Sub-agent patched the generated file directly -- fragile workaround.
 
 ### Ada reserved word in command names (T13-S2, multiple iterations)
 - **Severity:** error (compilation failure)
@@ -79,7 +79,7 @@ Each entry includes the iteration where it was first observed and the resolution
 
 ### Subassembly model cache workaround (T13-S3-i3)
 - **Severity:** info
-- **Pattern:** Sub-agent pre-generates subassembly source files (`redo build/src/<subasm>_components.ads`) before `redo style` to work around framework model caching that produces empty `with` clauses when subassembly is first loaded by parent.
+- **Pattern:** Sub-agent pre-generates subassembly source files (`redo build/src/<subasm>_components.ads`) before `admt style` to work around framework model caching that produces empty `with` clauses when subassembly is first loaded by parent.
 - **Impact:** Adds build time but avoids compilation failures. The `with:` field in subassembly YAML is the cleaner fix.
 - **Resolution:** Use `with: ["Task_Types", "Interrupt_Types", "Component"]` in subassembly YAML instead of build-order workarounds.
 

@@ -17,7 +17,7 @@ Cold-start sub-agent exercises for each skill. Each exercise starts from NOTHING
 - Has a parameter `Warning_Threshold` (Packed_U16, default 3)
 - Implementation: increment counter on tick, fault if counter exceeds timeout, reset on command
 **Create in:** `/home/user/adamant_bot_station/src/components/heartbeat_monitor/`
-**Validation:** `redo style && redo test` from component directory
+**Validation:** `admt style && admt test` from component directory
 
 ## Exercise: test
 
@@ -26,7 +26,7 @@ Cold-start sub-agent exercises for each skill. Each exercise starts from NOTHING
 Steps:
 1. Read the component's YAML files to understand its interface
 2. Create `test/` directory with `env.py` and `component_name.tests.yaml`
-3. Run `redo templates` from test/ dir to generate tester scaffolding
+3. Run `admt templates` from test/ dir to generate tester scaffolding
 4. Copy generated files from `build/template/` to `test/`
 5. Write ONLY the `*_tests-implementation.adb` (test case bodies) from scratch
 Tests must cover:
@@ -37,7 +37,7 @@ Tests must cover:
 - Parameter updates (stage/validate/update cycle)
 - Error/fault paths
 **Create in:** `/home/user/adamant_bot_station/src/components/<component>/test/`
-**Validation:** `redo test` then `redo coverage` from component directory
+**Validation:** `admt test` then `admt coverage` from component directory
 
 ## Exercise: assembly
 
@@ -72,7 +72,7 @@ Tests must cover:
 3. Array `Sensor_Array.T` of 4 Sensor_Reading.T
 4. Simple record `Sensor_Config` with threshold_high (Short_Float), threshold_low (Short_Float)
 **Create in:** `/home/user/adamant_bot_station/src/types/sensor_reading/`, etc.
-**Validation:** `redo style` on types directories
+**Validation:** `admt style` on types directories
 
 ## Exercise: algorithm
 
@@ -87,7 +87,7 @@ Tests must cover:
 - Data dependency output: `Packed_F32.T` (filtered value)
 - Init param: alpha (Short_Float, default 0.1)
 **Create in:** `/home/user/adamant_bot_station/src/components/low_pass_filter/`
-**Validation:** `redo style && redo test`
+**Validation:** `admt style && admt test`
 
 ## Exercise: build
 
@@ -107,4 +107,4 @@ Tests must cover:
 - Ada: wrong casing, missing spaces around operators, wrong indentation, lines >120 chars
 - YAML: wrong indentation, missing descriptions, inconsistent quoting
 **Provide:** Pre-created messy files
-**Validation:** `redo style` passes with 0 warnings
+**Validation:** `admt style` passes with 0 warnings

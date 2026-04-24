@@ -7,33 +7,53 @@ description: Understanding and using the Adamant redo-based build system and cod
 
 Redo-based: YAML models → Python/Jinja2 code generation → Ada compilation, with incremental deps and multi-target cross-compilation.
 
-## CRITICAL: Docker Build Environment
+## CRITICAL: Use `admt` as the primary entry point
 
 **All Adamant builds MUST run inside the project's Docker container.** Never attempt to build locally on the host -- the GNAT toolchain, Python generators, redo, and Alire dependencies are only available inside the container.
 
-**Detection:** Check for `ADAMANT_ENVIRONMENT_SET=yes` in the environment. If this variable is NOT set, you are on the host and MUST use `adamant_env.sh exec` to run builds:
+**Use [`admt`](https://github.com/Jbsco/admt) (The Adamant Multitool) for all build, test, and container operations from the host.** admt forwards into the container automatically, handles env activation via a cached snapshot, and maps host paths to container paths.
+
 ```bash
-# From host -- REQUIRED method (fast snapshot-based activation):
-bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project> && redo <target>"
+# Discover targets, build, test, style -- from the host:
+admt what                       # redo what (list targets in cwd)
+admt build [path]               # redo all
+admt test [path]                # redo test (add --all for test_all)
+admt style [path]               # redo style (add --all for style_all)
 
-# Discover what can be built in any directory:
-bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo what"
+# Container lifecycle:
+admt env start                  # Start the container (pulls image if missing, runs activation)
+admt env login                  # Interactive shell inside the container
+admt env stop                   # Stop the container
 
-# If already inside the container (ADAMANT_ENVIRONMENT_SET=yes):
+# Arbitrary commands inside the container:
+admt env exec "<command>"
+```
+
+**Detection:** Check for `ADAMANT_ENVIRONMENT_SET=yes` to tell whether you are already inside the container (e.g., running from an interactive `admt env login` session). If the variable is set, invoke `redo` directly; otherwise use admt from the host.
+
+```bash
+# Inside the container (ADAMANT_ENVIRONMENT_SET=yes):
 cd /home/user/<project> && redo <target>
+
+# From the host -- primary form:
+admt build <target>             # or admt <passthrough-cmd> [path]
 ```
 
-**NEVER use `source env/activate` directly.** The `adamant_env.sh exec` function handles environment activation automatically via a cached snapshot.
+**Fallback (when admt does not cover the case):** the `adamant_env.sh exec` form still works for operations admt has not yet absorbed. admt MVP covers all redo passthroughs (build/test/style/analyze/clean/coverage/prove/publish/templates/what) plus the container lifecycle; reach for the fallback only for the residual cases.
 
-**Container setup pattern** (each project has its own Docker environment):
 ```bash
-cd <project_dir>/docker
-bash adamant_env.sh start    # Pull image + start container
-bash adamant_env.sh login    # Interactive shell (preferred)
-bash adamant_env.sh stop     # Stop container
+# Fallback only -- when admt does not cover the case.
+bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project> && <command>"
 ```
 
-See TOOLS.md for project-specific container names and paths.
+**admt is new -- report gaps, don't silently work around them.** admt's MVP just landed; post-MVP work is ongoing. If admt errors on a case you expected it to handle or its output is visibly wrong:
+
+1. Fall back to `adamant_env.sh exec` (or the equivalent inside `admt env exec`) to unblock the task.
+2. Surface the gap in your final report -- the admt command you tried, the error or observed deviation, the fallback form that worked, and `admt --version`. The user can then file an issue at <https://github.com/Jbsco/admt/issues>.
+
+Silent fallback hides the signal that admt needs fixing; verbose fallback keeps admt improving.
+
+See TOOLS.md for project-specific container names and paths. See `CLAUDE.md` at the repo root for the full redo -> admt translation table.
 
 ## YAML Model Extensions
 
@@ -92,84 +112,100 @@ bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project> && redo <
 bash <project_dir>/docker/adamant_env.sh login
 ```
 
-The `exec` command handles BUILD_ROOTS, Python venv, GPR_PROJECT_PATH, Alire dependencies, and PYTHONPATH automatically. See `adamant-project-setup` for details.
+# Multiple roots:
+source $ADAMANT_DIR/env/activate "/path/to/project1:/path/to/project2"
+```yaml
+
+**For non-interactive commands, use admt (`admt <passthrough>` or `admt env exec "<cmd>"`)** or, as a fallback, `adamant_env.sh exec`. Both use snapshot-based activation (milliseconds vs seconds from a cold `source`) and handle the environment correctly. For interactive sessions, use `admt env login` (or `adamant_env.sh login`). The base image's `.bashrc` may have already activated the adamant environment, blocking the project's activate via the `ADAMANT_ENVIRONMENT_SET` guard -- all of these handle it correctly. See `adamant-project-setup` for details.
 
 Activation does: set BUILD_ROOTS, create Python venv, install requirements, set GPR_PROJECT_PATH, configure Alire dependencies, set PYTHONPATH for code generators.
 
 Validation: `bash scripts/check_build_paths.sh <project_root>`
 
-## Redo Command Reference
+## Command Reference
 
-All predefined targets (available in any directory):
+admt wraps redo's predefined targets. Use admt from the host; the underlying redo targets are available inside the container for debugging.
+
+| admt command | redo target | Notes |
+|---|---|---|
+| `admt build [path]` | `redo all` | Default: build everything in cwd |
+| `admt build <target>` | `redo <target>` | Specific target (e.g., `admt build build/svg/foo.svg`) |
+| `admt test [path]` | `redo test` | `--all` -> `redo test_all` |
+| `admt style [path]` | `redo style` | `--all` -> `redo style_all` |
+| `admt analyze [path]` | `redo analyze` | `--all` -> `redo analyze_all` |
+| `admt clean [path]` | `redo clean` | `--all` -> `redo clean_all` |
+| `admt coverage [path]` | `redo coverage` | `--all` -> `redo coverage_all` |
+| `admt prove [path]` | `redo prove` | SPARK proof |
+| `admt publish [path]` | `redo publish` | `--all` -> `redo publish_all` |
+| `admt templates [path]` | `redo templates` + stub copy | `--undo` restores prior impl |
+| `admt what [path]` | `redo what` | List targets |
 
 ### Build Targets
 ```bash
-redo all              # Build everything in current directory
-redo -j               # Parallel build (uses -j0 internally for gprbuild)
-redo templates        # Generate implementation stubs → build/template/
-redo publish          # Publish build artifacts
-redo targets          # Show available build targets and their descriptions
+admt build            # Build everything in current directory (redo all)
+redo -j               # Parallel build (-j0 internally) -- inside container only
+admt templates        # Generate implementation stubs -> build/template/ + optional copy
+admt publish          # Publish build artifacts
+admt build targets    # Show available build targets and their descriptions
 ```
 
 ### Test & Verification
 ```bash
-redo test             # Run unit test (from test/ dir, needs test.adb → test.elf)
-redo test_all         # Recursive: run all tests in subdirectories
-redo coverage         # Coverage analysis via gcov
-redo coverage_all     # Recursive coverage for all subdirectories
-redo style            # Style check: Ada warnings + flake8 + yamllint + codespell
-redo style_all        # Recursive style check
-redo prove            # SPARK proof (needs all.prove.yaml in component dir)
-redo analyze          # GNAT SAS static analysis
-redo analyze_all      # Recursive static analysis
-redo pretty           # Auto-format Ada source code
+admt test             # Run unit test (from test/ dir, needs test.adb -> test.elf)
+admt test --all       # Recursive: run all tests in subdirectories (redo test_all)
+admt coverage         # Coverage analysis via gcov
+admt coverage --all   # Recursive coverage for all subdirectories
+admt style            # Style check: Ada warnings + flake8 + yamllint + codespell
+admt style --all      # Recursive style check
+admt prove            # SPARK proof (needs all.prove.yaml in component dir)
+admt analyze          # GNAT SAS static analysis
+admt analyze --all    # Recursive static analysis
+admt build pretty     # Auto-format Ada source code (redo pretty)
 ```
 
 ### Diagrams & Documentation
 ```bash
-redo build/svg/name.svg     # Architecture/type diagram (SVG)
-redo build/eps/name.eps     # EPS diagram
-redo build/png/name.png     # PNG diagram
-redo build/pdf/name.pdf     # PDF document
-redo build/html/name.html   # HTML documentation
+admt build build/svg/name.svg     # Architecture/type diagram (SVG)
+admt build build/eps/name.eps     # EPS diagram
+admt build build/png/name.png     # PNG diagram
+admt build build/pdf/name.pdf     # PDF document
+admt build build/html/name.html   # HTML documentation
 ```
 
-Assembly-level generation includes: HTML command/telemetry docs, PDF documentation, SVG/EPS/PNG architecture diagrams, Python binding classes, COSMOS plugin configs, MATLAB interfaces. Use `redo what` in the assembly directory to list all available targets.
+Assembly-level generation includes: HTML command/telemetry docs, PDF documentation, SVG/EPS/PNG architecture diagrams, Python binding classes, COSMOS plugin configs, MATLAB interfaces. Use `admt what` in the assembly directory to list all available targets.
 
 **⚠️ Subassembly constraint**: All assembly-level generation targets (docs, diagrams, COSMOS, Python) require a flat assembly with a top-level `components:` key. Assemblies using only `subassemblies:` will fail validation. Generate per-subassembly or create a flattened assembly for doc generation.
 
 ### Maintenance
 ```bash
-redo clean            # Remove build/ in current directory
-redo clean_all        # Recursive clean (all subdirectories)
-redo clear_cache      # Clear model cache (SQLite in $ADAMANT_TMP_DIR)
-redo run               # Build and execute main.elf (from main/ dir only)
-redo yaml_sloc         # Count YAML source lines of code
+admt clean            # Remove build/ in current directory (redo clean)
+admt clean --all      # Recursive clean (redo clean_all)
+admt build clear_cache # Clear model cache (SQLite in $ADAMANT_TMP_DIR)
+admt build run        # Build and execute main.elf (from main/ dir only)
+admt build yaml_sloc  # Count YAML source lines of code
 ```
 
-**Refreshing the environment:** After changing `env/activate`, `requirements*.txt`, `alire.toml`, or adding/removing `__init__.py` files, run `adamant_env.sh refresh` to delete and rebuild the cached environment snapshot. This is a subcommand of `adamant_env.sh` (not a redo target). It does NOT clear the model cache -- run `redo clear_cache` separately if needed.
+`admt clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed.
 
-`redo clean` is always safe on any directory (framework or project). It just removes build artifacts, causing longer rebuilds since redo will rebuild anything whose source changed.
+**Assembly build order:** For assemblies, `admt build` in the assembly directory generates source in `build/src/`. The ELF binary is built from `main/` (a sibling directory). If building manually: run `admt build` in the assembly dir first, THEN `admt build` in `main/`. Or just use `admt build run` from `main/` which handles the dependency chain.
 
-**Assembly build order:** For assemblies, `redo all` in the assembly directory generates source in `build/src/`. The ELF binary is built from `main/` (a sibling directory). If building manually: run `redo all` in the assembly dir first, THEN `redo` in `main/`. Or just use `redo run` from `main/` which handles the dependency chain.
+**`admt clean --all` is safe on ANY directory, including the adamant framework.** If redo state corrupts (symptom: `No rule to build 'src/core/connector/in_return_connector.adb'`), run `admt clean --all` on BOTH adamant and the project, then rebuild. The usual cause of corruption is concurrent builds (e.g. multiple sub-agents building simultaneously). If it doesn't fix, recover with `admt env rm --volumes && admt env start` (fresh Docker volumes).
 
-**`redo clean_all` is safe on ANY directory, including the adamant framework.** If redo state corrupts (symptom: `No rule to build 'src/core/connector/in_return_connector.adb'`), run `redo clean_all` on BOTH adamant and the project, then rebuild. The usual cause of corruption is concurrent redo processes (e.g. multiple sub-agents building simultaneously). If clean_all doesn't fix it, recover with `adamant_env.sh remove` + `start` (fresh Docker volumes).
+**NEVER manually delete build directories or redo state.** This includes `rm -rf build`, `rm -rf .redo`, `rm -rf */build`, `rm -rf */test/build`, or any variant. Always use `admt clean` or `admt clean --all` -- they properly reset state. Do NOT re-clone the adamant repository (destructive, wipes local state).
 
-**NEVER manually delete build directories or redo state.** This includes `rm -rf build`, `rm -rf .redo`, `rm -rf */build`, `rm -rf */test/build`, or any variant. Always use `redo clean` or `redo clean_all` -- they properly reset state. Do NOT re-clone the adamant repository (destructive, wipes local state).
-
-**After deleting source files, run `redo clean` before rebuilding.** When you `rm -rf` a source directory and recreate it with different files, redo's database still tracks the old output files. This causes phantom build errors like "No rule to build 'deleted_file.ads'". Fix: `redo clean` (or `redo clean_all`) on the affected directory clears stale DB entries. This is especially common when iterating on types directories (deleting and recreating packed type YAML files with different names).
+**After deleting source files, run `admt clean` before rebuilding.** When you `rm -rf` a source directory and recreate it with different files, redo's database still tracks the old output files. This causes phantom build errors like "No rule to build 'deleted_file.ads'". Fix: `admt clean` (or `admt clean --all`) on the affected directory clears stale DB entries. This is especially common when iterating on types directories (deleting and recreating packed type YAML files with different names).
 
 ### Inspect
 ```bash
-redo what             # List all buildable targets in current directory
-redo what_predefined  # List predefined (universal) targets
-redo path             # Display build path info
-redo print_path       # Print resolved build path
-redo recursive        # Recursively build all subdirectories
-```ada
+admt what                   # List all buildable targets in current directory (redo what)
+admt build what_predefined  # List predefined (universal) targets
+admt build path             # Display build path info
+admt build print_path       # Print resolved build path
+admt build recursive        # Recursively build all subdirectories
+```
 
 ### Style Check Details
-`redo style` performs four checks:
+`admt style` (wraps `redo style`) performs four checks:
 1. **Ada style** -- Recompiles all `.o` files with `CHECK_STYLE=True`, enforcing GNAT style switches (`-gnaty3aABbdDefhiklL12nOprStux`)
 2. **Python flake8** -- Checks `*.py` in current dir and `build/py/` (ignores E121,E123,E126,E226,E24,E704,W503,W504,E402,E501)
 3. **YAML lint** -- Validates YAML files after resolving Jinja2 templates via configuration
@@ -244,21 +280,30 @@ Generated files live in `build/src/`. Source files with the same name override g
 
 GPR Source_Dirs includes both `build/src/` (generated) and the component's source directory. When GNAT finds two files with the same name, the **source directory wins** because it appears earlier in the Source_Dirs list. This is how you override generated base classes or type packages:
 
-1. Run `redo all` to generate the file in `build/src/`
+1. Run `admt build` to generate the file in `build/src/`
 2. Copy it to your source directory: `cp build/src/my_file.ads ./my_file.ads`
 3. Edit the copy -- your version now takes precedence
-4. Subsequent `redo` regenerates `build/src/` but GNAT uses your copy
+4. Subsequent `admt build` regenerates `build/src/` but GNAT uses your copy
 
 **Template stubs** (`build/template/`) work differently -- they are NOT in Source_Dirs. You explicitly copy them to your source directory to create implementation files. They are never auto-included.
 
 ### Test Template Workflow (Critical)
 
-This is the #1 source of test build failures. Test directories need generated template files copied in:
+This is the #1 source of test build failures. Test directories need generated template files copied in. `admt templates` is the easy path -- it runs `redo templates` and offers to copy the stubs into the source directory (with a backup + `--undo`):
 
 ```bash
-# From the component directory (NOT the test/ dir):
+# From the component directory (or pass it as an argument):
+admt templates                            # generates build/template/*, prompts to copy
+# Or non-interactively:
+admt -y templates src/components/my_component
+```
+
+For the manual form (e.g., when you want to review stubs before copying):
+
+```bash
+# Inside the container, or via `admt env exec`:
 cd src/components/my_component
-redo templates                    # generates build/template/*.ads, *.adb
+redo templates                            # generates build/template/*.ads, *.adb
 cp build/template/my_component_tests-implementation.ads test/
 cp build/template/my_component_tests-implementation.adb test/
 # Also copy tester files:
@@ -266,7 +311,7 @@ cp build/template/component-my_component-implementation-tester.ads test/
 cp build/template/component-my_component-implementation-tester.adb test/
 ```
 
-Only THEN can you edit the test body. Without these files, `redo test` fails with "Cannot find template files". The test directory has NO `.all_path` file -- it uses `env.py` only (`from environments import test`).
+Only THEN can you edit the test body. Without these files, `admt test` fails with "Cannot find template files". The test directory has NO `.all_path` file -- it uses `env.py` only (`from environments import test`).
 
 ### Ada Elaboration / Binding Step
 
@@ -332,7 +377,7 @@ Full flag details: [references/build-commands.md](references/build-commands.md)
 
 ## SPARK Prove
 
-`redo prove` runs GNATprove. See `adamant-formal-verification` skill for full SPARK/prove workflow, `all.prove.yaml` configuration, and contract patterns.
+`admt prove` runs GNATprove (wraps `redo prove`). See `adamant-formal-verification` skill for full SPARK/prove workflow, `all.prove.yaml` configuration, and contract patterns.
 
 ## Cross-Compilation Targets
 
@@ -360,8 +405,12 @@ pico/hardware_action.adb         # .Pico_path
 
 ### Setting the Target
 ```bash
+# Inside the container (or via admt env login):
 export TARGET=Pico
 redo build/bin/Pico/main.elf
+
+# From the host, TARGET must be passed through admt env exec:
+admt env exec "cd /home/user/<project>/src/assembly/main && TARGET=Pico redo build/bin/Pico/main.elf"
 ```
 
 ### Ada Runtime Modes
@@ -376,18 +425,18 @@ redo build/bin/Pico/main.elf
 | `No target test.elf` | Missing `test.adb` in test directory |
 | `duplicate file name` | Filenames must be globally unique across all `.path` dirs |
 | Model cache stale | `redo clear_cache` then rebuild (see escalation below) |
-| `redo coverage` shows 0% or stamp mismatch | Stale gcov data; `redo clean` in test dir, then re-run `redo coverage` |
+| `admt coverage` shows 0% or stamp mismatch | Stale gcov data; `admt clean` in test dir, then re-run `admt coverage` |
 | Ravenscar violations in tests | Use `env.py` (selects Linux_Test target, not Linux) |
 
 ### Model Cache Troubleshooting Escalation
 
-If `redo clear_cache` + rebuild doesn't fix stale generated output:
+If `admt build clear_cache` + rebuild doesn't fix stale generated output:
 
 1. **Check for file overrides**: A hand-written file in the source directory overrides generated output in `build/src/`. Run `find . -name "the_file.ads" -not -path "*/build/*"` -- if found outside `build/`, that's your stale copy.
-2. **Clean + clear + rebuild**: `redo clean` then `redo clear_cache` then `redo all` (in that order -- clean removes old `.o` files that redo's dep tracking might skip).
-3. **Check `$ADAMANT_TMP_DIR`**: Multiple environments may use different temp dirs. Verify: `echo $ADAMANT_TMP_DIR`.
-4. **Full clean**: `redo clean_all` on both adamant and project directories.
-5. **Fresh Docker volumes**: `adamant_env.sh remove` + `start` as last resort.
+2. **Clean + clear + rebuild**: `admt clean` then `admt build clear_cache` then `admt build` (in that order -- clean removes old `.o` files that redo's dep tracking might skip).
+3. **Check `$ADAMANT_TMP_DIR`**: Multiple environments may use different temp dirs. Verify: `admt env exec 'echo $ADAMANT_TMP_DIR'`.
+4. **Full clean**: `admt clean --all` on both adamant and project directories.
+5. **Fresh Docker volumes**: `admt env rm --volumes && admt env start` as last resort.
 
 More errors and project structure: [references/build-commands.md](references/build-commands.md)
 

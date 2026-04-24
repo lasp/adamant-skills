@@ -29,7 +29,7 @@ component_name/test/
 **CRITICAL rules:**
 - Test dirs use `env.py`, NOT `.all_path` (causes duplicate conflicts)
 - File naming: `{component_name}.tests.yaml`, NOT bare `tests.yaml`
-- Test spec (`*_tests-implementation.ads`) MUST come from `redo templates`
+- Test spec (`*_tests-implementation.ads`) MUST come from `admt templates` (wraps `redo templates`)
 - `tests.yaml` MUST be in `test/` dir, NOT component dir
 
 Setup: `bash scripts/mk_test_env.sh [test_names...]` (from component directory)
@@ -38,20 +38,21 @@ Setup: `bash scripts/mk_test_env.sh [test_names...]` (from component directory)
 
 **⚠️ CRITICAL -- NEVER write tester .ads/.adb or test.adb from scratch.** These files are ~500 lines of generated code with complex reciprocal connector wiring, History API instantiation, and AUnit scaffolding. ALWAYS generate them:
 
-**⚠️ ALL redo commands for tests MUST run from inside the test/ directory.** Running from the project root uses the `Linux` target (no AUnit). The test `env.py` sets `TARGET=Linux_Test` which includes AUnit, but this only takes effect when redo is invoked from within test/.
+**⚠️ ALL test build commands MUST run from inside the test/ directory.** Running from the project root uses the `Linux` target (no AUnit). The test `env.py` sets `TARGET=Linux_Test` which includes AUnit, but this only takes effect when the build is invoked from within test/.
 
 ```bash
 # From the test/ directory (MANDATORY -- do NOT run from project root):
 cd test/
-redo templates                              # Generate ALL tester stubs
-cp build/template/component-*-tester.ads .  # Tester spec (generated)
-cp build/template/component-*-tester.adb .  # Tester body (generated)
-cp build/template/*_tests-implementation.ads .   # Test spec (generated)
-cp build/template/test.adb .               # AUnit runner (generated)
+admt templates                              # Generates build/template/*, prompts to copy
+# If you need to cherry-pick specific files instead of the default copy,
+# answer the prompt with ``n`` and use the container form:
+admt env exec "cd /home/user/<project>/src/components/<name>/test && cp build/template/component-*-tester.ads ."
+admt env exec "cd /home/user/<project>/src/components/<name>/test && cp build/template/component-*-tester.adb ."
+admt env exec "cd /home/user/<project>/src/components/<name>/test && cp build/template/*_tests-implementation.ads ."
+admt env exec "cd /home/user/<project>/src/components/<name>/test && cp build/template/test.adb ."
 # Then write ONLY: *_tests-implementation.adb (test case bodies)
-redo test                                   # Build and run
-redo style                                  # Must pass with ZERO warnings
-redo coverage                               # Must show 100% on implementation body
+admt test                                   # Build and run (wraps redo test)
+admt coverage                               # Coverage analysis via gcov (wraps redo coverage)
 ```
 
 **⚠️ Quality gates — tests are NOT done until:**
@@ -149,9 +150,9 @@ Verify every item before declaring tests complete:
 
 **The ONLY file you write from scratch is `*_tests-implementation.adb`** (the test case bodies). Everything else is generated. You also need `env.py` and `*.tests.yaml`.
 
-**⚠️ Test body package name is `<Component_Name>_Tests.Implementation`** (e.g., `Signal_Processor_Tests.Implementation`), NOT `Component.<Name>.Implementation.Tester.Tests.Implementation`. The file name is `<component_name>_tests-implementation.adb`. Match what `redo templates` generates in `*_tests-implementation.ads`.
+**⚠️ Test body package name is `<Component_Name>_Tests.Implementation`** (e.g., `Signal_Processor_Tests.Implementation`), NOT `Component.<Name>.Implementation.Tester.Tests.Implementation`. The file name is `<component_name>_tests-implementation.adb`. Match what `admt templates` generates in `*_tests-implementation.ads`.
 
-**Adding tests:** Add to tests.yaml -> `redo templates` -> copy ONLY the `*_tests-implementation.ads` -> add implementation in `.adb` -> `redo test`.
+**Adding tests:** Add to tests.yaml -> `admt templates` -> copy ONLY the `*_tests-implementation.ads` -> add implementation in `.adb` -> `admt test`.
 
 **⚠️ NEVER `cp build/template/*.adb .`** -- this overwrites your handwritten implementation body. Only copy specific files: tester `.ads/.adb`, test spec `.ads`, `test.adb`. Never glob-copy `.adb` files from templates after writing implementation.
 
@@ -476,6 +477,10 @@ The framework detects that the data product timestamp is older than expected and
 
 **Side-effect events from Invalid_Data_Dependency:** When a `Get_*` call returns a non-Success status, the framework automatically calls the component's `Invalid_Data_Dependency` override DURING the Get call (before control returns to the caller). If that override sends events, those events appear in the history BEFORE any events the caller sends afterward. Account for these extra events in assertion counts -- e.g., if testing staleness and the override sends a Sensor_Stale event, that event fires inside Get, not after it.
 
+## Test Body With-Clauses
+
+Add `with` for every type referenced in tests: `Basic_Assertions`, `Packed_F32.Assertion`, `Command_Enums`, `Interfaces`, custom types from `src/types/`. Only `with` what you use -- `admt style` flags unused imports.
+
 ## Common Errors
 
 Top errors that waste time:
@@ -655,7 +660,9 @@ Use for: simulated sensor values, internal state flags, cooldown counters -- any
 
 ## Coverage Patterns
 
-Run `redo coverage` from the test/ directory. Focus on `component-*-implementation.adb` in `build/coverage/coverage.txt`. Ignore generated files.
+```bash
+admt coverage    # From the component's test/ directory (wraps redo coverage)
+```
 
 Common patterns for reaching 100%:
 - **Invalid_Command:** Corrupt `Cmd.Header.Arg_Buffer_Length := 22;` after constructing via `T.Commands.*`
@@ -675,11 +682,11 @@ Full coverage workflow: [coverage-guide.md](references/coverage-guide.md)
 | [references/assertion-patterns.md](references/assertion-patterns.md) | Complex assertion chains, packed type field comparisons, or when tests need extended History API patterns. **Skip for basic tests** (count + simple value checks). |
 | [references/command-test-patterns.md](references/command-test-patterns.md) | Only when testing components with commands. **Skip for passive components without commands.** |
 | [references/adamant-example-patterns.md](references/adamant-example-patterns.md) | Only for task-based testing, memory regions, or advanced packet construction. Rarely needed. |
-| [references/coverage-guide.md](references/coverage-guide.md) | Only when measuring or improving test coverage (`redo coverage`). |
+| [references/coverage-guide.md](references/coverage-guide.md) | Only when measuring or improving test coverage (`admt coverage`). |
 
 ## Related Skills
 
 - **Component dev**: [adamant-component-dev](../adamant-component-dev/SKILL.md)
 - **Assembly**: [adamant-assembly-dev](../adamant-assembly-dev/SKILL.md)
-- **Style**: [adamant-style](../adamant-style/SKILL.md) -- test code must pass `redo style`
+- **Style**: [adamant-style](../adamant-style/SKILL.md) -- test code must pass `admt style`
 - **Type system**: [adamant-type-system](../adamant-type-system/SKILL.md) -- packed type assertions and comparisons

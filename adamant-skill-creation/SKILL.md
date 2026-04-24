@@ -232,14 +232,14 @@ Reference from the skill-selector:
 The standard validation loop for skill changes:
 
 1. **Sub-agent** creates or modifies skill files (SKILL.md, references/)
-2. **Main agent** runs `redo style` to check style compliance
-3. **Main agent** runs `redo test` to verify tests pass
-4. **Main agent** runs `redo coverage` to check coverage targets
+2. **Main agent** runs `admt style` to check style compliance
+3. **Main agent** runs `admt test` to verify tests pass
+4. **Main agent** runs `admt coverage` to check coverage targets
 
 Sub-agents MUST NOT run redo commands directly. Only the main agent validates.
 
 ### Concurrent redo Is Unsafe
-All redo operations must be serialized. Never run `redo style` and `redo test` in parallel -- redo uses shared build state and concurrent runs cause data corruption or spurious failures.
+All redo operations must be serialized. Never run `admt style` and `admt test` in parallel -- redo uses shared build state and concurrent runs cause data corruption or spurious failures.
 
 ### Skill Selector Regeneration
 After adding or modifying skills, regenerate the routing table:

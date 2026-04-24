@@ -246,8 +246,7 @@ data_products:
 
 ```bash
 cd src/components/<component_name>
-redo templates
-cp build/template/*.ad[sb] .
+admt -y templates      # generates build/template/* and copies stubs into source dir
 ```ada
 
 ### Implementation spec (.ads) modifications
@@ -365,8 +364,7 @@ MUST compile with ZERO warnings and ZERO errors. Fix all `-gnatwu`, `-gnatwk` wa
 ```bash
 cd src/components/<component_name>/test
 # Create env.py, tests.yaml, then:
-redo templates
-cp build/template/*.ad[sb] .
+admt -y templates      # generates build/template/* and copies stubs into test dir
 ```
 
 ### Test pattern
@@ -418,7 +416,7 @@ void vec3_math_cross(Vec3Math* self, const float* a, const float* b, float* out)
 }
 ```
 
-This enables `redo test` without requiring the C++ algorithm library to be built or mounted.
+This enables `admt test` without requiring the C++ algorithm library to be built or mounted.
 
 > Full test templates and troubleshooting: [references/unit-test-patterns.md](references/unit-test-patterns.md)
 
@@ -515,7 +513,7 @@ Call_Time : constant Unsigned_64 := Unsigned_64 (Arg.Time.Seconds) * 1_000_000_0
 Qualified `Interfaces.Unsigned_64(...)` without `use` can cause type mismatch errors on the `*` operator.
 
 ### Data Product Buffer Size Limit
-The framework `data_product_header.record.yaml` hardcodes `Buffer_Length` as `format: U8`, capping `data_product_buffer_size` at 255. Large array types like `Packed_F32x36.T` (144 bytes) fit, but check your config before using large output types. If you change `data_product_buffer_size`, you must: `redo clear_cache` + `redo clean` on `adamant/src/types/data_product/` + `redo clean_all` on both framework and project.
+The framework `data_product_header.record.yaml` hardcodes `Buffer_Length` as `format: U8`, capping `data_product_buffer_size` at 255. Large array types like `Packed_F32x36.T` (144 bytes) fit, but check your config before using large output types. If you change `data_product_buffer_size`, you must: `redo clear_cache` + `admt clean` on `adamant/src/types/data_product/` + `admt clean --all` on both framework and project.
 
 ### Singular Matrix in Zero-Config Algorithms
 Algorithms using pseudo-inverse (e.g., rwNullSpace) will produce NaN if configured with zero effectors. Always initialize with at least a minimal valid configuration (e.g., 3 orthogonal wheels for rwNullSpace).

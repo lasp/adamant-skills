@@ -521,10 +521,10 @@ byte_image: True         # Print as byte array instead of typed Image
 ## Build Commands
 
 ```bash
-redo all                          # Build everything
-redo build/html/type_name.html    # HTML docs
-redo build/svg/type_name.svg      # Bit layout diagram
-redo build/py/type_name.py        # Python class
+admt build                                # Build everything (redo all)
+admt build build/html/type_name.html      # HTML docs
+admt build build/svg/type_name.svg        # Bit layout diagram
+admt build build/py/type_name.py          # Python class
 ```ada
 
 ## Common Patterns

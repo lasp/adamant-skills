@@ -1,14 +1,14 @@
 <!-- validated: adamant@80c1f5f 2026-02-18 (main) -->
 # Adamant Test Coverage Guide
 
-Systematic approach to measuring and improving component implementation coverage using `redo coverage` and gcovr.
+Systematic approach to measuring and improving component implementation coverage using `admt coverage` and gcovr.
 
 ## Running Coverage
 
 ```bash
 # From component test/ directory:
 cd src/components/component_name/test
-redo coverage
+admt coverage
 
 # Output:
 # build/coverage/coverage.txt   (text report)
@@ -214,7 +214,7 @@ end Critical_Event_T_Recv_Sync;
 
 1. **Run coverage with clean build:**
    ```bash
-   redo coverage
+   admt coverage
    ```
 
 2. **Read coverage.txt, find implementation .adb section**
@@ -235,7 +235,7 @@ end Critical_Event_T_Recv_Sync;
 
 6. **Regenerate and copy spec:**
    ```bash
-   redo templates
+   admt templates               # prompts to copy; answer `n` to cherry-pick below
    cp build/template/*_tests-implementation.ads .
    ```
 
@@ -243,7 +243,7 @@ end Critical_Event_T_Recv_Sync;
 
 8. **Verify:**
    ```bash
-   redo coverage
+   admt coverage
    ```
 
 ## Tester Helpers for Private State Coverage
@@ -422,4 +422,4 @@ T.Packet_T_Send (Pkt);  -- This one triggers Recv_Async_Dropped
 ## gcovr Known Issues
 
 - **gcovr 8.6 path bug:** Some components get `SanityCheckError: Output file ... doesn't exist`. The gcov output path is mangled. No workaround other than upgrading gcovr.
-- **Active component 0% coverage:** Some active components (telemetry_collector, watchdog_kicker) show 0% on ALL files including test code despite all tests passing. This is a GNAT/gcov limitation: Ada tasks in active components may prevent clean process exit, so gcov data (.gcda files) is never flushed to disk. The .gcno (notes) files exist but no .gcda (data) files are produced. Running the binary manually (not via `redo coverage`) sometimes produces .gcda files, but with stamp mismatches. No workaround exists for the redo pipeline -- this is a structural limitation.
+- **Active component 0% coverage:** Some active components (telemetry_collector, watchdog_kicker) show 0% on ALL files including test code despite all tests passing. This is a GNAT/gcov limitation: Ada tasks in active components may prevent clean process exit, so gcov data (.gcda files) is never flushed to disk. The .gcno (notes) files exist but no .gcda (data) files are produced. Running the binary manually (not via `admt coverage`) sometimes produces .gcda files, but with stamp mismatches. No workaround exists for the redo pipeline -- this is a structural limitation.

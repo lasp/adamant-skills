@@ -24,14 +24,14 @@ Each skill gets a "zero-to-complete" test exercise:
 
 | Skill | Exercise | Validation |
 |-------|----------|------------|
-| component-dev | Create new component from scratch (YAML + impl + env.py) | `redo style && redo test` |
-| testing | Write full test suite for existing component | `redo coverage` |
-| assembly-dev | Create mini assembly with 3+ components | `redo build/bin/Linux/main.elf` |
+| component-dev | Create new component from scratch (YAML + impl + env.py) | `admt style && admt test` |
+| testing | Write full test suite for existing component | `admt coverage` |
+| assembly-dev | Create mini assembly with 3+ components | `admt build build/bin/Linux/main.elf` |
 | subassemblies | Create assembly with 2+ subassemblies | ELF builds clean |
-| type-system | Create packed type + enum + array + record | `redo style` on types dir |
-| algorithm-wrapping | Wrap a C function into Adamant component | `redo test` on wrapped component |
+| type-system | Create packed type + enum + array + record | `admt style` on types dir |
+| algorithm-wrapping | Wrap a C function into Adamant component | `admt test` on wrapped component |
 | build-system | Set up build for new source directory | `redo` succeeds |
-| style | Fix intentionally messy files | `redo style` passes |
+| style | Fix intentionally messy files | `admt style` passes |
 | framework-components | Select components for a given requirement set | Correct selections verified |
 | cosmos-integration | Generate COSMOS plugin config | Valid plugin YAML |
 | project-setup | Bootstrap new project directory structure | `redo` from clean state |

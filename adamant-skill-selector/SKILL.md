@@ -15,22 +15,19 @@ Always read skills in the order listed in the routing table below -- primary ski
 
 If your task matches a sequence in "Deterministic Read Order" at the bottom of this file, use that exact sequence.
 
-## CRITICAL: Sub-Agent Delegation
+## CRITICAL: Use `admt` as the primary entry point
 
-**Prefer writing code yourself over delegating to sub-agents.** Sub-agents lack your accumulated conversation context — review feedback, coding standard discussions, and framework idiom understanding. Delegating implementation or test code to sub-agents produces non-idiomatic output that requires full rewrites, wasting tokens and time. Use sub-agents for research and exploration (reading files, searching code), not for writing standards-sensitive code.
-
-If you must delegate writing to a sub-agent, it MUST read the relevant skills IN FULL before starting work. Do NOT summarize skills in the prompt — the sub-agent must read the actual skill files. Include explicit instructions like: "Read adamant-testing/SKILL.md completely before writing any test code."
-
-## CRITICAL: All Builds Require Docker
-
-Adamant builds MUST run inside the project's Docker container. **Never build locally on the host.** Use `adamant_env.sh exec` to run all redo/build/test commands:
+Adamant builds MUST run inside the project's Docker container. **Never build on the host directly.** Use [`admt`](https://github.com/Jbsco/admt) (The Adamant Multitool) as the primary interface -- it forwards builds into the container, handles env activation, and maps host paths to container paths automatically.
 
 ```bash
-bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo what"   # Discover build targets
-bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo <target>"
+admt what                      # Discover build targets in current dir
+admt build [path]              # redo all in current dir (or specified path)
+admt test [path]               # redo test  (add --all for test_all)
+admt style [path]              # redo style (add --all for style_all)
+admt env exec "<command>"      # Arbitrary command inside the container
 ```
 
-**Run `redo what` first** in any directory to discover what can be built before attempting builds. **NEVER use `source env/activate` directly** -- `adamant_env.sh exec` handles activation automatically.
+Every passthrough accepts an optional path argument; see `CLAUDE.md` for the full redo -> admt translation table. Use `bash docker/adamant_env.sh exec "..."` only as a fallback for operations admt has not yet absorbed. See `adamant-build-system` for detail and `TOOLS.md` for project-specific container names.
 
 ## Task Routing Table
 
@@ -55,7 +52,7 @@ bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo <ta
 
 ### Measuring or improving test coverage
 **Load:** `adamant-testing` (see `references/coverage-guide.md`)
-- `redo coverage` workflow, gcov stamp mismatch troubleshooting
+- `admt coverage` workflow (wraps `redo coverage`), gcov stamp mismatch troubleshooting
 - `impl_coverage.sh` script for filtering to implementation .adb
 - Full path coverage techniques (Invalid_Command, Send_Dropped, Recv_Async_Dropped)
 - Adding tests to existing components (YAML + template regeneration)
@@ -175,7 +172,7 @@ bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo <ta
 ### SPARK formal verification
 **Load:** `adamant-formal-verification`
 - Adding SPARK contracts (Pre, Post, Global, Depends) to components or standalone packages
-- Running GNATprove via `redo prove`
+- Running GNATprove via `admt prove` (wraps `redo prove`)
 - `all.prove.yaml` configuration (level, mode)
 - Ghost code, loop invariants, ghost lemma pattern
 - Proof chain pattern for opaque type boundaries

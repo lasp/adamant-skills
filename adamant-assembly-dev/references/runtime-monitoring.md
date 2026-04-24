@@ -33,7 +33,7 @@ Tick_Divider [D1, D2, D3]
 - Max_Count = product of all divisors (e.g. 50 for [5,10,1])
 - Assembly preamble defines divisor array: `Dividers : aliased Component.Tick_Divider.Divider_Array_Type := [1 => 1, 2 => 10];`
 - Init: `"Dividers => Dividers'Access"`
-- Assembly build cache: must `redo clean` in BOTH assembly dir AND main dir to regenerate (do NOT use `rm -rf build`)
+- Assembly build cache: must `admt clean` in BOTH assembly dir AND main dir to regenerate (do NOT use `rm -rf build`)
 - Behavioral change: faster tick rates cause faster counter accumulation, may trigger timeouts sooner
 - Single Ticker -> single Tick_Divider is standard pattern
 

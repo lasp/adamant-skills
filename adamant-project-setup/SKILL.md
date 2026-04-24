@@ -223,21 +223,23 @@ services:
   ```
 - Projects with C/C++ dependencies often use a **custom Docker image** (`adamant_env.sh build`) that pre-installs toolchains
 
-#### adamant_env.sh Commands
+#### Container Management
 
-The helper script auto-detects project name from its parent directory.
+Day-to-day container management should go through [`admt`](https://github.com/Jbsco/Adamant) (primary) or the project's `adamant_env.sh` helper (fallback / underlying mechanism). `admt env init <project_root>` registers the project with admt, after which:
 
-| Command | Action |
-|---|---|
-| `bash docker/adamant_env.sh start` | Pull image (if missing) + start container + run first-time initialization |
-| `bash docker/adamant_env.sh stop` | Stop container |
-| `bash docker/adamant_env.sh login` | Interactive bash shell as `user` |
-| `bash docker/adamant_env.sh pull` | Pull latest image |
-| `bash docker/adamant_env.sh push` | Push image to registry |
-| `bash docker/adamant_env.sh build` | Build custom Docker image from `docker/Dockerfile` |
-| `bash docker/adamant_env.sh buildx` | Multi-platform build (arm64/amd64) |
-| `bash docker/adamant_env.sh pushx` | Multi-platform build + push |
-| `bash docker/adamant_env.sh remove` | Remove container, network, volumes (destructive!) |
+| admt command (primary) | Legacy `adamant_env.sh` (underlying) | Action |
+|---|---|---|
+| `admt env start` | `bash docker/adamant_env.sh start` | Pull image (if missing) + start container + run first-time env/activate |
+| `admt env stop` | `bash docker/adamant_env.sh stop` | Stop container |
+| `admt env login` | `bash docker/adamant_env.sh login` | Interactive bash shell as `user` |
+| `admt env pull` | `bash docker/adamant_env.sh pull` | Pull latest image |
+| `admt env push` | `bash docker/adamant_env.sh push` | Push image to registry |
+| `admt env build` | `bash docker/adamant_env.sh build` | Build custom Docker image from `docker/Dockerfile` |
+| *(post-MVP)* | `bash docker/adamant_env.sh buildx` | Multi-platform build (arm64/amd64) |
+| *(post-MVP)* | `bash docker/adamant_env.sh pushx` | Multi-platform build + push |
+| `admt env rm [--volumes \| --image \| --remove-all]` | `bash docker/adamant_env.sh remove` | Remove container (destructive with `--volumes`/`--image`) |
+
+The helper script auto-detects project name from its parent directory. Generated project scaffolds still include `docker/adamant_env.sh`; admt does not replace the file, only its day-to-day usage on the host.
 
 **First `start`** runs initialization inside the container, which:
 1. Creates Python venv (`~/.py_env`) and installs requirements
@@ -247,38 +249,46 @@ The helper script auto-detects project name from its parent directory.
 
 The script supports both `docker` and `podman` -- falls back to podman if docker is not found.
 
-#### Interactive Development (Preferred)
+#### Interactive Development
 
-**Always prefer `adamant_env.sh login` for interactive work.** The login shell sources the correct activate script via `.bashrc`, ensuring BUILD_ROOTS is set correctly with both adamant and the project.
+**Use `admt env login` for interactive work** (or `bash docker/adamant_env.sh login` as the fallback). The login shell sources the correct activate script via `.bashrc`, ensuring BUILD_ROOTS is set correctly with both adamant and the project.
 
 ```bash
 cd <project_dir>
-bash docker/adamant_env.sh login
+admt env login
 # Inside container:
 cd src/components && redo style_all
 cd src/components && redo test_all
-```ada
+```
 
 #### Non-interactive command execution
 
-For scripted/automated commands, use `adamant_env.sh exec` (fast snapshot-based activation):
+Use admt for redo passthroughs and arbitrary container commands:
 
 ```bash
-bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project_name> && redo <target>"
+admt build [path]                   # redo all
+admt test [path]                    # redo test
+admt env exec "<arbitrary-command>" # Non-redo work inside the container
 ```
 
-This uses a cached environment snapshot (`/tmp/.<project>_env_snapshot`) created by the first full activation. Subsequent calls restore the snapshot in milliseconds instead of re-running the multi-second activation. The `/tmp` location means container restart auto-invalidates the cache.
+As a fallback -- for operations admt has not yet absorbed:
 
-**How it works:**
-- First activation saves `export -p` to `/tmp/.<project>_env_snapshot`
-- `env/container_run.sh` loads the snapshot (or falls back to full activate) and runs the command
+```bash
+bash <project_dir>/docker/adamant_env.sh exec "cd /home/user/<project_name> && <command>"
+```
+
+Both forms use a cached environment snapshot so the second and subsequent calls restore in milliseconds instead of re-running the multi-second activation. admt owns its own snapshot (`/tmp/admt/<project>/env_snapshot.sh` + `exec.sh`); the legacy helper uses `/tmp/.<project>_env_snapshot`. Container restart invalidates both.
+
+**How the legacy helper works (kept as the underlying mechanism):**
+- `env/activate` saves `export -p` to `/tmp/.<project>_env_snapshot` after setup
+- `env/activate_from_snapshot` loads the snapshot or falls back to full activate if none exists
+- `env/container_run.sh` sources `activate_from_snapshot` and runs the command
 - `adamant_env.sh exec` calls `container_run.sh` inside the container
 
-**Why `exec` is the required method for agents:**
+**Why snapshot-based activation is preferred over raw `docker exec`:**
 - Fast: snapshot activation is milliseconds vs seconds for full activate
 - Correct: handles the `ADAMANT_ENVIRONMENT_SET` guard variable properly
-- **NEVER use `source env/activate` directly** -- agents must always use `adamant_env.sh exec`
-- **Bottom line:** `adamant_env.sh exec` for automated commands, `adamant_env.sh login` for interactive sessions.
+- The base adamant image's `.bashrc` sources `adamant/env/activate`, which sets `ADAMANT_ENVIRONMENT_SET`. This guard variable prevents the project's activate from re-running. Both admt's proxy and `adamant_env.sh exec` handle this correctly; `docker exec` directly does not.
 
 ### 5. Set Up .gitignore
 
@@ -334,16 +344,16 @@ Each build root can have Python configuration activated via `set_python_path.sh`
 ## Build Commands
 
 ```bash
-redo all                                    # Build everything from any dir
-redo build/bin/Linux/main.elf              # Native ELF (from main/ dir)
-redo run                                    # Build and run (from main/ dir)
-redo clean                                  # Remove all build artifacts
-redo style_all                              # Check style across project
+admt build                                  # Build everything from any dir (redo all)
+admt build build/bin/Linux/main.elf         # Native ELF (from main/ dir)
+admt build run                              # Build and run (from main/ dir)
+admt clean                                  # Remove all build artifacts
+admt style --all                            # Check style across project
 ```
 
 ## First Build Walkthrough
 
-When you run `redo all` or build a target for the first time:
+When you run `admt build` or build a target for the first time:
 
 1. **Environment check** -- redo verifies BUILD_ROOTS and ADAMANT_CONFIGURATION_YAML are set
 2. **Code generation** -- YAML model files are processed through Jinja templates to generate Ada specs/bodies. Configuration values from your YAML are substituted (e.g., `{{ data_product_buffer_size }}` → `32`)

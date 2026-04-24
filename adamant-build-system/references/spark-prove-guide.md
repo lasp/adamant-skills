@@ -53,7 +53,7 @@ mode: "silver"  # Analysis mode
 From the component directory:
 
 ```bash
-redo prove
+admt prove
 ```
 
 The prove target will:
@@ -125,7 +125,7 @@ gnatprove -j0 --checks-as-errors=on --level=2 --mode=silver \
 You can override prove switches:
 
 ```bash
-PROVE_SWITCHES="--level=4 --mode=gold" redo prove
+admt env exec "cd /home/user/<project>/<component> && PROVE_SWITCHES='--level=4 --mode=gold' redo prove"
 ```
 
 ### Output Location
@@ -354,7 +354,7 @@ Run verification:
 
 ```bash
 cd path/to/safe_counter
-redo prove
+admt prove
 ```
 
 This example would successfully prove:
@@ -367,11 +367,11 @@ This example would successfully prove:
 SPARK verification integrates with other Adamant build targets:
 
 ```bash
-redo style          # Style check (includes Ada warnings)
-redo prove          # SPARK formal verification  
-redo test           # Unit testing with AUnit
-redo coverage       # Code coverage analysis
-redo analyze        # GNAT SAS static analysis
+admt style          # Style check (includes Ada warnings)
+admt prove          # SPARK formal verification
+admt test           # Unit testing with AUnit
+admt coverage       # Code coverage analysis
+admt analyze        # GNAT SAS static analysis
 ```
 
 Use all these together for comprehensive code quality assurance.
