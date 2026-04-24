@@ -20,8 +20,8 @@ component_name/
 ├── component_name.parameters.yaml               # Parameters (optional)
 ├── component_name.faults.yaml                   # Faults (optional)
 ├── component_name.packets.yaml                  # Packets (optional)
-├── component-component_name-implementation.ads  # Handwritten spec
-├── component-component_name-implementation.adb  # Handwritten body
+├── component-component_name-implementation.ads  # Generated stub (admt templates), then edited
+├── component-component_name-implementation.adb  # Generated stub (admt templates), then edited
 └── test/                                        # See adamant-testing skill
 ```
 
@@ -35,15 +35,29 @@ component_name/
 
 **CRITICAL**: Do NOT create a `build/` directory manually.
 
+**The `*-implementation.{ads,adb}` files start as stubs generated from the YAML by `admt templates`** (or by the one-shot `adamant_scaffold.py` tool from `adamant-tools`, which produces YAML + impl stubs in one step from a spec). You edit the body to add logic. Do NOT hand-write them from scratch -- the package declaration, base-class derivation, and connector handler signatures are derived from `*.component.yaml`, and writing them manually risks signature drift from the generated base class.
+
 ## Workflow
 
+The component lifecycle goes YAML -> generated stubs -> edited impl -> build/test:
+
 ```bash
-admt -y templates                         # Generate stubs + copy (redo templates + admt's copy flow)
-admt build                                # Build (redo all)
-admt test                                 # Run tests (redo test)
+# 1. Write *.component.yaml (and any feature YAMLs: commands, events, data_products, ...).
+# 2. Generate impl spec + body stubs from the YAML and copy them into the component dir.
+#    Required after the YAML stabilizes -- do NOT hand-write .ads/.adb from scratch.
+admt -y templates                         # redo templates + admt's stub copy
+
+# 3. Edit component-<name>-implementation.adb to fill in handler bodies.
+# 4. Build and test.
+admt build                                # redo all
+admt test                                 # redo test (run from test/ dir)
 ```
 
-**⚠️ CRITICAL -- Always start from generated templates**: Run `redo templates` and copy the generated `.ads/.adb` stubs BEFORE writing any implementation code. The templates contain required comments, formatting, and exact procedure signatures. Never write implementation spec/body files from scratch — always edit the generated stubs. Skipping this step is a common source of missing comments, wrong signatures, and formatting mismatches.
+**⚠️ CRITICAL -- Always start from generated templates**: Run `admt templates` and copy the generated `.ads/.adb` stubs BEFORE writing any implementation code. The templates contain required comments, formatting, and exact procedure signatures. Never write implementation spec/body files from scratch -- always edit the generated stubs. Skipping this step is a common source of missing comments, wrong signatures, and formatting mismatches.
+
+If you use the `adamant_scaffold.py` tool (see `adamant-tools`), it produces YAML and impl stubs in one step from a spec file -- equivalent to step 1 + step 2 combined. After that, jump to step 3.
+
+Re-run `admt templates` whenever you change the YAML in a way that affects the generated impl signature (new connectors, new commands, new event handlers). admt backs up the existing impl and copies the new stubs; use `admt templates --undo` to restore if needed.
 
 ## Component Model (YAML)
 
