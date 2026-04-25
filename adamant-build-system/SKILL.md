@@ -191,6 +191,17 @@ admt build yaml_sloc  # Count YAML source lines of code
 
 **`admt clean --all` is safe on ANY directory, including the adamant framework.** If redo state corrupts (symptom: `No rule to build 'src/core/connector/in_return_connector.adb'`), run `admt clean --all` on BOTH adamant and the project, then rebuild. The usual cause of corruption is concurrent builds (e.g. multiple sub-agents building simultaneously). If it doesn't fix, recover with `admt env rm --volumes && admt env start` (fresh Docker volumes).
 
+**Scope: `admt clean --all` is per-directory, not workspace-wide.** It runs `redo clean_all` recursively under the cwd's container path only -- this matches redo's design (each repo is its own redo build root). Other volume mounts in the active project's compose (the framework at `/home/user/adamant`, sibling component repos) are NOT cleaned by the same invocation. To clean another mount, `cd` into its host root and run `admt clean --all` there:
+
+```bash
+admt env list                 # See registered projects + their compose files
+# inspect a project's compose to see its volume mount roots, then:
+cd ~/cs/adamant && admt clean --all                  # cleans the framework tree
+cd ~/cs/adamant-xmera-components && admt clean --all # cleans sibling component repo
+```
+
+Stale framework codegen (e.g., a generated type whose layout shifted upstream) is the canonical case where you need to clean another mount in addition to the project. ``admt`` accepts any host path that falls under the active project's volume mounts, so no explicit ``--cwd`` flag is needed -- just ``cd`` and run.
+
 **NEVER manually delete build directories or redo state.** This includes `rm -rf build`, `rm -rf .redo`, `rm -rf */build`, `rm -rf */test/build`, or any variant. Always use `admt clean` or `admt clean --all` -- they properly reset state. Do NOT re-clone the adamant repository (destructive, wipes local state).
 
 **After deleting source files, run `admt clean` before rebuilding.** When you `rm -rf` a source directory and recreate it with different files, redo's database still tracks the old output files. This causes phantom build errors like "No rule to build 'deleted_file.ads'". Fix: `admt clean` (or `admt clean --all`) on the affected directory clears stale DB entries. This is especially common when iterating on types directories (deleting and recreating packed type YAML files with different names).

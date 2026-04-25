@@ -159,7 +159,8 @@ When building as part of a phased pipeline (types -> components -> assembly):
 
 ## Critical Build Rules
 
-- **`admt clean` is always safe** on any directory (framework or project). If redo state corrupts (STORAGE_ERROR), run `admt clean --all` on BOTH adamant and project dirs.
+- **`admt clean` is always safe** on any directory (framework or project). If redo state corrupts (STORAGE_ERROR), run `admt clean --all` on BOTH the project root AND the framework root (see scope note below).
+- **`admt clean --all` is per-directory, not workspace-wide.** It runs `redo clean_all` recursively under the cwd's container path only. Other volume mounts in the active project's compose -- the framework at `/home/user/adamant`, sibling component repos -- are NOT cleaned by the same invocation. To clean another mount, `cd` into it on the host first; admt's path mapper accepts any host path under the active project's volume mounts. Example: `cd ~/cs/adamant && admt clean --all` cleans the framework tree when the active project mounts it.
 - **NEVER manually delete build directories** (`rm -rf build`, `rm -rf */build`, etc.). Use `admt clean` or `admt clean --all`. Bulk-deleting build dirs corrupts redo state and may require container recreation (`admt env rm --volumes && admt env start`) to recover.
 - **`admt coverage`** runs from the component's `test/` directory. No `admt clean` needed.
 - **Do not `source env/activate` directly.** admt handles environment activation via a cached snapshot; `adamant_env.sh exec` does too for the fallback case.
