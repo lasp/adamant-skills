@@ -95,6 +95,18 @@ description: <What it does>. <When to use it -- specific triggers>.
 6. **No commits/push instructions**: Skills teach Adamant patterns, not git workflow
 7. **Cross-reference sparingly**: Each skill should be mostly self-contained. Mention other skills only when genuinely needed
 8. **Target 300 lines**: Upper cap ~350. Move detail to references/
+9. **Challenge each addition for token cost -- and pair imperatives with their reason**.
+   Context window is shared across system prompt, all loaded skills, and conversation.
+   Before adding a paragraph, ask:
+   - Does the agent already know this from training?
+   - Does this teach Adamant-specific behavior, or generic programming knowledge?
+   - Would removing this paragraph harm a cold-start agent's first-attempt success?
+
+   Only add content that survives all three. When the answer is "keep it", pair the rule
+   with a brief reason. Bare imperatives ("Do X") are easier for agents to skim or hand-wave
+   past than imperatives with motivation ("Do X because Y"). A single clause is usually
+   enough -- the goal is enough context for the agent to apply judgment in edge cases, not
+   a lecture. Reasons let the agent reapply the rule in situations the skill didn't anticipate.
 
 ### Description Field (Critical for Triggering)
 
@@ -366,6 +378,20 @@ Based on 14 skills developed over 20+ sessions:
 4. **Missing error section**: If cold-start agents hit it, document it
 5. **Stale examples**: Examples that don't compile are worse than no examples
 6. **Project contamination**: Any project name in a generic skill is a bug
+7. **Time-pinned references in skill body**: Dates, version numbers, "after X lands" notes,
+   and PR numbers in skill body rot quickly and become noise. State the post-change contract
+   directly rather than describing the transition. When migration guidance is genuinely
+   useful (callers crossing a breaking change), pin the contrast in a "Current API" /
+   "Old API" subsection rather than as inline dates or PR references. Leave the upgrade
+   narrative for PR descriptions and commit messages, which are the right home for it.
+   - Avoid: "After PR NNN merges, Validation will take bytes."
+   - Prefer: "Validation takes a `Serialization.Byte_Array` parameter."
+8. **Terminology drift across skills**: Pick one term per concept and use it everywhere.
+   Adamant convention examples: "connector" not "port" or "channel"; "rate group" not
+   "scheduler slot"; "data product" not "telemetry point" (telemetry-point is COSMOS-side
+   vocabulary). When introducing a new term, grep existing skills for synonyms and pick
+   the dominant one before committing. Drift is hard to spot in review and confuses
+   agents that load multiple skills with conflicting vocabularies.
 
 ## References
 - [references/validation-history.md](references/validation-history.md) -- Convergence data from 19 rounds of skill validation
