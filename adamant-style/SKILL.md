@@ -177,6 +177,37 @@ This applies to every `pragma Assert` in hand-written component implementations 
 - **Qualified aggregates**: `Packed_U16.T'(Value => N)` when type is ambiguous
 - **Box default `<>`**: Use in aggregates when default initialization is appropriate. Prefer explicit values for critical fields: `(Status => Success, Count => 0)` over `(Status => Success, Count => <>)`.
 
+### Multi-Line Subprogram Signatures
+
+When a procedure or function signature is too long to fit on a single line, format it with:
+
+- Open `(` on the **same line** as the subprogram name
+- Each parameter on its own line, indented 3 spaces relative to the subprogram declaration
+- Close `)` on its own line, aligned with the start of the subprogram declaration
+- `return ...` / `is` / `;` follow immediately after `)` on the same line
+
+```ada
+-- CORRECT:
+function Get_Ptr_And_Header_From_Region (
+   Region : in Memory_Region.T;
+   Table_Header : out Parameter_Table_Header.T
+) return Byte_Array_Pointer.Instance is
+   ...
+begin
+   ...
+end Get_Ptr_And_Header_From_Region;
+
+-- WRONG: open paren on its own line, params over-indented, `return` floats:
+function Get_Ptr_And_Header_From_Region
+   (Region : in Memory_Region.T;
+    Table_Header : out Parameter_Table_Header.T)
+    return Byte_Array_Pointer.Instance
+is
+   ...
+```
+
+Single-line signatures stay on one line; this rule applies only when the signature wraps.
+
 ## Advanced Ada Constructs
 
 ### `use type` vs `use all type` vs `use Package`
