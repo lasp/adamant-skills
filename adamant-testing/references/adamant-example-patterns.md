@@ -128,18 +128,18 @@ end;
 
 Source: parameter_manager. Uses Ada's Import pragma to safely access memory at a specific address for validation. The subtype ensures bounds checking.
 
-### 2b. Aliased byte array setup for memory regions
+### 2b. Byte array setup for memory regions
 
 ```ada
--- Global aliased arrays for memory region addresses
-Sim_Bytes : aliased Basic_Types.Byte_Array := [0 .. 99 => 12];
-Sim_Bytes_2 : aliased Basic_Types.Byte_Array := [0 .. 99 => 11];
+-- Package-level arrays for memory region addresses
+Sim_Bytes : Basic_Types.Byte_Array := [0 .. 99 => 12];
+Sim_Bytes_2 : Basic_Types.Byte_Array := [0 .. 99 => 11];
 
 -- Usage in memory region construction
 Region => (Address => Sim_Bytes'Address, Length => Sim_Bytes'Length)
 ```
 
-Source: parameter_manager. Aliased arrays provide stable addresses for memory regions. Different arrays allow testing multiple memory areas.
+Source: parameter_manager. Package-level arrays provide stable addresses for memory regions. Different arrays allow testing multiple memory areas.
 
 ---
 
