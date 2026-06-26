@@ -185,7 +185,7 @@ Point the read-order at the skills you want to validate -- **generic** skills
 Build scaffolding depends on how the target project is wired:
 
 - **admt-registered project** (preferred): `export ADMT_ENV=<project> ADMT_NONINTERACTIVE=1`;
-  `admt env start` (with `ADMT_NONINTERACTIVE=1`; `--yes` is not an admt 0.1.0 option);
+  `admt env start` (with `ADMT_NONINTERACTIVE=1` set, no prompt; `--yes` is not an `admt env start` option);
   `admt build <path>`; `admt test <path>/test`; `admt style <path>`.
 - **Legacy / unregistered**: `bash <project>/docker/adamant_env.sh exec "cd /home/user/<project> && redo <target>"`.
 
@@ -223,16 +223,17 @@ Discover which projects are registered with `admt env list`. A project whose con
   build) before the campaign.
 - **Stale framework build state / admt quirks**: a corrupt framework redo state surfaces as
   cascading "size for ... too small" errors on *framework* types -- fix with `admt clean
-  --all` on the framework root and pre-flight it. In admt 0.1.0, `env start` takes no
-  `--yes`, and `templates` does not copy generated stubs in noninteractive mode (copy them
-  manually). These are env/tool gotchas, not skill gaps -- keep them out of the DP scoring.
+  --all` on the framework root and pre-flight it. `admt env start` takes no `--yes` flag
+  (set `ADMT_NONINTERACTIVE=1`), and `admt templates` in noninteractive mode generates stubs
+  but does not copy them (copy them manually). These are env/tool gotchas, not skill gaps --
+  keep them out of the DP scoring.
 - **Calling an all-HIT N=1 run "done"**: one clean cold start proves little. A real baseline
   needs N-parallel (for *stable* misses) and escalating difficulty; treat a findings-free
   run as a prompt that wasn't hard enough.
 
 ## References
 - [references/workflow-harness.md](references/workflow-harness.md) -- full annotated Workflow
-  script (build + audit + N-parallel + convergence) and a worked cold-start run.
+  script (build + audit + N-parallel + convergence) and how to interpret a run.
 
 ## Related Skills
 - **Skill creation / validation theory**: [adamant-skill-creation](../adamant-skill-creation/SKILL.md) -- decision points, convergence, fix-isolation, project-vs-generic separation

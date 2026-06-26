@@ -74,7 +74,7 @@ TASK (build into ${PROJECT}): ${SPEC}
 BUILD ENV (scaffolding, not skill content):
 - export ADMT_ENV=<project> ADMT_NONINTERACTIVE=1
 - admt env start   (ADMT_NONINTERACTIVE=1 is set, so no prompt; do NOT pass --yes -- not
-  an option in admt 0.1.0. If the container is 'not-found' and cannot come up, STOP and
+  an `admt env start` option. If the container is 'not-found' and cannot come up, STOP and
   report env_ok=false with the error -- do not hang)
 - build: admt build ${PROJECT}/src/components/${COMPONENT}
 - style: admt style ${PROJECT}/src/components/${COMPONENT}
@@ -138,32 +138,30 @@ for (let i = 1; clean < TARGET && i <= MAX; i++) {
 `resetTree()` shells out to `git checkout -- . && git clean -fd` on the project. Apply a
 skill fix only between iterations, one at a time, and confirm it resolves before the next.
 
-## Worked Run
+## Interpreting a run
 
-A single cold-start validation (this script; relaxed spec for a passive limit-monitor --
-configurable limit, a sampled input, a status report, a transition flag, with tests).
+A clean cold-start validation produces **zero compile errors, passing tests, full line
+coverage, and clean style**, with every *realization* decision point HIT from the
+conventions alone -- e.g. connector kinds (parameter -> `modify`, data dependency ->
+`request`, time -> `get`, data product/event -> `send`), data-product-name vs type-package
+separation, standalone-enum `Pkg.Enum.E` access, byte-aligned records under a buffer, no
+`format` on packed fields, `Init` iff `init:`, `Update_Parameters` first, and typed
+full-record test assertions.
 
-Outcome: **0 compile errors, all tests pass, 100% line coverage, style clean.** Every
-*realization* decision point HIT from the conventions alone -- connector kinds (parameter
--> `modify`, data dependency -> `request`, time -> `get`, data product/event -> `send`),
-DP-name vs type-package, enum-vs-record base-name collision, standalone-enum `Pkg.Enum.E`
-+ `E8`, project-prefixed type names, byte-aligned record under buffer, no `format` on
-packed fields, `.all_path` vs test `env.py`, `Init` iff `init:`, `Set_Up is null`,
-`Update_Parameters` first, `.Value` access, `*_Send_Dropped` handlers, no redundant
-`with`s, typed `.Assertion` full-record tests.
+The findings a campaign surfaces fall into three kinds -- each is a "success," since it
+names something to fix or to rule out:
 
-Findings the run surfaced (each is a "success" -- it tells us what to fix):
-- **Stale framework build state** broke the whole project first (cascading "size for ...
-  too small" on framework types) until `admt clean --all` on the framework root. Pre-flight
-  a framework clean, or the first agent burns time diagnosing the env.
-- **Inherited tester field (MISS->FIX):** the agent re-added a base-class-inherited field to
-  the generated tester (the tester body references it, so it looked dropped), hit a
-  conflict, reverted. A MISS->FIX is still a gap -> the testing skill should state the field
-  is inherited and must not be re-declared.
-- **admt 0.1.0 quirks:** `env start` takes no `--yes`; `templates` in noninteractive mode
-  generates but does not copy stubs (copy the generated stubs manually).
+- **Environment / tooling failures** (stale framework build state with cascading "size for
+  ... too small" errors on framework types, a `not-found` container, generator flags) are
+  NOT skill gaps. Pre-flight the env and keep them out of the decision-point scoring.
+- **Skill gaps** -- a decision point a cold-start agent gets wrong from the skills alone. A
+  self-corrected MISS (a wrong choice that hits a conflict and is reverted) still counts as
+  a MISS: the skill failed to prevent it. A point missed by 3+ independent agents is a
+  stable gap, and points to the one skill to fix.
+- **Prompt-design gaps** -- a spec that *names* the constructs tests only how the skills
+  *realize* them, not whether the skills lead an agent to *choose* them. Omit constructs,
+  and escalate to active components, subassemblies, and algorithm wrapping, to exercise
+  construct-choice.
 
-Prompt-design lesson: this spec *named* the constructs, so it tested how the skills
-*realize* them but not whether the skills *choose* them. A harder run omits the constructs
-(and escalates to active components, subassemblies, algorithm wrapping) to push
-construct-choice and surface more gaps. **An all-HIT N=1 run is not "done" -- push harder.**
+**An all-HIT run at N=1 is not "done."** Raise difficulty and agent count until failures
+surface, then fix the responsible skill and re-validate.
