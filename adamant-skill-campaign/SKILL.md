@@ -230,6 +230,11 @@ Discover which projects are registered with `admt env list`. A project whose con
 - **Calling an all-HIT N=1 run "done"**: one clean cold start proves little. A real baseline
   needs N-parallel (for *stable* misses) and escalating difficulty; treat a findings-free
   run as a prompt that wasn't hard enough.
+- **Permission-gated shared edits**: a build/wrapping workflow may require editing a *shared*
+  build file outside the scratch scope (e.g. registering a new source in a shared
+  `CMakeLists`, or adding a build-path entry), which may be permission-gated. Pre-authorize
+  it in the build scaffolding, or the run stalls at the link step. A link-only failure (clean
+  compile, undefined symbols) is an env/BLOCKED condition, not a decision-point MISS.
 
 ## References
 - [references/workflow-harness.md](references/workflow-harness.md) -- full annotated Workflow
