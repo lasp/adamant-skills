@@ -137,11 +137,11 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 
 **Also load:** `adamant-cosmos-integration` (for plugin structure, CCSDS wiring, cmd/tlm definitions)
 
-### COSMOS test execution via Script Runner REST API and MinIO log retrieval
-**Load:** `adamant-cosmos-minio`
-- Launching COSMOS test scripts via curl REST API
-- Polling for script completion
-- Retrieving suite logs from MinIO
+### COSMOS suite execution + result verification (headless / CI)
+**Load:** `adamant-cosmos-suite-results`
+- Running a suite via `openc3cli script run` (stream + exit-code gate) or the Script Runner REST API
+- Stopping a running suite; collecting per-service container logs for debugging
+- COSMOS 6.x (MinIO) vs 7.x (versitygw / `openc3-buckets`) object-store rename
 - Parsing pass/fail results
 
 **Also load:** `adamant-cosmos-integration` (for container architecture and troubleshooting)

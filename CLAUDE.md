@@ -104,7 +104,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-skill-creation` | 839 | Creating, validating, and refactoring Adamant skills |
 | `adamant-skill-campaign` | 408 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
 | `adamant-cosmos-testing` | 687 | Integration test scripts via COSMOS scripting API |
-| `adamant-cosmos-minio` | 231 | COSMOS suite execution via Script Runner REST API + MinIO log retrieval |
+| `adamant-cosmos-suite-results` | 133 | COSMOS suite execution (openc3cli / Script Runner REST API) + result verification |
 | `adamant-framework-components` | 675 | Catalog of all 58 built-in components + audit |
 | `adamant-type-system` | 567 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-subassemblies` | 504 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |

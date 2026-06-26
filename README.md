@@ -33,7 +33,7 @@
 - `adamant-framework-components` — Catalog of 58 built-in components
 - `adamant-framework-internals` — Python model internals, code gen debugging
 - `adamant-generator-dev` — Custom generators (Ada, YAML types, HTML docs, ground artifacts)
-- `adamant-cosmos-minio` — COSMOS suite execution via Script Runner REST API + MinIO logs
+- `adamant-cosmos-suite-results` — COSMOS suite execution (openc3cli / REST API) + result verification
 
 ### Meta/Support
 - `adamant-skill-creation` — Building and validating new skills
