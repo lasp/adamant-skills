@@ -416,3 +416,4 @@ Extension scenarios test whether skills teach UNDERSTANDING, not just PROCEDURES
 ## Related Skills
 - **Skill selector**: [adamant-skill-selector](../adamant-skill-selector/SKILL.md)
 - **Knowledge acquisition**: [knowledge-acquisition](../knowledge-acquisition/SKILL.md)
+- **Running validation as a campaign**: [adamant-skill-campaign](../adamant-skill-campaign/SKILL.md) -- in-session Workflow orchestration of the cold-start validation loop described here

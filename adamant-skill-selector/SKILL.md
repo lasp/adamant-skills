@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 20 Adamant skills totaling ~20000 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 21 Adamant skills totaling ~20400 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -263,6 +263,17 @@ These patterns cause compilation errors if violated:
 - Cold-start testing, convergence tracking
 - Separating project-specific from generic content
 - Maintaining skill health and preventing anti-patterns
+
+**Also load:** `adamant-skill-campaign` -- to actually *run* the validation as a campaign
+
+### Validating skills via cold-start campaigns
+**Load:** `adamant-skill-campaign`
+- Run cold-start skill-validation in-session with the Workflow tool (Build -> Audit)
+- Relaxed prompts (specify intent, never the convention); decision-point HIT/MISS/GAP scoring
+- N-parallel for stable-miss signal; convergence loop; sandboxing; admt-vs-legacy targeting
+- The modern in-session replacement for external cron + `claude -p` campaign harnesses
+
+**Also load:** `adamant-skill-creation` (the measurement theory: decision points, convergence, fix-isolation)
 
 ## Project-Specific Skills
 
