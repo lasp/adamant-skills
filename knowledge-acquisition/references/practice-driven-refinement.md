@@ -180,7 +180,8 @@ iterations that never actually tested the component logic.
 
 ### Campaign State Tracking
 
-Maintain a state file (JSON) tracking:
+Track campaign state -- tier, scenario, iteration, consecutive-clean count, and the skill
+fixes applied so far:
 ```json
 {
   "currentTier": 10,
@@ -195,9 +196,11 @@ Maintain a state file (JSON) tracking:
 }
 ```
 
-Use a cron job (every 5 min) as a campaign driver to check state, process results,
-and spawn the next phase. The driver must check for running sub-agents before
-spawning to avoid concurrent redo conflicts.
+With the Workflow tool this state lives in plain JS variables (and the run journal, which
+makes a campaign resumable) rather than an external file. The Workflow's control flow is the
+campaign driver: it checks state, processes each phase's results, and starts the next phase
+in-session. Serialize build phases (one build agent per project at a time) to avoid
+concurrent redo conflicts. See [adamant-skill-campaign](../../adamant-skill-campaign/SKILL.md).
 
 ### Commit Strategy: Atomic Iterations
 
