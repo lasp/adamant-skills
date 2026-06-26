@@ -167,11 +167,10 @@ Skill Health (worst-case across all skills):
 
 ## Scheduling
 
-Use cron to spawn iteration rounds automatically:
-- One round every 30 minutes during active refinement
+Drive iteration rounds with the Workflow tool (see [adamant-skill-campaign](../../adamant-skill-campaign/SKILL.md)) -- its control flow runs the rounds in-session, with no external scheduler:
 - Each round targets ONE skill (rotate through skills)
-- Results logged to memory/skill-refinement/SKILL-NAME-RN.md
-- Main session notified on completion via Signal
+- Each round's results come back as the agent's structured return
+- Serialize build phases (one build agent per project at a time) to avoid concurrent redo conflicts
 
 ## State File
 

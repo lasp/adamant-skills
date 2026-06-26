@@ -241,7 +241,7 @@ Reference from the skill-selector:
 ## Validation Loop
 
 ### Sub-Agent → Main Agent Workflow
-The standard validation loop for skill changes:
+The standard validation loop for skill changes (run it in-session with the Workflow tool -- see [adamant-skill-campaign](../adamant-skill-campaign/SKILL.md)):
 
 1. **Sub-agent** creates or modifies skill files (SKILL.md, references/)
 2. **Main agent** runs `admt style` to check style compliance
