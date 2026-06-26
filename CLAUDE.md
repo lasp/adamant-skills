@@ -4,10 +4,9 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 ## Agent Configuration Files
 
-This repo contains three agent prompt files. Copy them to your project root:
+This repo contains two agent prompt files. Copy them to your project root:
 - **CLAUDE.md** -- Claude Code CLI system prompt (build rules, skill inventory)
-- **AGENTS.md** -- OpenClaw subagent workspace rules (task scope, docker exec, quality gates)
-- **SOUL.md** -- OpenClaw subagent voice and disposition (technical, no filler, scoped)
+- **AGENTS.md** -- subagent workspace rules (task scope, build commands, quality gates)
 
 ## Running Commands in the Adamant Environment
 
@@ -88,7 +87,7 @@ Every passthrough command also accepts an optional path argument -- `admt build 
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (20 skills, ~19300 lines with refs)
+## Skill Inventory (23 skills + 1 meta-skill = 24 total, ~22500 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
@@ -103,7 +102,9 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-formal-verification` | 609 | SPARK contracts, GNATprove, ghost lemmas, proof chains |
 | `adamant-build-system` | 973 | Redo commands, code gen, build paths |
 | `adamant-skill-creation` | 839 | Creating, validating, and refactoring Adamant skills |
+| `adamant-skill-campaign` | 408 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
 | `adamant-cosmos-testing` | 687 | Integration test scripts via COSMOS scripting API |
+| `adamant-cosmos-minio` | 231 | COSMOS suite execution via Script Runner REST API + MinIO log retrieval |
 | `adamant-framework-components` | 675 | Catalog of all 58 built-in components + audit |
 | `adamant-type-system` | 567 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-subassemblies` | 504 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
@@ -111,9 +112,10 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `knowledge-acquisition` | 471 | Systematic codebase study with sub-agents |
 | `adamant-code-review` | ~170 | Component, test, type, assembly review checklists, design assessment |
 | `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
+| `adamant-generator-dev` | 672 | Custom generators: Ada source, YAML types, HTML docs, ground artifacts from YAML |
 | `high-assurance-design` | 304 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~19100 lines (includes tool scripts)
+**Total:** ~22500 lines (SKILL.md + references)
 
 ## Meta-Skills
 
@@ -127,7 +129,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
 - **Compiler-validated.** 30+ rounds of build-test-fix cycles across 100+ components + unit tests. Components compile clean on first try when skills are followed.
-- **Selector-driven.** Load 1-2 skills per task, not all 18.
+- **Selector-driven.** Load 1-2 skills per task, not all 24.
 - **Three-tier prompt strategy:** This file (CLAUDE.md) -> skill-selector -> deep skills. Load order matters for cache efficiency:
   1. This file -- loaded automatically as system prompt
   2. `adamant-skill-selector/SKILL.md` -- always the first skill read

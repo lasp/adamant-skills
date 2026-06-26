@@ -1,14 +1,13 @@
 # Repository Overview
 
-19 skills, ~21K lines for AI-assisted Adamant embedded software development.
+24 skills, ~22.5K lines for AI-assisted Adamant embedded software development.
 
 ## Top-Level Files
 
 | File | Purpose |
 |------|---------|
 | `CLAUDE.md` | System prompt for Claude Code CLI |
-| `AGENTS.md` | OpenClaw subagent workspace rules |
-| `SOUL.md` | Subagent voice/disposition config |
+| `AGENTS.md` | Subagent workspace rules |
 
 ## Skill Inventory by Category
 
@@ -33,11 +32,16 @@
 - `adamant-subassemblies` — Splitting assemblies, nesting, wiring
 - `adamant-framework-components` — Catalog of 58 built-in components
 - `adamant-framework-internals` — Python model internals, code gen debugging
+- `adamant-generator-dev` — Custom generators (Ada, YAML types, HTML docs, ground artifacts)
+- `adamant-cosmos-minio` — COSMOS suite execution via Script Runner REST API + MinIO logs
 
 ### Meta/Support
 - `adamant-skill-creation` — Building and validating new skills
 - `knowledge-acquisition` — Systematic codebase study with sub-agents
 - `high-assurance-design` — Design-by-invariant, non-goals, formal verification
+- `adamant-skill-campaign` — Cold-start skill-validation campaigns via the Workflow tool
+- `adamant-code-review` — Component/test/type/assembly review checklists, design assessment
+- `task-planning` — Time-boxing, progress tracking, batch execution for large tasks
 
 ## Structure Pattern
 
@@ -148,7 +152,7 @@ Skills are structured to keep the cacheable portion as large as possible:
 - **`references/`** -- detailed examples, validation history, code artifacts. Loaded only when needed, and only the specific files required.
 - **Task request** -- always last. Never in the stable prefix.
 
-This split means the bulk of skill content (~8400 lines across all `SKILL.md` files, plus selected references) can be cached across calls within a session, while only the task-specific question changes between requests.
+This split means the bulk of skill content (~11000 lines across all `SKILL.md` files, plus selected references) can be cached across calls within a session, while only the task-specific question changes between requests.
 
 ### What "Within a Session" Means
 

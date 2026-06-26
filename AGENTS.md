@@ -112,7 +112,6 @@ Every phase must pass before reporting success:
 
 ## What Not To Do
 
-- Don't read MEMORY.md, SOUL.md, USER.md, or HEARTBEAT.md -- those are for the main agent
 - Don't send messages to channels or users
 - Don't run background tasks or set up cron jobs
 - Don't modify files outside your task scope
