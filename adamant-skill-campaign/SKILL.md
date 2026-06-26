@@ -174,10 +174,16 @@ Cold-start agents build real artifacts; keep the blast radius zero:
   types only if required). The agent must not modify or rename other components.
 - **No git from agents**: agents never `commit`, `push`, or `checkout`. The orchestrator
   (you) owns version control.
-- **Reset between iterations** (orchestrator, not the agent, to avoid mid-run races):
+- **Reset between iterations** (orchestrator, not the agent, to avoid mid-run races): revert
+  any tracked file the agent edited, then remove the scratch -- scoped to the scratch paths:
   ```bash
-  git -C <project> checkout -- . && git -C <project> clean -fd
+  git -C <project> checkout -- <shared-file-the-agent-edited>   # e.g. a registration line in a shared CMakeLists
+  git -C <project> clean -fdx <scratch_component_dir>           # -x also clears the component's build/ artifacts
   ```
+  Use `-x` only on the *scratch* path, never the whole project -- a project-wide
+  `clean -fdx` also deletes git-ignored essentials (e.g. `docker/.env`, which carries the
+  worktree's container identity). Plain `clean -fd` leaves `build/` behind, so the next cold
+  start is not truly pristine; the scoped `-fdx` (or `admt clean` on the component) fixes that.
 - **Leave artifacts for the audit**: do not reset *before* the audit agent reads the files.
 - **Bounded agents**: Workflow agents are time/▢-bounded; a failed build drops that item to
   `null` -- filter with `.filter(Boolean)`.
