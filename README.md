@@ -47,11 +47,11 @@
 
 Each skill follows: `SKILL.md` (dense patterns) + `references/` (detailed examples) + optional `scripts/` (utilities).
 
-## Validation State (as of latest commits)
+## Validation State
 
 - **Style:** 221/221 directories, 0 failures
 - **Coverage:** 89%+ across 100+ components
-- **Cold-start:** 0 errors (stress-tested 2026-02-20)
+- **Cold-start:** 0 errors (stress-tested)
 - **Subassemblies:** R10 zero cold-start errors
 
 ---
@@ -88,7 +88,7 @@ The structural principle -- stable content at the front of the prompt, variant c
 
 > **Sources:** [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) -- [OpenAI prompt caching](https://platform.openai.com/docs/guides/prompt-caching) -- [Google Gemini context caching](https://ai.google.dev/gemini-api/docs/caching)
 
-The skills in this repo and the OpenClaw campaign are built around Anthropic. All cache mechanics documented here -- `cache_control`, 5-minute TTL, hit/miss reporting via `cache_creation_input_tokens`/`cache_read_input_tokens`, TTL reset on hit -- are Anthropic-specific. The structural optimizations (deterministic read order, stable prefix, variant content last) apply to any provider, but TTL behavior, annotation requirements, and cost models vary.
+The skills in this repo are built around Anthropic. All cache mechanics documented here -- `cache_control`, 5-minute TTL, hit/miss reporting via `cache_creation_input_tokens`/`cache_read_input_tokens`, TTL reset on hit -- are Anthropic-specific. The structural optimizations (deterministic read order, stable prefix, variant content last) apply to any provider, but TTL behavior, annotation requirements, and cost models vary.
 
 ## Model-Tier Cache Economics
 
@@ -105,8 +105,6 @@ Since cache reads are always priced at 10% of the base input price across all Cl
 The 90% discount ratio is uniform, but the absolute savings are **5x higher on Opus than Haiku** and **1.67x higher on Opus than Sonnet**. This compounds significantly across multi-step tasks that generate many API calls. Opus is also the model used for the most complex, longest-running tasks -- precisely the tasks that load the most skill content and generate the most API calls per session.
 
 A full component development session (skill selector + component-dev + references + testing + iterative code generation) can produce 10-20 API calls sharing the same large prefix. Each cache hit at Opus pricing returns ~$0.45 per 100k cached tokens, with the initial write cost recovered after roughly 2 hits.
-
-The OpenClaw campaign data validates this empirically: Sonnet sessions with ~130k token prompts showed 62-76% runtime reduction per phase (32m to 12m, 21m to 5m), and 67% total runtime reduction (53m to 17m) for identical work output. The cache write cost at these prompt sizes is recovered within the first few hits of a session.
 
 ## Where Cache Hits Matter Most
 
@@ -196,52 +194,15 @@ The cache cools when work pauses. A 10-minute break between requests lets the TT
 
 ---
 
-# OpenClaw Campaign: Observed Cache Performance
-
-## Campaign Data
-
-The key structural optimization in the campaign -- deterministic skill read order, stable task template prefix, iteration-variant text at the end -- produced the following results:
-
-```
-i1 Phase A: 130.8k prompt, 32m  (cache miss -- first run)
-i2 Phase A: 103.5k prompt, 12m  (cache hit)
-i1 Phase B: 106.1k prompt, 21m  (cache miss)
-i2 Phase B:  85.1k prompt,  5m  (cache hit)
-```
-
-Total runtime: 53m to 17m (67% reduction), same work output.
-
-## Analysis
-
-**The token delta understates the actual cache savings.** The 27k drop (Phase A) and 21k drop (Phase B) between i1 and i2 reflect how the API reports usage -- cached tokens still appear as `input_tokens` in the usage object, but at the cheaper read rate. The runtime is the honest signal: the model isn't reprocessing that prefix, it's reading the KV cache. The 62-76% runtime reduction per phase is the real throughput gain.
-
-**On the TTL edge case.** The 5-minute window means the most reliable cache hits are within a single phase run -- sub-agent sequential skill reads and iteration calls, all seconds apart. The i1-to-i2 cross-iteration hit on Phase A (32m run, then i2 starts) suggests either:
-
-- i2 starts close enough to i1's last API call (cache TTL resets on each hit, not just the write), or
-- OpenClaw's retry/warmup structure generates early calls that refresh the TTL during the phase
-
-That TTL-reset-on-hit behavior is worth confirming. If each cache read extends the TTL, then a long phase with frequent sub-agent calls will keep the cache warm longer than 5 minutes from the initial write.
-
-**What's not on the table without gateway config:**
-
-- `ttl: "1h"` on the `cache_control` block -- needs to be injected at the API call layer
-- Shared cache across phases -- would require the same prefix, which breaks on different skill loads anyway
-
-**One potential structural gain still available:** if Phase B's task template prefix shares a large common segment with Phase A's before the skill content diverges, that shared prefix could still cache independently. Whether that's worth pursuing depends on how early in the message the skill content appears.
-
-The structural optimization is mature. Gateway TTL config is the next lever.
-
----
-
 # Cache Efficiency for Regular Users
 
 ## What Works for Any User
 
 The same structural conditions apply -- stable system prompt (`CLAUDE.md` loaded at session start), deterministic skill read order, task-variant text at the end of the prompt. Any user who runs multiple requests within a single Claude Code session benefits from intra-session caching. The skill files are large (1-2k lines each), so they're well above the minimum cache threshold.
 
-## Where It Differs from the OpenClaw Campaign
+## Where Caching Is Less Reliable
 
-The campaign has a controlled, repeatable prefix structure across iterations. Regular users have more variability:
+A tightly-structured automated run has a controlled, repeatable prefix across iterations. Regular users have more variability:
 
 - Different conversation history lengths between requests
 - `CLAUDE.md` + skill content is stable, but everything before and between those reads varies by user workflow
@@ -255,4 +216,4 @@ Cross-session caching (coming back the next day to continue) -- no benefit. Cach
 
 ## Bottom Line
 
-Regular users get the intra-session efficiency. They won't see the clean i1-to-i2 iteration numbers the campaign produces because their workflows aren't as tightly structured, but the structural optimization (stable prefix, variant text at end) still helps every user by maximizing the cacheable prefix length.
+Regular users get the intra-session efficiency. Even without a tightly-structured iteration cadence, the structural optimization (stable prefix, variant text at end) still helps every user by maximizing the cacheable prefix length.
