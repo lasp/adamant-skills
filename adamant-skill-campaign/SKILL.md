@@ -127,6 +127,12 @@ the skills (full definitions and the "never blame the agent for a stable miss" r
   != type name; parameter type package != parameter name; standalone enum = `Pkg.Enum.E`),
   required files (`.all_path`, test `env.py`), `Set_Up` vs `Init`, tester/assertion
   patterns.
+- **Judge against the skill/directive, not reference code**: a choice that matches the skill
+  is a HIT even if it differs from some example in the target repo (which may be
+  non-representative legacy); copying non-compliant reference code is a MISS. Before recording
+  a GAP, confirm the skill actually misprescribes -- not that the audit read a rule too
+  literally or compared to unrepresentative code. Where the directive, the file layout, and
+  the existing examples all agree, that agreement is the authority.
 
 For a stronger signal, run the **same** relaxed spec through N cold-start agents in
 parallel and aggregate: a DP that 3+ independent agents MISS is a skill gap, not agent
