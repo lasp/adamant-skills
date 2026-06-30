@@ -62,7 +62,7 @@ echo "## Structure" >> /path/to/workspace/memory/<target>-notes.md
 
 ### 3. Spawn the Study Session
 
-Use sessions_spawn or cron with these mandatory elements:
+Spawn a study agent (the Agent tool for one subagent, or a Workflow for several in parallel) with these mandatory elements:
 
 **Task prompt template:**
 ```
@@ -91,10 +91,10 @@ Skill guidelines:
 Report what you learned and what skills you created/modified.
 ```ada
 
-**Session parameters:**
-- Model: anthropic/claude-sonnet-4-20250514 (cheaper for bulk reading)
-- Timeout: match to scope assessment (see budget rules above)
-- sessionTarget: isolated (own context, no main session pollution)
+**Agent parameters:**
+- Model: pick a cheaper model for bulk reading (e.g. Sonnet) via the spawn tool's `model` parameter
+- Scope/timeout: match to the scope assessment (see budget rules above)
+- Isolated context: a subagent has its own context window, so bulk reading does not pollute the main session
 
 ### 4. Quality Gate
 
@@ -130,7 +130,7 @@ After initial skill creation, shift to building real artifacts to discover gaps.
 
 **Study generated output, not just source.** For code generation frameworks, the generated files ARE the API contract. Read `build/src/`, `build/template/`, and every output directory. The generated base class, event/command/data product packages, and template stubs define the exact function signatures, naming conventions, and type paths your implementation must use. Reading only the generator source or YAML schemas gives you the input format but not the output contract.
 
-**Automated campaigns**: For systematic validation at scale, run multi-tier campaigns with escalating complexity, phased execution (to stay within context limits), convergence criteria, and cron-driven orchestration. See the "Automated Refinement Campaigns" section in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
+**Automated campaigns**: For systematic validation at scale, run multi-tier campaigns with escalating complexity, phased execution (to stay within context limits), and convergence criteria, orchestrated in-session with the Workflow tool. See [adamant-skill-campaign](../adamant-skill-campaign/SKILL.md) for the harness, and the "Automated Refinement Campaigns" section in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
 
 **Adaptive phase granularity**: When a phase fails repeatedly due to context exhaustion (not skill errors), split it further rather than retrying at the same granularity. Separating type definitions from component implementation, or component creation from test setup, gives Sonnet enough headroom. Finer phases also improve error attribution. Adjust dynamically based on observed failures.
 
@@ -166,64 +166,21 @@ After consolidation, update MEMORY.md with:
 - Skills created/modified
 - Lessons learned about the study process itself
 
-## Usage Tracking and Budget Awareness
+## Budget Awareness
 
-### Checking Current Usage
+Bulk reading is the main cost of study sessions, so manage it deliberately:
 
-Before spawning study sessions, check current spend:
-
-```bash
-# Quick usage report (all sessions, estimated cost)
-python3 {baseDir}/scripts/usage_report.py
-
-# JSON output for scripting
-python3 {baseDir}/scripts/usage_report.py --format json
-```ada
-
-The script reads the OpenClaw session store and estimates cost per session based
-on model and total tokens consumed. Costs are blended estimates (input+output
-averaged); real cost depends on the input/output token ratio.
-
-### Per-Session Status
-
-Use `session_status` tool to check individual session usage (tokens, model,
-context window fill). For sub-agent sessions, pass their sessionKey.
-
-Use `sessions_list` to see all active sessions with token counts:
-- `totalTokens` = how much of the context window has been consumed
-- A session at 200,000 tokens has maxed its context (compacted at least once)
-
-### Budget Rules
-
-**Before spawning:**
-1. Run usage_report.py to see cumulative spend
-2. Estimate new session cost: (timeout_minutes / 10) * model_rate_per_MTk is a rough upper bound
-   - Sonnet: ~$1.20 per maxed-out 200k context session
-   - Opus: ~$6.00 per maxed-out 200k context session
-3. If cumulative spend exceeds the user's comfort threshold, ask before proceeding
-
-**During multi-session studies:**
-- Check usage between spawns, not just at the end
-- If a session maxes context (200k tokens), it consumed its full budget
-- Four Sonnet sessions maxing context = ~$4.80
-- Stagger sessions and check results before spawning more
-
-**Cost optimization:**
-- Always use Sonnet for bulk reading (6x cheaper than Opus)
-- Set realistic timeouts -- a 60min timeout on a 20-file repo wastes budget
-- Smaller, focused sessions > one massive session (easier to spot-check, less waste on compaction)
-- Kill sessions early if scratch file shows they have gone off-track
-
-### Model Cost Reference (approximate blended $/MTk)
-
-| Model | Blended $/MTk |
-|-------|--------------|
-| claude-opus-4 | ~$30 |
-| claude-sonnet-4 | ~$6 |
-| claude-haiku-3.5 | ~$1.60 |
-
-These are rough. Actual cost depends on input:output ratio. Output tokens cost
-3-5x more than input tokens for most models.
+- **Use a cheaper model for bulk reading** (e.g. Sonnet) via the spawn tool's `model`
+  parameter; reserve the stronger model for synthesis. A subagent that fills its context
+  window has consumed its full budget for that pass.
+- **Size scope to the context window**: smaller, focused sessions beat one massive session
+  -- easier to spot-check, and less is lost to compaction. Split a target that repeatedly
+  exhausts context rather than retrying at the same granularity.
+- **Check results between spawns**, not just at the end; kill a session early if its scratch
+  file shows it has gone off-track.
+- **Ask before large spend**: if a multi-session study will run well past the user's comfort
+  threshold, confirm first. A Workflow exposes a token budget (`budget.spent()` /
+  `budget.remaining()`) for in-session campaigns.
 
 ## Build Validation Notes
 
@@ -247,7 +204,6 @@ The **primary agent** (not sub-agents) runs `admt style`, `admt test`, and `admt
 
 **Watch for:**
 - Context compaction destroying early reads (mitigated by scratch file)
-- Model override not taking effect in cron (use session_status to force)
 - Sub-agent hallucinating framework-specific details it never read
 - Emoji and non-standard metadata in skill frontmatter
 
@@ -265,36 +221,18 @@ Before accepting any skill output:
 
 ---
 
-## Appendix: OpenClaw Integration
+## Spawning Study Agents
 
-When using this skill within OpenClaw:
+Delegate isolated study to subagents so bulk reading does not consume the main session's
+context:
 
-- **Session spawning**: Use `sessions_spawn` or cron for study sessions. Sonnet is preferred for bulk reading (6x cheaper than Opus).
-- **Scratch files**: Direct study sessions to write to `memory/<target>-notes.md` incrementally.
-- **Session parameters**: Set `sessionTarget: isolated` for sub-agent study sessions.
-- **Usage tracking**: Run `usage_report.py` before spawning to check cumulative spend.
-- **Session status**: Use `session_status` to check context window fill; sessions at 200k tokens have maxed context.
-- **Model override**: Verify model override takes effect with `session_status` after spawn.
-
-### Sub-Agent Model Configuration
-
-Sub-agents can only use models listed in `agents.defaults.models` in the gateway config (`openclaw.json`). By default, only the main model (e.g., Opus) is listed.
-
-**To enable Sonnet for sub-agents:**
-
-```bash
-# Via config.patch (from agent):
-gateway config.patch '{"agents":{"defaults":{"models":{
-  "anthropic/claude-opus-4-6":{"alias":"opus"},
-  "anthropic/claude-sonnet-4-20250514":{"alias":"sonnet"}
-}}}}'
-```
-
-Then spawn with `model: sonnet` or `model: anthropic/claude-sonnet-4-20250514`.
-
-**Important:** Running `openclaw configure` (the setup wizard) rewrites the config file and will remove manually-patched model entries. After each `openclaw configure` run, re-patch the models allowlist. Coordinate with the user so they notify you before/after running configure.
-
-**Verifying model assignment:** Check `modelApplied` in the spawn response. If `false`, the model was rejected and the sub-agent falls back to the default. Common causes:
-- Model not in `agents.defaults.models` allowlist
-- Typo in model name (use exact provider/model string or configured alias)
-- Config was overwritten by `openclaw configure` since last patch
+- **One target**: the Agent tool spawns a single subagent with its own context window.
+- **Several in parallel**: a Workflow fans out one study agent per area and collects their
+  notes (the same fan-out [adamant-skill-campaign](../adamant-skill-campaign/SKILL.md)
+  applies to skill validation).
+- **Model**: pass a cheaper model (e.g. Sonnet) via the spawn tool's `model` parameter for
+  bulk reading; reserve the stronger model for synthesis.
+- **Scratch files**: have each agent write incremental notes to `memory/<target>-notes.md`
+  -- context compacts, and unwritten early reads are lost.
+- **Budget**: size each agent's scope to its context window; split a target that repeatedly
+  exhausts context into finer study sessions rather than retrying at the same granularity.

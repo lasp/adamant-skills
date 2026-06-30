@@ -112,7 +112,7 @@ Each entry includes the iteration where it was first observed and the resolution
 ### Build output noise (all iterations)
 - **Pattern:** Sub-agents paste 40-80 lines of redo target announcements and recompilation warnings into their output.
 - **Impact:** Wasted output tokens, no diagnostic value.
-- **Resolution:** AGENTS.md build output filtering (added 2026-03-02). Use `sed + grep` filter to strip noise.
+- **Resolution:** AGENTS.md build output filtering. Use a `sed + grep` filter to strip noise.
 
 ### Subassembly event_to_text (known framework limitation)
 - **Pattern:** Every subassembly with events produces a broken `_event_to_text.adb`.

@@ -241,7 +241,7 @@ Reference from the skill-selector:
 ## Validation Loop
 
 ### Sub-Agent → Main Agent Workflow
-The standard validation loop for skill changes:
+The standard validation loop for skill changes (run it in-session with the Workflow tool -- see [adamant-skill-campaign](../adamant-skill-campaign/SKILL.md)):
 
 1. **Sub-agent** creates or modifies skill files (SKILL.md, references/)
 2. **Main agent** runs `admt style` to check style compliance
@@ -416,3 +416,4 @@ Extension scenarios test whether skills teach UNDERSTANDING, not just PROCEDURES
 ## Related Skills
 - **Skill selector**: [adamant-skill-selector](../adamant-skill-selector/SKILL.md)
 - **Knowledge acquisition**: [knowledge-acquisition](../knowledge-acquisition/SKILL.md)
+- **Running validation as a campaign**: [adamant-skill-campaign](../adamant-skill-campaign/SKILL.md) -- in-session Workflow orchestration of the cold-start validation loop described here

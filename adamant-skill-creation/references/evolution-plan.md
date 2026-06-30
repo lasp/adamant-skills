@@ -76,7 +76,7 @@ Candidates from framework audit:
 
 ## Phase 6: Automated Refinement Loop
 
-Long-term goal: cron-scheduled validation that runs continuously.
+Goal: continuous automated validation -- run in-session with the Workflow tool (see [adamant-skill-campaign](../../adamant-skill-campaign/SKILL.md)), not an external scheduler.
 
 ```
 Schedule: Every 6 hours during active development periods

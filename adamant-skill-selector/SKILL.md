@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 20 Adamant skills totaling ~20000 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 24 Adamant skills totaling ~22500 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -137,11 +137,11 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 
 **Also load:** `adamant-cosmos-integration` (for plugin structure, CCSDS wiring, cmd/tlm definitions)
 
-### COSMOS test execution via Script Runner REST API and MinIO log retrieval
-**Load:** `adamant-cosmos-minio`
-- Launching COSMOS test scripts via curl REST API
-- Polling for script completion
-- Retrieving suite logs from MinIO
+### COSMOS suite execution + result verification (headless / CI)
+**Load:** `adamant-cosmos-suite-results`
+- Running a suite via `openc3cli script run` (stream + exit-code gate) or the Script Runner REST API
+- Stopping a running suite; collecting per-service container logs for debugging
+- COSMOS 6.x (MinIO) vs 7.x (versitygw / `openc3-buckets`) object-store rename
 - Parsing pass/fail results
 
 **Also load:** `adamant-cosmos-integration` (for container architecture and troubleshooting)
@@ -263,6 +263,17 @@ These patterns cause compilation errors if violated:
 - Cold-start testing, convergence tracking
 - Separating project-specific from generic content
 - Maintaining skill health and preventing anti-patterns
+
+**Also load:** `adamant-skill-campaign` -- to actually *run* the validation as a campaign
+
+### Validating skills via cold-start campaigns
+**Load:** `adamant-skill-campaign`
+- Run cold-start skill-validation in-session with the Workflow tool (Build -> Audit)
+- Relaxed prompts (specify intent, never the convention); decision-point HIT/MISS/GAP scoring
+- N-parallel for stable-miss signal; convergence loop; sandboxing; admt-vs-legacy targeting
+- The modern in-session replacement for external cron + `claude -p` campaign harnesses
+
+**Also load:** `adamant-skill-creation` (the measurement theory: decision points, convergence, fix-isolation)
 
 ## Project-Specific Skills
 
