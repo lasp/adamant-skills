@@ -68,7 +68,7 @@ When you send a request to the API, the input tokens are normally billed at full
 - Cache **hit** (subsequent requests): ~90% cheaper than normal input
 - Output tokens: unaffected, always billed at full rate
 
-For `claude-opus-4-6` at $5.00/1M input tokens:
+For `claude-opus-4-8` at $5.00/1M input tokens:
 
 | Event | Effective rate |
 |-------|---------------|
@@ -97,7 +97,7 @@ Since cache reads are always priced at 10% of the base input price across all Cl
 
 | Model | Base input | Cache read | Savings per hit (100k tokens) | Write cost (100k, 5-min TTL) |
 |-------|-----------|-----------|-------------------------------|------------------------------|
-| Opus 4.6 | $5.00/1M | $0.50/1M | **$0.45** | $0.625 (recovered after ~2 hits) |
+| Opus 4.8 | $5.00/1M | $0.50/1M | **$0.45** | $0.625 (recovered after ~2 hits) |
 | Sonnet 4.6 | $3.00/1M | $0.30/1M | $0.27 | $0.375 (recovered after ~2 hits) |
 | Haiku 4.5 | $1.00/1M | $0.10/1M | $0.09 | $0.125 (recovered after ~2 hits) |
 
@@ -126,8 +126,8 @@ Skills are loaded in a fixed hierarchy that forms a stable, cacheable prefix:
 
 | Tier | Content | Size | Cache role |
 |------|---------|------|-----------|
-| 1 | `CLAUDE.md` (system prompt) | ~300 lines | Outermost prefix -- always identical |
-| 2 | `adamant-skill-selector/SKILL.md` | ~285 lines | Always loaded first, routes to 1-2 skills |
+| 1 | `CLAUDE.md` (system prompt) | ~170 lines | Outermost prefix -- always identical |
+| 2 | `adamant-skill-selector/SKILL.md` | ~357 lines | Always loaded first, routes to 1-2 skills |
 | 3 | Task-specific `SKILL.md` + `references/` | 250-800 lines | Stable per task type |
 
 Task-variant content (the actual user request, iteration state) appears at the end of the prompt, after all stable skill content. This is the key structural choice that enables caching -- stable content at the front, variant content at the back.
@@ -167,14 +167,14 @@ Skills are not all the same size. The SKILL.md target of 250-350 lines is a mini
 
 | Skill | Total lines (with refs) | SKILL.md lines | Notes |
 |-------|------------------------|----------------|-------|
-| `adamant-testing` | ~2515 | ~598 | Largest -- most frequently loaded alongside component dev |
-| `adamant-component-dev` | ~1960 | ~628 | Core skill, loaded on almost every task |
-| `adamant-algorithm-wrapping` | ~1896 | ~523 | Complex multi-file pipeline |
-| `adamant-assembly-dev` | ~1416 | ~647 | Second most common task type |
-| `adamant-style` | ~1078 | ~415 | Often loaded as a secondary skill |
+| `adamant-testing` | ~2647 | ~692 | Largest -- most frequently loaded alongside component dev |
+| `adamant-component-dev` | ~2302 | ~719 | Core skill, loaded on almost every task |
+| `adamant-algorithm-wrapping` | ~2009 | ~557 | Complex multi-file pipeline |
+| `adamant-assembly-dev` | ~1455 | ~661 | Second most common task type |
+| `adamant-style` | ~1152 | ~489 | Often loaded as a secondary skill |
 | `adamant-framework-internals` | ~441 | ~260 | Lightweight -- narrow-use, loaded only for code gen debugging |
 
-**The cache efficiency implication:** a task that loads `adamant-component-dev/SKILL.md` (~628 lines, roughly 9,000-15,000 tokens) plus `adamant-testing/SKILL.md` (~598 lines) creates a stable cacheable prefix of 15,000-25,000 tokens from skill content alone, on top of CLAUDE.md and the selector. Every subsequent API call in that session serves those tokens at ~$0.50/1M instead of $5.00/1M.
+**The cache efficiency implication:** a task that loads `adamant-component-dev/SKILL.md` (~719 lines, roughly 9,000-15,000 tokens) plus `adamant-testing/SKILL.md` (~692 lines) creates a stable cacheable prefix of 15,000-25,000 tokens from skill content alone, on top of CLAUDE.md and the selector. Every subsequent API call in that session serves those tokens at ~$0.50/1M instead of $5.00/1M.
 
 A lightweight skill like `adamant-framework-internals` (~260 lines, ~4,000 tokens) cached in isolation saves proportionally less -- though it still benefits when combined with other stable prefix content.
 
