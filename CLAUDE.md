@@ -32,6 +32,8 @@ bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && <command
 
 **`admt what`** is what you run first in any directory to discover what can be built. It replaces `redo what`.
 
+**admt is self-describing.** `admt --help` lists every command and global flag; `admt <command> --help` shows command-specific options (e.g. `admt env --help`, or `admt templates --help`, which reveals `--undo`). The tables below are a quick reference, not exhaustive -- when you need an advanced or unlisted subcommand or flag, run `--help` rather than guessing or defaulting to the fallback.
+
 ### admt is new -- report gaps, don't silently work around them
 
 admt's MVP just landed; post-MVP work is ongoing. Gaps and bugs exist. If admt errors on a case you expected it to handle, or its output is visibly wrong:

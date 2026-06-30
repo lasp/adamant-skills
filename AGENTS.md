@@ -34,6 +34,15 @@ admt env exec "<command>"         # Arbitrary command inside the container (non-
 admt env login                    # Interactive shell
 ```
 
+**admt is self-describing -- discover, don't guess.** The patterns above cover the common cases. For anything not listed, ask admt directly rather than guessing or falling back prematurely:
+
+```bash
+admt --help            # all commands + global flags (-v/-q/-d/-y/-f)
+admt <command> --help  # command-specific options, e.g. `admt env --help`, `admt templates --help` (--undo)
+```
+
+The CLAUDE.md tables are a quick reference, not exhaustive -- e.g. `admt env --help` lists subcommands (`pull`, `push`, `env build`) the table omits.
+
 The `bash docker/adamant_env.sh exec "..."` form remains as a fallback for operations admt has not yet absorbed (MVP is complete; post-MVP will keep closing the gap). See `CLAUDE.md` for the full redo -> admt translation table.
 
 **admt is new -- if it errors on something it should handle, fall back to `bash docker/adamant_env.sh exec` AND report the gap in your final report** (admt command tried, exact error, fallback form that worked, `admt --version`). See `CLAUDE.md` §"admt is new" for the full rule. Silent fallback hides the signal that admt needs fixing.
