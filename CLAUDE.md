@@ -4,9 +4,10 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 ## Agent Configuration Files
 
-This repo contains two agent prompt files. Copy them to your project root:
-- **CLAUDE.md** -- Claude Code CLI system prompt (build rules, skill inventory)
-- **AGENTS.md** -- subagent workspace rules (task scope, build commands, quality gates)
+This repo contains three agent instruction files. Copy the ones your tooling uses to your project root:
+- **CLAUDE.md** (this file) -- the Claude Code entry point: build rules, skill inventory, Claude-specific load order. Functionally the Claude Code counterpart to `AGENTS.md`.
+- **AGENTS.md** -- vendor-neutral agent instructions ([agents.md](https://agents.md/) convention): the same build rules + skill inventory for any coding agent or tool.
+- **SUBAGENT_CONTRACT.md** -- handoff contract for an orchestrated/headless build subagent: a scoped posture (no questions, no git, output filtering, quality gates) layered on top of the shared instructions.
 
 ## Running Commands in the Adamant Environment
 
@@ -87,41 +88,41 @@ Every passthrough command also accepts an optional path argument -- `admt build 
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (23 skills + 1 meta-skill = 24 total, ~22500 lines with refs)
+## Skill Inventory (23 skills + 1 meta-skill = 24 total, ~25000 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
-| `adamant-skill-selector` | 267 | **Read first.** Maps tasks to skills. |
-| `adamant-testing` | 2515 | Test harness, History API, assertions, coverage, advanced patterns |
-| `adamant-tools` | 2216 | API inspector, component scaffolder, YAML validator (Python scripts) |
-| `adamant-component-dev` | 1960 | Components: YAML models, generated API, implementation patterns, LASEL |
-| `adamant-algorithm-wrapping` | 1896 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
-| `adamant-assembly-dev` | 1416 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
-| `adamant-cosmos-integration` | 1254 | CCSDS pipeline, COSMOS plugin build/load |
-| `adamant-style` | 1078 | Ada/YAML/Python style rules enforced by `redo style` |
-| `adamant-formal-verification` | 609 | SPARK contracts, GNATprove, ghost lemmas, proof chains |
-| `adamant-build-system` | 973 | Redo commands, code gen, build paths |
-| `adamant-skill-creation` | 839 | Creating, validating, and refactoring Adamant skills |
-| `adamant-skill-campaign` | 408 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
-| `adamant-cosmos-testing` | 687 | Integration test scripts via COSMOS scripting API |
+| `adamant-skill-selector` | 403 | **Read first.** Maps tasks to skills. |
+| `adamant-testing` | 2647 | Test harness, History API, assertions, coverage, advanced patterns |
+| `adamant-tools` | 2221 | API inspector, component scaffolder, YAML validator (Python scripts) |
+| `adamant-component-dev` | 2302 | Components: YAML models, generated API, implementation patterns, LASEL |
+| `adamant-algorithm-wrapping` | 2009 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
+| `adamant-assembly-dev` | 1455 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
+| `adamant-cosmos-integration` | 1955 | CCSDS pipeline, COSMOS plugin build/load |
+| `adamant-style` | 1152 | Ada/YAML/Python style rules enforced by `redo style` |
+| `adamant-formal-verification` | 1528 | SPARK contracts, GNATprove, ghost lemmas, proof chains |
+| `adamant-build-system` | 1057 | Redo commands, code gen, build paths |
+| `adamant-skill-creation` | 1341 | Creating, validating, and refactoring Adamant skills |
+| `adamant-skill-campaign` | 425 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
+| `adamant-cosmos-testing` | 1043 | Integration test scripts via COSMOS scripting API |
 | `adamant-cosmos-suite-results` | 133 | COSMOS suite execution (openc3cli / Script Runner REST API) + result verification |
 | `adamant-framework-components` | 675 | Catalog of all 58 built-in components + audit |
-| `adamant-type-system` | 567 | YAML type definitions, format codes, Ada type hierarchy |
-| `adamant-subassemblies` | 504 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
-| `adamant-project-setup` | 484 | New project scaffolding, adamant_env.sh, Docker, config |
-| `knowledge-acquisition` | 471 | Systematic codebase study with sub-agents |
-| `adamant-code-review` | ~170 | Component, test, type, assembly review checklists, design assessment |
+| `adamant-type-system` | 931 | YAML type definitions, format codes, Ada type hierarchy |
+| `adamant-subassemblies` | 546 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
+| `adamant-project-setup` | 546 | New project scaffolding, adamant_env.sh, Docker, config |
+| `knowledge-acquisition` | 699 | Systematic codebase study with sub-agents |
+| `adamant-code-review` | 362 | Component, test, type, assembly review checklists, design assessment |
 | `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
 | `adamant-generator-dev` | 672 | Custom generators: Ada source, YAML types, HTML docs, ground artifacts from YAML |
 | `high-assurance-design` | 304 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~22500 lines (SKILL.md + references)
+**Total:** ~25000 lines (SKILL.md + references)
 
 ## Meta-Skills
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
-| `task-planning` | ~180 | Time-boxing, progress tracking, batch execution for large tasks |
+| `task-planning` | 193 | Time-boxing, progress tracking, batch execution for large tasks |
 
 **Read `task-planning/SKILL.md` FIRST** for any task with 5+ deliverables or 10+ components. It teaches how to manage time, track progress, and avoid rabbit holes.
 

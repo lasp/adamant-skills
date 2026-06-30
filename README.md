@@ -1,13 +1,14 @@
 # Repository Overview
 
-24 skills, ~22.5K lines for AI-assisted Adamant embedded software development.
+24 skills, ~25K lines for AI-assisted Adamant embedded software development.
 
 ## Top-Level Files
 
 | File | Purpose |
 |------|---------|
-| `CLAUDE.md` | System prompt for Claude Code CLI |
-| `AGENTS.md` | Subagent workspace rules |
+| `CLAUDE.md` | Claude Code entry point (system prompt): build rules + skill inventory |
+| `AGENTS.md` | Vendor-neutral agent instructions ([agents.md](https://agents.md/) convention); counterpart to `CLAUDE.md` |
+| `SUBAGENT_CONTRACT.md` | Handoff contract for an orchestrated/headless build subagent (scoped posture: no git, output filtering, quality gates) |
 
 ## Skill Inventory by Category
 
@@ -15,7 +16,7 @@
 - `adamant-skill-selector` — Entry point, routes to correct skills
 - `adamant-component-dev` — YAML models, connectors, LASEL patterns
 - `adamant-assembly-dev` — Scheduling, routing, ID assignment
-- `adamant-testing` — Test harness, History API, coverage (largest: 2515 lines)
+- `adamant-testing` — Test harness, History API, coverage (largest: 2647 lines)
 - `adamant-type-system` — YAML types, format codes, Ada hierarchy
 - `adamant-algorithm-wrapping` — C++ → C shim → Ada → Adamant pipeline
 
