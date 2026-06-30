@@ -109,7 +109,7 @@ src/components/my_component/
 The `configuration.yaml` in each project sets buffer sizes, stack margins, and other system-wide parameters:
 
 ```yaml
-# Processed at code gen time. Changes require redo clean + rebuild.
+# Processed at code gen time. Changes require `admt clean` + rebuild.
 data_products:
   max_data_product_size_bytes: 256
 events:
@@ -129,14 +129,14 @@ These values size the framework's generic buffer types and affect the generated 
 
 | Target | From | Does |
 |--------|------|------|
-| `redo all` | Any dir with `.all_path` or `env.py` | Build all targets in this dir |
-| `redo test` | test/ dir | Build + run tests |
-| `redo coverage` | test/ dir | Build with gcov + run + gcovr report |
-| `redo prove` | Any dir | Run GNATprove on SPARK-annotated files |
-| `redo templates` | test/ dir | Regenerate tester template stubs |
-| `redo style` | Any dir | Check Ada/YAML/Python style |
-| `redo style_all` | project root | Style check entire project tree |
-| `redo clean` | Any dir | Remove build artifacts in this dir |
-| `redo clean_all` | project root | Clean entire project tree |
+| `admt build` | Any dir with `.all_path` or `env.py` | Build all targets in this dir |
+| `admt test` | test/ dir | Build + run tests |
+| `admt coverage` | test/ dir | Build with gcov + run + gcovr report |
+| `admt prove` | Any dir | Run GNATprove on SPARK-annotated files |
+| `admt templates` | test/ dir | Regenerate tester template stubs |
+| `admt style` | Any dir | Check Ada/YAML/Python style |
+| `admt style --all` | project root | Style check entire project tree |
+| `admt clean` | Any dir | Remove build artifacts in this dir |
+| `admt clean --all` | project root | Clean entire project tree |
 | `redo clear_cache` | project root | Clear model caching SQLite DB |
 | `redo cosmos_config` | assembly/main/ | Generate COSMOS plugin config |

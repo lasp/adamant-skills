@@ -20,61 +20,80 @@ You are a build agent working on an Adamant embedded software project.
 - **Read-only means read-only.** If directories are listed as read-only, do not modify them. Read component YAML to discover connectors and types, then wire them as-is.
 - **Delete before recreating.** If told to build from scratch and files exist, delete YOUR phase's directory first. Never delete prior phases or other scenarios.
 - **No git operations.** Don't commit, push, or branch. The orchestrator handles version control.
-- **No concurrent redo.** Never run multiple redo processes in the same container.
-- **redo clean, never rm -rf build.** Use `redo clean` or `redo clean_all` for cleanup. Manual deletion of build directories corrupts redo state.
+- **No concurrent builds.** Never run multiple `admt build` / `admt test` invocations in the same container -- corrupts redo state.
+- **`admt clean`, never `rm -rf build`.** Use `admt clean` or `admt clean --all` for cleanup. Manual deletion of build directories corrupts redo state.
 - **Report precisely.** State what was created, what passed, what failed, and any warnings. Include ELF size for assembly builds.
 
-## Docker Exec Pattern
+## Exec Pattern
+
+**Use [`admt`](https://github.com/Jbsco/admt) for all builds, tests, and container operations.** admt is the primary entry point -- it wraps redo, docker compose, and env activation.
 
 ```bash
-bash docker/adamant_env.sh exec "cd /home/user/<project> && <command>"
+admt <build-command> [path]       # build / test / style / analyze / coverage / prove / publish / templates / clean
+admt env exec "<command>"         # Arbitrary command inside the container (non-redo work)
+admt env login                    # Interactive shell
 ```
 
-Use `adamant_env.sh exec` for non-interactive commands. Use `adamant_env.sh login` only if you need an interactive shell.
+**admt is self-describing -- discover, don't guess.** The patterns above cover the common cases. For anything not listed, ask admt directly rather than guessing or falling back prematurely:
+
+```bash
+admt --help            # all commands + global flags (-v/-q/-d/-y/-f)
+admt <command> --help  # command-specific options, e.g. `admt env --help`, `admt templates --help` (--undo)
+```
+
+The CLAUDE.md tables are a quick reference, not exhaustive -- e.g. `admt env --help` lists subcommands (`pull`, `push`, `env build`) the table omits.
+
+The `bash docker/adamant_env.sh exec "..."` form remains as a fallback for operations admt has not yet absorbed (MVP is complete; post-MVP will keep closing the gap). See `CLAUDE.md` for the full redo -> admt translation table.
+
+**admt is new -- if it errors on something it should handle, fall back to `bash docker/adamant_env.sh exec` AND report the gap in your final report** (admt command tried, exact error, fallback form that worked, `admt --version`). See `CLAUDE.md` §"admt is new" for the full rule. Silent fallback hides the signal that admt needs fixing.
 
 ## Build Output Filtering
 
-Redo produces verbose output (target lists, recompilation warnings). Filter it
-to reduce context consumption. Use these patterns:
+Redo produces verbose output (target lists, recompilation warnings). admt's streaming output is already scoped (``build`` verbs highlighted, depth paths preserved), and ``-q`` / ``--quiet`` suppresses successful output entirely while still printing the command + full output on failure. Prefer ``admt -q`` for agent-driven builds where you only care about pass/fail + diagnostics.
 
-### Strip ANSI + noise filter (use for ALL redo commands)
 ```bash
-# Note: use `grep ... || true` to avoid grep exit code 1 when no lines match
+# Agent-friendly default: silent on success, full diagnostic on failure.
+admt -q <build-command> [path]; echo "EXIT=$?"
+```
+
+For cases where you need to filter the streaming output yourself (e.g., when using the fallback form), the ANSI + noise filter still applies:
+
+```bash
+# Use with the adamant_env.sh fallback when admt is not applicable.
 FILTER="sed 's/\x1b\[[0-9;]*m//g' | { grep -vE '^redo |^warning:.*should be recompiled|^$|^Any style messages' || true; }"
 ```
 
 ### Style check
 ```bash
-bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <path>/style 2>&1; echo EXIT=\$?" | eval "$FILTER"
+admt -q style <path>; echo "EXIT=$?"
 ```
-On success: only `EXIT=0`. On failure: compiler errors + `EXIT=N`.
-Also check the style log for errors: `cat <path>/build/style/style.log`
+On success: only `EXIT=0`. On failure: admt prints ``Failed (exit N): docker exec ...`` plus redo's diagnostic. Also check the style log for errors: ``cat <path>/build/style/style.log``
 
 ### Test
 ```bash
-bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <path>/test/test 2>&1; echo EXIT=\$?" | eval "$FILTER"
+admt -q test <path>; echo "EXIT=$?"
 ```
-On success: `OK <test_name>` lines + summary. On failure: `FAIL` lines + assertion messages.
+On success: only `EXIT=0`. On failure: test framework `FAIL` lines + assertion messages. Drop ``-q`` to see ``OK <test_name>`` lines on success.
 
 ### Assembly ELF build
 ```bash
-bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <path>/main/build/bin/Linux/main.elf 2>&1; echo EXIT=\$?" | eval "$FILTER"
+admt -q build <path>/main/build/bin/Linux/main.elf; echo "EXIT=$?"
 ```
-On success: only `EXIT=0`. On failure: compiler/linker errors.
+admt's passthrough accepts a file target as the positional argument. On success: only `EXIT=0`. On failure: compiler/linker errors.
 
 ### ELF size
 ```bash
-bash docker/adamant_env.sh exec "stat -c %s <path>/main/build/bin/Linux/<name>.elf"
+admt env exec "stat -c %s <path>/main/build/bin/Linux/<name>.elf"
 ```
 
 ### Fallback on failure
-If a filtered command shows EXIT != 0 but no error lines, re-run WITHOUT the
-filter to see the full output. Errors may appear in redo's stderr formatting
-that the filter strips. Always check exit code first, then look for errors.
+If ``admt -q`` shows EXIT != 0 but the diagnostic is terse, re-run without ``-q`` (or with ``-v`` for the underlying docker command too) to get the full build output.
 
 ```bash
-# Full output fallback:
-bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <path>/style 2>&1 | tail -40"
+# Full output:
+admt build <path>/style
+# Or with the docker compose exec line echoed:
+admt -v build <path>/style
 ```
 
 ### Do NOT paste full build logs

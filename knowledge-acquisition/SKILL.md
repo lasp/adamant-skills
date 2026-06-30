@@ -228,13 +228,13 @@ These are rough. Actual cost depends on input:output ratio. Output tokens cost
 ## Build Validation Notes
 
 ### Long-Running redo Commands
-`redo style_all`, `redo test_all`, and `redo coverage_all` are long-running commands that can take many minutes. **Ctrl+C typically does NOT stop them** -- the process continues inside the Docker container. If you need to abort, restart the container:
+`admt style --all`, `admt test --all`, and `admt coverage --all` are long-running commands that can take many minutes. **Ctrl+C typically does NOT stop them** -- the process continues inside the Docker container. If you need to abort, restart the container:
 ```bash
 docker restart <container_name>
 ```
 
 ### Validation Responsibility
-The **primary agent** (not sub-agents) runs `redo style`, `redo test`, and `redo coverage` for validation. Sub-agents create/modify files; the main agent validates them. This prevents concurrent redo conflicts and keeps the validation loop visible.
+The **primary agent** (not sub-agents) runs `admt style`, `admt test`, and `admt coverage` for validation. Sub-agents create/modify files; the main agent validates them. This prevents concurrent redo conflicts and keeps the validation loop visible.
 
 ## Anti-Patterns
 

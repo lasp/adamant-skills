@@ -124,7 +124,7 @@ components:
       - "Queue_Size => 3 * Event_Text_Logger_Instance.Get_Max_Queue_Element_Size"
 ```ada
 
-⚠️ **Event_Text_Logger build path caveat**: The `event_to_text` package is auto-generated in the assembly's `build/src/`. In some build configurations (especially with subassemblies), the ELF linker step may not find this package. If you hit `"Assembly_Name_Event_To_Text" is undefined` during linking, ensure the event_to_text `.adb` is generated first by running `redo build/src/assembly_name_event_to_text.adb` from the assembly directory before the ELF build. Alternatively, omit Event_Text_Logger for test assemblies.
+⚠️ **Event_Text_Logger build path caveat**: The `event_to_text` package is auto-generated in the assembly's `build/src/`. In some build configurations (especially with subassemblies), the ELF linker step may not find this package. If you hit `"Assembly_Name_Event_To_Text" is undefined` during linking, ensure the event_to_text `.adb` is generated first by running `admt build build/src/assembly_name_event_to_text.adb` from the assembly directory before the ELF build. Alternatively, omit Event_Text_Logger for test assemblies.
 
 ⚠️ **CRITICAL - Component YAML vs Assembly YAML Fields**: `priority`, `stack_size`, `secondary_stack_size` are **assembly-level fields** and must NOT appear in the `.component.yaml` file. They go in the assembly YAML component entry only. Putting these in component YAML causes build errors.
 
@@ -324,13 +324,13 @@ filters:
 
 Filter types: `component_name`, `component_type`, `component_execution`, `connector_name`, `connector_type`, `connector_kind`. Combine with `&` (AND) or `|` (OR) in `rule`.
 
-Build: `redo build/svg/assembly.svg` (full) or `redo views/build/svg/<view_name>.svg`.
+Build: `admt build build/svg/assembly.svg` (full) or `admt build views/build/svg/<view_name>.svg`.
 
 ## Assembly-Level Configuration Files
 
 Beyond the main `.assembly.yaml` and `.product_packets.yaml`, assemblies can use three additional YAML files for system-level configuration.
 
-**⚠️ Config file naming:** All config files follow the `<name>.<assembly>.<config_type>.yaml` pattern. The `<name>` prefix MUST be distinct from the assembly name and any other generated package names. Files whose names match generated-file patterns (e.g., `<assembly>_<suffix>.ads`) may be deleted by `redo clean` -- if your config YAML disappears after a clean, rename it with a more distinct prefix.
+**⚠️ Config file naming:** All config files follow the `<name>.<assembly>.<config_type>.yaml` pattern. The `<name>` prefix MUST be distinct from the assembly name and any other generated package names. Files whose names match generated-file patterns (e.g., `<assembly>_<suffix>.ads`) may be deleted by `admt clean` -- if your config YAML disappears after a clean, rename it with a more distinct prefix.
 
 ### Fault Response Table (`<name>.<assembly>.fault_responses.yaml`)
 
@@ -472,12 +472,12 @@ end Main;
 ## Build Commands
 
 ```bash
-redo build/svg/assembly.svg             # Diagram
-redo all                                # Build
-redo run                                # Build and run (from main/)
-```ada
+admt build build/svg/assembly.svg       # Diagram (redo build/svg/assembly.svg)
+admt build                              # Build (redo all)
+admt build run                          # Build and run (from main/, redo run)
+```
 
-Assembly build cache: run `redo clean` in BOTH assembly dir AND main dir to regenerate. **NEVER use `rm -rf build`** -- always use `redo clean`.
+Assembly build cache: run `admt clean` in BOTH assembly dir AND main dir to regenerate. **NEVER use `rm -rf build`** -- always use `admt clean`.
 
 ### Phased Assembly Integration
 
@@ -488,9 +488,9 @@ Build assemblies incrementally. Start with the minimum viable assembly (time sou
 3. **+CCSDS:** Add Ccsds_Packetizer + Ccsds_Command_Depacketizer + Ccsds_Socket_Interface + product_packets.yaml
 4. **+Safety:** Add Fault_Correction + Task_Watchdog + supporting config YAMLs
 
-Each addition requires correct wiring AND supporting YAML files. Verify `redo all` passes before adding the next layer.
+Each addition requires correct wiring AND supporting YAML files. Verify `admt build` passes before adding the next layer.
 
-**Build phases**: `redo all` runs multiple phases: YAML validation, Ada code generation, compilation, and documentation generation (LaTeX/SVG/HTML). Documentation failures (configuration.ads, .tex files, Jinja2 `TemplateNotFound` for HTML docs) do NOT mean the core assembly failed -- the assembly Ada code may compile fine. Check whether the actual `.ads/.adb` files in `build/src/` were generated before concluding the build failed. **Recommended**: build ELF directly from `main/` dir with `redo build/bin/Linux/main.elf` to avoid doc-generation failures blocking the build.
+**Build phases**: `admt build` runs multiple phases: YAML validation, Ada code generation, compilation, and documentation generation (LaTeX/SVG/HTML). Documentation failures (configuration.ads, .tex files, Jinja2 `TemplateNotFound` for HTML docs) do NOT mean the core assembly failed -- the assembly Ada code may compile fine. Check whether the actual `.ads/.adb` files in `build/src/` were generated before concluding the build failed. **Recommended**: build ELF directly from `main/` dir with `admt build build/bin/Linux/main.elf` to avoid doc-generation failures blocking the build.
 
 ## Common Assembly Errors
 
@@ -636,14 +636,16 @@ Before building, verify every component has ALL required connections:
 ## Running an Assembly
 
 ```bash
-# From host:
-bash docker/adamant_env.sh exec "cd /home/user/<project>/src/assembly/<name>/main && redo build/bin/Linux/main.elf"
-bash docker/adamant_env.sh exec "cd /home/user/<project>/src/assembly/<name>/main && ./build/bin/Linux/main.elf 2>&1"
+# In Docker:
+source /home/user/<project>/env/activate
+cd src/assembly/<name>/main
+admt build build/bin/Linux/main.elf
+./build/bin/Linux/main.elf 2>&1         # Events to stderr
 ```
 
 ## Style
 
-Run `redo style` on the assembly directory and `main/` before finalizing. Assembly YAML `with:` sections ARE correct (unlike component YAML where it's preamble-only). See [adamant-style](../adamant-style/SKILL.md).
+Run `admt style` on the assembly directory and `main/` before finalizing. Assembly YAML `with:` sections ARE correct (unlike component YAML where it's preamble-only). See [adamant-style](../adamant-style/SKILL.md).
 
 ## References
 - [references/assembly-yaml-examples.md](references/assembly-yaml-examples.md) -- Full YAML examples for assemblies

@@ -596,7 +596,7 @@ These appear in `style.log` for test directories and are NOT fixable:
 *_tests-implementation.ads:2:06: warning: unnecessary with of ancestor [-gnatwr]
 ```
 
-These come from `redo templates` generated files. Modifying them would be overwritten on next template generation.
+These come from `admt templates` generated files. Modifying them would be overwritten on next template generation.
 
 ---
 
@@ -643,7 +643,7 @@ return Success;
 ```bash
 # 1. Run style check
 cd src/components/my_component
-redo style
+admt style
 
 # 2. Review output
 cat build/style/style.log
@@ -655,9 +655,9 @@ cat build/style/style.log
 
 # 4. Fix all warnings
 # 5. Re-run until clean (zero warnings)
-redo style
+admt style
 
 # 6. Recursive check from project root
 cd /path/to/project
-redo style_all
+admt style --all
 ```

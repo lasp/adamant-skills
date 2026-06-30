@@ -113,17 +113,17 @@ data_dependencies:
 
 **After scaffolding:**
 1. Review and edit generated files (fill in TODOs)
-2. `redo <component_dir>/build/src/component-<name>.ads` (generate base class)
+2. `admt build <component_dir>/build/src/component-<name>.ads` (generate base class)
 3. Run `adamant_inspect.py` to see the full generated API
-4. `redo <component_dir>/test/build/template/` (generate test templates)
-5. `cp <component_dir>/test/build/template/*.ads <component_dir>/test/`
-6. Write test body, then `cd test && redo test`
+4. `admt build <component_dir>/test/build/template/` (generate test templates) -- or use `admt templates <component_dir>` which runs this plus the stub copy
+5. `cp <component_dir>/test/build/template/*.ads <component_dir>/test/`  (skipped when `admt templates` handles the copy)
+6. Write test body, then `cd test && admt test`
 
 ### adamant_validate_yaml.py -- YAML Pre-flight Checker
 
-**Purpose:** Fast structural validation of component YAML files without Docker. Catches the errors that most commonly cause `redo` failures.
+**Purpose:** Fast structural validation of component YAML files without Docker. Catches the errors that most commonly cause build failures.
 
-**When to use:** After writing or editing YAML files, before running `redo`. Saves a Docker round-trip per error.
+**When to use:** After writing or editing YAML files, before running `admt build`. Saves a Docker round-trip per error.
 
 ```
 python3 adamant_validate_yaml.py <component_dir>
@@ -151,18 +151,18 @@ python3 adamant_validate_yaml.py src/components/voltage_monitor
 These tools complement the existing skills:
 - **adamant-component-dev**: Use `adamant_scaffold` to create files, `adamant_validate_yaml` before building
 - **adamant-testing**: Use `adamant_inspect` after first build to see tester API before writing tests
-- **adamant-build-system**: Tools run outside Docker; `redo` still handles all code generation
+- **adamant-build-system**: Tools run outside Docker; `admt` (and the underlying `redo`) handle all in-container code generation
 
-## Environment Caching: adamant_env.sh exec
+## Environment Caching
 
-The project's `docker/adamant_env.sh exec` command handles environment activation automatically via a cached snapshot (~0.25s vs 3-5 seconds for full activation). **Always use `adamant_env.sh exec` -- never use `source env/activate` directly.**
+admt owns a cached environment snapshot per registered project (`/tmp/admt/<project>/env_snapshot.sh` + `exec.sh`) and restores it in milliseconds on every call. The legacy `adamant_env.sh` wrapper still provides its own `/tmp/.<project>_env_snapshot` as a fallback.
 
 ```bash
-# Run any command inside the container:
-bash docker/adamant_env.sh exec "cd /home/user/<project> && redo <target>"
+# Run any in-container command through admt (snapshot-cached):
+admt env exec "python3 /tmp/adamant_validate_yaml.py src/components/foo"
 
-# Discover what can be built:
-bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo what"
+# Force snapshot regeneration after container recreation:
+admt env refresh
 ```
 
 **Sub-agent workflow pattern:**
@@ -170,17 +170,23 @@ bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo wha
 # Step 1: Copy tools into container (once per container start)
 docker cp adamant-tools/*.py <project>_container:/tmp/
 
-# Step 2: Validate YAML (e.g. src/components/thermal_controller)
-bash docker/adamant_env.sh exec "python3 /tmp/adamant_validate_yaml.py src/components/thermal_controller"
+# Step 2: Validate YAML (uses pykwalify if SCHEMAPATH set)
+admt env exec "python3 /tmp/adamant_validate_yaml.py $COMP_DIR"
 
 # Step 3: Build component
-bash docker/adamant_env.sh exec "cd /home/user/<project> && redo src/components/thermal_controller/build/src/component-thermal_controller.ads"
+admt build $COMP_DIR/build/src/component-$NAME.ads
 
 # Step 4: Inspect generated API
-bash docker/adamant_env.sh exec "python3 /tmp/adamant_inspect.py src/components/thermal_controller"
+admt env exec "python3 /tmp/adamant_inspect.py $COMP_DIR"
 
 # Step 5: Build and test
-bash docker/adamant_env.sh exec "cd /home/user/<project>/src/components/thermal_controller/test && redo test"
+admt test $COMP_DIR/test
+```
+
+Fallback form (when admt is not applicable):
+
+```bash
+bash <project_dir>/docker/adamant_env.sh exec "python3 /tmp/adamant_validate_yaml.py src/components/foo"
 ```
 
 ## pykwalify Schema Validation

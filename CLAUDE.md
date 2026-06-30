@@ -11,16 +11,78 @@ This repo contains three agent prompt files. Copy them to your project root:
 
 ## Running Commands in the Adamant Environment
 
-All adamant and redo commands must be run inside the adamant environment container. Use the `adamant_env.sh exec` function from the project's `docker/` directory:
+**Use [`admt`](https://github.com/Jbsco/admt) (The Adamant Multitool) as the primary entry point for all Adamant work.** admt wraps redo, docker compose, and env activation behind one CLI. Run it from the host, on or below a registered project root; it forwards into the container automatically.
 
 ```bash
-bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo what"
-bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && redo test"
+admt what               # List buildable targets in the current dir
+admt build              # redo all
+admt test               # redo test (add --all for test_all)
+admt style              # redo style
+admt templates          # redo templates + optional stub copy
+admt env start          # Start the container
+admt env exec "<cmd>"   # Arbitrary command inside the container
 ```
 
-**`redo what`** lists all available build targets in any directory. Agents should run `redo what` first to discover what can be built before attempting builds.
+**Prefer admt everywhere.** The `adamant_env.sh exec` form remains as a fallback for operations admt has not yet absorbed (MVP is complete; post-MVP will keep closing the gap):
 
-**NEVER use `source env/activate` or `source project/env/activate`.** The `adamant_env.sh exec` function handles environment activation automatically via a cached snapshot, and is the only supported method for agents.
+```bash
+# Fallback only -- when admt does not cover the case.
+bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && <command>"
+```
+
+**`admt what`** is what you run first in any directory to discover what can be built. It replaces `redo what`.
+
+**admt is self-describing.** `admt --help` lists every command and global flag; `admt <command> --help` shows command-specific options (e.g. `admt env --help`, or `admt templates --help`, which reveals `--undo`). The tables below are a quick reference, not exhaustive -- when you need an advanced or unlisted subcommand or flag, run `--help` rather than guessing or defaulting to the fallback.
+
+### admt is new -- report gaps, don't silently work around them
+
+admt's MVP just landed; post-MVP work is ongoing. Gaps and bugs exist. If admt errors on a case you expected it to handle, or its output is visibly wrong:
+
+1. **Fall back to `adamant_env.sh exec` (or the equivalent inside `admt env exec`) to unblock the task.** Don't get stuck.
+2. **Surface the gap in your final report.** Include:
+   - The admt command you tried
+   - The error or observed deviation (copy the exact message when possible)
+   - The fallback form that worked
+   - admt version from `admt --version`
+
+   The user can then file an issue at <https://github.com/Jbsco/admt/issues>.
+
+Silent fallback is worse than no fallback -- it hides the signal that admt needs fixing. Verbose fallback keeps admt improving.
+
+### redo target -> admt command
+
+| Legacy (`adamant_env.sh exec "... redo X"`) | admt form |
+|---|---|
+| `redo what` | `admt what` |
+| `redo all` | `admt build` |
+| `redo <target>` | `admt build <target>` |
+| `redo test` / `redo test_all` | `admt test` / `admt test --all` |
+| `redo style` / `redo style_all` | `admt style` / `admt style --all` |
+| `redo analyze` / `redo analyze_all` | `admt analyze` / `admt analyze --all` |
+| `redo clean` / `redo clean_all` | `admt clean` / `admt clean --all` |
+| `redo coverage` / `redo coverage_all` | `admt coverage` / `admt coverage --all` |
+| `redo prove` | `admt prove` |
+| `redo publish` / `redo publish_all` | `admt publish` / `admt publish --all` |
+| `redo templates` | `admt templates` (plus stub copy / `--undo`) |
+| `DEBUG=1 redo ...` | `admt -d ...` |
+
+Every passthrough command also accepts an optional path argument -- `admt build src/components/foo` is equivalent to `cd src/components/foo && admt build`. Resolved against cwd, symlinks canonicalized, must fall under a registered volume mount.
+
+### admt env subcommands
+
+| Operation | admt form |
+|---|---|
+| Start / stop / restart the container | `admt env start` / `stop` / `restart` |
+| Interactive shell | `admt env login` |
+| Arbitrary command inside the container | `admt env exec "<cmd>"` |
+| Rebuild cached env snapshot | `admt env refresh` |
+| Container status | `admt env status` |
+| Register a project | `admt env init [path]` |
+| Switch active project | `admt env use <name>` |
+| List registered projects | `admt env list` |
+| Remove container (+ volumes / image) | `admt env rm [--volumes \| --image \| --remove-all]` |
+
+**NEVER `source env/activate` or `source project/env/activate` directly.** admt (and the `adamant_env.sh exec` fallback) handles activation automatically via a cached snapshot.
 
 ## Quick Start
 
@@ -99,8 +161,9 @@ When building as part of a phased pipeline (types -> components -> assembly):
 
 ## Critical Build Rules
 
-- **`redo clean` is always safe** on any directory (framework or project). If redo state corrupts (STORAGE_ERROR), run `redo clean_all` on BOTH adamant and project dirs.
-- **NEVER manually delete build directories** (`rm -rf build`, `rm -rf */build`, etc.). Use `redo clean` or `redo clean_all`. Bulk-deleting build dirs corrupts redo state and may require container recreation to recover.
-- **`redo coverage`** runs from the component's `test/` directory. No `redo clean` needed.
-- **Use `bash docker/adamant_env.sh exec "command"`** to run all build commands. Never use `source env/activate` directly.
-- **Never run concurrent redo processes** in the same container -- corrupts redo state.
+- **`admt clean` is always safe** on any directory (framework or project). If redo state corrupts (STORAGE_ERROR), run `admt clean --all` on BOTH the project root AND the framework root (see scope note below).
+- **`admt clean --all` is per-directory, not workspace-wide.** It runs `redo clean_all` recursively under the cwd's container path only. Other volume mounts in the active project's compose -- the framework at `/home/user/adamant`, sibling component repos -- are NOT cleaned by the same invocation. To clean another mount, `cd` into it on the host first; admt's path mapper accepts any host path under the active project's volume mounts. Example: `cd ~/cs/adamant && admt clean --all` cleans the framework tree when the active project mounts it.
+- **NEVER manually delete build directories** (`rm -rf build`, `rm -rf */build`, etc.). Use `admt clean` or `admt clean --all`. Bulk-deleting build dirs corrupts redo state and may require container recreation (`admt env rm --volumes && admt env start`) to recover.
+- **`admt coverage`** runs from the component's `test/` directory. No `admt clean` needed.
+- **Do not `source env/activate` directly.** admt handles environment activation via a cached snapshot; `adamant_env.sh exec` does too for the fallback case.
+- **Never run concurrent builds** in the same container -- corrupts redo state. admt serializes per-invocation; do not spawn multiple `admt build` / `admt test` runs at once.

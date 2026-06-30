@@ -575,21 +575,22 @@ openc3cli unload openc3-cosmos-station-assembly-0.0.1.gem__0
 
 ```bash
 # Launch assembly ELF in background with timeout (capture BOTH stdout and stderr):
-adamant_env.sh exec "cd /home/user/project && nohup timeout 300 path/to/main.elf > /tmp/assembly.log 2>&1 &"
+admt env exec "cd /home/user/project && nohup timeout 300 path/to/main.elf > /tmp/assembly.log 2>&1 &"
 
 # Wait for connection, then check log:
 sleep 15
-adamant_env.sh exec "cat /tmp/assembly.log"
+admt env exec "cat /tmp/assembly.log"
 # Look for Socket_Connected event (NOT Socket_Not_Connected)
 # Look for "Init_Base...", "Running..." lines confirming startup sequence
 
 # Kill when done:
-adamant_env.sh exec "pkill -f main.elf || true"
+admt env exec "pkill -f main.elf || true"
 ```
 
 **IMPORTANT:** Always do a clean rebuild before live testing to avoid stale .o file issues:
 ```bash
-adamant_env.sh exec "cd /home/user/project/src/assembly/<name>/main && redo clean && redo build/bin/Linux/main.elf"
+admt clean src/assembly/<name>/main
+admt build src/assembly/<name>/main/build/bin/Linux/main.elf
 ```
 
 **Main procedure pattern** (reference: adamant_example linux assembly):
@@ -972,4 +973,4 @@ troubleshooting table, and the gRPC keepalive/GoAway fix, see
 
 - **Assembly**: [adamant-assembly-dev](../adamant-assembly-dev/SKILL.md)
 - **Framework components**: [adamant-framework-components](../adamant-framework-components/SKILL.md)
-- **Style**: [adamant-style](../adamant-style/SKILL.md) -- run `redo style` on assembly dirs after adding CCSDS components
+- **Style**: [adamant-style](../adamant-style/SKILL.md) -- run `admt style` on assembly dirs after adding CCSDS components

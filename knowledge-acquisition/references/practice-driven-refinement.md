@@ -422,7 +422,7 @@ Build a [system description] using Adamant.
 
 Requirements:
 - [key constraints: SPARK, C FFI, subassemblies, active/passive]
-- [quality: tests with N% coverage, redo style clean, redo test passing]
+- [quality: tests with N% coverage, admt style clean, admt test passing]
 
 Use the Adamant skills. Make design decisions for types, connectors,
 fault thresholds, test cases, and assembly topology.

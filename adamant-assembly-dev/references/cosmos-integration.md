@@ -5,7 +5,7 @@ Adamant auto-generates COSMOS configuration from assembly YAML models. This refe
 
 ## Generated Output
 
-Assembly `redo what` lists buildable COSMOS targets. Run via `cosmos_config.do`:
+Assembly `admt what` lists buildable COSMOS targets. Run via `cosmos_config.do`:
 ```
 build/cosmos/plugin/{assembly}_ccsds_cosmos_commands.txt   # Command definitions
 build/cosmos/plugin/{assembly}_ccsds_cosmos_telemetry.txt  # Telemetry definitions

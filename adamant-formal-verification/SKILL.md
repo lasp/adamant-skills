@@ -5,14 +5,14 @@ description: SPARK formal verification for Adamant components and standalone pac
 
 # SPARK Formal Verification in Adamant
 
-SPARK is a subset of Ada with contracts (preconditions, postconditions, data dependencies) that enables mathematical proof of program correctness. Adamant integrates GNATprove through `redo prove`.
+SPARK is a subset of Ada with contracts (preconditions, postconditions, data dependencies) that enables mathematical proof of program correctness. Adamant integrates GNATprove through `admt prove`.
 
 ## Quick Start
 
 1. Add `SPARK_Mode => On` to package spec and body
 2. Write contracts (Pre, Post, Global, Depends)
 3. Create `all.prove.yaml` in the component/package directory (optional -- defaults: level 2, mode gold)
-4. Run `redo prove` from that directory
+4. Run `admt prove` from that directory
 
 ## SPARK Mode
 
@@ -236,7 +236,7 @@ Start with `silver` level 1-2. Escalate to `gold` level 3-4 for critical paths.
 ### Environment Override
 
 ```bash
-PROVE_SWITCHES="--level=4 --mode=gold" redo prove
+admt env exec "cd /home/user/<project>/<component> && PROVE_SWITCHES='--level=4 --mode=gold' redo prove"
 ```
 
 ### Output
@@ -245,9 +245,9 @@ Results go to `build/prove/prove.txt`.
 
 ## Build System Integration
 
-### redo prove (Component Directories)
+### `admt prove` (Component Directories)
 
-`redo prove` analyzes ALL Ada sources in the directory. For Adamant components, this includes generated base class files that depend on the full framework -- which GNATprove often cannot handle (child package resolution failures).
+`admt prove` analyzes ALL Ada sources in the directory. For Adamant components, this includes generated base class files that depend on the full framework -- which GNATprove often cannot handle (child package resolution failures).
 
 **Workaround: Prove logic packages directly:**
 
@@ -275,16 +275,16 @@ gnatprove ... \
 
 The `$(pwd),$(pwd)/build/src` form only works when `pwd` IS the component directory. From project root, the files are not in `$(pwd)` and gnatprove will report "not a file or compilation unit of any project".
 
-### redo prove (Standalone Packages)
+### `admt prove` (Standalone Packages)
 
-For directories containing only standalone SPARK packages (not Adamant components), `redo prove` works correctly.
+For directories containing only standalone SPARK packages (not Adamant components), `admt prove` works correctly.
 
 ### Other Build Targets
 
 ```bash
-redo style    # Style check (includes Ada warnings)
-redo test     # Unit tests
-redo coverage # Coverage analysis
+admt style    # Style check (includes Ada warnings)
+admt test     # Unit tests
+admt coverage # Coverage analysis
 ```
 
 ### GNAT Body Discovery: Pure Packages Must Have Bodies
@@ -368,7 +368,7 @@ function F (Tick : Unsigned_32; Period : Unsigned_16) return Unsigned_16
 
 ### Memory Maps and Register Maps
 
-Framework auto-generates memory/register map packages with `SPARK_Mode => On`. This detects bit-constrained types that would be dangerous in hardware-mapped memory (corrupted value outside range = mission-ending failure). These are analyzed by GNATprove during `redo prove` on the generated packages.
+Framework auto-generates memory/register map packages with `SPARK_Mode => On`. This detects bit-constrained types that would be dangerous in hardware-mapped memory (corrupted value outside range = mission-ending failure). These are analyzed by GNATprove during `admt prove` on the generated packages.
 
 ### Component Implementation
 
@@ -378,7 +378,7 @@ Standard Adamant components are Ada 2012, NOT SPARK by default. SPARK is opt-in 
 2. Apply `SPARK_Mode => On` to that package
 3. Call from the component implementation (which may be `SPARK_Mode => Off`)
 4. Create `all.prove.yaml` in the component directory
-5. `redo prove` analyzes all SPARK-mode sources in that directory
+5. `admt prove` analyzes all SPARK-mode sources in that directory
 
 ### Packed Types
 
@@ -409,7 +409,7 @@ When creating SPARK logic packages for Adamant components:
 4. Write contracts: Pre, Post, Global (prefer `Global => null`)
 5. Add loop invariants for every loop
 6. Create `all.prove.yaml` (start: level 2, mode silver)
-7. Run `redo prove`
+7. Run `admt prove`
 8. Fix failures using escalation strategy
 9. Escalate to gold mode when silver passes clean
 10. Document any `pragma Assume` with mathematical justification

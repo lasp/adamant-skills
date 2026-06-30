@@ -45,8 +45,7 @@ from environments import test  # noqa: F401
 ### Generate and copy templates
 ```bash
 cd src/components/<component_name>/test
-redo templates
-cp build/template/*.ad[sb] .
+admt -y templates      # generates build/template/* and copies stubs into test dir
 ```
 
 ## Test Body Template (Loop-Based)
