@@ -15,7 +15,8 @@ command/telemetry interface and verify the telemetry it returns. A regression su
 Author every test from the *interface contract* only:
 - all `.yaml`/`.yml` model files (commands, events, data products, packets, parameters, faults,
   assembly, configuration) -- ALLOWED and expected;
-- the generated COSMOS command/telemetry dictionary;
+- the generated COSMOS command/telemetry dictionary (the plugin's `cmd.txt` / `tlm.txt`; see
+  `adamant-cosmos-testing` for reading them);
 - the generated ground-side Python (numeric IDs and packed-type classes).
 
 **Why:** a test written by reading the implementation encodes what the code *does*, not what the
@@ -32,8 +33,9 @@ rule alone is leaky -- a shell `cat` bypasses it -- and the hook closes that gap
 1. **Read the contract** (order below) -- never the source.
 2. **Survey the existing suite** -- match its groups, naming, helpers, and coverage; extend it, do
    not reinvent it (see "Survey the existing suite first").
-3. **Author** a procedure in the project's ground/COSMOS tree (`gnd/cosmos/<TARGET>/procedures/`),
-   reusing the project's helper library (`gnd/cosmos/<TARGET>/lib/`).
+3. **Author** a procedure in the project's ground/COSMOS suite tree -- commonly
+   `gnd/cosmos/<TARGET>/procedures/` with helpers in `gnd/cosmos/<TARGET>/lib/`, but confirm the
+   actual layout against the project's tree and VCS -- reusing the project's helper library.
 4. **Rebuild** so the generated IDs/dictionary are current (the project's standard Adamant build).
 5. **Run** through the project's simulation harness and gate on exit code:
    ```bash
@@ -57,7 +59,7 @@ Adamant YAML models (per component: *.commands.yaml / *.events.yaml / *.data_pro
 ```
 
 **Read order for one procedure:**
-1. the generated COSMOS cmd/tlm dictionary -- exact command/telemetry names and parameters;
+1. the generated COSMOS cmd/tlm dictionary (`cmd.txt` / `tlm.txt`) -- exact command/telemetry names and parameters;
 2. the component's `.yaml` models -- descriptions, ranges, enum states;
 3. the generated `<assembly>_*.py` -- numeric IDs and the packed-type classes you need;
 4. the project's helper library (`lib/`) -- timing and command-and-verify primitives;
@@ -68,24 +70,27 @@ Naming transform, CCSDS framing, and the command-response contract in depth:
 
 ### Names
 - Command: `<Component_Instance>-<Command_Name>` under a COSMOS `<TARGET>`.
-- Telemetry item: a dotted/dashed path under a packet, e.g. `<Component_Instance>-<Data_Product>-<Field>`.
+- Telemetry item: the data-product + field path under a packet, e.g. `<Component_Instance>-<Data_Product>-<Field>`
+  (the exact join/case is naming-layer-dependent: the framework generator emits field-named items;
+  project naming layers commonly re-join them dashed and lowercased).
 - Use the **exact** names from the generated dictionary. Never abbreviate, guess, or **invent** a
   name, ID, range, or enum value -- every one traces to a contract artifact above. If you cannot
   point to where a value comes from, do not write it. `Safe_Mode_Thermal_Packet` is not `Safe_Thermal_Packet`.
 
-### Standing Adamant contracts (true for every project)
-- **Command response:** every command yields exactly one command response, and the command router
-  keeps success/failure counts. Verify acceptance by a success-count delta (or last-command id);
-  verify rejection by a failure-count delta. `Command_Response_Status`: `Success=0, Failure=1,
-  Id_Error=2, Validation_Error=3, Length_Error=4, Dropped=5`.
-- **CCSDS framing:** packets carry a CCSDS primary header, a secondary header (command function
-  code/checksum; telemetry time code), and a CRC trailer -- all defined in YAML, never in source.
+### Standing Adamant contracts
+- **Command response (every project):** every command yields exactly one command response, and the
+  command router keeps success/failure counts. Verify acceptance by a success-count delta (or
+  last-command id); verify rejection by a failure-count delta. `Command_Response_Status`:
+  `Success=0, Failure=1, Id_Error=2, Validation_Error=3, Length_Error=4, Dropped=5`.
+- **CCSDS framing (any project using the framework's CCSDS packetizer/depacketizer -- the common
+  downlink/uplink path):** packets carry a CCSDS primary header and a secondary header (command:
+  function code + XOR-8 checksum; telemetry: time code); telemetry packets end with a CRC-16
+  trailer, commands do not -- all defined in YAML, never in source.
 
 ## Where the suite lives
 
-- **Author** in the flight-software project's ground/COSMOS tree: procedures in
-  `gnd/cosmos/<TARGET>/procedures/`, hand-maintained helpers in `gnd/cosmos/<TARGET>/lib/`. These are
-  version-controlled source.
+- **Author** in the flight-software project's ground/COSMOS suite tree (procedures + hand-maintained
+  helpers, per the layout confirmed above). These are version-controlled source.
 - **Generated dependencies** (`<assembly>_*.py`, packed-type classes) are build output, merged into
   the packaged plugin at build time. **Read them; never edit them** -- edits are lost on rebuild.
 - **Rebuild** after any model change so IDs and the dictionary are current. Confirm with the
@@ -94,8 +99,8 @@ Naming transform, CCSDS framing, and the command-response contract in depth:
 
 ## Survey the existing suite first
 
-Before adding tests, read the project's existing procedures and helpers under
-`gnd/cosmos/<TARGET>/{procedures,lib}/` and conform to them -- faster, and it keeps the suite coherent:
+Before adding tests, read the project's existing procedures and helpers in the suite tree and
+conform to them -- faster, and it keeps the suite coherent:
 - **Style and structure** -- how Groups are organized, how `setup`/`teardown` and helpers are used, naming conventions.
 - **Helper API** -- the timing and command-and-verify helpers already provided; reuse them, never duplicate them.
 - **Coverage** -- which commands, telemetry, modes, parameters, and faults are already exercised, so you
@@ -112,8 +117,8 @@ from openc3.script import *
 from openc3.script.suite import Group, Suite
 
 class <Feature>Tests(Group):
-    def setup(self):     ...   # before each test in the group
-    def teardown(self):  ...   # after the group (restore any global state you disturbed)
+    def setup(self):     ...   # once, before the group's tests (NOT per-test)
+    def teardown(self):  ...   # once, after the group (restore any global state you disturbed)
     def _helper(self):   ...   # underscore = helper, NOT discovered as a test
     def test_<behavior>(self): ...   # test_* auto-discovered, run ALPHABETICALLY
 
@@ -125,8 +130,9 @@ class TestSuite(Suite):
     def teardown(self): ...   # once after all groups
 ```
 - `test_*` methods run **alphabetically** within a group -- number them (`test_01_*`) when sequence matters.
-- Route assertions through the check/wait-check API (below), never a bare Python `assert`, so
-  failures land in the suite report.
+- Route assertions through the check/wait-check API (below), never a bare Python `assert` -- check
+  failures report formatted context (expected vs. actual telemetry) and behave correctly in
+  disconnect mode, where a bare assert fails uninformatively.
 
 ## Standard regression patterns
 
@@ -139,7 +145,8 @@ cmd("<TARGET>", "<Component_Instance>-<Command_Name>", {"<PARAM>": value})
 wait_check_expression(
     f"tlm('<TARGET> <Status_Packet> <Command_Router_Instance>-Command_Success_Count-Value') == {before}+1", 10)
 ```
-Always baseline a free-running counter and check the delta -- never an absolute value.
+Always baseline a free-running counter and check the delta -- never an absolute value (counters do
+not start at zero on a warm re-run).
 
 **Simulation time vs wall-clock:** if the FSW runs in simulation time, use the project's sim-time
 wait helpers (derived from a housekeeping packet's sequence count), not wall-clock `wait`. Reserve
@@ -154,8 +161,8 @@ group works on a cold start and a warm re-run.
 
 ## Running the suite
 
-The project provides a simulation/run harness (softsim-style) that brings up the FSW, the simulator,
-and COSMOS, runs the suite via the COSMOS script runner, and **exits non-zero on any failure** (the
+The project provides a simulation/run harness that brings up the FSW, the simulator, and COSMOS,
+runs the suite via the COSMOS script runner, and **exits non-zero on any failure** (the
 regression gate):
 ```bash
 <harness> start
@@ -163,15 +170,15 @@ regression gate):
 ```
 The optional script/suite arguments run a single target -- the fast loop while developing one
 procedure. Underneath, this is `openc3cli script run <script> --suite <Suite> --method start`.
-For programmatic launch + log retrieval, see `adamant-cosmos-suite-results`; for the full script API,
-see `adamant-cosmos-testing`.
+For headless suite execution and result gating (stream + exit code), see
+`adamant-cosmos-suite-results`; for the full script API, see `adamant-cosmos-testing`.
 
 ## Checklist
 
 1. Wire enforcement (deny rules + hook) into the project -- see enforcement.md.
 2. Read the contract in order; identify the exact command/telemetry names for the feature.
 3. Survey the existing suite; reuse its helpers and conventions; target behavior not already covered.
-4. Create/extend a Group in `gnd/cosmos/<TARGET>/procedures/`; add it to the Suite in run order.
+4. Create/extend a Group in the suite tree's procedures directory; add it to the Suite in run order.
 5. Write `test_*` methods: baseline -> command -> check delta; verify via the command-response
    contract; assert through the check API.
 6. Reuse the project's `lib/` helpers (sim-time waits, command-and-verify); do not reinvent them.
@@ -200,5 +207,5 @@ see `adamant-cosmos-testing`.
 
 ## Related skills
 - `adamant-cosmos-testing` -- the COSMOS script API (cmd/tlm/wait-check) and suite/group mechanics.
-- `adamant-cosmos-suite-results` -- launching a suite programmatically and parsing its result log.
+- `adamant-cosmos-suite-results` -- headless suite execution and result gating (stream + exit code).
 - `adamant-component-dev` -- the YAML models (commands/events/data products/parameters) you read as the contract.

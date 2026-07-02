@@ -2,8 +2,10 @@
 
 Generic, placeholder-named snippets for the recurring shapes in an Adamant COSMOS regression suite.
 Replace `<TARGET>`, `<Component_Instance>`, `<Packet>`, `<Status_Packet>`, `<Command_Name>`,
-`<assembly>`, and helper names with the project's actual values (read from the generated dictionary
-and the project `lib/`). For the full COSMOS script API see `adamant-cosmos-testing`.
+`<assembly>`, `<Seq_Count_Item>` (the packet's sequence-count item -- the name comes from the
+generated dictionary and is naming-layer-dependent), and helper names with the project's actual
+values (read from the generated dictionary and the project `lib/`). For the full COSMOS script API
+see `adamant-cosmos-testing`.
 
 ## Helper library + imports
 
@@ -21,7 +23,8 @@ if _libs:
 from openc3.script import *
 from openc3.script.suite import Group, Suite
 from <assembly>_events import <Component_Instance>_<Event_Name>          # numeric event id
-from sim_util import wait_check_st, cmd_wait                              # project helpers (example names)
+from <project_lib> import wait_check_sim_time, send_and_verify_command   # project helpers -- use the
+                                                                          # project's actual names from lib/
 ```
 
 ## Suite + Group skeleton
@@ -75,8 +78,8 @@ If the FSW advances in simulation time, use the project's sim-time helpers (buil
 packet's sequence count) instead of wall-clock `wait`:
 
 ```python
-# project helper, e.g. wait_check_st(check_str, timeout_sim_seconds)
-wait_check_st("<TARGET> <Packet> <Component_Instance>-<Data_Product>-<Field> == 'EXPECTED'", 20)
+# project helper, e.g. wait_check_sim_time(check_str, timeout_sim_seconds)
+wait_check_sim_time("<TARGET> <Packet> <Component_Instance>-<Data_Product>-<Field> == 'EXPECTED'", 20)
 ```
 Reserve real `time.time()` / `wait(seconds)` for genuine wall-clock bounds (e.g. liveness timeouts).
 
@@ -85,12 +88,14 @@ Reserve real `time.time()` / `wait(seconds)` for genuine wall-clock bounds (e.g.
 ```python
 def test_01_alive(self):
     wait_packet("<TARGET>", "<Status_Packet>", 1, 10)        # block for first packet before checking
-    check("<TARGET> <Status_Packet> CCSDS_SEQ_COUNT > 0")
+    check("<TARGET> <Status_Packet> RECEIVED_COUNT > 0")     # RECEIVED_COUNT is COSMOS-derived (every packet)
 
 def test_packet_updating(self):
-    s1 = tlm("<TARGET> <Packet> CCSDS_SEQ_COUNT", type="RAW")
+    # <Seq_Count_Item> comes from the generated dictionary (framework default: Sequence_Count;
+    # naming layers may differ, e.g. Primary_Header_sequence_count)
+    s1 = tlm("<TARGET> <Packet> <Seq_Count_Item>", type="RAW")
     wait(2)
-    s2 = tlm("<TARGET> <Packet> CCSDS_SEQ_COUNT", type="RAW")
+    s2 = tlm("<TARGET> <Packet> <Seq_Count_Item>", type="RAW")
     if (s2 - s1) % 16384 <= 0:                                # wrap-safe 14-bit delta
         raise CheckError("<Packet> not advancing")
 ```
@@ -105,14 +110,15 @@ def test_event_emitted(self):
     sub, packets = get_packets(sub)
     # decode with project/event helper that maps buffers -> event ids (generated typed classes)
     ids = decode_event_ids([p["BUFFER"] for p in packets])
-    check_expression("<Component_Instance>_<Event_Name> in ids", locals())
+    expected_id = <Component_Instance>_<Event_Name>   # bind the module-level import to a local --
+    check_expression("expected_id in ids", locals())  # locals() cannot see module-level names
 ```
 
 ## Telemetry buffer dump + deserialize
 
 ```python
 def test_dump_roundtrip(self):
-    cmd_wait("<Component_Instance>-Dump_<Thing>")
+    send_and_verify_command("<Component_Instance>-Dump_<Thing>")
     buf = get_tlm_buffer("<TARGET> <Packet>")["buffer"]
     obj = <Type>()                       # generated packed-type class
     obj._from_byte_array(bitstring.ConstBitStream(buf[HEADER_LENGTH:]))
@@ -124,8 +130,8 @@ def test_dump_roundtrip(self):
 ```python
 def test_parameter_table(self):
     record = <Table_Record>( ... )                    # generated packed-type class
-    send_parameter_table("<Parameters_Instance>", record)        # project helper (serialize+CRC+send+verify)
-    check_dumped_active_table("<Parameters_Instance>", <Table_Record>(), record)
+    send_param_table("<Parameters_Instance>", record)            # project helper (serialize+CRC+send+verify)
+    verify_dumped_table("<Parameters_Instance>", <Table_Record>(), record)
 ```
 
 ## Negative / stability assertion
@@ -147,9 +153,11 @@ def _assert_stable(self, item, duration_s=3, poll_s=0.5):
 ## Assertion discipline + state hygiene
 
 - Every assertion goes through `check`, `check_expression`, `wait_check`, or `wait_check_expression`
-  -- never a bare `assert` (bare asserts do not register in the suite report).
-- `check*` raises on failure (immediate); `wait_check*` polls then raises on timeout; `wait*` returns
-  a bool without raising. Pick the one matching the test's intent.
+  -- never a bare `assert`. Check failures report with formatted context (expected vs. actual
+  telemetry) and behave correctly in disconnect mode; a bare assert fails uninformatively.
+- `check*` raises on failure (immediate); `wait_check*` polls then raises on timeout; `wait*` never
+  raises (the expression/tolerance/packet forms return a success bool; the plain time form returns
+  elapsed time). Pick the one matching the test's intent.
 - Restore disturbed global state in `teardown()`; keep setup helpers idempotent.
 - Order tests numerically (`test_01_*`) when later tests depend on earlier state, since discovery is
   alphabetical.

@@ -40,7 +40,7 @@ actual numbers, and the per-component YAML for the *semantics* (descriptions, ra
 | Packed-type field layouts (to build/parse a buffer) | the generated `<type>.py` classes |
 | Field ranges, defaults, enum states, descriptions | the component `.yaml` models |
 | Buffer sizes and similar constants | `<project>.configuration.yaml` |
-| CCSDS header/CRC layout | framework + IR CCSDS YAML (see below) |
+| CCSDS header/CRC layout | framework CCSDS YAML, plus any project-level interface-definition YAML (see below) |
 
 ## The naming transform (model name -> COSMOS name)
 
@@ -50,8 +50,10 @@ and `tlm("<TARGET> <Packet> <item path>")`. Those names are derived mechanically
 - **TARGET** is the COSMOS target name the plugin assigns to the assembly (one per assembly).
 - **Command name** is `<Component_Instance>-<Command_Name>` (the instance and command joined; `.` in
   a nested name becomes `-`).
-- **Telemetry item** is the dotted path of the data product and field, lowercased/dashed, under the
-  packet, e.g. `<Component_Instance>-<Data_Product>-<Field>[-<SubField>]`.
+- **Telemetry item** is the data-product + field path under the packet, e.g.
+  `<Component_Instance>-<Data_Product>-<Field>[-<SubField>]`. The join and case are
+  naming-layer-dependent: the framework generator emits field-named items, and project naming
+  layers commonly re-join the path dashed and lowercased.
 - Projects commonly run these through a **ground-software naming layer** that maps the model name to
   a final (often ALL-CAPS) operator-facing name. Because that mapping is project-defined, **always
   take the authoritative name from the generated dictionary** rather than reconstructing it. Use the
@@ -76,11 +78,18 @@ to parse a dumped telemetry buffer -- never reconstruct a byte layout by hand fr
 
 - **Primary header (6 bytes):** Version (3 bits), Packet_Type (1), Secondary_Header flag (1),
   APID (11), Sequence_Flag (2), Sequence_Count (14), Packet_Length (16).
-- **Command secondary header:** a function-code field plus a checksum (an XOR-8 over the packet).
-- **Telemetry secondary header:** a time code; telemetry packets end with a 2-byte CRC-16 trailer.
-- COSMOS auto-exposes the standard CCSDS items (`CCSDS_SEQ_COUNT`, `CCSDS_APID`, `CCSDS_LENGTH`,
-  ...). Read sequence counts with `type="RAW"` for integers. Use a wrap-safe delta for the 14-bit
-  sequence count: `(after - before) % 16384`.
+- **Command secondary header:** a function-code field plus a checksum (an XOR-8 over the packet,
+  seed `0xFF`; in normal operation the interface's write protocol computes it -- see the project's
+  `plugin.txt` Protocol stack).
+- **Telemetry secondary header:** a time code; telemetry packets end with a 2-byte CRC-16 trailer
+  (commands carry no CRC trailer).
+- The primary-header fields appear as telemetry items under **dictionary-defined names** -- COSMOS
+  does not auto-expose CCSDS items. The framework generator emits field-named items
+  (`Sequence_Count`, `Apid`, `Packet_Length`, ...); a project naming layer may rename them (e.g. a
+  `Primary_Header_sequence_count`-style item). Take the exact item name from the generated
+  dictionary. (What COSMOS *does* auto-derive per packet is `RECEIVED_COUNT` / `RECEIVED_TIME*` /
+  `PACKET_TIME*`.) Read sequence counts with `type="RAW"` for integers, and use a wrap-safe delta
+  for the 14-bit sequence count: `(after - before) % 16384`.
 
 ## The command-response contract
 
