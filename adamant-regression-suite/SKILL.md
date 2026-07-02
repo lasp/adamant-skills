@@ -163,8 +163,8 @@ regression gate):
 ```
 The optional script/suite arguments run a single target -- the fast loop while developing one
 procedure. Underneath, this is `openc3cli script run <script> --suite <Suite> --method start`.
-For programmatic launch + log retrieval, see `adamant-cosmos-minio`; for the full script API, see
-`adamant-cosmos-testing`.
+For programmatic launch + log retrieval, see `adamant-cosmos-suite-results`; for the full script API,
+see `adamant-cosmos-testing`.
 
 ## Checklist
 
@@ -200,5 +200,5 @@ For programmatic launch + log retrieval, see `adamant-cosmos-minio`; for the ful
 
 ## Related skills
 - `adamant-cosmos-testing` -- the COSMOS script API (cmd/tlm/wait-check) and suite/group mechanics.
-- `adamant-cosmos-minio` -- launching a suite programmatically and parsing its result log.
+- `adamant-cosmos-suite-results` -- launching a suite programmatically and parsing its result log.
 - `adamant-component-dev` -- the YAML models (commands/events/data products/parameters) you read as the contract.
