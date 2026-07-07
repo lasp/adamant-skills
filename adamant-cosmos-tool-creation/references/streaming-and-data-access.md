@@ -105,3 +105,39 @@ the norm for tools. Packet-mode keys stream whole decom hashes; on TSDB
 backfill the `__C` columns are renamed to plain item names and formatted
 variants are dropped. Prefer items mode unless the tool genuinely consumes
 most of a packet.
+
+## Verifying a tool's feed against ground truth
+
+When validating that a streaming tool shows every packet (no drops) or that a
+converted value is what the server actually stored, you need an independent
+ground truth -- not the tool reading itself back. Three sources, most to least
+reliable in practice:
+
+- **Query the time-series database directly (most reliable).** On COSMOS 7.x the
+  decom output is a QuestDB table per packet
+  (`{SCOPE}__TLM__{TARGET}__{PACKET}`) with one column per decom-hash key,
+  including the converted `ITEM__C` columns. Its HTTP API answers SQL:
+  `GET /exp?query=...` (CSV) or `/exec` (JSON) on the tsdb service port (9000),
+  authenticated with the QuestDB HTTP user/password (env `QDB_HTTP_USER` /
+  `QDB_HTTP_PASSWORD`). Example (from inside a container that can reach the tsdb
+  host): select `PACKET_TIMESECONDS` + `"ITEM__C"` over a time window and
+  reconcile against the tool's export. Note: **column/table names that are SQL
+  keywords must be double-quoted** (`"BUFFER__C"`), and a list/dict converted
+  value is stored as **JSON text** in a VARCHAR column (parse it before
+  comparing). This bypasses the streaming stack entirely and is the definitive
+  record of what decom wrote.
+- **`StreamingWebSocketApi.read_all(items=[...], start_time=, end_time=)`** (the
+  Python `openc3.script` client, runnable headless inside a container). Convenient
+  and language-native, but a *bounded* historical query (with `end_time`) has
+  been observed to hang on some deployments at the logged->realtime handoff --
+  if a capture stalls, fall back to the direct DB query rather than debugging the
+  socket. (venv path: `/openc3/python/.venv/bin/python` on 7.x.)
+- **A second, independent consumer** -- e.g. a `subscribe_packets`/`get_packets`
+  capture in a procedure reading the DECOM topic. Good for live/near-real-time
+  spans; bounded by Redis decom-topic retention (~minutes), so not for history.
+
+Reconciliation tip: match on a **stable per-event identity** (a value that
+embeds the source timestamp), not the packet `__time` (ns rounding) and not row
+counts alone -- diff the actual event/value set so a discrepancy names the
+specific missing item. Account for the tool's own dedup (identical values
+collapsed) and any display cap (oldest trimmed) before calling a gap a drop.

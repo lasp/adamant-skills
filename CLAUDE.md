@@ -110,7 +110,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-cosmos-testing` | 1043 | Integration test scripts via COSMOS scripting API |
 | `adamant-cosmos-suite-results` | 133 | COSMOS suite execution (openc3cli / Script Runner REST API) + result verification |
 | `adamant-regression-suite` | 700 | Black-box Python regression suites driven through the COSMOS cmd/tlm interface (source-blind) |
-| `adamant-cosmos-tool-creation` | 501 | Custom COSMOS web UI tools + widgets: decision ladder (screen/widget/tool/microservice), build contract, data feeds |
+| `adamant-cosmos-tool-creation` | 537 | Custom COSMOS web UI tools + widgets: decision ladder (screen/widget/tool/microservice), build contract, data feeds |
 | `adamant-framework-components` | 675 | Catalog of all 58 built-in components + audit |
 | `adamant-type-system` | 931 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-subassemblies` | 546 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
