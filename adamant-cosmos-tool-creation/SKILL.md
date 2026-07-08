@@ -199,6 +199,16 @@ validation yourself (see the archetypes reference).
    `/<route_prefix>/...` URL under the current origin.
 8. **Custom microservice trusts the caller** -- raw-websocket microservices are
    unauthenticated; gate destructive actions and validate tokens yourself.
+9. **Animated/WebGL tool degrades after navigating away and back a few times**
+   -- the render loop, window-level listeners, and GPU resources were never torn
+   down. Single-spa tools remount per navigation; `beforeUnmount` must cancel
+   the `requestAnimationFrame` loop, abort window listeners (AbortController),
+   dispose scene geometries/materials, and force WebGL context loss. Browsers
+   cap live WebGL contexts (~16); one leak per remount kills the tool.
+10. **Tool renders wrong or frozen data from an external feed** -- verify the
+    feed, not the render: capture the upstream stream directly (in-network,
+    from a container) and confirm the values move. A tool faithfully rendering
+    a static feed is an upstream problem; changing the tool cannot fix it.
 
 ## Checklist
 
@@ -208,10 +218,13 @@ validation yourself (see the archetypes reference).
 3. Externals + `systemjs` output + `preserveEntrySignatures` in the vite config
 4. Data feed chosen from the table (poll only for latest-value; stream for logs)
 5. Accumulating tools persist state and implement clear as a watermark
-6. Custom widgets and custom tools are in separate plugins
-7. `yarn build` clean; bundle lands at `tools/<name>/` (tool) or
+6. Animated/WebGL tools tear everything down in `beforeUnmount` (animation
+   loop, window listeners, GPU resources); heavy assets are dynamic-imported
+   (code-split) with a load-failure fallback
+7. Custom widgets and custom tools are in separate plugins
+8. `yarn build` clean; bundle lands at `tools/<name>/` (tool) or
    `tools/widgets/<Name>/` (widget); gemspec globs cover it
-8. Plugin installs; tool/widget appears and survives a browser reload with state
+9. Plugin installs; tool/widget appears and survives a browser reload with state
    intact
 
 ## References
@@ -222,9 +235,9 @@ validation yourself (see the archetypes reference).
   wiring a live/backfilled feed or debugging feed behavior.
 - `references/tool-archetypes-and-widgets.md` -- the concrete archetypes
   (append-only log stream, single-packet detail view, external-I/O terminal via
-  a backing microservice), the custom WIDGET build + built-in widget catalog,
-  and the MICROSERVICE keyword reference. Read when choosing an archetype or
-  building rung 2 / rung 4.
+  a backing microservice, live 3D view of an external binary feed), the custom
+  WIDGET build + built-in widget catalog, and the MICROSERVICE keyword
+  reference. Read when choosing an archetype or building rung 2 / rung 4.
 
 ## Related Skills
 

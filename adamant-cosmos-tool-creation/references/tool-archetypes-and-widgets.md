@@ -6,7 +6,7 @@ against the deployed version when a detail matters.
 
 ## Archetypes (rung 3 tools)
 
-Three recurring shapes. Pick by data access pattern and display, not by domain.
+Four recurring shapes. Pick by data access pattern and display, not by domain.
 
 ### A. Append-only log / event stream
 A growing list fed by every packet of a high-rate or event packet.
@@ -45,6 +45,67 @@ endpoint, a subprocess, a device console.
 - **Backend:** a MICROSERVICE that bridges the external socket to the websocket,
   holds the connection alive independent of any browser tab, and replays a ring
   buffer to newly-attached clients. See the MICROSERVICE section below.
+
+### D. Live 3D/graphics view of an external binary feed (rung 4)
+A rendered scene (three.js/WebGL) driven by a binary stream COSMOS does not
+broker -- e.g. a simulator's ZMQ/UDP visualization broadcast carrying protobuf
+frames. Proven end-to-end; the browser-native render is also what makes the
+tool portable (see the portability note below).
+
+- **Bridge (microservice):** subscribe upstream, relay each payload to attached
+  clients as **binary websocket frames** (opcode `0x2` -- the text-terminal
+  archetype C uses `0x1`). Cache the latest payload and replay it on attach so
+  a freshly opened tool renders without waiting for the next upstream message.
+  Address the upstream by its **compose service name** (in-network), never a
+  host-mapped port -- host mappings collide across concurrent stacks and do not
+  exist in CI.
+- **Decode in the tool:** vendor the `.proto` beside the tool source, import it
+  as raw text (vite `?raw`), and `protobuf.parse(protoText)` at startup
+  (protobufjs) -- no codegen step, and schema drift is a source-diff away.
+  Distinguish two non-rendering states: *no feed* (backend legitimately absent,
+  e.g. CI or a deployment without the upstream) and *frames arriving but not
+  decoding* (schema drift) -- a bare `catch { return }` makes drift look like an
+  idle feed; count failures and surface a distinct message (throttle the
+  console warning).
+- **Bundled static assets (meshes):** import the asset as raw text and parse it
+  directly (`new OBJLoader().parse(objText)`) instead of fetching a URL -- this
+  sidesteps tools-bucket asset-path resolution entirely and works identically
+  in dev and deployed. Load heavy assets via dynamic `import()` so they
+  code-split into lazy chunks and the scene paints immediately (keep a
+  primitive placeholder as the load-failure fallback). Decimate meshes before
+  committing (a headless Blender `DECIMATE` pass preserves bounds); raw CAD
+  exports are megabytes of repo blob for no visual gain at tool scale.
+- **Coordinate frames:** convert between the data's frame and the scene's frame
+  (e.g. Z-up to Y-up) **once**, with a proper rotation on a single parent group
+  (`root.rotation.set(-Math.PI / 2, 0, 0)`), and keep every per-body quantity
+  in the data's native frame inside it. Do NOT swap vector/quaternion
+  components per-value: a y/z component swap is a reflection (determinant -1)
+  that mirrors the scene and breaks chirality in ways that look almost right.
+- **Unmount hygiene (any animated/WebGL tool):** single-spa tools remount on
+  every navigation, so `beforeUnmount` must (1) `cancelAnimationFrame` the
+  render loop -- the closure otherwise pins the whole scene and keeps rendering
+  a disposed renderer; (2) remove window-level listeners (register them with
+  one `AbortController` signal and abort it); (3) traverse the scene disposing
+  geometries/materials, then `renderer.dispose()` +
+  `renderer.forceContextLoss()`. Browsers cap live WebGL contexts (~16 in
+  Chromium); leaking one per remount breaks the tool after a dozen visits.
+- **Dependency caveat:** a Python bridge's native-extension deps (e.g. zmq
+  bindings) are NOT auto-installed -- the microservice runs in the operator's
+  venv, so the dependency must be provided by the deployment (an install step
+  at stack start) or the bridge crash-loops. If the plugin deploys to
+  environments without the upstream feed or the dependency, gate the
+  microservice behind a plugin `VARIABLE`.
+- **Diagnosing a wrong/static render:** the tool renders whatever the feed
+  says -- verify the *feed*, not the render. Capture upstream inside the
+  network (a short script in a container subscribing directly) and check the
+  values change as expected before touching tool code; a static upstream is an
+  upstream/simulation problem the tool cannot fix.
+- **Portability:** this archetype renders in the browser's own WebGL, so it is
+  native-speed on every client OS and needs no GPU passthrough into
+  containers -- which containerized native renderers do need and cannot get on
+  Docker Desktop (macOS/Windows VMs have no GPU passthrough). Pure-JS deps
+  (three, protobufjs) bundle into the tool; the only platform-sensitive piece
+  is the bridge dependency above.
 
 ## The MICROSERVICE backend (rung 4)
 

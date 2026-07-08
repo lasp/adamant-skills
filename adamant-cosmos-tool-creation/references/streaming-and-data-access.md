@@ -141,3 +141,9 @@ embeds the source timestamp), not the packet `__time` (ns rounding) and not row
 counts alone -- diff the actual event/value set so a discrepancy names the
 specific missing item. Account for the tool's own dedup (identical values
 collapsed) and any display cap (oldest trimmed) before calling a gap a drop.
+
+For a rung-4 tool consuming an **external (non-COSMOS) feed**, the analogous
+ground truth is the upstream stream itself: capture it in-network (a short
+script in a container subscribing directly to the publisher) and confirm the
+values evolve as expected. The tool renders whatever the feed says; diagnose
+feed and render separately (see archetype D in the archetypes reference).
