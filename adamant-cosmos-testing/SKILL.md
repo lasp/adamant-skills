@@ -138,10 +138,9 @@ SkipScriptError     # Mark test SKIP, continue suite
 ### Python (recommended for Adamant -- tooling is Python-based)
 
 ```python
-from openc3.script import Suite, Group, cmd, tlm, wait, wait_check, wait_check_expression, \
-    wait_check_packet, check, check_expression, check_tolerance, override_tlm, normalize_tlm, \
-    set_limits, enable_limits, disable_limits, cmd_no_range_check, get_out_of_limits
-from openc3.script import CheckError, SkipScriptError
+from openc3.script import *              # cmd/tlm/wait_check/check/... plus CheckError, SkipScriptError
+from openc3.script.suite import Suite, Group   # Suite/Group live in the suite submodule -- NOT re-exported
+                                               # from openc3.script; importing them from there raises ImportError
 
 class CommandTests(Group):
     def setup(self):
@@ -224,11 +223,13 @@ PACKETS = [
 ]
 
 def test_all_packets_updating(self):
+    # Seq-count item name comes from the generated dictionary (framework default:
+    # Sequence_Count; project naming layers may differ, e.g. Primary_Header_sequence_count).
     for pkt in self.PACKETS:
-        seq1 = tlm(f"{pkt} CCSDS_SEQ_COUNT")
+        seq1 = tlm(f"{pkt} Sequence_Count")
         wait(2)
-        seq2 = tlm(f"{pkt} CCSDS_SEQ_COUNT")
-        if seq2 <= seq1:
+        seq2 = tlm(f"{pkt} Sequence_Count")
+        if (seq2 - seq1) % 16384 == 0:   # wrap-safe delta -- the 14-bit counter wraps at 16383
             raise CheckError(f"{pkt} not updating (seq {seq1} -> {seq2})")
 
 def test_values_within_limits(self):
@@ -282,12 +283,12 @@ Command an action, verify data propagates through the processing chain to teleme
 
 ```python
 def test_sensor_read_to_telemetry(self):
-    seq_before = tlm("ASSEMBLY ADCS_HK CCSDS_SEQ_COUNT")
+    seq_before = tlm("ASSEMBLY ADCS_HK Sequence_Count")
     cmd("ASSEMBLY REQUEST_MAG_SAMPLE")
     wait_check("ASSEMBLY CMD_RESPONSE STATUS == 'SUCCESS'", 5)
-    # Wait for new ADCS packet with updated data
+    # Wait for new ADCS packet with updated data (!= is wrap-safe; > misses the 16383->0 wrap)
     wait_check_expression(
-        f"tlm('ASSEMBLY ADCS_HK CCSDS_SEQ_COUNT') > {seq_before}", 10)
+        f"tlm('ASSEMBLY ADCS_HK Sequence_Count') != {seq_before}", 10)
     # Verify magnetic field magnitude is Earth-like (20-65 uT)
     mag_x = tlm("ASSEMBLY ADCS_HK MAG_X")
     mag_y = tlm("ASSEMBLY ADCS_HK MAG_Y")
@@ -339,12 +340,12 @@ RATE_TOLERANCE = 0.15  # 15%
 def test_packet_rates(self):
     for pkt, expected_hz in self.EXPECTED_RATES.items():
         measure_sec = max(5.0, 3.0 / expected_hz)
-        seq_start = tlm(f"{pkt} CCSDS_SEQ_COUNT")
+        seq_start = tlm(f"{pkt} Sequence_Count")
         t_start = time.time()
         wait(measure_sec)
-        seq_end = tlm(f"{pkt} CCSDS_SEQ_COUNT")
+        seq_end = tlm(f"{pkt} Sequence_Count")
         elapsed = time.time() - t_start
-        measured_hz = (seq_end - seq_start) / elapsed
+        measured_hz = ((seq_end - seq_start) % 16384) / elapsed   # wrap-safe 14-bit delta
         deviation = abs(measured_hz - expected_hz) / expected_hz
         if deviation > self.RATE_TOLERANCE:
             raise CheckError(
@@ -451,33 +452,39 @@ crc2.update(header_bytes)
 crc2.update(body_bytes)
 # crc2.value == Crc16().update(header_bytes + body_bytes).value
 
-# Cross-validate against COSMOS
-cosmos_crc = int(tlm("ASSEMBLY System_Status_Packet CCSDS_CRC", type="RAW"))
+# Cross-validate against COSMOS (CRC item name from the generated dictionary; framework emits `Crc`)
+cosmos_crc = int(tlm("ASSEMBLY System_Status_Packet Crc", type="RAW"))
 local_crc = Crc16()
 local_crc.update(packet_bytes_without_crc)
 assert local_crc.value == cosmos_crc
 ```
 
 ### Raw CCSDS packet construction
-For protocol-level testing, build CCSDS packets manually:
+For protocol-level testing, build CCSDS command packets manually. Adamant command framing: a
+2-byte secondary header (1 reserved bit + 7-bit function code + 8-bit XOR checksum), **no CRC
+trailer** -- the CRC-16 trailer is telemetry-side only:
 ```python
 import struct
-from crc16 import Crc16
 
-def build_ccsds_cmd(apid, seq_count, payload_bytes):
-    """Build a complete CCSDS command packet with CRC."""
-    data_length = len(payload_bytes) + 2 - 1  # +2 for CRC, -1 per CCSDS convention
+def build_ccsds_cmd(apid, seq_count, function_code, payload_bytes):
+    """Build a CCSDS command packet with Adamant framing (XOR-8 checksummed)."""
+    data_length = 2 + len(payload_bytes) - 1     # bytes after primary header, -1 per CCSDS convention
     # Primary header: version=0, type=1(cmd), sec_hdr=1, APID
     word0 = (0 << 13) | (1 << 12) | (1 << 11) | (apid & 0x7FF)
-    word1 = (0x3 << 14) | (seq_count & 0x3FFF)  # seq_flags=3 (unsegmented)
-    header = struct.pack('>HHH', word0, word1, data_length)
-    # Secondary header (Adamant: 8-byte function code area)
-    # Append payload + CRC
-    packet = header + payload_bytes
-    crc = Crc16()
-    crc.update(packet)
-    return packet + struct.pack('>H', crc.value)
+    word1 = (0x3 << 14) | (seq_count & 0x3FFF)   # seq_flags=3 (unsegmented)
+    # Secondary header: reserved bit + 7-bit function code, checksum byte zeroed for now
+    pkt = bytearray(struct.pack('>HHHBB', word0, word1, data_length, function_code & 0x7F, 0))
+    pkt.extend(payload_bytes)
+    checksum = 0xFF                               # XOR-8 longitudinal parity, seed 0xFF (framework Xor_8)
+    for b in pkt:
+        checksum ^= b
+    pkt[7] = checksum                             # FSW re-XORs the full packet and expects zero
+    return bytes(pkt)
 ```
+In a normal suite you never compute this yourself: the interface's write protocol (`cmd_checksum`)
+fills in the checksum. Hand-build only for protocol-level tests -- and check the project's
+`plugin.txt` `Protocol` stack first, since any additional command framing (sync words, a
+per-project CRC) is an interface/protocol decision, not part of the packet definition.
 
 ## Disconnect Mode (Offline Testing)
 
@@ -671,7 +678,7 @@ limitation that can affect any test making this call sequence.
 - **Fault injection:** Assembly-specific. Requires test commands built into the assembly (not all assemblies have these).
 - **Packet names:** Must match COSMOS plugin cmd.txt/tlm.txt definitions exactly (TARGET PACKET ITEM).
 - **`wait_check_expression` evaluates strings:** Only `tlm()`, `cmd()`, and built-in Python are available inside the expression string. User-defined functions (e.g., `seq_delta()`) are NOT visible. Use `wait_check_packet` or manual polling loops instead.
-- **CCSDS standard items:** COSMOS auto-generates `CCSDS_VERSION`, `CCSDS_TYPE`, `CCSDS_SEC_HDR_FLG`, `CCSDS_APID`, `CCSDS_SEQ_FLAGS`, `CCSDS_SEQ_COUNT`, `CCSDS_LENGTH` for every packet with a CCSDS header. Read with `type="RAW"` to get integer values.
+- **CCSDS header items:** COSMOS does NOT auto-generate CCSDS items -- header items exist only as defined in the generated dictionary. Adamant's plugin generator emits the primary-header fields as items named after the model fields (`Version`, `Packet_Type`, `Secondary_Header`, `Apid`, `Sequence_Flag`, `Sequence_Count`, `Packet_Length`); project naming layers may rename them (e.g. `Primary_Header_sequence_count`). Take the exact name from cmd.txt/tlm.txt. (What COSMOS *does* auto-derive per packet is `RECEIVED_COUNT` / `RECEIVED_TIMESECONDS` / `PACKET_TIME*` -- not CCSDS fields.) Read items with `STATE` conversions using `type="RAW"` to get integer values.
 - **Python vs Ruby:** Both APIs have identical method names and behavior. Python recommended for Adamant since tooling is Python-based.
 - **Performance:** Use `disable_instrumentation()` context manager for tight loops:
   ```python
@@ -719,7 +726,7 @@ def test_01_assembly_alive(self):
     """First contact -- wait for ANY packet before checking values."""
     wait_packet("ASSEMBLY", "System_Status_Packet", 1, timeout=10)  # blocks until first packet
     # NOW safe to use wait_check/check
-    check("ASSEMBLY System_Status_Packet CCSDS_SEQ_COUNT > 0")
+    check("ASSEMBLY System_Status_Packet RECEIVED_COUNT > 0")
 ```
 
 Order boot tests numerically (`test_01` through `test_0N`) to enforce sequential verification: POST -> init -> rate groups -> command link -> telemetry flow -> nominal mode.
@@ -761,8 +768,8 @@ cmd(f"GROUND_SIM Sensor_Sim-Set_Sun_Vector with X {pack_f32(0.5)}, Y {pack_f32(0
 # Verify flight SW responds
 wait_check("FLIGHT_FSW Attitude_HK Controller_State.Value == 'TRACKING'", 15)
 # Cross-target consistency
-sim_seq = tlm("GROUND_SIM Sim_Status CCSDS_SEQ_COUNT")
-flight_seq = tlm("FLIGHT_FSW Flight_HK CCSDS_SEQ_COUNT")
+sim_seq = tlm("GROUND_SIM Sim_Status Sequence_Count")
+flight_seq = tlm("FLIGHT_FSW Flight_HK Sequence_Count")
 ```
 
 For vector commands with multiple F32 fields, pack each independently:

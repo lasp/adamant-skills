@@ -217,7 +217,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Wrap C++ algorithm into Adamant component | algorithm-wrapping | component-dev |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | COSMOS integration test scripts | cosmos-testing | cosmos-integration |
-| COSMOS test execution via REST API / MinIO logs | cosmos-minio | cosmos-integration |
+| COSMOS suite execution headless/CI (stream + exit-code gate) | cosmos-suite-results | cosmos-integration |
 | Debug COSMOS service failures / script runner | cosmos-integration (internals ref) | -- |
 | Memory-mapped register interface | type-system | component-dev |
 | Split assembly into subassemblies | subassemblies | assembly-dev |
