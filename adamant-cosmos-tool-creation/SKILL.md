@@ -209,6 +209,12 @@ validation yourself (see the archetypes reference).
     feed, not the render: capture the upstream stream directly (in-network,
     from a container) and confirm the values move. A tool faithfully rendering
     a static feed is an upstream problem; changing the tool cannot fix it.
+11. **Bundled asset 404s only when deployed (works in dev)** -- vite emitted an
+    asset file plus a URL that lacks the tool's base path (e.g. `?inline` on a
+    dynamic import silently degrades to an asset URL). Bundle assets as text
+    instead: `?raw` for text formats, base64-in-a-text-file + `data:` URI for
+    binaries (see the archetypes reference). Inspect the built output for
+    root-absolute `/assets/...` URLs before shipping.
 
 ## Checklist
 

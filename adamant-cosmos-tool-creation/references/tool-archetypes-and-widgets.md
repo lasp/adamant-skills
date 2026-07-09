@@ -67,14 +67,29 @@ tool portable (see the portability note below).
   decoding* (schema drift) -- a bare `catch { return }` makes drift look like an
   idle feed; count failures and surface a distinct message (throttle the
   console warning).
-- **Bundled static assets (meshes):** import the asset as raw text and parse it
-  directly (`new OBJLoader().parse(objText)`) instead of fetching a URL -- this
-  sidesteps tools-bucket asset-path resolution entirely and works identically
-  in dev and deployed. Load heavy assets via dynamic `import()` so they
+- **Bundled static assets (meshes, textures):** import the asset as raw text
+  and parse it directly (`new OBJLoader().parse(objText)`) instead of fetching
+  a URL -- this sidesteps tools-bucket asset-path resolution entirely and works
+  identically in dev and deployed. **Binary assets (images) get the same
+  treatment**: commit them base64-encoded as text, dynamic-import with `?raw`,
+  and feed a `data:` URI to the loader. Do NOT reach for vite's `?inline` on a
+  dynamic import -- it builds clean but silently emits a hashed asset file plus
+  a URL missing the tool's base path (and leaks the query string), a 404 that
+  appears only when deployed. Load heavy assets via dynamic `import()` so they
   code-split into lazy chunks and the scene paints immediately (keep a
   primitive placeholder as the load-failure fallback). Decimate meshes before
   committing (a headless Blender `DECIMATE` pass preserves bounds); raw CAD
   exports are megabytes of repo blob for no visual gain at tool scale.
+- **In-scene annotations and video capture:** draw text labels onto a canvas
+  and show them as `THREE.Sprite`s (`sizeAttenuation: false` for constant
+  screen size, `depthTest: false` to stay legible) rather than DOM/CSS2D
+  overlays -- the scene canvas is the only thing `canvas.captureStream()`
+  records, so sprite labels appear in recordings and DOM overlays silently
+  vanish. Scene recording itself is dependency-free: `captureStream(30)` +
+  native `MediaRecorder` to WebM, flushing a chunk each second so an
+  interrupted recording still saves. Caveat: browsers throttle the render
+  loop of hidden tabs, which freezes the capture -- keep the tab visible
+  while recording.
 - **Coordinate frames:** convert between the data's frame and the scene's frame
   (e.g. Z-up to Y-up) **once**, with a proper rotation on a single parent group
   (`root.rotation.set(-Math.PI / 2, 0, 0)`), and keep every per-body quantity
