@@ -26,6 +26,13 @@ run                      # runs the whole AUnit suite
 bt                       # on catch: raise point <- test proc <- AUnit caller
 ```
 
+**Diagnosis standard: a root cause is demonstrated, not inferred.** Reading
+source produces a hypothesis; the diagnosis is complete only when the
+mechanism has been shown at runtime -- the actual values at the defect (a
+catchpoint stop, a breakpoint print, a watchpoint transition). This is what
+separates "the bug is probably X" from a report a reviewer can act on, and
+it routinely falsifies convincing source-reading theories.
+
 No flags, no rebuild-for-debug: Linux test binaries are always compiled
 `-O0 -g -gnata -gnatVa` and never stripped, so source-level debugging works
 on the artifact `redo test` already built.
