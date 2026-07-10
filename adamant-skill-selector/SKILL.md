@@ -57,6 +57,13 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 - Full path coverage techniques (Invalid_Command, Send_Dropped, Recv_Async_Dropped)
 - Adding tests to existing components (YAML + template regeneration)
 
+### Debugging a failing test or binary with GDB
+**Load:** `adamant-debugging`
+- Unit tests are already debuggable (`Linux_Test` = `-O0 -g`, never stripped) -- no rebuild-for-debug
+- Ada-specific moves: `file:line` breakpoints (name resolution unreliable), `catch exception`/`catch assert`
+- Cross targets: attach to Renode's GDB server (symbols only, no `load`) or scripted JTAG bring-up
+- `DEBUG=1` is build verbosity, NOT debug symbols -- the target already provides them
+
 ### Defining custom types (records, arrays, enums)
 **Load:** `adamant-type-system`
 - YAML field types and format codes
@@ -206,6 +213,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Scaffold + validate before building | tools | component-dev |
 | Add tests to existing component | testing | component-dev |
 | Measure/improve test coverage | testing (coverage guide) | component-dev |
+| Debug a failing test at runtime (breakpoints/stepping) | debugging | testing |
 | Wire components into assembly | assembly-dev | framework-components |
 | Debug build failure | build-system | -- |
 | Debug code generation producing wrong output | framework-internals | build-system |

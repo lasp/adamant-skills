@@ -1,6 +1,6 @@
 # Repository Overview
 
-25 skills, ~25K lines for AI-assisted Adamant embedded software development.
+26 skills, ~25K lines for AI-assisted Adamant embedded software development.
 
 ## Top-Level Files
 
@@ -21,6 +21,7 @@
 
 ### Infrastructure
 - `adamant-build-system` — Redo commands, code gen, build paths
+- `adamant-debugging` — GDB workflows: unit tests, Renode/JTAG cross targets
 - `adamant-project-setup` — Scaffolding, Docker, env/activate
 - `adamant-style` — Ada/YAML/Python style rules
 - `adamant-tools` — Python utilities: inspector, scaffolder, YAML validator
