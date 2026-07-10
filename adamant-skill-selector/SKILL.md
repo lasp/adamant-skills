@@ -57,11 +57,12 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 - Full path coverage techniques (Invalid_Command, Send_Dropped, Recv_Async_Dropped)
 - Adding tests to existing components (YAML + template regeneration)
 
-### Debugging a failing test or binary with GDB
+### Debugging: failing tests, crashes/hangs, target-only bugs
 **Load:** `adamant-debugging`
-- Unit tests are already debuggable (`Linux_Test` = `-O0 -g`, never stripped) -- no rebuild-for-debug
-- Ada-specific moves: `file:line` breakpoints (name resolution unreliable), `catch exception`/`catch assert`
-- Cross targets: attach to Renode's GDB server (symbols only, no `load`) or scripted JTAG bring-up
+- Interactive GDB: tests are already debuggable (`Linux_Test` = `-O0 -g`); `file:line` breakpoints, `catch exception`/`catch assert`
+- Post-mortem: Last Chance Handler packet decode, stack-trace symbolization (bundled script), gdb attach to a crashed target
+- A hung COSMOS/Renode suite is a crash until proven otherwise (LCH kills telemetry; waits spin)
+- Target/compiler level: works-on-Linux-traps-on-target families, stale-codegen signatures
 - `DEBUG=1` is build verbosity, NOT debug symbols -- the target already provides them
 
 ### Defining custom types (records, arrays, enums)
@@ -214,6 +215,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Add tests to existing component | testing | component-dev |
 | Measure/improve test coverage | testing (coverage guide) | component-dev |
 | Debug a failing test at runtime (breakpoints/stepping) | debugging | testing |
+| Triage a crash, hang, or LCH packet | debugging | -- |
 | Wire components into assembly | assembly-dev | framework-components |
 | Debug build failure | build-system | -- |
 | Debug code generation producing wrong output | framework-internals | build-system |

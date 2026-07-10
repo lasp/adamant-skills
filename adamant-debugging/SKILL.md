@@ -1,20 +1,22 @@
 ---
 name: adamant-debugging
-description: Debug Adamant binaries with GDB -- unit tests, Linux assembly binaries, and cross-compiled bareboard targets under Renode or JTAG hardware. Use when a test fails and assertions/prints are not enough, when stepping through component or assembly code, when catching Ada exceptions at the raise point, or when choosing which build target gives honest (-O0) stepping.
+description: Debug Adamant software at three levels -- interactive GDB on unit tests and assemblies (breakpoints, stepping, Ada catchpoints), post-mortem crash triage (Last Chance Handler packets, stack-trace symbolization, Renode attach), and target/compiler-level pitfalls (works-on-Linux-traps-on-target, codegen bugs, stale generated code). Use when a test fails and assertions/prints are not enough, when the FSW crashes or a test suite hangs, when decoding an exception traceback, or when behavior differs between Linux and the flight target.
 ---
 
 # adamant-debugging
 
-GDB workflows for Adamant executables. The framework's build targets already
-produce debuggable artifacts -- the skill is knowing which target carries which
-switches, where the binary lands, and the Ada-specific GDB moves that differ
-from C/C++ debugging.
+Three debugging layers, in escalation order: interactive GDB (a failing test
+in front of you), post-mortem triage (a crash already happened -- decode what
+the flight software left behind), and target/compiler-level (the bug only
+exists on the cross target). The framework already builds debuggable
+artifacts and ships crash-reporting components -- the skill is knowing which
+level you are at and the Ada-specific moves at each.
 
 ## Quick Start (debug a failing unit test)
 
 ```bash
 cd src/components/<component_name>/test
-redo test                        # or: redo all -- builds build/bin/Linux_Test/test.elf
+redo test                        # builds build/bin/Linux_Test/test.elf
 gdb build/bin/Linux_Test/test.elf
 ```
 
@@ -25,11 +27,10 @@ bt                       # on catch: raise point <- test proc <- AUnit caller
 ```
 
 No flags, no rebuild-for-debug: Linux test binaries are always compiled
-`-O0 -g -gnata -gnatVa` and are never stripped (no strip step exists in the
-build rules), so full source-level debugging works on the artifact
-`redo test` already built.
+`-O0 -g -gnata -gnatVa` and never stripped, so source-level debugging works
+on the artifact `redo test` already built.
 
-## Why builds are already debuggable (and when they are not)
+## Build targets: which artifacts are debuggable
 
 Debug readiness is decided by the build TARGET, not a flag:
 
@@ -37,50 +38,34 @@ Debug readiness is decided by the build TARGET, not a flag:
 |---|---|---|
 | `Linux` (= `Linux_Debug`), `Linux_Test`, `Linux_Coverage` | `-O0 -g -fstack-check -gnato -gnata -gnatVa` | Yes -- honest line-by-line |
 | Bareboard `<Platform>_Debug` / `_Test` variants | `-g3 -ggdb -O0 -gnata -gnatVa` | Yes |
-| Bareboard `_Production` / `_Development` | `-g3 -ggdb` **plus `-O2`** | Loadable, but stepping is jumpy and locals may be optimized out |
+| Bareboard `_Production` / `_Development` | `-g3 -ggdb` **plus `-O2`** | Loadable; stepping jumpy, locals may be optimized out |
 
-Rules that follow from the table:
-
-- There is no production Linux mode -- `Linux` is a rename of `Linux_Debug`,
-  so anything built for host execution is already a debug build.
-- Bareboard ELFs keep symbols in **every** mode (the base gpr sets
-  `-g3 -ggdb` unconditionally), so a production ELF loads in gdb -- but for
-  honest stepping build the `-O0` variant explicitly:
-  `redo build/bin/<Platform>_Debug/main.elf` and point gdb's `file` at it.
+- There is no production Linux mode -- `Linux` is a rename of `Linux_Debug`.
+- Bareboard ELFs keep symbols in **every** mode, so a production ELF loads in
+  gdb -- but for honest stepping build the `-O0` variant:
+  `redo build/bin/<Platform>_Debug/main.elf`.
 - `DEBUG=1 redo ...` is **build verbosity** (prints gprbuild/gcc command
-  lines), not debug symbols. The name collides with what you might expect;
-  symbols come from the target, which already provides them.
-
-Artifact locations: executables land at
-`<src_dir>/build/bin/<TARGET>/<test|main>.elf`; test dirs force the `_Test`
-target automatically via their `env.py`, so you do not set TARGET by hand.
-`redo targets` lists every available target with its gpr file.
+  lines), not debug symbols -- the target already provides those.
+- Executables land at `<src_dir>/build/bin/<TARGET>/<test|main>.elf`; test
+  dirs force the `_Test` suffix automatically via `env.py`. `redo targets`
+  lists every target.
 
 ## Ada-specific GDB moves
 
-These differ from C/C++ debugging and are where cold-start time goes:
-
-1. **Set breakpoints by `file:line`, not Ada name.** The Ada expression form
-   (`break My_Package.My_Proc`) frequently fails to resolve; `file:line`
-   always works:
+1. **Set breakpoints by `file:line`, not Ada name** -- the expression form
+   (`break My_Package.My_Proc`) frequently fails to resolve:
 
    ```gdb
    break <unit_name>-implementation.adb:326
    ```
 
-   If you need a symbolic breakpoint, use the linker name -- Ada mangles
-   with double underscores. Find it first:
+   For symbolic breakpoints use the linker name (Ada mangles with double
+   underscores): `nm test.elf | grep -i <proc_name>` then break on
+   `<unit>__implementation__<proc>`.
 
-   ```bash
-   nm build/bin/Linux_Test/test.elf | grep -i <proc_name>
-   # e.g. <unit>__implementation__test_set_up
-   ```
-
-2. **`catch exception` is the failing-test power tool.** Debug/test targets
-   compile with `-gnata`, so a failing `pragma Assert` raises
-   `ADA.ASSERTIONS.ASSERTION_ERROR`. Catch it and gdb stops at the raise
-   with the full call stack -- almost always faster than locating the
-   failing assertion by reading test output:
+2. **`catch exception` is the failing-test power tool** -- `-gnata` means a
+   failing `pragma Assert` raises `ADA.ASSERTIONS.ASSERTION_ERROR`; the
+   catchpoint stops at the raise with the full stack:
 
    ```gdb
    catch exception                    # all Ada exceptions
@@ -88,145 +73,177 @@ These differ from C/C++ debugging and are where cold-start time goes:
    catch assert                       # only failed assertions
    ```
 
-3. **There is no single-test filter.** The AUnit harness runs the whole
-   suite; to debug one test, break in that `Test_*` procedure (file:line)
-   and `continue` past everything before it.
+3. **No single-test filter** -- the AUnit harness runs the whole suite;
+   break in the specific `Test_*` procedure and `continue` past the rest.
 
-4. **Validity checks change what you see.** `-gnatVa` + Initialize_Scalars
-   means uninitialized scalars hold recognizable invalid patterns rather
-   than garbage -- a variable showing an extreme/invalid value in
-   `info locals` usually means "never assigned", not "corrupted".
+4. **Validity checks change what you see** -- `-gnatVa` +
+   Initialize_Scalars means uninitialized scalars hold recognizable invalid
+   patterns; an extreme value in `info locals` usually means "never
+   assigned", not "corrupted".
 
 ## Debugging environment
 
 - gdb ships with the GNAT toolchain and is on PATH **only in the activated
-  environment** (container login shell via the project's env tooling). A
-  bare `docker exec` shell will not find it -- it lives under the toolchain
-  installation, not `/usr/bin`.
-- DWARF records build-environment paths. Debugging inside the container
-  matches exactly. A host gdb also works on Linux-target binaries (they are
-  native executables): run gdb from the source directory so sources resolve
-  via cwd, or map the prefix:
+  environment** (container login via the project's env tooling); a bare
+  `docker exec` shell will not find it.
+- DWARF records build-environment paths. Inside the container everything
+  matches; a host gdb works on Linux-target binaries if launched from the
+  source dir (cwd resolution) or with
+  `set substitute-path <container_prefix> <host_checkout>`.
+- **Rebuild before debugging** -- "Source file is more recent than
+  executable" means line numbers are lying.
+- Assembly binaries on Linux: same story without the `_Test` suffix --
+  `redo build/bin/Linux/main.elf`, then `gdb` it (`redo run` = build + run).
 
-  ```gdb
-  set substitute-path <container_build_prefix> <host_checkout_path>
+## Cross targets: Renode and JTAG
+
+Cross ELFs cannot execute on the host. Attach a **cross** gdb
+(`riscv32-elf-gdb`, `arm-eabi-gdb`) to a GDB server:
+
+- **Renode**: the project's `.resc` loads the ELF (`sysbus LoadELF`) and
+  starts `machine StartGdbServer 3333`; attach with the ELF as **symbols
+  only -- no `load`** (Renode already loaded it):
+
+  ```bash
+  <cross>-gdb build/bin/<Platform>/main.elf -ex 'target remote :3333'
   ```
 
-- **Rebuild before debugging.** gdb's "Source file is more recent than
-  executable" warning means line numbers are lying; `redo test` first.
-- Use `gdb -nx` if a host `~/.gdbinit` interferes with batch scripts.
+  Ctrl-C halts the live target; `monitor <cmd>` passes to the Renode
+  console. Projects wrap this in `redo renode` / `debug_renode.sh` scripts
+  beside the assembly or `test_renode` dirs -- discover them before
+  hand-rolling. Server in a different container: attach via
+  `host.docker.internal:3333`.
+- **JTAG hardware**: probe's GDB server runs on the host (USB) with its
+  all-interfaces flag; gdb in the container attaches via
+  `target extended-remote host.docker.internal:<port>` and owns the
+  bring-up -- script it (`gdb -nx -x bringup.gdb`): reset, halt,
+  `file <elf>`, `load` (needs a RAM-loader link), break, continue.
 
-## Assembly binaries on Linux
+## Post-mortem: crashes and the Last Chance Handler
 
-Same story as tests, without the `_Test` suffix -- from the directory
-containing `main.adb`:
+When an exception escapes on the flight target, GNAT's
+`__gnat_last_chance_handler` hook fires and Adamant's LCH pattern captures a
+`Packed_Exception_Occurrence` (exception name, message, and a stack-trace
+address array) and broadcasts it as a telemetry packet until watchdog reset.
+Framework components involved (all open, in `src/components/`):
+
+| Component | Role in debugging |
+|---|---|
+| `zero_divider` | Commandable, magic-number-protected crash trigger -- **the LCH test fixture**; also supplies the LCH packet definition |
+| `last_chance_manager` | Dumps/clears the non-volatile copy of the last exception by command; data product doubles as an "LCH fired" flag |
+| `stack_monitor` | Per-task stack + secondary-stack usage percent, per tick |
+| `cpu_monitor` / `queue_monitor` | Per-task CPU windows / queue high-water marks |
+| `memory_dumper` | Command-driven dump of configured memory regions |
+| `logger` + `gnd/bin/decode_event_log.py` | Post-mortem circular-buffer event dump -> decoded event list |
+
+Triage rules (each learned from a real incident -- details and the full
+runbook in `references/post-mortem-and-lch.md`):
+
+- **A hung test suite IS a crash until proven otherwise.** The LCH stops
+  telemetry; downstream waits spin forever, so the failure never reports.
+  Check whether housekeeping sequence counts froze.
+- **Symbolize against the same build.** Generate a symbol table at build
+  time (`<cross>-nm -C -n main.elf > main.nm`); resolve trace addresses by
+  nearest-symbol-below, or `<cross>-addr2line -f -C -e main.elf <addr>` for
+  file:line. A symbol file from any other build resolves plausible garbage.
+- **The crashed target is still attachable**: Renode's GDB server works
+  while the CPU spins in the LCH -- capture the exception occurrence and
+  registers via a batch gdb script, no reproduction needed.
+- Interrupt-context traps record only ONE frame (the unwinder cannot cross
+  the trap handler); recover the real chain by re-running paused with a
+  hardware breakpoint at the LCH entry.
+
+`scripts/symbolize_traceback.py` (in this skill) resolves pasted traceback
+addresses against an nm dump or ELF -- see the reference for usage.
+
+## Target/compiler-level debugging
+
+"Works on Linux, traps on the flight target" is a class, not a fluke:
+undefined behavior is target-dependent, so **cross-run the unit tests on the
+flight target** (`redo test_renode` where the project provides it) rather
+than trusting host green. The known pitfall families -- alignment-erroneous
+overlays, scalar-storage-order codegen bugs, per-flag workarounds pinned in
+gpr files, and the post-rebase stale-generated-code signatures -- are in
+`references/target-pitfalls.md` with their proof techniques (bit-pattern
+analysis, disassembly around the faulting PC, RISC-V trap-register
+decoding).
+
+## Project tooling discovery
+
+Closed-source projects commonly ship debug helpers the framework does not:
+symbolizers, per-task stack maps, UART/log capture scripts, scripted gdb
+bring-ups. Before hand-rolling, look in the project's ground tooling and
+assembly directories:
 
 ```bash
-redo build/bin/Linux/main.elf     # Linux = Linux_Debug, -O0 -g
-gdb build/bin/Linux/main.elf      # or: redo run  (build + execute)
+ls gnd/bin/ | grep -iE 'stack|trace|decode|symbol|log'
+ls src/assembly/<name>/main/*.sh src/assembly/<name>/main/*.gdb
 ```
 
-## Cross targets: Renode emulation
-
-Cross-compiled ELFs cannot execute on the host (`redo test` on a cross
-target builds `test.elf`, then stops with a hint to run it under Renode).
-The debug pattern -- project-provided, but consistent wherever it appears:
-
-1. A Renode script (`.resc`) creates the machine from a platform
-   description, loads the same ELF the build produced
-   (`sysbus LoadELF @build/bin/<Platform>/main.elf`), starts a GDB server
-   (`machine StartGdbServer 3333`), and starts emulation -- the target runs
-   immediately; gdb attaches to a live system.
-2. Attach with the **cross** gdb from the target's toolchain (e.g.
-   `riscv32-elf-gdb`, `arm-eabi-gdb`), giving the ELF for symbols only --
-   no `load`, Renode already loaded it:
-
-   ```bash
-   <cross>-gdb build/bin/<Platform>/main.elf -ex 'target remote :3333'
-   ```
-
-3. Ctrl-C halts the live target; then breakpoints/stepping work normally.
-   `monitor <command>` passes through to the Renode console.
-4. Projects typically wrap steps 1-2 in `redo renode` / `debug_renode.sh`
-   scripts beside the assembly or `test_renode` directory -- look for them
-   before hand-rolling; each `test_renode` dir follows the same
-   resc-plus-attach-script shape.
-
-If the Renode server runs in a different container than gdb, attach via the
-host gateway (`target remote host.docker.internal:3333`) instead of
-localhost.
-
-## Cross targets: JTAG hardware
-
-Same attach model with a hardware GDB server (e.g. a SEGGER J-Link) instead
-of Renode, with two differences:
-
-- The probe's server runs on the **host** (USB access); gdb runs in the
-  container and reaches it via `target extended-remote
-  host.docker.internal:<port>` -- start the server with its
-  listen-on-all-interfaces option or the container cannot connect.
-- gdb must put the target in a known state and load the image itself.
-  Script it (`gdb -nx -x <file>.gdb`) so every session is reproducible:
-
-  ```gdb
-  target extended-remote host.docker.internal:2331
-  monitor reset
-  monitor halt
-  file build/bin/<Platform>/main.elf
-  load                       # works when the image links with a RAM loader
-  break main.adb:11
-  continue
-  ```
-
-## IDE route
-
-`redo build/gpr/test.gpr` (or `main.gpr`) in the executable's directory
-generates a standalone GPRbuild project with the computed source paths --
-open it in GNAT Studio and use its integrated gdb instead of the CLI.
+Prefer the project's own scripts -- they encode target-specific details
+(ports, ELF paths, register sets) this skill keeps generic.
 
 ## Checklist
 
-1. Rebuild the executable (`redo test` / `redo all`) so symbols match source
-2. Pick the honest target: Linux/`_Test` are already `-O0 -g`; for bareboard
-   build the `_Debug` variant if stepping matters
-3. Launch gdb on `build/bin/<TARGET>/<test|main>.elf` from the source dir
-   (in the activated environment, or fix `substitute-path` on host)
-4. `catch exception` before `run` when hunting a failure
-5. Breakpoints by `file:line`; symbolic only via `nm`-discovered `__` names
-6. Cross target: start Renode (or the JTAG server) first, then attach the
-   cross gdb with the ELF as the symbol file
-7. On attach to a live Renode target: no `load`; on JTAG: scripted
-   reset/halt/`load`
+1. Pick the layer: failing test in hand -> interactive gdb; crash/hang
+   already happened -> post-mortem; target-only misbehavior -> pitfalls ref
+2. Rebuild so symbols match source; pick the `-O0` target if stepping
+3. Interactive: `catch exception` before `run`; breakpoints by `file:line`
+4. Cross: server first (Renode/JTAG), then cross gdb; `load` only on JTAG
+5. Post-mortem: capture the LCH output (telemetry, NV dump via
+   `last_chance_manager`, UART log, or gdb attach to the spinning target)
+6. Symbolize addresses against the SAME build's nm dump or ELF
+7. Suite hang: check for frozen housekeeping counters before debugging the
+   test script
+8. Target-only bug: reproduce under Renode, decode the trap registers,
+   check the pitfalls reference before suspecting your code
 
 ## Common Errors
 
-1. **`break Package.Proc` reports "not defined"** -- Ada name resolution in
-   gdb is unreliable; use `file:line`, or the mangled `pkg__proc` name from
-   `nm`.
-2. **Breakpoint never hits / lines do not match source** -- stale binary.
-   gdb warned "Source file is more recent than executable" at load; rebuild.
-3. **`gdb: command not found` in the container** -- bare shell without the
-   activated environment; enter via the project's env login (gdb lives in
-   the toolchain directory, not `/usr/bin`).
-4. **No source listing, only addresses (host gdb)** -- DWARF paths are
-   container paths; `cd` to the source dir before launching or
-   `set substitute-path`.
-5. **Stepping jumps around / locals `<optimized out>` on a bareboard ELF** --
-   you attached to a `_Production`/`_Development` (-O2) image; build and
-   load the `_Debug` variant.
-6. **`load` fails or hangs on a Renode-attached session** -- Renode already
-   loaded the ELF via `LoadELF`; give gdb the ELF as symbols only and skip
-   `load` (that command belongs to the JTAG flow with a RAM loader).
-7. **Expected a debug build from `DEBUG=1`** -- that variable controls build
-   verbosity, not compilation switches; the target selects switches, and
-   debug-capable ones are already the default for tests and Linux.
-8. **Cannot connect to the GDB server from the container** -- the server is
-   listening on localhost of a different host/container; use
-   `host.docker.internal:<port>`, and start hardware servers with their
-   all-interfaces flag.
+1. **`break Package.Proc` "not defined"** -- use `file:line` or the mangled
+   `pkg__proc` name from `nm`.
+2. **Breakpoint never hits / lines mismatch** -- stale binary; gdb warned
+   "Source file is more recent than executable"; rebuild.
+3. **`gdb: command not found` in the container** -- bare shell; enter the
+   activated environment (gdb lives in the toolchain, not `/usr/bin`).
+4. **No source listing on host gdb** -- DWARF has container paths; `cd` to
+   the source dir or `set substitute-path`.
+5. **Stepping jumps around on a bareboard ELF** -- attached to an `-O2`
+   image; build and load the `_Debug` variant.
+6. **`load` fails/hangs against Renode** -- Renode already `LoadELF`ed;
+   attach with symbols only (`load` belongs to the JTAG flow).
+7. **Expected a debug build from `DEBUG=1`** -- that is build verbosity;
+   the target selects switches, and tests/Linux are already debug.
+8. **Cannot reach the GDB server from the container** -- server listening
+   on another host/container's localhost; use
+   `host.docker.internal:<port>` and all-interfaces server flags.
+9. **Symbolized trace names look wrong / nonsensical** -- symbol file and
+   ELF are from different builds; regenerate the nm dump from the exact ELF
+   that was running.
+10. **Suite "hangs" with no failure** -- likely an LCH crash upstream:
+    telemetry died, waits spin. Triage as a crash (post-mortem reference),
+    not as a slow test.
+11. **Single-frame stack trace from an interrupt trap** -- expected; the
+    unwinder stops at the trap boundary. Use the paused-emulation +
+    hardware-breakpoint recovery in the post-mortem reference.
+12. **Assertions "fixed" by disabling them** -- never ship
+    `Assertion_Policy (Ignore)` to hide an LCH: the code then runs on the
+    bad input and produces garbage instead of a diagnosable crash. Fix the
+    dependency (fetch + early-return on non-Success).
 
 ## References
 
-None yet -- workflows above are self-contained. Renode `.resc`/platform
-authoring belongs to project repos; JTAG server specifics belong to the
-probe vendor's documentation.
+- `references/post-mortem-and-lch.md` -- LCH anatomy and wire format,
+  capture paths (telemetry / NV dump / UART / gdb attach), symbolization
+  pipeline + script usage, interrupt-context trap recovery, RISC-V trap
+  register decoding, crash root-cause checklist, suite-hang signatures.
+  Read when a crash or hang already happened.
+- `references/target-pitfalls.md` -- works-on-Linux-traps-on-target
+  families with reproducers and proof techniques; compiler-bug workaround
+  flag pinning; post-rebase stale-codegen signature table; runtime
+  debug-variant builds; monitor components for resource debugging. Read
+  when behavior differs between host and flight target, or after a rebase
+  produces baffling compile errors.
+- `scripts/symbolize_traceback.py` -- stdlib-only resolver: traceback
+  addresses + (nm dump | ELF + binutils prefix) -> symbol+offset and
+  optional file:line.

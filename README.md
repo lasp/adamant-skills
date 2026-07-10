@@ -21,7 +21,7 @@
 
 ### Infrastructure
 - `adamant-build-system` — Redo commands, code gen, build paths
-- `adamant-debugging` — GDB workflows: unit tests, Renode/JTAG cross targets
+- `adamant-debugging` — GDB, post-mortem LCH/stack-trace triage, target pitfalls
 - `adamant-project-setup` — Scaffolding, Docker, env/activate
 - `adamant-style` — Ada/YAML/Python style rules
 - `adamant-tools` — Python utilities: inspector, scaffolder, YAML validator
