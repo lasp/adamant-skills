@@ -188,7 +188,10 @@ Prefer the project's own scripts -- they encode target-specific details
 1. Pick the layer: failing test in hand -> interactive gdb; crash/hang
    already happened -> post-mortem; target-only misbehavior -> pitfalls ref
 2. Rebuild so symbols match source; pick the `-O0` target if stepping
-3. Interactive: `catch exception` before `run`; breakpoints by `file:line`
+3. Interactive: `catch exception` before `run`; breakpoints by `file:line`;
+   escalate to watchpoints / `info tasks` / memory views per the advanced
+   reference when the mechanism is a mystery write, a hung task, or a
+   packed-layout mismatch
 4. Cross: server first (Renode/JTAG), then cross gdb; `load` only on JTAG
 5. Post-mortem: capture the LCH output (telemetry, NV dump via
    `last_chance_manager`, UART log, or gdb attach to the spinning target)
@@ -233,6 +236,11 @@ Prefer the project's own scripts -- they encode target-specific details
 
 ## References
 
+- `references/gdb-advanced-inspection.md` -- watchpoints (who mutates this?),
+  Ada task/thread triage (`info tasks`, `thread apply all bt`, live attach),
+  packed-record vs raw-memory views, conditional/scripted stops, signals vs
+  cross-target traps, core-file handoff, Renode monitor passthrough. Read
+  when breakpoints + catchpoints are not enough to demonstrate a mechanism.
 - `references/post-mortem-and-lch.md` -- LCH anatomy and wire format,
   capture paths (telemetry / NV dump / UART / gdb attach), symbolization
   pipeline + script usage, interrupt-context trap recovery, RISC-V trap
