@@ -239,7 +239,8 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Create system architecture from scratch | assembly-dev | framework-components |
 | Start a new Adamant project | project-setup | build-system |
 | Run/monitor assembly at runtime | assembly-dev (runtime ref) | -- |
-| Debug running assembly (events, queues) | assembly-dev (runtime ref) | -- |
+| Debug running assembly misbehavior (hangs, stalls, crashes, watchdog faults) | debugging | assembly-dev (runtime ref) |
+| Interpret assembly runtime telemetry (events, queues) | assembly-dev (runtime ref) | debugging | -- |
 | Use Python ground tools | assembly-dev (runtime ref) | cosmos-integration |
 | Multi-rate scheduling design | assembly-dev (runtime ref) | framework-components |
 
