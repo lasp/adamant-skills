@@ -26,6 +26,18 @@ run                      # runs the whole AUnit suite
 bt                       # on catch: raise point <- test proc <- AUnit caller
 ```
 
+The same session runs headless for reproducible, pasteable evidence --
+the form to prefer when the finding goes in a report:
+
+```bash
+gdb -batch -ex 'catch exception' -ex run -ex bt -ex 'info locals' \
+    build/bin/Linux_Test/test.elf
+```
+
+(`-ex 'break file.adb:N'` and print commands chain the same way; note
+`catch assert` fires on `pragma Assert` failures under `-gnata`, NOT on
+AUnit `Assert` calls, which record failures without raising.)
+
 **Diagnosis standard: a root cause is demonstrated, not inferred.** Reading
 source produces a hypothesis; the diagnosis is complete only when the
 mechanism has been shown at runtime -- the actual values at the defect (a
