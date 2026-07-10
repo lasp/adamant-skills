@@ -120,11 +120,22 @@ Cross ELFs cannot execute on the host. Attach a **cross** gdb
   beside the assembly or `test_renode` dirs -- discover them before
   hand-rolling. Server in a different container: attach via
   `host.docker.internal:3333`.
-- **JTAG hardware**: probe's GDB server runs on the host (USB) with its
-  all-interfaces flag; gdb in the container attaches via
-  `target extended-remote host.docker.internal:<port>` and owns the
-  bring-up -- script it (`gdb -nx -x bringup.gdb`): reset, halt,
-  `file <elf>`, `load` (needs a RAM-loader link), break, continue.
+- **JTAG/SWD hardware**: the probe's GDB server runs on the host (USB);
+  gdb attaches (`target [extended-]remote host.docker.internal:<port>` from
+  a container, `localhost:<port>` on host) and owns the bring-up -- script
+  it (`gdb -x bringup.gdb`). Server variants differ in monitor syntax:
+  - **OpenOCD** (open example: adamant_example's Raspberry Pi Pico --
+    `src/assembly/pico/main/{debug.sh,config.gdb,program.sh}` and its
+    README): server `openocd -f interface/cmsis-dap.cfg -f
+    target/rp2040.cfg`, port 3333; bring-up `monitor reset init`, `load`,
+    `continue`; one-shot flash-without-debug via
+    `openocd ... -c "program <elf> verify reset exit"`.
+  - **SEGGER J-Link**: port 2331 typical; bring-up `monitor reset`,
+    `monitor halt`, `file <elf>`, `load` (needs a RAM-loader link), then
+    break/continue. Start the server with its all-interfaces flag or a
+    containerized gdb cannot reach it.
+  A serial/UART cable beside the probe carries the console/telemetry
+  channel -- it is the capture path, not the debug transport.
 
 ## Post-mortem: crashes and the Last Chance Handler
 
