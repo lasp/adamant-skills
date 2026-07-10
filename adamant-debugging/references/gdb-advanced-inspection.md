@@ -41,7 +41,10 @@ thread apply all bt   # every thread's backtrace -- the deadlock/hang tool
 ```
 
 - A hung assembly triages fast: attach (`gdb -p <pid>` on Linux, or the
-  Renode GDB server), `thread apply all bt`, and read which task is parked
+  Renode GDB server), **`info tasks` first** (the Ada view names each task
+  and its state -- a `Delay`/`Waiting` task is your hang), then `task <n>`
+  + `bt` to see where it is parked. `thread apply all bt` is the fallback
+  when `info tasks` is unavailable; read which task is parked
   in a queue wait vs spinning vs gone. Adamant task names come from the
   active component instance names -- `info tasks` maps the blocked task
   straight to the component.

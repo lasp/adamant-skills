@@ -218,10 +218,12 @@ Prefer the project's own scripts -- they encode target-specific details
 1. Pick the layer: failing test in hand -> interactive gdb; crash/hang
    already happened -> post-mortem; target-only misbehavior -> pitfalls ref
 2. Rebuild so symbols match source; pick the `-O0` target if stepping
-3. Interactive: `catch exception` before `run`; breakpoints by `file:line`;
-   escalate to watchpoints / `info tasks` / memory views per the advanced
-   reference when the mechanism is a mystery write, a hung task, or a
-   packed-layout mismatch
+3. Interactive: `catch exception` before `run`; breakpoints by `file:line`.
+   **A hung/stalled/parked task, a mystery write, or a packed-layout
+   mismatch means read `references/gdb-advanced-inspection.md`** -- generic
+   gdb gets you a backtrace, but `info tasks` maps the blocked Ada task to
+   the Adamant component instance, which is the answer for a hang; do not
+   improvise the task-triage sequence from memory
 4. Cross: server first (Renode/JTAG), then cross gdb; `load` only on JTAG
 5. Post-mortem: capture the LCH output (telemetry, NV dump via
    `last_chance_manager`, UART log, or gdb attach to the spinning target)
