@@ -35,8 +35,11 @@ gdb -batch -ex 'catch exception' -ex run -ex bt -ex 'info locals' \
 ```
 
 (`-ex 'break file.adb:N'` and print commands chain the same way; note
-`catch assert` fires on `pragma Assert` failures under `-gnata`, NOT on
-AUnit `Assert` calls, which record failures without raising.)
+`catch assert` hooks GNAT's assert-failure routine -- `pragma Assert` /
+`Ada.Assertions` / SPARK contracts under `-gnata` -- so it does NOT fire
+on AUnit/Adamant test assertions, which raise their own
+`Assertion_Error` as an ordinary exception. `catch exception` DOES stop
+at those; `catch assert` does not.)
 
 **Diagnosis standard: a root cause is demonstrated, not inferred.** Reading
 source produces a hypothesis; the diagnosis is complete only when the

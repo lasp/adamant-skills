@@ -164,7 +164,7 @@ When attached at/after a trap on RISC-V targets:
 
 | Register | Meaning |
 |---|---|
-| `mcause` | Trap cause: 2 = illegal instruction, 4 = load address misaligned, 5/6/7 = load/store access faults |
+| `mcause` | Trap cause: 0 = instruction address misaligned, 2 = illegal instruction, 4 = load address misaligned, 5 = load access fault, 6 = store/AMO address misaligned, 7 = store/AMO access fault |
 | `mepc` | PC of the faulting instruction -- disassemble around it (`x/8i $mepc - 8`) |
 | `mtval` | Faulting address; low bits reveal the misalignment (e.g. bit 1 set = 2-byte-aligned access where 4 needed) |
 
