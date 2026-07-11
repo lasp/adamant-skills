@@ -221,9 +221,10 @@ Prefer the project's own scripts -- they encode target-specific details
 3. Interactive: `catch exception` before `run`; breakpoints by `file:line`.
    **A hung/stalled/parked task, a mystery write, or a packed-layout
    mismatch means read `references/gdb-advanced-inspection.md`** -- generic
-   gdb gets you a backtrace, but `info tasks` maps the blocked Ada task to
-   the Adamant component instance, which is the answer for a hang; do not
-   improvise the task-triage sequence from memory
+   gdb gets you a backtrace; the reference has the Adamant-specific moves
+   (for a hang, `thread apply all bt` + mapping the parked thread to its
+   component by the tick-handler frame -- `info tasks` is unreliable for
+   Adamant tasks; see the reference), so read it rather than improvising
 4. Cross: server first (Renode/JTAG), then cross gdb; `load` only on JTAG
 5. Post-mortem: capture the LCH output (telemetry, NV dump via
    `last_chance_manager`, UART log, or gdb attach to the spinning target)

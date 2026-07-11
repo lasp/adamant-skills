@@ -41,13 +41,24 @@ thread apply all bt   # every thread's backtrace -- the deadlock/hang tool
 ```
 
 - A hung assembly triages fast: attach (`gdb -p <pid>` on Linux, or the
-  Renode GDB server), **`info tasks` first** (the Ada view names each task
-  and its state -- a `Delay`/`Waiting` task is your hang), then `task <n>`
-  + `bt` to see where it is parked. `thread apply all bt` is the fallback
-  when `info tasks` is unavailable; read which task is parked
-  in a queue wait vs spinning vs gone. Adamant task names come from the
-  active component instance names -- `info tasks` maps the blocked task
-  straight to the component.
+  Renode GDB server), then **`thread apply all bt` first** -- it reliably
+  shows every thread's stack, and a thread parked in
+  `Suspend_Until_True` / a queue wait / a `delay` is your hang. Map it to a
+  component by the frame: the suspended stack runs the component's
+  `Tick_T_Recv_Sync` (or handler), whose package name IS the component.
+- **Do NOT rely on `info tasks` for Adamant active components.** In
+  practice on a Linux target it often prints only `main_task` (or
+  "Your application does not use any Ada tasks") -- the per-component tasks
+  do not always register with the GNAT task table gdb reads. When it does
+  populate it names tasks by component and is convenient, but `thread apply
+  all bt` is the dependable move; treat `info tasks` as a bonus, not the
+  answer.
+- **Finding the PID to attach to:** an assembly is often launched through a
+  wrapper (`env/container_run.sh`, a shell), so `$!` and a bare
+  `pgrep main` capture the launcher, not the binary -- attaching there
+  inspects the wrong process. Target the ELF explicitly:
+  `pgrep -f build/bin/.*/main.elf` (or `pgrep -nf main.elf` for the newest),
+  or run the binary directly (not via the wrapper) when you control launch.
 - Attach does not need a restart: `gdb <elf> -p $(pgrep -f main.elf)` on a
   running Linux assembly is non-destructive (`detach` leaves it running).
 - Under Renode, tasks appear via the same `info tasks` when the runtime's

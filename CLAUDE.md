@@ -105,7 +105,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-style` | 1152 | Ada/YAML/Python style rules enforced by `redo style` |
 | `adamant-formal-verification` | 1528 | SPARK contracts, GNATprove, ghost lemmas, proof chains |
 | `adamant-build-system` | 1057 | Redo commands, code gen, build paths |
-| `adamant-debugging` | 852 | Three-layer debugging: GDB (tests/assemblies), post-mortem LCH/stack-trace triage + symbolizer script, target/compiler pitfalls |
+| `adamant-debugging` | 869 | Three-layer debugging: GDB (tests/assemblies), post-mortem LCH/stack-trace triage + symbolizer script, target/compiler pitfalls |
 | `adamant-skill-creation` | 1341 | Creating, validating, and refactoring Adamant skills |
 | `adamant-skill-campaign` | 425 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
 | `adamant-cosmos-testing` | 1043 | Integration test scripts via COSMOS scripting API |
