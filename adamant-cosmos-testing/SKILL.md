@@ -224,7 +224,8 @@ PACKETS = [
 
 def test_all_packets_updating(self):
     # Seq-count item name comes from the generated dictionary (framework default:
-    # Sequence_Count; project naming layers may differ, e.g. Primary_Header_sequence_count).
+    # Sequence_Count; project naming layers may rename it -- take the exact
+    # name from the generated tlm.txt rather than assuming the field name).
     for pkt in self.PACKETS:
         seq1 = tlm(f"{pkt} Sequence_Count")
         wait(2)
@@ -678,7 +679,7 @@ limitation that can affect any test making this call sequence.
 - **Fault injection:** Assembly-specific. Requires test commands built into the assembly (not all assemblies have these).
 - **Packet names:** Must match COSMOS plugin cmd.txt/tlm.txt definitions exactly (TARGET PACKET ITEM).
 - **`wait_check_expression` evaluates strings:** Only `tlm()`, `cmd()`, and built-in Python are available inside the expression string. User-defined functions (e.g., `seq_delta()`) are NOT visible. Use `wait_check_packet` or manual polling loops instead.
-- **CCSDS header items:** COSMOS does NOT auto-generate CCSDS items -- header items exist only as defined in the generated dictionary. Adamant's plugin generator emits the primary-header fields as items named after the model fields (`Version`, `Packet_Type`, `Secondary_Header`, `Apid`, `Sequence_Flag`, `Sequence_Count`, `Packet_Length`); project naming layers may rename them (e.g. `Primary_Header_sequence_count`). Take the exact name from cmd.txt/tlm.txt. (What COSMOS *does* auto-derive per packet is `RECEIVED_COUNT` / `RECEIVED_TIMESECONDS` / `PACKET_TIME*` -- not CCSDS fields.) Read items with `STATE` conversions using `type="RAW"` to get integer values.
+- **CCSDS header items:** COSMOS does NOT auto-generate CCSDS items -- header items exist only as defined in the generated dictionary. Adamant's plugin generator emits the primary-header fields as items named after the model fields (`Version`, `Packet_Type`, `Secondary_Header`, `Apid`, `Sequence_Flag`, `Sequence_Count`, `Packet_Length`); project naming layers may rename them. Take the exact name from cmd.txt/tlm.txt rather than assuming the model field name. (What COSMOS *does* auto-derive per packet is `RECEIVED_COUNT` / `RECEIVED_TIMESECONDS` / `PACKET_TIME*` -- not CCSDS fields.) Read items with `STATE` conversions using `type="RAW"` to get integer values.
 - **Python vs Ruby:** Both APIs have identical method names and behavior. Python recommended for Adamant since tooling is Python-based.
 - **Performance:** Use `disable_instrumentation()` context manager for tight loops:
   ```python

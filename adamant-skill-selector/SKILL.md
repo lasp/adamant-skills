@@ -306,14 +306,15 @@ Examples of project-specific content:
 
 Generic Adamant skills provide the *how*. Project skills provide the *what* and *where*. **When a project ships its own instructions or skills — a project `CLAUDE.md`/`AGENTS.md`, an `agents/` (or `skills/`) directory, or any project-local guidance — those take precedence over the generic skills here: if the project provides a skill for a task, use it instead of the generic one, and never let generic guidance override a project-specific instruction. Consult the generic skills only for tasks the project does not cover.**
 
-## Regenerating the Routing Table
+## Auditing the Skill Index
 
-This routing table can be regenerated from skill metadata:
+The routing table, task combinations, and read orders above are
+hand-curated -- update them manually when skills are added or renamed.
+What CAN be generated is a flat frontmatter index (skill, description,
+line counts) for auditing coverage and stale counts against this file:
 ```bash
-bash scripts/generate_selector.sh /path/to/skills/
+bash adamant-skill-selector/scripts/generate_selector.sh /path/to/skills/
 ```
-
-Last generated: 2026-02-19
 
 ## Deterministic Read Order (for cache-stable automation)
 
