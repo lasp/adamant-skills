@@ -216,6 +216,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Measure/improve test coverage | testing (coverage guide) | component-dev |
 | Debug a failing test at runtime (breakpoints/stepping) | debugging | testing |
 | Test passes on Linux but fails on the flight target (cross/Renode) | debugging (target-pitfalls ref) | build-system |
+| A value/memory location is silently wrong and nothing in source writes it (mystery write, corruption, canary flips) | debugging (advanced-inspection ref, watchpoints) | -- |
 | Triage a crash, hang, or LCH packet | debugging | -- |
 | Wire components into assembly | assembly-dev | framework-components |
 | Debug build failure | build-system | -- |
