@@ -8,7 +8,8 @@ framework (open); project specifics are described as patterns.
 
 1. An unhandled Ada exception reaches GNAT's hook
    `__gnat_last_chance_handler` (projects export their handler with this
-   link name; a parallel `__cpp_last_wishes` hook covers C++ termination).
+   link name; C++ termination routes into the same last-chance path via a
+   project-installed `std::terminate` handler).
 2. The handler translates the occurrence into the framework type
    `Packed_Exception_Occurrence.T`
    (`src/types/.../packed_exception_occurrence.record.yaml`): fixed
