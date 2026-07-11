@@ -204,6 +204,42 @@ staring at 60 components.
 dropping `-gnata`): the algorithm then runs on the bad input and emits
 garbage telemetry instead of a diagnosable crash.
 
+## Bench operations: headless emulator runs
+
+Scripted crash-reproduction runs fail on operations, not on debugging
+theory. The recurring traps, each observed repeatedly in practice:
+
+- **Launch form**: `nohup renode --disable-gui -P <port> <script.resc>
+  > run.log 2>&1 &` -- the `--console` flag instead exits the moment
+  stdin closes under nohup, silently ending the run. Give each
+  concurrent run its own `-P` monitor port.
+- **Stale instances own the ports**: the default monitor (1234) and GDB
+  (3333) ports outlive failed runs; the next launch aborts with
+  `AddressAlreadyInUse`, or a gdb attach lands on the WRONG (old)
+  machine. Before launching: kill leftovers by the emulator's process
+  name. Beware the `pkill -f` self-match trap in containerized shells:
+  if the kill pattern appears anywhere in your own compound command
+  line (e.g. the launch string later in the same `bash -c`), pkill
+  kills your own wrapper (exit 143) -- issue the kill as its own
+  command, and bracket a character in the pattern (`'[r]enode'`).
+- **The emulator can outlive or die with its shell** depending on how
+  the container exec tears down -- never assume; check the process and
+  the ports, not your memory of launching it.
+- **Interactive monitor over telnet eats leading bytes** while its line
+  editor redraws -- a piped command arrives truncated ("No such command
+  or device: etTimeSourceInfo"). Resend until the echo matches, drive it
+  from a real socket client with delays, or prefer file backends and
+  logs over interactive monitor queries entirely.
+- **Batch gdb `continue` may be refused or asynchronous** against an
+  emulator stub ("Cannot execute this command while the target is
+  running"): treat batch attach as good for HALTED inspection --
+  attach, read registers/memory/backtraces, detach. To observe live
+  execution points headlessly, prefer emulator-native instrumentation:
+  Renode's `sysbus.cpu AddHook <address> "<python>"` logs arbitrary
+  state each time the PC passes an address (and watchpoint-style hooks
+  exist for data addresses) with no gdb session at all -- resolve the
+  addresses from `nm` on the same build.
+
 ## Suite automation: terminal sentinels
 
 For scripted cross-target test runs, watch the UART log for terminal
