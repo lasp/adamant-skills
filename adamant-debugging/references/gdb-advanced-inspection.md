@@ -116,10 +116,16 @@ end
   faulting frame. GNAT maps some signals into Ada exceptions -- catching
   the signal fires earlier than `catch exception`.
 - Cross/Renode: traps do not raise signals -- the CPU vectors to the trap
-  handler. Break there by symbol (`hbreak *__gnat_trap_handler` or the
-  runtime's vector symbol), then read the trap registers
-  (`info registers mcause mepc mtval` on RISC-V; see the post-mortem
-  reference for decoding) and `x/8i $mepc - 8`.
+  handler. Do not guess the handler symbol (runtimes carry several
+  trap-named symbols that are not on the live path): read `mtvec` for the
+  real vector, `hbreak` that address, then read the trap registers. The
+  Renode GDB stub may not expose RISC-V CSRs to `info registers` (they
+  print empty) -- read them through the monitor instead:
+  `monitor sysbus.cpu MCAUSE` (likewise MEPC / MTVAL / MTVEC), then
+  `x/8i $mepc - 8` using the monitor-read PC. If the failure is a
+  PROGRAM_ERROR raise rather than a trap, no trap state exists -- it is a
+  software check (see target-pitfalls Family 1); catch the raise, not the
+  vector.
 - Interrupt-context frames do not unwind past the handler (one-frame
   traces); the paused-start + `hbreak` recovery in the post-mortem
   reference applies to interactive sessions too.

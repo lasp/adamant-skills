@@ -239,8 +239,11 @@ Prefer the project's own scripts -- they encode target-specific details
 6. Symbolize addresses against the SAME build's nm dump or ELF
 7. Suite hang: check for frozen housekeeping counters before debugging the
    test script
-8. Target-only bug: reproduce under Renode, decode the trap registers,
-   check the pitfalls reference before suspecting your code
+8. Target-only bug: reproduce under Renode; a PROGRAM_ERROR raise with no
+   message usually means a runtime CHECK fired, not a trap (catch the
+   exception or the `__gnat_rcheck_*` call -- see the pitfalls reference);
+   decode trap registers only for genuine traps, and read CSRs through
+   the emulator monitor if the GDB stub does not expose them
 
 ## Common Errors
 

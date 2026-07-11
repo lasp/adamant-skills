@@ -20,16 +20,39 @@ warning at either point. Consequences:
 
 Overlaying a composite type onto a byte array (`for X'Address use ...`,
 unchecked conversions to access types) is **erroneous** if the runtime
-address violates the type's alignment (Ada RM 13.3(13/3)). x86_64 tolerates
-misaligned loads; RISC-V emits `lw` and hardware-faults (mcause=4).
+address violates the type's alignment (Ada RM 13.3(13/3)). x86_64 is not
+a strict-alignment target, so the overlay runs fine there; on a
+strict-alignment target (RISC-V and most flight CPUs) the same code
+fails -- in two distinct ways, and the first one is NOT a trap:
 
-- Detection: trap with `mcause=4`; `mtval` low bits show the misalignment;
-  disassembly around `mepc` shows the wide load and the offset arithmetic
-  that produced the misaligned address.
+- **Checks on (Debug/Test targets): a software check fires first.** GNAT
+  emits a misaligned-address check at the overlay's elaboration -- a call
+  to `__gnat_rcheck_PE_Misaligned_Address_Value` -- raising PROGRAM_ERROR
+  before any hardware access happens. No machine trap occurs: mcause /
+  mepc / mtval never populate and a breakpoint on the trap vector never
+  fires. A test harness catches the raise, so the symptom is an
+  unexplained PROGRAM_ERROR against the test with no message. Detection:
+  `catch exception` (or break on the rcheck symbol) on the cross target;
+  statically, `objdump -dr` the cross object and look for a relocation
+  to the rcheck symbol next to the wide load -- a constant load plus a
+  call immediately before the `lw` is the recognition signature. The
+  same source compiled for the host shows no such call: diffing host vs
+  cross disassembly of one subprogram localizes the construct fast.
+- **Checks suppressed (production `-gnatp`): the hardware path.** The
+  wide load executes and a strict-alignment CPU traps (RISC-V mcause=4;
+  `mtval` low bits show the misalignment; disassembly around `mepc`
+  shows the load and the offset arithmetic). Caveat under emulation:
+  emulator cores may silently EMULATE misaligned loads instead of
+  trapping -- absence of a trap in an emulator does not prove alignment.
 - Mitigation: only overlay types with `'Alignment = 1` (packed byte-level
   types); assert `T'Alignment = 1` beside the overlay as executable
   documentation. Never overlay types whose fields the compiler may access
-  with wide loads.
+  with wide loads. Check the WHOLE address derivation, not just your
+  index math: a byte-array field of a packed record inherits the record's
+  internal byte offset (a buffer behind a 16-bit length field starts at
+  offset 2), so an overlay can be misaligned even when the index
+  arithmetic looks word-aligned -- byte-wise folds or an aligned local
+  copy are the safe rewrites.
 
 ## Family 2: codegen bugs around representation clauses
 

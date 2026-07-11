@@ -134,6 +134,19 @@ The runtime's trap handlers typically raise `PROGRAM_ERROR` with
 "Unhandled trap: N" and no further context -- the registers ARE the
 context; capture them before resuming or resetting.
 
+Two verification caveats before decoding:
+
+- **Not every target PROGRAM_ERROR is a trap.** With checks on
+  (Debug/Test targets) GNAT raises many failures as software checks
+  (`__gnat_rcheck_*` calls -- e.g. a misaligned Address overlay raises
+  before any hardware access; see target-pitfalls Family 1). In that
+  case mcause/mepc/mtval stay zero and the trap vector is never entered:
+  zeroed trap CSRs plus a PROGRAM_ERROR means catch the raise, not the
+  trap.
+- **The emulator GDB stub may not expose CSRs** to `info registers`
+  (they print empty). Read them through the monitor passthrough:
+  `monitor sysbus.cpu MCAUSE` (likewise MEPC / MTVAL / MTVEC).
+
 ## Crash root-cause checklist (proven suspects, most frequent first)
 
 1. **Unseeded/stale data dependency on first tick**: a component asserts
