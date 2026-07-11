@@ -121,6 +121,10 @@ the skills (full definitions and the "never blame the agent for a stable miss" r
 
 - **Read the artifacts on disk**, not just the build agent's self-report (self-reports
   hide unreported self-corrections -- a MISS->FIX still counts as a MISS).
+- **Behavioral DPs come from the transcript, not the summary.** DPs about *conduct* --
+  was the skill loaded, was tool X run, in what order -- leave no file artifact; score
+  them from the agent's run transcript. A report routinely claims a step ("debugged with
+  gdb") the transcript does not show.
 - **Cite evidence** (`file:line` or the artifact) for every verdict.
 - **Define DPs from the skill, not the output**: connector kinds (parameter -> `modify`,
   data dependency -> `request` not `get`, data product -> `send`), naming rules (DP name
@@ -164,6 +168,28 @@ for (let i = 1; clean < TARGET && i <= MAX; i++) {
 
 Convergence target = 5 consecutive clean (configurable). Track the DP hit-ratio across
 iterations to tell convergence (rising) from a plateau (fundamentally unclear skill).
+
+## Campaigning a diagnose/fix skill (fault injection)
+
+When the skill under test **diagnoses or fixes** rather than **builds** (debugging, review,
+triage), the scenario is a *seeded defect*, not a build spec, and the agent's deliverable is
+the diagnosis. Three rules that do not apply to build campaigns:
+
+- **Frame it as a deployed system -- forbid VCS-history archaeology.** "Diagnose from the
+  running system and the source as it stands; history of any change is unavailable." A
+  committed seed shows nothing in the working-tree diff but is fully recoverable via
+  `git log`/`git diff`; without this framing agents read the introducing commit instead of
+  diagnosing, and no runtime-technique DP is earnable. It is also the honest field condition.
+- **Match fixture opacity to the DP.** A source-visible defect is legitimately source-
+  diagnosable -- so to validate a *runtime* technique (live attach, watchpoints, memory
+  inspection) the defect must be runtime-opaque (deadlock, race, data-dependent, corruption)
+  so static reading cannot localize it. A source-obvious bug tests reading, not the tool
+  (see "Scoring a DP the scenario cannot exercise").
+- **Keep the fiction airtight.** In-fiction commit messages *and* branch names -- agents read
+  both; a `campaign/seed-bug` branch or a "Seed fixture" message hands over the answer.
+
+Validate every fixture end-to-end before the campaign: it compiles clean and fails
+deterministically with the intended signature (a fixture that does not fire wastes the run).
 
 ## Sandboxing and Safety
 
@@ -242,6 +268,12 @@ Discover which projects are registered with `admt env list`. A project whose con
 - **Calling an all-HIT N=1 run "done"**: one clean cold start proves little. A real baseline
   needs N-parallel (for *stable* misses) and escalating difficulty; treat a findings-free
   run as a prompt that wasn't hard enough.
+- **Scoring a DP the scenario cannot exercise**: marking a MISS because the agent skipped a
+  technique the task never required -- e.g. faulting a debugging agent for not attaching a
+  debugger to a defect obvious from the source. The scenario must be built so a correct
+  outcome genuinely *requires* the prescribed behavior; otherwise the DP measures noise and
+  the cheapest sufficient method is the right answer. Fix the fixture to earn the DP; do not
+  punish efficiency.
 - **Permission-gated shared edits**: a build/wrapping workflow may require editing a *shared*
   build file outside the scratch scope (e.g. registering a new source in a shared
   `CMakeLists`, or adding a build-path entry), which may be permission-gated. Pre-authorize
