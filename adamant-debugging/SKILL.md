@@ -294,9 +294,12 @@ Prefer the project's own scripts -- they encode target-specific details
   when breakpoints + catchpoints are not enough to demonstrate a mechanism.
 - `references/post-mortem-and-lch.md` -- LCH anatomy and wire format,
   capture paths (telemetry / NV dump / UART / gdb attach), symbolization
-  pipeline + script usage, interrupt-context trap recovery, RISC-V trap
-  register decoding, crash root-cause checklist, suite-hang signatures.
-  Read when a crash or hang already happened.
+  pipeline + script usage (including extracting a trace from a raw
+  binary capture), interrupt-context trap recovery, RISC-V trap register
+  decoding, crash root-cause checklist, suite-hang signatures, and the
+  headless-emulator bench-operations runbook (launch form, port hygiene,
+  kill patterns). Read when a crash or hang already happened, or before
+  any scripted emulator session.
 - `references/target-pitfalls.md` -- works-on-Linux-traps-on-target
   families with reproducers and proof techniques; compiler-bug workaround
   flag pinning; post-rebase stale-codegen signature table; runtime

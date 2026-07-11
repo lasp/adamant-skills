@@ -71,6 +71,10 @@ has two traps:
   type surfaces as a CPU-domain error, not a syntax error). Read the PC in
   the hook and symbolize it against the same build.
 
+For general headless-emulator operations (launch form, stale-port
+recovery, kill patterns, monitor quirks), see post-mortem-and-lch.md
+"Bench operations: headless emulator runs".
+
 ## Ada tasks (Ravenscar) and threads
 
 Adamant active components each run an Ada task; on Linux these are pthreads,

@@ -214,8 +214,10 @@ garbage telemetry instead of a diagnosable crash.
 
 ## Bench operations: headless emulator runs
 
-Scripted crash-reproduction runs fail on operations, not on debugging
-theory. The recurring traps, each observed repeatedly in practice:
+These operations apply to ANY headless Renode session -- interactive
+cross-target debugging and `test_renode` runs as much as crash
+reproduction. Scripted runs fail on operations, not on debugging theory.
+The recurring traps, each observed repeatedly in practice:
 
 - **Launch form**: `setsid nohup renode --disable-gui -P <port>
   <script.resc> > run.log 2>&1 < /dev/null &` -- the `< /dev/null` and
@@ -256,7 +258,9 @@ theory. The recurring traps, each observed repeatedly in practice:
   Renode's `sysbus.cpu AddHook <address> "<python>"` logs arbitrary
   state each time the PC passes an address (and watchpoint-style hooks
   exist for data addresses) with no gdb session at all -- resolve the
-  addresses from `nm` on the same build.
+  addresses from `nm` on the same build. For data-address watchpoints
+  over the same stub, see gdb-advanced-inspection.md "Watchpoints over a
+  Renode GDB stub (headless)".
 
 ## Suite automation: terminal sentinels
 
