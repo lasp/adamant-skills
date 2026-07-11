@@ -215,6 +215,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Add tests to existing component | testing | component-dev |
 | Measure/improve test coverage | testing (coverage guide) | component-dev |
 | Debug a failing test at runtime (breakpoints/stepping) | debugging | testing |
+| Test passes on Linux but fails on the flight target (cross/Renode) | debugging (target-pitfalls ref) | build-system |
 | Triage a crash, hang, or LCH packet | debugging | -- |
 | Wire components into assembly | assembly-dev | framework-components |
 | Debug build failure | build-system | -- |
