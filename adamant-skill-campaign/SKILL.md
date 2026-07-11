@@ -173,7 +173,7 @@ iterations to tell convergence (rising) from a plateau (fundamentally unclear sk
 
 When the skill under test **diagnoses or fixes** rather than **builds** (debugging, review,
 triage), the scenario is a *seeded defect*, not a build spec, and the agent's deliverable is
-the diagnosis. Three rules that do not apply to build campaigns:
+the diagnosis. Four rules that do not apply to build campaigns:
 
 - **Frame it as a deployed system -- forbid VCS-history archaeology.** "Diagnose from the
   running system and the source as it stands; history of any change is unavailable." A
@@ -198,7 +198,7 @@ the diagnosis. Three rules that do not apply to build campaigns:
   give only the *symptom* a field operator would have -- "telemetry value X reads wrong",
   "the unit resets ~1 min in". Naming the exact address to watch, the register to read, the
   gdb/emulator recipe, or the tool itself scaffolds the very behavior under test: the DP then
-  measures the prompt, not the skill (the E1a demotion). Symptom in, technique out.
+  measures the prompt, not the skill -- demote such a DP to non-evidence when scoring. Symptom in, technique out.
 - **Keep the fiction airtight.** In-fiction commit messages *and* branch names -- agents read
   both; a `campaign/seed-bug` branch or a "Seed fixture" message hands over the answer.
 

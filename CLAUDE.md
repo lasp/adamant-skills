@@ -96,7 +96,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
-| `adamant-skill-selector` | 403 | **Read first.** Maps tasks to skills. |
+| `adamant-skill-selector` | 416 | **Read first.** Maps tasks to skills. |
 | `adamant-testing` | 2647 | Test harness, History API, assertions, coverage, advanced patterns |
 | `adamant-tools` | 2221 | API inspector, component scaffolder, YAML validator (Python scripts) |
 | `adamant-component-dev` | 2302 | Components: YAML models, generated API, implementation patterns, LASEL |
@@ -107,7 +107,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-build-system` | 1057 | Redo commands, code gen, build paths |
 | `adamant-debugging` | 1129 | Three-layer debugging: GDB (tests/assemblies), post-mortem LCH/stack-trace triage + symbolizer script, target/compiler pitfalls |
 | `adamant-skill-creation` | 1341 | Creating, validating, and refactoring Adamant skills |
-| `adamant-skill-campaign` | 425 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
+| `adamant-skill-campaign` | 482 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
 | `adamant-cosmos-testing` | 1043 | Integration test scripts via COSMOS scripting API |
 | `adamant-cosmos-suite-results` | 133 | COSMOS suite execution (openc3cli / Script Runner REST API) + result verification |
 | `adamant-regression-suite` | 700 | Black-box Python regression suites driven through the COSMOS cmd/tlm interface (source-blind) |
@@ -122,7 +122,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-generator-dev` | 672 | Custom generators: Ada source, YAML types, HTML docs, ground artifacts from YAML |
 | `high-assurance-design` | 304 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~25000 lines (SKILL.md + references)
+**Total:** ~25200 lines (SKILL.md + references)
 
 ## Meta-Skills
 

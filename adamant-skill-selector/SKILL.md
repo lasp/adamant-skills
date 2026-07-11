@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 25 Adamant skills totaling ~23800 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 26 Adamant skills totaling ~24900 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -242,7 +242,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Start a new Adamant project | project-setup | build-system |
 | Run/monitor assembly at runtime | assembly-dev (runtime ref) | -- |
 | Debug running assembly misbehavior (hangs, stalls, crashes, watchdog faults) | debugging | assembly-dev (runtime ref) |
-| Interpret assembly runtime telemetry (events, queues) | assembly-dev (runtime ref) | debugging | -- |
+| Interpret assembly runtime telemetry (events, queues) | assembly-dev (runtime ref) | debugging |
 | Use Python ground tools | assembly-dev (runtime ref) | cosmos-integration |
 | Multi-rate scheduling design | assembly-dev (runtime ref) | framework-components |
 
