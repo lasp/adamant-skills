@@ -285,6 +285,38 @@ Prefer the project's own scripts -- they encode target-specific details
     bad input and produces garbage instead of a diagnosable crash. Fix the
     dependency (fetch + early-return on non-Success).
 
+## Improving this skill in the field
+
+Everything in this skill was demonstrated on a real program, and field
+use has more than once falsified content that was merely plausible. Hold
+the skill itself to the same bar, while the evidence is still in front
+of you:
+
+- **When a debugging task goes beyond what is written here** -- a failure
+  family, tool behavior, target quirk, or workaround this skill does not
+  cover, or a documented move that did not work as described -- capture
+  it. Silently working around a gap leaves it for the next debugger.
+- **New content meets the diagnosis standard: demonstrated, not
+  inferred.** Record what you observed (the command, the output, the
+  failure signature and its resolution), never what you believe should
+  happen. If you falsified a claim here, correct it and state what you
+  observed instead -- a wrong confident claim is worse than a gap.
+- **Keep it generic.** No project names, component or symbol names,
+  memory addresses, platform files, or naming motifs from the program
+  you were debugging -- placeholders only (`<addr>`, `<component>`, "the
+  project's LCH"). Project-specific guidance belongs in that project's
+  own skill, not here.
+- **Extend, don't duplicate.** Search this file and the references for
+  an existing section on the topic first and sharpen it in place; put
+  quick moves here and depth in the layer-appropriate reference, and add
+  a routing cue (References blurb, selector row) so the new content is
+  findable.
+- **If your task does not permit editing skills** (some validation and
+  review tasks forbid it), put the proposed change in your report
+  verbatim -- the gap, the observed evidence, and suggested wording -- so
+  a maintainer can fold it in. Version control of skill edits belongs to
+  the orchestrator or maintainer either way.
+
 ## References
 
 - `references/gdb-advanced-inspection.md` -- watchpoints (who mutates this?),
