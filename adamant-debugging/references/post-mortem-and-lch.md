@@ -115,6 +115,27 @@ python3 symbolize_traceback.py --elf main.elf --prefix riscv32-elf- 0x800123a4
 # from an Ada "Call stack traceback locations:" line
 ```
 
+### Extracting the trace from a RAW byte capture
+
+When the occurrence arrives as a binary broadcast in a UART capture (or
+a memory dump) rather than pasted text, get the addresses out first:
+
+- **Layout is open**: the packed exception occurrence record's YAML
+  model gives every field's size and order (name, message, trace depth,
+  trace addresses); byte offsets derive directly from it. Packed
+  Adamant types serialize **big-endian** unless the type says otherwise
+  -- a raw `x/` dump or a little-endian `struct` read shows byte-swapped
+  words (a trace word rendered as `0xc4200b80` for `0x800b20c4`, or an
+  absurd depth like 117440512 = 0x07000000, is the byte-order tell, not
+  corruption).
+- **Fast localization**: find the exception-name/message ASCII in the
+  capture, then read consecutive big-endian 32-bit words after it and
+  keep those inside the code region -- e.g. in Python,
+  `struct.unpack_from('>I', buf, off)` filtered to the text segment's
+  address range. The trace sits at a fixed offset from the text fields
+  per the layout, so one packet yields the full address list.
+- Then symbolize as above (same-build rule applies unchanged).
+
 ## Interrupt-context traps: the one-frame trace
 
 Traps taken on the interrupt stack (bus faults, alignment traps) yield a
