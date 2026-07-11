@@ -37,9 +37,18 @@ surfaces as an **infinite wait, not a failure**:
   value on a tight cadence.
 - On hardware devkits: all status LEDs flashing together is commonly the
   LCH loop, not a heartbeat.
-- Emulator/container stdout shows only peripheral noise -- the LCH banner
-  text goes to the FSW UART, which is usually a separate channel (socket
+- Emulator/container stdout shows only peripheral noise -- the LCH output
+  goes to the FSW UART, which is usually a separate channel (socket
   terminal or file backend), not the emulator's stdout.
+- **The LCH output may be a BINARY packet broadcast, not banner text.**
+  Flight-class handlers often spin-transmit the packed occurrence as
+  CCSDS frames with no human-readable banner (banner prints are commonly
+  debug-gated and compiled out). The reliable detectors on a captured
+  UART log: the exception NAME appears as ASCII inside the packet stream
+  (grep for `CONSTRAINT_ERROR`/`PROGRAM_ERROR`/`STORAGE_ERROR` or run
+  `strings` on the capture), and the log grows rapidly after telemetry
+  goes silent (the spin loop rebroadcasts continuously -- a
+  multi-megabyte UART file from a quiet system IS the crash).
 
 Backstop pattern worth adding to suite utilities: fail a wait if the
 housekeeping sequence count does not advance for N real seconds --
@@ -181,7 +190,11 @@ markers instead of fixed timeouts:
 
 - `Unexpected\s+Errors:\s+\d+` -- AUnit run completed (pass or fail)
 - `In last chance handler` -- the embedded runtime's LCH banner: the test
-  crashed; stop waiting
+  crashed; stop waiting. **Do not rely on this for flight builds**: a
+  project LCH that broadcasts binary packets emits no banner -- sentinel
+  on the exception-name ASCII inside the stream (`grep -a
+  'CONSTRAINT_ERROR\|PROGRAM_ERROR\|STORAGE_ERROR'`), on `strings`
+  output, or on unexpected log-size growth instead.
 - Emulator-side fatal markers (e.g. `CPU abort` in the emulator log)
 
 Sentinel-driven shutdown makes a 4-second test take 4 seconds instead of
