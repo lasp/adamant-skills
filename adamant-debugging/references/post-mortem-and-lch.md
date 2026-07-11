@@ -83,9 +83,16 @@ converting silent hangs into normal failures that archive their logs.
 
    If the handler stores the occurrence in a known variable, `print` it in
    the same batch (project handlers commonly keep a global occurrence --
-   check the project's LCH source for the name). Get the **matching ELF**
-   from wherever the emulator loaded it (e.g. `docker cp` from the
-   container) -- never a rebuilt one.
+   check the project's LCH source for the name). **The Ada-qualified name
+   often does not resolve in gdb** (`print pkg.the_global` -> "No
+   definition ... in current context", especially for Export/Convention-C
+   globals): fall back to the mangled or exported symbol from
+   `<cross>-nm main.elf | grep -i <name>` -- print that name directly, or
+   overlay the type on its address (`print {<type>} 0x<addr>`), or
+   `x/<n>xb 0x<addr>` and decode per the packed layout. Data symbols work
+   the same as code symbols here. Get the **matching ELF** from wherever
+   the emulator loaded it (e.g. `docker cp` from the container) -- never
+   a rebuilt one.
 
 ## Symbolization
 
@@ -209,19 +216,29 @@ garbage telemetry instead of a diagnosable crash.
 Scripted crash-reproduction runs fail on operations, not on debugging
 theory. The recurring traps, each observed repeatedly in practice:
 
-- **Launch form**: `nohup renode --disable-gui -P <port> <script.resc>
-  > run.log 2>&1 &` -- the `--console` flag instead exits the moment
-  stdin closes under nohup, silently ending the run. Give each
-  concurrent run its own `-P` monitor port.
+- **Launch form**: `setsid nohup renode --disable-gui -P <port>
+  <script.resc> > run.log 2>&1 < /dev/null &` -- the `< /dev/null` and
+  `setsid` matter in container-exec contexts, where an emulator left
+  attached to the exec's stdin dies (or hangs the exec) when the shell
+  tears down; the `--console` flag exits the moment stdin closes under
+  nohup, silently ending the run. Give each concurrent run its own `-P`
+  monitor port.
 - **Stale instances own the ports**: the default monitor (1234) and GDB
   (3333) ports outlive failed runs; the next launch aborts with
   `AddressAlreadyInUse`, or a gdb attach lands on the WRONG (old)
-  machine. Before launching: kill leftovers by the emulator's process
-  name. Beware the `pkill -f` self-match trap in containerized shells:
-  if the kill pattern appears anywhere in your own compound command
-  line (e.g. the launch string later in the same `bash -c`), pkill
-  kills your own wrapper (exit 143) -- issue the kill as its own
-  command, and bracket a character in the pattern (`'[r]enode'`).
+  machine. Clean up with this as its OWN command -- never in the same
+  compound command as a launch line:
+
+  ```bash
+  pkill -f '[R]enode' ; sleep 1
+  ```
+
+  The bracketed pattern avoids the `pkill -f` self-match trap: if the
+  kill pattern appears anywhere in your own compound command line (an
+  unbracketed pattern matches itself; a bracketed one still matches a
+  launch string elsewhere in the SAME command), pkill kills your own
+  wrapper (exit 143). Both halves of the rule have burned careful
+  operators -- use the one-liner verbatim, separately.
 - **The emulator can outlive or die with its shell** depending on how
   the container exec tears down -- never assume; check the process and
   the ports, not your memory of launching it.
