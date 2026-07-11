@@ -92,10 +92,18 @@ Debug readiness is decided by the build TARGET, not a flag:
    catch assert                       # only failed assertions
    ```
 
-3. **No single-test filter** -- the AUnit harness runs the whole suite;
+3. **SPARK contracts are assertions at runtime.** On Debug/Test targets
+   (checks on), a failing SPARK pre/postcondition raises like a
+   `pragma Assert` -- `catch exception`/`catch assert` stops at it the same
+   way. Static *proof* is a separate GNATprove analyze target, not part of
+   the gdb loop (see `adamant-formal-verification`); do not confuse a
+   proof failure (compile/analyze time) with a runtime contract violation
+   (what you debug here).
+
+4. **No single-test filter** -- the AUnit harness runs the whole suite;
    break in the specific `Test_*` procedure and `continue` past the rest.
 
-4. **Validity checks change what you see** -- `-gnatVa` +
+5. **Validity checks change what you see** -- `-gnatVa` +
    Initialize_Scalars means uninitialized scalars hold recognizable invalid
    patterns; an extreme value in `info locals` usually means "never
    assigned", not "corrupted".
