@@ -190,6 +190,17 @@ the diagnosis. Three rules that do not apply to build campaigns:
 
 Validate every fixture end-to-end before the campaign: it compiles clean and fails
 deterministically with the intended signature (a fixture that does not fire wastes the run).
+Two hard-won qualifiers on "validated":
+
+- **Verify the failure MECHANISM empirically, not by assumption.** Observe the actual
+  raise/trap/hang with the prescribed tooling before writing the answer key -- an answer
+  key that misstates the mechanism (e.g. asserting a hardware trap where a software check
+  raises first) propagates into every audit, makes mechanism-level DPs unearnable, and can
+  even mislead agents who trust the skill's description over their own observations.
+- **Verify determinism against a CLEAN-REBUILT binary** (`clean_all`-equivalent, then
+  rebuild, then reproduce), not just the incremental build that first showed the failure --
+  stale sibling objects can make a fixture pass or fail by build history rather than by the
+  seeded defect, which reads as nondeterminism and burns iterations on false anomalies.
 
 ## Sandboxing and Safety
 
