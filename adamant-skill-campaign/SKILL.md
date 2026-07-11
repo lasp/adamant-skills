@@ -185,6 +185,20 @@ the diagnosis. Three rules that do not apply to build campaigns:
   inspection) the defect must be runtime-opaque (deadlock, race, data-dependent, corruption)
   so static reading cannot localize it. A source-obvious bug tests reading, not the tool
   (see "Scoring a DP the scenario cannot exercise").
+  - **"Corruption" is not automatically opaque.** The label is not the test -- the *write*
+    is. An off-by-one that overflows a buffer into a neighbor is a runtime-visible SYMPTOM,
+    but if the faulty index (`mod (n+1)`) sits in plain source, reading the writer localizes
+    it with no watchpoint -- so the watchpoint DP is not earned even though a value got
+    corrupted. True opacity requires that *which location gets hit is not derivable from the
+    writer's source*: the target address is computed from runtime data, a stray/aliased
+    pointer, a stale handle, or a write whose culprit has no textual reference to the victim
+    AND whose own arithmetic does not visibly reach it. If an agent can point at the bug by
+    reading the one procedure that writes it, the fixture is source-solvable, full stop.
+- **Do not hand the technique to the prompt.** For a runtime-technique DP, the prompt must
+  give only the *symptom* a field operator would have -- "telemetry value X reads wrong",
+  "the unit resets ~1 min in". Naming the exact address to watch, the register to read, the
+  gdb/emulator recipe, or the tool itself scaffolds the very behavior under test: the DP then
+  measures the prompt, not the skill (the E1a demotion). Symptom in, technique out.
 - **Keep the fiction airtight.** In-fiction commit messages *and* branch names -- agents read
   both; a `campaign/seed-bug` branch or a "Seed fixture" message hands over the answer.
 
