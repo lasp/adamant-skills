@@ -29,6 +29,48 @@ continue
   watchpoints single-step the emulated CPU and are unusably slow.
 - `rwatch` (reads) answers the inverse: "who consumes this stale value?"
 
+### Watching a raw absolute address (no symbol in scope)
+
+When the wrong value is at a known address but there is no in-scope Ada
+expression for it -- a memory-mapped word, an exported buffer, a location
+you found by `nm` -- switch gdb to C to cast the address, then watch it:
+
+```gdb
+set language c
+watch *(unsigned int *)0x<addr>     # or *(unsigned char[N] *)0x<addr> for a span
+continue
+```
+
+The stop reports the writing instruction; `bt` names the frame, whose
+package IS the culprit component. This is the localizer for
+"value at address X is wrong and nothing I can see writes it" -- the write
+is coming from an unrelated unit (an overlay, a stray pointer, an
+off-by-one past an adjacent object), which is exactly why no source search
+for X's name finds it.
+
+### Watchpoints over a Renode GDB stub (headless)
+
+The emulator's GDB stub carries hardware watchpoints, but the batch flow
+has two traps:
+
+- **Start paused, drive from gdb.** Launch with the server not
+  auto-starting (`machine StartGdbServer <port> false`), `target remote
+  :<port>`, set the watchpoint, then `continue` to run the CPU under gdb.
+  Do NOT `monitor start` first -- that races the emulation ahead of gdb and
+  the subsequent `continue` is refused ("Cannot execute this command while
+  the target is running").
+- **`gdb -batch` fights async stops.** A watchpoint stop arriving while a
+  batch script blocks in `continue` can surface as "target is running";
+  run gdb interactively for watchpoint work, or drive it from a background
+  process and poll its output, rather than a single `-batch -ex continue`.
+- **Renode-native alternative.** Renode can catch the write without gdb at
+  all via a watchpoint hook on the address (a `sysbus`/CPU watchpoint hook
+  logging the PC); consult the installed Renode's monitor help for the
+  exact command name and argument types on your version (the access-width
+  and access-kind arguments are enums, not bare integers -- a wrong arg
+  type surfaces as a CPU-domain error, not a syntax error). Read the PC in
+  the hook and symbolize it against the same build.
+
 ## Ada tasks (Ravenscar) and threads
 
 Adamant active components each run an Ada task; on Linux these are pthreads,
