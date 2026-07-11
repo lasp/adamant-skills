@@ -110,6 +110,33 @@ already changed, suspect a stale bind-mount cache -- compare
 `stat -c 'inode=%i size=%s mtime=%Y' <file>` on host vs container; an
 environment restart (not a build clean) resolves it.
 
+## Stale objects fake runtime results (no compile error)
+
+The stale-state failure mode that costs the most is silent: objects from
+a previous source state survive an incremental build and the binary you
+run (or the object you inspect) is not the source you read. Nothing
+errors -- a fault "disappears", appears on one run and not the next, or a
+disassembly/nm signature contradicts the source. Rules:
+
+- **A runtime reproduction that contradicts expectations is a stale-state
+  suspect first, a mystery second.** A shallow `redo clean` in the test
+  directory is NOT sufficient to rule this out -- reciprocal component
+  build dirs keep their objects. Run `redo clean_all` (or `admt clean
+  --all`) at the component, rebuild, and reproduce again before drawing
+  any conclusion from a surprising pass or fail.
+- **Static signatures need fresh objects too**: before trusting an
+  nm/objdump recognition signature (rcheck relocations, symbol diffs),
+  confirm the object postdates the source (`stat` both, or just clean and
+  rebuild) -- an inherited build tree proves nothing about the code you
+  are reading.
+- **Checked-in test logs are historical documents**, not evidence about
+  the current binary; re-run the suite yourself.
+- Tool caveat: `objdump -dS`/`--line-numbers` interleaves the LIVE source
+  file with the OLD compiled instructions -- on a stale object the
+  listing looks self-consistent while showing code that was never
+  compiled. The instruction bytes, not the interleaved source, are the
+  evidence.
+
 ## Custom runtime debug builds
 
 Bare-metal targets run project-built GNAT runtimes (BSP layout:

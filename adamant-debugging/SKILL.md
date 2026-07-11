@@ -251,6 +251,10 @@ Prefer the project's own scripts -- they encode target-specific details
    `pkg__proc` name from `nm`.
 2. **Breakpoint never hits / lines mismatch** -- stale binary; gdb warned
    "Source file is more recent than executable"; rebuild.
+   More generally, a reproduction or nm/objdump signature that contradicts
+   the source means stale objects until proven otherwise: `redo clean_all`
+   (not a shallow `redo clean`) at the component, rebuild, re-verify --
+   see the stale-objects section of `references/target-pitfalls.md`.
 3. **`gdb: command not found` in the container** -- bare shell; enter the
    activated environment (gdb lives in the toolchain, not `/usr/bin`).
 4. **No source listing on host gdb** -- DWARF has container paths; `cd` to
