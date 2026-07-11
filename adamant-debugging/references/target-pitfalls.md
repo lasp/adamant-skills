@@ -38,8 +38,11 @@ fails -- in two distinct ways, and the first one is NOT a trap:
   call immediately before the `lw` is the recognition signature. The
   same source compiled for the host shows no such call: diffing host vs
   cross disassembly of one subprogram localizes the construct fast.
-- **Checks suppressed (production `-gnatp`): the hardware path.** The
-  wide load executes and a strict-alignment CPU traps (RISC-V mcause=4;
+- **Checks suppressed (`-gnatp`, the `_Safe` target): the hardware
+  path.** Note Adamant's `_Production` target KEEPS `-gnata`/`-gnato`;
+  only `_Safe` (or a project target adding `-gnatp`) suppresses checks.
+  There the wide load executes and a strict-alignment CPU traps (RISC-V
+  mcause=4;
   `mtval` low bits show the misalignment; disassembly around `mepc`
   shows the load and the offset arithmetic). Caveat under emulation:
   emulator cores may silently EMULATE misaligned loads instead of

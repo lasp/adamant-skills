@@ -12,11 +12,13 @@ framework (open); project specifics are described as patterns.
    project-installed `std::terminate` handler).
 2. The handler translates the occurrence into the framework type
    `Packed_Exception_Occurrence.T`
-   (`src/types/.../packed_exception_occurrence.record.yaml`): fixed
-   100-byte exception name, 300-byte message, U32 stack-trace depth, and a
-   fixed-size array of U32 stack-trace addresses. Translation uses
-   `Ada.Exceptions.Traceback` with truncation, absorbing secondary
-   exceptions -- the capture path must not itself crash.
+   (`src/components/last_chance_manager/types/{32bit,64bit}/packed_exception_occurrence.record.yaml`
+   in Adamant -- pick the variant matching the target's address width):
+   fixed 100-byte exception name, 300-byte message, U32 stack-trace
+   depth, and a fixed-size array of packed addresses (U32 in the 32bit
+   variant, U64 in 64bit). Translation uses `Ada.Exceptions.Traceback`
+   with truncation, absorbing secondary exceptions -- the capture path
+   must not itself crash.
 3. The handler typically writes a copy to a non-volatile region, then
    **spins broadcasting the LCH packet** until the hardware watchdog
    resets. The FSW stops servicing everything else -- including telemetry
@@ -137,11 +139,12 @@ a memory dump) rather than pasted text, get the addresses out first:
   absurd depth like 117440512 = 0x07000000, is the byte-order tell, not
   corruption).
 - **Fast localization**: find the exception-name/message ASCII in the
-  capture, then read consecutive big-endian 32-bit words after it and
-  keep those inside the code region -- e.g. in Python,
-  `struct.unpack_from('>I', buf, off)` filtered to the text segment's
-  address range. The trace sits at a fixed offset from the text fields
-  per the layout, so one packet yields the full address list.
+  capture, then read consecutive big-endian address-width words after it
+  and keep those inside the code region -- e.g. in Python,
+  `struct.unpack_from('>I', buf, off)` on a 32-bit target (`'>Q'` for the
+  64bit occurrence variant) filtered to the text segment's address range.
+  The trace sits at a fixed offset from the text fields per the layout,
+  so one packet yields the full address list.
 - Then symbolize as above (same-build rule applies unchanged).
 
 ## Interrupt-context traps: the one-frame trace
