@@ -14,6 +14,10 @@ level you are at and the Ada-specific moves at each.
 
 ## Quick Start (debug a failing unit test)
 
+From the host, build with `admt test <component>/test` as usual; gdb
+itself must run inside the activated container shell -- enter one with
+`admt env login` (the `redo`/`gdb` lines below are what you run there).
+
 ```bash
 cd src/components/<component_name>/test
 redo test                        # builds build/bin/Linux_Test/test.elf
