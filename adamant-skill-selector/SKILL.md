@@ -37,7 +37,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 - Connector kinds and compatibility
 - Generated code API (base class, events, commands, data products packages)
 - Implementation spec/body patterns
-- Parameter modify connector, active component queues, C++ FFI wrapping
+- Parameter modify connector, active component queues
 
 **Also load if needed:**
 - `adamant-type-system` -- if defining custom packed records, arrays, or enums
@@ -103,9 +103,6 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 - Code generation pipeline (YAML -> Python/Jinja2 -> Ada)
 - Generated file map per YAML model type
 - Cross-compilation, Docker environment, SPARK prove config
-
-### Wrapping C++ algorithms into Adamant components
-Wrapping has no generic skill. It is project-specific -- use the wrapping skills the project ships in its own `agents/` (or `skills/`) directory, which encode that project's C-shim, packed-record, ABI-assert, and native-scalar conventions. See **Project-Specific Skills** below; do not substitute a generic pipeline.
 
 ### COSMOS ground system integration
 **Load:** `adamant-cosmos-integration`
@@ -204,7 +201,6 @@ Wrapping has no generic skill. It is project-specific -- use the wrapping skills
 | Review generated or hand-written code | code-review | component-dev |
 | PR review (Adamant artifacts) | code-review | testing |
 | SPARK verification | formal-verification | component-dev |
-| Wrap C++ algorithm into Adamant component | *(project-specific -- use the project's own wrapping skills)* | |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | COSMOS integration test scripts | cosmos-testing | cosmos-integration |
 | COSMOS suite execution headless/CI (stream + exit-code gate) | cosmos-suite-results | cosmos-integration |
