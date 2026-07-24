@@ -4,6 +4,10 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 This is the vendor-neutral agent instructions file ([agents.md](https://agents.md/) convention): the working instructions for any coding agent or tool operating in this repo. It is functionally equivalent to `CLAUDE.md` (the Claude Code entry point) -- read either; they carry the same build rules and skill inventory.
 
+## Project Precedence
+
+These skills describe the Adamant framework generically. **When you are working in a project that provides its own instructions or skills — a project `CLAUDE.md`/`AGENTS.md`, an `agents/` skill directory, or any project-local guidance — those take precedence over anything here.** Use the project's guidance for every task it covers, and do not fall back to a generic skill the project has superseded. These generic skills remain the authority only for framework tasks the project does not cover.
+
 ## Agent Configuration Files
 
 This repo contains three agent instruction files; copy the ones your tooling uses to your project root:

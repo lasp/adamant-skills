@@ -286,7 +286,7 @@ Examples of project-specific content:
 - Build/deployment recipes specific to the project's Docker setup
 - COSMOS plugin configuration for the project's telemetry
 
-Generic Adamant skills provide the *how*. Project skills provide the *what* and *where*.
+Generic Adamant skills provide the *how*. Project skills provide the *what* and *where*. **When a project ships its own instructions or skills — a project `CLAUDE.md`/`AGENTS.md`, an `agents/` (or `skills/`) directory, or any project-local guidance — those take precedence over the generic skills here: if the project provides a skill for a task, use it instead of the generic one, and never let generic guidance override a project-specific instruction. Consult the generic skills only for tasks the project does not cover.**
 
 ## Regenerating the Routing Table
 
