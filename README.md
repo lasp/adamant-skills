@@ -18,7 +18,6 @@
 - `adamant-assembly-dev` — Scheduling, routing, ID assignment
 - `adamant-testing` — Test harness, History API, coverage (largest: 2647 lines)
 - `adamant-type-system` — YAML types, format codes, Ada hierarchy
-- `adamant-algorithm-wrapping` — C++ → C shim → Ada → Adamant pipeline
 
 ### Infrastructure
 - `adamant-build-system` — Redo commands, code gen, build paths
@@ -169,7 +168,6 @@ Skills are not all the same size. The SKILL.md target of 250-350 lines is a mini
 |-------|------------------------|----------------|-------|
 | `adamant-testing` | ~2647 | ~692 | Largest -- most frequently loaded alongside component dev |
 | `adamant-component-dev` | ~2302 | ~719 | Core skill, loaded on almost every task |
-| `adamant-algorithm-wrapping` | ~2009 | ~557 | Complex multi-file pipeline |
 | `adamant-assembly-dev` | ~1455 | ~661 | Second most common task type |
 | `adamant-style` | ~1152 | ~489 | Often loaded as a secondary skill |
 | `adamant-framework-internals` | ~441 | ~260 | Lightweight -- narrow-use, loaded only for code gen debugging |

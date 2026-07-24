@@ -4,6 +4,10 @@ Skills for AI-assisted development with the [Adamant](https://github.com/lasp/ad
 
 This is the vendor-neutral agent instructions file ([agents.md](https://agents.md/) convention): the working instructions for any coding agent or tool operating in this repo. It is functionally equivalent to `CLAUDE.md` (the Claude Code entry point) -- read either; they carry the same build rules and skill inventory.
 
+## Project Precedence
+
+These skills describe the Adamant framework generically. **When you are working in a project that provides its own instructions or skills — a project `CLAUDE.md`/`AGENTS.md`, an `agents/` skill directory, or any project-local guidance — those take precedence over anything here.** Use the project's guidance for every task it covers, and do not fall back to a generic skill the project has superseded. These generic skills remain the authority only for framework tasks the project does not cover.
+
 ## Agent Configuration Files
 
 This repo contains three agent instruction files; copy the ones your tooling uses to your project root:
@@ -90,7 +94,7 @@ Every passthrough command also accepts an optional path argument -- `admt build 
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (23 skills + 1 meta-skill = 24 total, ~25000 lines with refs)
+## Skill Inventory (22 skills + 1 meta-skill = 23 total, ~23000 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
@@ -98,7 +102,6 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-testing` | 2647 | Test harness, History API, assertions, coverage, advanced patterns |
 | `adamant-tools` | 2221 | API inspector, component scaffolder, YAML validator (Python scripts) |
 | `adamant-component-dev` | 2302 | Components: YAML models, generated API, implementation patterns, LASEL |
-| `adamant-algorithm-wrapping` | 2009 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
 | `adamant-assembly-dev` | 1455 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
 | `adamant-cosmos-integration` | 1955 | CCSDS pipeline, COSMOS plugin build/load |
 | `adamant-style` | 1152 | Ada/YAML/Python style rules enforced by `redo style` |
