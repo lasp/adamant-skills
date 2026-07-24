@@ -105,17 +105,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 - Cross-compilation, Docker environment, SPARK prove config
 
 ### Wrapping C++ algorithms into Adamant components
-**Load:** `adamant-algorithm-wrapping`
-- Complete 7-stage pipeline: C shim -> Ada bindings -> packed records -> component implementation -> unit tests
-- C shim patterns (shared types headers, opaque handles, POD conversions)
-- h2ads tool usage and Ada binding transformation rules
-- C struct to packed record YAML conversion
-- Component YAML models for algorithm wrappers
-- Integration testing patterns comparing against Python reference tests
-
-**Also load if needed:**
-- `adamant-component-dev` -- for understanding component implementation patterns
-- `adamant-type-system` -- if creating new packed record types not covered in the examples
+Wrapping has no generic skill. It is project-specific -- use the wrapping skills the project ships in its own `agents/` (or `skills/`) directory, which encode that project's C-shim, packed-record, ABI-assert, and native-scalar conventions. See **Project-Specific Skills** below; do not substitute a generic pipeline.
 
 ### COSMOS ground system integration
 **Load:** `adamant-cosmos-integration`
@@ -214,7 +204,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Review generated or hand-written code | code-review | component-dev |
 | PR review (Adamant artifacts) | code-review | testing |
 | SPARK verification | formal-verification | component-dev |
-| Wrap C++ algorithm into Adamant component | algorithm-wrapping | component-dev |
+| Wrap C++ algorithm into Adamant component | *(project-specific -- use the project's own wrapping skills)* | |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | COSMOS integration test scripts | cosmos-testing | cosmos-integration |
 | COSMOS suite execution headless/CI (stream + exit-code gate) | cosmos-suite-results | cosmos-integration |
@@ -334,14 +324,6 @@ Skip `generated-api.md` for consolidated phases with only simple passive compone
 1. `adamant-skill-selector/SKILL.md` (this file)
 2. `adamant-assembly-dev/SKILL.md`
 3. `adamant-subassemblies/SKILL.md`
-
-### Algorithm Wrapping (C/C++ -> Adamant)
-1. `adamant-skill-selector/SKILL.md` (this file)
-2. `adamant-algorithm-wrapping/SKILL.md`
-3. `adamant-component-dev/SKILL.md`
-4. `adamant-component-dev/references/generated-api.md`
-5. `adamant-component-dev/references/implementation-patterns.md`
-6. `adamant-testing/SKILL.md`
 
 ### Large Tasks (5+ deliverables or 10+ components)
 1. `task-planning/SKILL.md` (read FIRST, before any technical skills)

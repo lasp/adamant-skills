@@ -92,7 +92,7 @@ Every passthrough command also accepts an optional path argument -- `admt build 
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (23 skills + 1 meta-skill = 24 total, ~25000 lines with refs)
+## Skill Inventory (22 skills + 1 meta-skill = 23 total, ~23000 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
@@ -100,7 +100,6 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-testing` | 2647 | Test harness, History API, assertions, coverage, advanced patterns |
 | `adamant-tools` | 2221 | API inspector, component scaffolder, YAML validator (Python scripts) |
 | `adamant-component-dev` | 2302 | Components: YAML models, generated API, implementation patterns, LASEL |
-| `adamant-algorithm-wrapping` | 2009 | C++ -> C shim -> Ada bindings -> Adamant component pipeline |
 | `adamant-assembly-dev` | 1455 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
 | `adamant-cosmos-integration` | 1955 | CCSDS pipeline, COSMOS plugin build/load |
 | `adamant-style` | 1152 | Ada/YAML/Python style rules enforced by `redo style` |
