@@ -1,11 +1,11 @@
 ---
 name: knowledge-acquisition
-description: Systematic study of codebases, frameworks, or domains using isolated Sonnet sessions to produce reusable skills. Use when asked to learn a repo, study a framework, gain expertise on a codebase, or create skills from existing knowledge. Covers scoping, delegation, incremental note-taking, quality gates, and skill consolidation.
+description: Systematic study of codebases, frameworks, or domains using isolated subagent sessions to produce reusable skills. Use when asked to learn a repo, study a framework, gain expertise on a codebase, or create skills from existing knowledge. Covers scoping, delegation, incremental note-taking, quality gates, and skill consolidation.
 ---
 
 # Knowledge Acquisition
 
-Pattern for using cheaper model sessions (Sonnet) to study large codebases and produce reusable skills.
+Pattern for using cheaper mid-tier model sessions (e.g. current Sonnet) to study large codebases and produce reusable skills.
 
 ## Tool-Agnostic Core
 
@@ -132,7 +132,7 @@ After initial skill creation, shift to building real artifacts to discover gaps.
 
 **Automated campaigns**: For systematic validation at scale, run multi-tier campaigns with escalating complexity, phased execution (to stay within context limits), and convergence criteria, orchestrated in-session with the Workflow tool. See [adamant-skill-campaign](../adamant-skill-campaign/SKILL.md) for the harness, and the "Automated Refinement Campaigns" section in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
 
-**Adaptive phase granularity**: When a phase fails repeatedly due to context exhaustion (not skill errors), split it further rather than retrying at the same granularity. Separating type definitions from component implementation, or component creation from test setup, gives Sonnet enough headroom. Finer phases also improve error attribution. Adjust dynamically based on observed failures.
+**Adaptive phase granularity**: When a phase fails repeatedly due to context exhaustion (not skill errors), split it further rather than retrying at the same granularity. Separating type definitions from component implementation, or component creation from test setup, gives a mid-tier subagent enough headroom. Finer phases also improve error attribution. Adjust dynamically based on observed failures.
 
 **Token-efficiency optimization**: After convergence, optimize skills to reduce token consumption via **structural changes only** (phase consolidation, deterministic read order, conditional reference loading, pipeline shape). Wording-level changes are not measurable -- run-to-run variance dominates. Re-run the SAME scenario with before/after CSV tracking. See "Token-Efficiency Optimization" and "Structural vs Wording Optimization" in [references/practice-driven-refinement.md](references/practice-driven-refinement.md).
 

@@ -249,16 +249,23 @@ Rate-limited runs do NOT count as failures -- don't reset the consecutive clean 
 
 ### Model Tiering as Quality Signal
 
-Running campaigns on different models tests skill robustness:
-- **Opus**: stronger reasoning, can compensate for vague skills
-- **Sonnet**: follows instructions more literally, exposes skill gaps Opus masks
+Running campaigns on different capability tiers tests skill robustness:
+- **Frontier tier (e.g. current Opus)**: stronger reasoning, can compensate for vague skills
+- **Mid tier (e.g. current Sonnet)**: follows instructions more literally, exposes skill gaps the frontier tier masks
 
-If a campaign converges on Opus but fails on Sonnet, the skills are relying on
-model capability rather than explicit documentation. Fix the skills until Sonnet
-converges too. This is a stronger quality bar.
+If a campaign converges on the frontier tier but fails mid-tier, the skills are
+relying on model capability rather than explicit documentation. Fix the skills
+until the mid tier converges too. This is a stronger quality bar.
 
-Consider re-running earlier tiers on Sonnet after initial Opus convergence to
-validate skill quality at the weaker model level.
+The reverse check matters equally on the newest model generations: if mid-tier
+output converges but frontier output is *degraded* -- verbose compliance,
+redundant re-verification, literal execution of steps the task didn't need --
+the skill is over-prescribed. Keep its invariants, drop its choreography
+(see `adamant-skill-creation` Writing Rule 10). Both checks are generation-scoped:
+re-run them when the models in routine use move a generation.
+
+Consider re-running earlier tiers on the mid tier after initial frontier
+convergence to validate skill quality at the weaker model level.
 
 ### Escalation Rules
 
