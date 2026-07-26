@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 24 Adamant skills totaling ~22500 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 24 Adamant skills totaling ~23200 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -133,6 +133,15 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 
 **Also load:** `adamant-cosmos-integration` (for container architecture and troubleshooting)
 
+### Building a black-box regression suite (source-blind)
+**Load:** `adamant-regression-suite`
+- Deriving the test surface from the command/telemetry contract instead of flight-software source
+- The black-box rule (no FSW source reads) and how it is enforced
+- Suite layout and structure, standard regression patterns, and the run loop
+- Wiring a suite into a simulation run harness
+
+**Also load:** `adamant-cosmos-testing` (for the COSMOS scripting API the suite is written against)
+
 ### Developing custom component generators
 **Load:** `adamant-generator-dev`
 - Creating new generators for components that need assembly-aware YAML configuration
@@ -204,6 +213,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | COSMOS integration test scripts | cosmos-testing | cosmos-integration |
 | COSMOS suite execution headless/CI (stream + exit-code gate) | cosmos-suite-results | cosmos-integration |
+| Build a black-box regression suite (source-blind) | regression-suite | cosmos-testing |
 | Debug COSMOS service failures / script runner | cosmos-integration (internals ref) | -- |
 | Memory-mapped register interface | type-system | component-dev |
 | Split assembly into subassemblies | subassemblies | assembly-dev |
