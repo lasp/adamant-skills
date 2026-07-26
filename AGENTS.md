@@ -94,11 +94,11 @@ Every passthrough command also accepts an optional path argument -- `admt build 
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (24 skills + 1 meta-skill = 25 total, ~24300 lines with refs)
+## Skill Inventory (22 skills + 4 meta-skills = 26 total, ~25400 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
-| `adamant-skill-selector` | 403 | **Read first.** Maps tasks to skills. |
+| `adamant-skill-selector` | 416 | **Read first.** Maps tasks to skills. |
 | `adamant-testing` | 2647 | Test harness, History API, assertions, coverage, advanced patterns |
 | `adamant-tools` | 2221 | API inspector, component scaffolder, YAML validator (Python scripts) |
 | `adamant-component-dev` | 2302 | Components: YAML models, generated API, implementation patterns, LASEL |
@@ -107,8 +107,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-style` | 1152 | Ada/YAML/Python style rules enforced by `redo style` |
 | `adamant-formal-verification` | 1528 | SPARK contracts, GNATprove, ghost lemmas, proof chains |
 | `adamant-build-system` | 1057 | Redo commands, code gen, build paths |
-| `adamant-skill-creation` | 1341 | Creating, validating, and refactoring Adamant skills |
-| `adamant-skill-campaign` | 425 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
+| `adamant-debugging` | 1139 | Three-layer debugging: GDB (tests/assemblies), post-mortem LCH/stack-trace triage + symbolizer script, target/compiler pitfalls |
 | `adamant-cosmos-testing` | 1043 | Integration test scripts via COSMOS scripting API |
 | `adamant-cosmos-suite-results` | 133 | COSMOS suite execution (openc3cli / Script Runner REST API) + result verification |
 | `adamant-regression-suite` | 700 | Black-box Python regression suites driven through the COSMOS cmd/tlm interface (source-blind) |
@@ -117,18 +116,22 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-type-system` | 931 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-subassemblies` | 546 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
 | `adamant-project-setup` | 546 | New project scaffolding, adamant_env.sh, Docker, config |
-| `knowledge-acquisition` | 699 | Systematic codebase study with sub-agents |
 | `adamant-code-review` | 362 | Component, test, type, assembly review checklists, design assessment |
 | `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
 | `adamant-generator-dev` | 672 | Custom generators: Ada source, YAML types, HTML docs, ground artifacts from YAML |
 | `high-assurance-design` | 304 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~25000 lines (SKILL.md + references)
+**Total:** ~25200 lines (SKILL.md + references)
 
 ## Meta-Skills
 
+Skills about the skill system and about running large tasks, rather than about the Adamant framework itself:
+
 | Skill | Lines | Purpose |
 |-------|-------|---------|
+| `adamant-skill-creation` | 1341 | Creating, validating, and refactoring Adamant skills |
+| `knowledge-acquisition` | 699 | Systematic codebase study with sub-agents |
+| `adamant-skill-campaign` | 482 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
 | `task-planning` | 193 | Time-boxing, progress tracking, batch execution for large tasks |
 
 **Read `task-planning/SKILL.md` FIRST** for any task with 5+ deliverables or 10+ components. It teaches how to manage time, track progress, and avoid rabbit holes.

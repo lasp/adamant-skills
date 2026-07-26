@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 25 Adamant skills totaling ~23800 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 26 Adamant skills totaling ~24900 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -56,6 +56,14 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 - `impl_coverage.sh` script for filtering to implementation .adb
 - Full path coverage techniques (Invalid_Command, Send_Dropped, Recv_Async_Dropped)
 - Adding tests to existing components (YAML + template regeneration)
+
+### Debugging: failing tests, crashes/hangs, target-only bugs
+**Load:** `adamant-debugging`
+- Interactive GDB: tests are already debuggable (`Linux_Test` = `-O0 -g`); `file:line` breakpoints, `catch exception`/`catch assert`
+- Post-mortem: Last Chance Handler packet decode, stack-trace symbolization (bundled script), gdb attach to a crashed target
+- A hung COSMOS/Renode suite is a crash until proven otherwise (LCH kills telemetry; waits spin)
+- Target/compiler level: works-on-Linux-traps-on-target families, stale-codegen signatures
+- `DEBUG=1` is build verbosity, NOT debug symbols -- the target already provides them
 
 ### Defining custom types (records, arrays, enums)
 **Load:** `adamant-type-system`
@@ -206,6 +214,10 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Scaffold + validate before building | tools | component-dev |
 | Add tests to existing component | testing | component-dev |
 | Measure/improve test coverage | testing (coverage guide) | component-dev |
+| Debug a failing test at runtime (breakpoints/stepping) | debugging | testing |
+| Test passes on Linux but fails on the flight target (cross/Renode) | debugging (target-pitfalls ref) | build-system |
+| A value/memory location is silently wrong and nothing in source writes it (mystery write, corruption, canary flips) | debugging (advanced-inspection ref, watchpoints) | -- |
+| Triage a crash, hang, or LCH packet | debugging | -- |
 | Wire components into assembly | assembly-dev | framework-components |
 | Debug build failure | build-system | -- |
 | Debug code generation producing wrong output | framework-internals | build-system |
@@ -229,7 +241,8 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Create system architecture from scratch | assembly-dev | framework-components |
 | Start a new Adamant project | project-setup | build-system |
 | Run/monitor assembly at runtime | assembly-dev (runtime ref) | -- |
-| Debug running assembly (events, queues) | assembly-dev (runtime ref) | -- |
+| Debug running assembly misbehavior (hangs, stalls, crashes, watchdog faults) | debugging | assembly-dev (runtime ref) |
+| Interpret assembly runtime telemetry (events, queues) | assembly-dev (runtime ref) | debugging |
 | Use Python ground tools | assembly-dev (runtime ref) | cosmos-integration |
 | Multi-rate scheduling design | assembly-dev (runtime ref) | framework-components |
 
@@ -293,14 +306,15 @@ Examples of project-specific content:
 
 Generic Adamant skills provide the *how*. Project skills provide the *what* and *where*. **When a project ships its own instructions or skills — a project `CLAUDE.md`/`AGENTS.md`, an `agents/` (or `skills/`) directory, or any project-local guidance — those take precedence over the generic skills here: if the project provides a skill for a task, use it instead of the generic one, and never let generic guidance override a project-specific instruction. Consult the generic skills only for tasks the project does not cover.**
 
-## Regenerating the Routing Table
+## Auditing the Skill Index
 
-This routing table can be regenerated from skill metadata:
+The routing table, task combinations, and read orders above are
+hand-curated -- update them manually when skills are added or renamed.
+What CAN be generated is a flat frontmatter index (skill, description,
+line counts) for auditing coverage and stale counts against this file:
 ```bash
-bash scripts/generate_selector.sh /path/to/skills/
+bash adamant-skill-selector/scripts/generate_selector.sh /path/to/skills/
 ```
-
-Last generated: 2026-02-19
 
 ## Deterministic Read Order (for cache-stable automation)
 
