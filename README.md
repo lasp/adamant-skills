@@ -1,6 +1,6 @@
 # Repository Overview
 
-24 skills, ~25K lines for AI-assisted Adamant embedded software development.
+25 skills, ~25K lines for AI-assisted Adamant embedded software development.
 
 ## Top-Level Files
 
@@ -35,6 +35,7 @@
 - `adamant-generator-dev` — Custom generators (Ada, YAML types, HTML docs, ground artifacts)
 - `adamant-cosmos-suite-results` — COSMOS suite execution (openc3cli / REST API) + result verification
 - `adamant-regression-suite` — Black-box Python regression suites via COSMOS cmd/tlm (source-blind)
+- `adamant-cosmos-tool-creation` — Custom COSMOS web UI tools (Vue/vite/single-spa), streaming vs polling, TSDB backfill
 
 ### Meta/Support
 - `adamant-skill-creation` — Building and validating new skills

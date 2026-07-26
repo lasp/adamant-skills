@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 24 Adamant skills totaling ~23200 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 25 Adamant skills totaling ~23800 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -141,6 +141,14 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 - Wiring a suite into a simulation run harness
 
 **Also load:** `adamant-cosmos-testing` (for the COSMOS scripting API the suite is written against)
+### Creating custom COSMOS web UI tools (Vue plugin tools)
+**Load:** `adamant-cosmos-tool-creation`
+- Building a browser tool (event viewer, dashboard, status page) with Vue + vite + single-spa
+- Declaring it in plugin.txt (`TOOL` / `INLINE_URL`) and shipping it in the plugin gem
+- Choosing a telemetry feed: JSON-RPC polling (CVT) vs websocket streaming (decom topic) vs TSDB backfill
+- Fixing a tool that drops packets, shows stale values, or does not clear persistently
+
+**Also load:** `adamant-cosmos-integration` (for plugin gem build/load and the JSON-RPC API)
 
 ### Developing custom component generators
 **Load:** `adamant-generator-dev`
@@ -214,6 +222,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | COSMOS integration test scripts | cosmos-testing | cosmos-integration |
 | COSMOS suite execution headless/CI (stream + exit-code gate) | cosmos-suite-results | cosmos-integration |
 | Build a black-box regression suite (source-blind) | regression-suite | cosmos-testing |
+| Create a custom COSMOS web UI tool (Vue plugin tool) | cosmos-tool-creation | cosmos-integration |
 | Debug COSMOS service failures / script runner | cosmos-integration (internals ref) | -- |
 | Memory-mapped register interface | type-system | component-dev |
 | Split assembly into subassemblies | subassemblies | assembly-dev |

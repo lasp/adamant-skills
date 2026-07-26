@@ -94,7 +94,7 @@ Every passthrough command also accepts an optional path argument -- `admt build 
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (23 skills + 1 meta-skill = 24 total, ~23700 lines with refs)
+## Skill Inventory (24 skills + 1 meta-skill = 25 total, ~24300 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
@@ -112,6 +112,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-cosmos-testing` | 1043 | Integration test scripts via COSMOS scripting API |
 | `adamant-cosmos-suite-results` | 133 | COSMOS suite execution (openc3cli / Script Runner REST API) + result verification |
 | `adamant-regression-suite` | 700 | Black-box Python regression suites driven through the COSMOS cmd/tlm interface (source-blind) |
+| `adamant-cosmos-tool-creation` | 638 | Custom COSMOS web UI tools + widgets: decision ladder (screen/widget/tool/microservice), build contract, data feeds |
 | `adamant-framework-components` | 675 | Catalog of all 58 built-in components + audit |
 | `adamant-type-system` | 931 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-subassemblies` | 546 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
