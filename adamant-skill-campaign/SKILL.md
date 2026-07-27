@@ -169,6 +169,35 @@ for (let i = 1; clean < TARGET && i <= MAX; i++) {
 Convergence target = 5 consecutive clean (configurable). Track the DP hit-ratio across
 iterations to tell convergence (rising) from a plateau (fundamentally unclear skill).
 
+## Model Generations (validation is generation-scoped)
+
+A convergence result is a statement about **the skills AND the model that ran them** --
+record the subagent model alongside every campaign result, and treat "converged" as
+scoped to that model generation. When the models in routine use move a generation
+(e.g. 4.x-era to 5-era), prior convergence records establish a baseline, not currency:
+re-run the highest-value tiers before trusting the skills unchanged on the new
+generation.
+
+Run subagents on **the models your users actually run**, and when the skill repo serves
+more than one tier or provider, campaign at least two capability tiers -- a frontier
+model and a mid-tier model. The two tiers expose opposite failure modes, and both are
+real findings:
+
+- **Under-specification** (mid-tier exposes it): the agent misses a convention the skill
+  implied but never stated. Classic MISS -- fix by stating the convention with its
+  rationale.
+- **Over-specification** (frontier exposes it): the agent follows step choreography
+  literally where judgment would produce better output -- symptoms are verbose
+  compliance, redundant re-verification of already-verified work, or faithfully
+  executing a stale step the domain no longer needs. Score these as GAPs against the
+  *skill*, not agent slips: fix by keeping the invariant and dropping the choreography
+  (see `adamant-skill-creation` Writing Rule 10).
+
+A skill that converges on a frontier model but fails mid-tier is leaning on model
+capability instead of documentation. A skill that converges mid-tier but degrades
+frontier output is over-prescribed. Both are skill defects; the campaign exists to
+find them.
+
 ## Campaigning a diagnose/fix skill (fault injection)
 
 When the skill under test **diagnoses or fixes** rather than **builds** (debugging, review,

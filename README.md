@@ -70,7 +70,7 @@ When you send a request to the API, the input tokens are normally billed at full
 - Cache **hit** (subsequent requests): ~90% cheaper than normal input
 - Output tokens: unaffected, always billed at full rate
 
-For `claude-opus-4-8` at $5.00/1M input tokens:
+For `claude-opus-5` at $5.00/1M input tokens:
 
 | Event | Effective rate |
 |-------|---------------|
@@ -99,8 +99,8 @@ Since cache reads are always priced at 10% of the base input price across all Cl
 
 | Model | Base input | Cache read | Savings per hit (100k tokens) | Write cost (100k, 5-min TTL) |
 |-------|-----------|-----------|-------------------------------|------------------------------|
-| Opus 4.8 | $5.00/1M | $0.50/1M | **$0.45** | $0.625 (recovered after ~2 hits) |
-| Sonnet 4.6 | $3.00/1M | $0.30/1M | $0.27 | $0.375 (recovered after ~2 hits) |
+| Opus 5 | $5.00/1M | $0.50/1M | **$0.45** | $0.625 (recovered after ~2 hits) |
+| Sonnet 5 | $3.00/1M | $0.30/1M | $0.27 | $0.375 (recovered after ~2 hits) |
 | Haiku 4.5 | $1.00/1M | $0.10/1M | $0.09 | $0.125 (recovered after ~2 hits) |
 
 > **Source:** [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing) -- cache read tokens are 0.1x base input price, cache write tokens are 1.25x base input price (5-min TTL) across all models.

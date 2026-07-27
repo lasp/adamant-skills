@@ -138,6 +138,7 @@ Skills about the skill system and about running large tasks, rather than about t
 
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
 - **Compiler-validated.** 30+ rounds of build-test-fix cycles across 100+ components + unit tests. Components compile clean on first try when skills are followed.
+- **Capability-calibrated.** Skills state domain *invariants* absolutely (build-state corruption, generated-code contracts, buffer limits) and *conventions* with their rationale. The most capable current models (e.g. Claude 5-generation) should exercise judgment over execution order and verification cadence *within* those invariants; the explicit statements are what keep mid-tier and non-Anthropic models convergent. Treat degraded output from over-prescription as a skill defect and report it (see `adamant-skill-creation` Writing Rule 10).
 - **Selector-driven.** Load 1-2 skills per task, not all 24.
 - **Three-tier prompt strategy:** This file (CLAUDE.md) -> skill-selector -> deep skills. Load order matters for cache efficiency:
   1. This file -- loaded automatically as system prompt
@@ -152,6 +153,8 @@ Skills about the skill system and about running large tasks, rather than about t
 - **All style warnings are fixable.** No "template artifacts" -- every warning has a solution.
 
 ## Validation Results
+
+All results below predate the Claude 5 generation. Earlier campaigns ran Opus-tier orchestrators driving Sonnet-tier cold-start subagents; more recent ones ran Opus- or Fable-tier orchestrators driving Opus-tier subagents. Validation is generation-scoped -- see `adamant-skill-campaign` -- and a systematic re-validation of the full skill set on 5-generation subagents is pending.
 
 - **Style:** 221/221 directories, 0 failures
 - **Coverage:** 89%+ aggregate across 100+ components

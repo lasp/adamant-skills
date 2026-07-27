@@ -107,6 +107,18 @@ description: <What it does>. <When to use it -- specific triggers>.
    past than imperatives with motivation ("Do X because Y"). A single clause is usually
    enough -- the goal is enough context for the agent to apply judgment in edge cases, not
    a lecture. Reasons let the agent reapply the rule in situations the skill didn't anticipate.
+10. **Classify every directive -- invariant, convention, or judgment call -- and write it
+    to match.** *Invariants* are facts of the domain (build-state corruption, generated-code
+    contracts, buffer/ABI limits, CI gates): state them absolutely, with the consequence
+    ("NEVER X -- corrupts Y"). *Conventions* are choices this ecosystem standardized
+    (naming, layout, assertion style): state them with their rationale so agents can apply
+    them to cases the skill didn't anticipate. *Judgment calls* (how much to explore, what
+    to verify, response shape): state the goal and the constraint, not a step sequence --
+    highly capable models produce worse output when choreography replaces goals, while
+    less capable models still get their guardrail from the stated constraint. A directive
+    that exists only because some model once got it wrong -- not because the domain demands
+    it -- is generation-scoped: flag it for removal when validation moves to a newer model
+    generation (see `adamant-skill-campaign` -- validation results are generation-scoped).
 
 ### Description Field (Critical for Triggering)
 
@@ -392,6 +404,15 @@ Based on 14 skills developed over 20+ sessions:
    vocabulary). When introducing a new term, grep existing skills for synonyms and pick
    the dominant one before committing. Drift is hard to spot in review and confuses
    agents that load multiple skills with conflicting vocabularies.
+9. **Over-prescription for capable models**: Step-by-step choreography where a goal plus
+   constraints would do. The most capable current model generations measurably produce
+   *worse* output when over-constrained -- they follow stale steps literally instead of
+   exercising judgment -- while the invariants those steps were protecting still hold.
+   Keep the invariant, drop the choreography. The symmetric failure also exists:
+   less capable models under-perform when conventions are implied rather than stated.
+   Cross-tier validation (see `adamant-skill-campaign`) finds both edges. When one skill
+   must serve both tiers, state invariants and conventions explicitly and leave execution
+   order to the agent -- unless order is load-bearing, in which case say why it is.
 
 ## References
 - [references/validation-history.md](references/validation-history.md) -- Convergence data from 19 rounds of skill validation
