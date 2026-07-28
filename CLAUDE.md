@@ -88,6 +88,16 @@ Every passthrough command also accepts an optional path argument -- `admt build 
 
 **NEVER `source env/activate` or `source project/env/activate` directly.** admt (and the `adamant_env.sh exec` fallback) handles activation automatically via a cached snapshot.
 
+### Selecting your project
+
+Every admt command targets one **active project** -- the container it forwards into -- chosen in this order: `ADMT_ENV=<project>` (per-command override) -> your session's pin -> the global default. Set it once and every later command follows:
+
+- **Interactive terminal:** `admt env use <project>` pins this terminal (keyed on the tty).
+- **Agent / headless (no tty):** `admt env use <project>` pins your **session**. admt keys the pin on your harness's session id (Claude Code's `CLAUDE_CODE_SESSION_ID` is detected automatically; other harnesses map their own onto `ADMT_SESSION_KEY`), so one `env use` at the start holds across every later command -- even though each runs in a fresh shell that would drop an `export`. This is the fix for the export-doesn't-persist trap: pin once, don't re-`export ADMT_ENV` per command.
+- **Per-command / orchestration:** `ADMT_ENV=<project> admt <cmd>` selects the project for that one call and pins nothing -- the right tool for hermetic or orchestrated runs.
+
+Two guarantees worth knowing: a headless `env use` pins only your session and **never moves the global default**, so concurrent agents (one per worktree) don't collide; and a headless caller with no tty and no session key is **refused** with an error naming the fix, rather than silently building against whatever the shared global happens to be -- a misconfigured project selection fails loudly, not silently against the wrong container.
+
 ## Quick Start
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
