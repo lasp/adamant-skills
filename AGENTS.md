@@ -19,6 +19,8 @@ This repo contains three agent instruction files; copy the ones your tooling use
 
 **Use [`admt`](https://github.com/Jbsco/admt) (The Adamant Multitool) as the primary entry point for all Adamant work.** admt wraps redo, docker compose, and env activation behind one CLI. Run it from the host, on or below a registered project root; it forwards into the container automatically.
 
+**Your first admt action is selecting a project.** Before any build/test/env command, pin your session -- `admt env use <project>` (`admt env list` shows the registered names); see [Selecting your project](#selecting-your-project). A tty-less session that has never selected a project has nothing to resolve: commands are refused (or, if a global default exists elsewhere, may target the wrong container's mounts), so select first, then build.
+
 ```bash
 admt what               # List buildable targets in the current dir
 admt build              # redo all
@@ -36,7 +38,7 @@ admt env exec "<cmd>"   # Arbitrary command inside the container
 bash docker/adamant_env.sh exec "cd /home/user/<project>/path/to/dir && <command>"
 ```
 
-**`admt what`** is what you run first in any directory to discover what can be built. It replaces `redo what`.
+**`admt what`** is what you run first in any directory -- once your project is selected -- to discover what can be built. It replaces `redo what`.
 
 **admt is self-describing.** `admt --help` lists every command and global flag; `admt <command> --help` shows command-specific options (e.g. `admt env --help`, or `admt templates --help`, which reveals `--undo`). The tables below are a quick reference, not exhaustive -- when you need an advanced or unlisted subcommand or flag, run `--help` rather than guessing or defaulting to the fallback.
 
@@ -94,7 +96,7 @@ Every passthrough command also accepts an optional path argument -- `admt build 
 
 Every admt command targets one **active project** -- the container it forwards into. As an agent, prefer these in order:
 
-1. **Pin your session (preferred -- zero configuration):** run `admt env use <project>` once at the start of your session. Your harness's session id (Claude Code's `CLAUDE_CODE_SESSION_ID`, Codex's `CODEX_THREAD_ID` -- injected into every shell) keys the pin, so it holds for every later command even though each runs in a fresh shell that would drop an `export`. Do not re-`export ADMT_ENV` per command -- that is the trap the pin exists to fix. On an unrecognized harness, export a stable `ADMT_SESSION_KEY` once, then `env use` the same way.
+1. **Pin your session (preferred -- zero configuration):** as your first admt action, run `admt env use <project>` once. Your harness's session id (Claude Code's `CLAUDE_CODE_SESSION_ID`, Codex's `CODEX_THREAD_ID` -- injected into every shell) keys the pin, so it holds for every later command even though each runs in a fresh shell that would drop an `export`. Do not re-`export ADMT_ENV` per command -- that is the trap the pin exists to fix. On an unrecognized harness, export a stable `ADMT_SESSION_KEY` once, then `env use` the same way.
 2. **Override per command only when needed:** `ADMT_ENV=<project> admt <cmd>` outranks the pin for that one call and persists nothing -- for a one-off command against another project, or orchestrated/hermetic runs where the orchestrator names the project explicitly.
 
 A tty is not usually available inside an agent session, so the terminal path is not yours; for completeness: in an interactive terminal the same `admt env use` pins that terminal, keyed on its tty.
