@@ -92,13 +92,14 @@ Every passthrough command also accepts an optional path argument -- `admt build 
 
 ### Selecting your project
 
-Every admt command targets one **active project** -- the container it forwards into -- chosen in this order: `ADMT_ENV=<project>` (per-command override) -> your session's pin -> the global default. Set it once and every later command follows:
+Every admt command targets one **active project** -- the container it forwards into. As an agent, prefer these in order:
 
-- **Interactive terminal:** `admt env use <project>` pins this terminal (keyed on the tty).
-- **Agent / headless (no tty):** `admt env use <project>` pins your **session**. admt keys the pin on your harness's stable per-session id -- Claude Code (`CLAUDE_CODE_SESSION_ID`) and Codex (`CODEX_THREAD_ID`) are auto-detected; any other harness maps its own onto `ADMT_SESSION_KEY` -- so one `env use` at the start holds across every later command, even though each runs in a fresh shell that would drop an `export`. This is the fix for the export-doesn't-persist trap: pin once, don't re-`export ADMT_ENV` per command.
-- **Per-command / orchestration:** `ADMT_ENV=<project> admt <cmd>` selects the project for that one call and pins nothing -- the right tool for hermetic or orchestrated runs.
+1. **Pin your session (preferred -- zero configuration):** run `admt env use <project>` once at the start of your session. Your harness's session id (Claude Code's `CLAUDE_CODE_SESSION_ID`, Codex's `CODEX_THREAD_ID` -- injected into every shell) keys the pin, so it holds for every later command even though each runs in a fresh shell that would drop an `export`. Do not re-`export ADMT_ENV` per command -- that is the trap the pin exists to fix. On an unrecognized harness, export a stable `ADMT_SESSION_KEY` once, then `env use` the same way.
+2. **Override per command only when needed:** `ADMT_ENV=<project> admt <cmd>` outranks the pin for that one call and persists nothing -- for a one-off command against another project, or orchestrated/hermetic runs where the orchestrator names the project explicitly.
 
-Two guarantees worth knowing: a headless `env use` pins only your session and **never moves the global default**, so concurrent agents (one per worktree) don't collide; and a headless caller with no tty and no session key is **refused** with an error naming the fix, rather than silently building against whatever the shared global happens to be -- a misconfigured project selection fails loudly, not silently against the wrong container.
+A tty is not usually available inside an agent session, so the terminal path is not yours; for completeness: in an interactive terminal the same `admt env use` pins that terminal, keyed on its tty.
+
+Behind this: a headless `env use` pins only your session and **never moves the global default**, so concurrent agents (one per worktree) don't collide -- and with no tty and no session key, admt refuses with an error naming the fix rather than silently building against the shared global.
 
 ## Quick Start
 
