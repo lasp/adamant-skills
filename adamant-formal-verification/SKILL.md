@@ -303,6 +303,15 @@ mathematical justification (see the ghost lemma pattern above).
 
 `admt prove` analyzes ALL Ada sources in the directory. For Adamant components, this includes generated base class files that depend on the full framework -- which GNATprove often cannot handle (child package resolution failures).
 
+The failure surfaces in more than one form. Both of these mean the same thing (prove is
+pulling in generated sources it cannot resolve), and both are fixed the same way:
+
+```
+<unit> is not a file or compilation unit of any project     -- often a generated
+                                                            -- *-representation unit
+error: child package ... cannot be resolved
+```
+
 **Workaround: Prove logic packages directly:**
 
 ```bash
@@ -317,6 +326,26 @@ gnatprove -j0 --checks-as-errors=on --level=2 --mode=silver \
 ```
 
 This targets only the SPARK logic package, skipping the framework-dependent component implementation.
+
+A logic package with no framework dependencies needs only its own directory on
+`SOURCE_DIRS` -- drop the `,$(pwd)/build/src` and the generated sources stay out of the
+analysis entirely, which is the point of the workaround.
+
+**Read the summary; exit status is not proof.** A clean run prints no findings, and so does a
+run that analyzed nothing you cared about. Open the summary and check the Unproved column:
+
+```
+Summary of SPARK analysis
+  Run-time Checks        6    .    6 (Z3)    .    .
+  Assertions             1    .    1 (Z3)    .    .
+  Functional Contracts   1    .    1 (Z3)    .    .
+  Total                 10    2 (20%)  8 (80%)  .   .
+```
+
+With a **relative** `-XOBJECT_DIR=build/prove` the summary lands under the GPR's directory
+(`<adamant>/redo/targets/gpr/build/prove/gnatprove/gnatprove.out`), not under the component --
+pass an absolute path if you want it beside your sources. Confirm the Detailed analysis
+report names the subprograms you expected, with `0 pragma Assume statements`.
 
 **CRITICAL: SOURCE_DIRS must include the directory containing the logic files.** If running from the project root (not the component directory), use the component subdirectory path:
 
@@ -470,3 +499,7 @@ When creating SPARK logic packages for Adamant components:
 
 ## References
 - `references/contract-patterns.md` -- Advanced contract patterns, ghost code examples, and proof chain walkthrough
+- `references/integer-logic-conversion.md` -- Read when converting existing integer arithmetic
+  (especially a body defended by `pragma Assert`) into a proved logic package: extraction
+  boundary, what modular register types do to your proof obligations, clamp-then-narrow,
+  writing postconditions as properties, and the four verification fronts a conversion needs
