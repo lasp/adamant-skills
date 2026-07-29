@@ -190,10 +190,15 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 - Proof chain pattern for opaque type boundaries
 - Absence-of-runtime-errors proofs
 - Memory map / register map SPARK analysis
+- Converting existing integer logic to a proved logic package (extraction boundary, contracts)
+- Specified saturation vs proof-convenience clamping (documented override on vendor guidance)
 
 **Also load if needed:**
 - `adamant-component-dev` -- if adding SPARK to a component's logic
 - `adamant-build-system` -- if debugging prove build path issues
+- The toolchain vendor's `gnatprove` skill, when available -- authoritative for raw tool
+  mechanics and SPARK language idioms; `adamant-formal-verification` covers how they meet
+  the framework and states the one override that applies
 
 ### Code style checking and compliance
 **Load:** `adamant-style`
@@ -230,6 +235,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Review generated or hand-written code | code-review | component-dev |
 | PR review (Adamant artifacts) | code-review | testing |
 | SPARK verification | formal-verification | component-dev |
+| Convert existing integer logic to a proved SPARK package | formal-verification | component-dev |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | COSMOS integration test scripts | cosmos-testing | cosmos-integration |
 | COSMOS suite execution headless/CI (stream + exit-code gate) | cosmos-suite-results | cosmos-integration |

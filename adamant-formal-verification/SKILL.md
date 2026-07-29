@@ -77,6 +77,46 @@ end My_Component;
 - Side effects in functions (functions must be pure)
 - General aliasing
 
+## Using This Skill With the Vendor GNATprove Skill
+
+When a `gnatprove` skill from the toolchain vendor is available alongside this one, it is
+authoritative for raw tool mechanics (invocation, proof levels, counterexamples, SPARK
+language idioms, floating-point and overflow references). This skill is authoritative for
+everything Adamant-specific: logic-package factoring, `all.prove.yaml`, `admt prove`
+integration, and the framework's own type/generation constraints. Read the vendor skill for
+the tool; read this one for how the tool meets the framework.
+
+One documented override applies when following the vendor guidance:
+
+**Specified saturation is not proof-convenience clamping.** General SPARK guidance warns
+against introducing clamps to make proofs discharge, and for ordinary application logic that
+warning is correct: a `Min`/`Max` bolted on to silence a prover hides a real precondition.
+The warning does not apply when the bound is part of the specification. Hardware registers,
+device models, protocol fields, and configured limits saturate by design, and a faithful
+implementation must reproduce the clamped value (and any status flag) exactly.
+
+Discriminating question: **is this bound in the specification, or did I add it to make the
+prover happy?**
+
+| Case | Treatment |
+|------|-----------|
+| Clamp as proof convenience | Anti-pattern. Remove it and state the real precondition. |
+| Clamp as specified behavior | Model it. Express the saturating branch in the postcondition so the bound is proved, not hidden. |
+
+Express specified saturation as a multi-branch postcondition (`Contract_Cases`, or a
+conditional expression per case) so the clamp becomes a proved case split:
+
+```ada
+function Allocate (Requested : Count_T; Limit : Count_T) return Count_T
+   with Global => null,
+        Post => Allocate'Result <= Limit
+                and then (if Requested <= Limit then Allocate'Result = Requested)
+                and then (if Requested > Limit then Allocate'Result = Limit);
+```
+
+The three-branch signed-saturation shapes in `references/contract-patterns.md` are the same
+idea for `Integer_32` corrections.
+
 ## Contract Patterns
 
 ### Preconditions and Postconditions
@@ -242,6 +282,20 @@ admt env exec "cd /home/user/<project>/<component> && PROVE_SWITCHES='--level=4 
 ### Output
 
 Results go to `build/prove/prove.txt`.
+
+### Keep the Silver-to-Gold boundary visible: count the assumes
+
+`pragma Assume` is the one construct that can make an unproved property look proved, so the
+proof gate should report how many exist, every run, alongside the unproved-subprogram count:
+
+```bash
+grep -c "pragma Assume" *.adb
+```
+
+Print both numbers whenever the gate runs. A codebase that does not count its assumes drifts
+from Gold to "Gold with exceptions" invisibly; a counted one makes assume creep show up the
+moment it lands. Each surviving assume must be confined to ghost code and carry a written
+mathematical justification (see the ghost lemma pattern above).
 
 ## Build System Integration
 
