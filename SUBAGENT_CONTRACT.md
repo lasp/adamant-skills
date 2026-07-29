@@ -34,6 +34,8 @@ admt env exec "<command>"         # Arbitrary command inside the container (non-
 admt env login                    # Interactive shell
 ```
 
+**Your active project is set by the orchestrator**, typically `ADMT_ENV=<project>` exported into your environment (or a session pin it established) -- you normally do not select it yourself. If admt reports `No tty and no session key`, your project was never scoped: report that gap so the orchestrator sets `ADMT_ENV` or pins the session, rather than guessing a project to build against.
+
 **admt is self-describing -- discover, don't guess.** The patterns above cover the common cases. For anything not listed, ask admt directly rather than guessing or falling back prematurely:
 
 ```bash
