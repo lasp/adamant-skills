@@ -176,6 +176,7 @@ This applies to every `pragma Assert` in hand-written component implementations 
 - **Based literals**: Use `16#...#` for hex
 - **Qualified aggregates**: `Packed_U16.T'(Value => N)` when type is ambiguous
 - **Box default `<>`**: Use in aggregates when default initialization is appropriate. Prefer explicit values for critical fields: `(Status => Success, Count => 0)` over `(Status => Success, Count => <>)`.
+- **Deliberately reordered call arguments**: when a call passes actuals in an unusual order on purpose (e.g. a lemma that swaps two operands), use **named association** in the call -- `F (A => X, B => Z, C => Y)` -- not positional actuals. GNAT's `-gnatw.p` warns "actuals for this call may be in wrong order" on exactly this shape; naming the arguments expresses the intent and clears the warning without `pragma Warnings (Off, ...)`, which would suppress the check everywhere else it is useful. Name the deliberate thing rather than silence the warning.
 
 ### Multi-Line Subprogram Signatures
 
