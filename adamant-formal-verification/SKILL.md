@@ -131,6 +131,28 @@ function Clamp (Val, Lo, Hi : Integer) return Integer
         Post => Clamp'Result >= Lo and then Clamp'Result <= Hi;
 ```
 
+### State the equivalence when code branches on the property
+
+A property a caller will *branch on* -- cull or keep, saturate or pass, accept or reject -- must
+be stated as an **equivalence**, not a one-way implication. The implication is the trap because it
+is true and it proves, so the contract looks finished while the direction the caller needs is
+absent:
+
+```ada
+-- Weaker than it looks: proves, but a caller deciding NOT to act gets nothing.
+Post => (if A > Threshold then Square (A) > Square (Threshold));
+
+-- Decision-supporting: holds in both directions.
+Post => (Square (A) > Square (Threshold)) = (A > Threshold);
+```
+
+Same shape as a saturation flag, specified `Flag = (out of range)` and not
+`(if out of range then Flag)`: a model that over-reports the flag satisfies the implication and is
+still wrong. The question when writing the contract is **"is anything going to branch on this?"** --
+if so, write `P = Q` (one equivalence) rather than paired `if` implications, so the symmetry is
+visible and cannot be half-updated later. The equivalence is usually no harder to prove; nonlinear
+ones like the squared-magnitude case discharge with null-body lemmas just as the implication would.
+
 ### Data Dependencies (Global and Depends)
 
 ```ada
