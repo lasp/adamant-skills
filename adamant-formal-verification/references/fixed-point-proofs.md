@@ -65,6 +65,54 @@ The conversion noise is correct, not a smell: it is the point at which you choos
 type, and therefore the point at which the prover gets a target range to check the product
 against. Multiply-heavy fixed-point code is a sequence of these deliberate conversions.
 
+## Division floors on the device, truncates in Ada
+
+A device that shifts right to divide is doing **floor** division. Ada's `/` truncates **toward
+zero**. They disagree for every negative value that is not an exact multiple of the divisor, and
+the disagreement is silent because both are "a division":
+
+```
+   -1 / 16     =  0    -- Ada: truncate toward zero
+   -1 >> 4     = -1    -- device: arithmetic shift right = floor
+```
+
+The harm escalates with where the result lands. A projected coordinate divided with `/` sits one
+unit off the hardware, on one side of centre only, invisible in review. Inside an operation family
+the same displacement hits every negative operand. Worst is when the result feeds a
+**clamp-and-flag**: an intensity of `-1` floors to `-1`, which clamps to zero *and sets the
+saturation flag*, where Ada's `/` yields `0` and reports no clamp. Same stored value, different
+flag word, and a differential test against a reference that does not model flags cannot see it.
+Corollary worth stating in any device model: **status bits are outputs; a reference that omits
+them cannot defend them.**
+
+The fix is not "use floor division everywhere" but **test the sign before dividing**, so the model
+depends on no language's rounding direction:
+
+```ada
+   --  Sign first: the device floors, so every negative intensity clamps and flags,
+   --  including the ones an Ada division would round up to zero.
+   if V < 0 then
+      return Colour_Result'(Value => 0, Saturated => True);
+   end if;
+   --  The remaining division sees only non-negative operands, where floor and
+   --  truncation agree and the question cannot arise.
+```
+
+Where a negative range genuinely flows through with no clamp, write floor explicitly and prove its
+*defining property* rather than restating the shift:
+
+```ada
+   function Floor_Shift (V : Numer_Value) return Long_Long_Integer is
+     (if V >= 0 then V / Divisor else -((-V + Divisor - 1) / Divisor))
+   with Post => Floor_Shift'Result * Divisor <= V
+               and then V < (Floor_Shift'Result + 1) * Divisor;
+```
+
+The bracketing postcondition holds whatever expression computes the result, and downstream
+monotonicity and exactness lemmas lean on it rather than on the shift. The same toward-zero-versus-
+floor split applies to plain integer shifts; the vendor gnatprove skill's overflow-pattern
+reference is the companion.
+
 ## Bound products before summing, in the body AND the contract
 
 A product needs more integer bits than its operands: a `1.3.12` times a `1.3.12` can reach
@@ -136,6 +184,38 @@ than removing the clamp:
 The body clamps to `Q3_12'Last`/`Q3_12'First` and sets the flag; the prover discharges both the
 flag equivalence and the exact-value case. Compare with the integer three-branch signed
 saturation in `contract-patterns.md`: same shape, scaled type.
+
+## A composed status word: state it as an expression function
+
+The pattern above returns one flag beside a value. An operation whose result includes a **word
+composed from several flags** needs one more step, or a caller cannot reason about the word.
+Leaving the word to the body -- pinning the value outputs and proving each flag's cause separately
+-- is true and provable, and forecloses nothing until a caller needs a property *of the word* ("in
+this domain the word is zero") and has no contract to prove it from.
+
+State the word as an **expression function** and pin it by equality:
+
+```ada
+   function Flag_Word_Of (...) return Flag_Word is
+     ((if Cause_1 then Bit (Flag_Bit (1)) else 0)
+      or (if Cause_2 then Bit (Flag_Bit (2)) else 0)
+      or ...);
+
+   function Operation (...) return Op_Result
+      with Post => ... and then Operation'Result.Flags = Flag_Word_Of (...);
+```
+
+Three consequences, observed rather than predicted:
+
+* The operation's own postcondition is trivial to discharge: the body returns the same expression
+  the contract names.
+* Word-level properties become *evaluable*. "The whole flag word is zero in this domain" is a lemma
+  proved by showing each cause false and letting the expression fold to zero. The per-bit
+  alternative -- quantified `Is_Set` biconditionals over an OR-fold -- pushes provers into bitvector
+  reasoning for every consumer.
+* The flag word joins the value outputs as *specified* rather than incidental, which is what a
+  device model owes its callers: the equivalence rule from the main skill (state `P = Q` when a
+  caller will branch on it), applied to a whole word at once.
 
 ## Device operations: the contract carries what the name does not
 
