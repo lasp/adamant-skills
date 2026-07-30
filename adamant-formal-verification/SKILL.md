@@ -503,3 +503,9 @@ When creating SPARK logic packages for Adamant components:
   (especially a body defended by `pragma Assert`) into a proved logic package: extraction
   boundary, what modular register types do to your proof obligations, clamp-then-narrow,
   writing postconditions as properties, and the four verification fronts a conversion needs
+- `references/fixed-point-proofs.md` -- Read when the numeric code is (or could be) fixed-point
+  rather than float: declaring a type that means the hardware format (`delta`, explicit
+  `Small`, `Size`), the `universal_fixed` conversion, widening products in the body AND the
+  contract, saturation-with-flag, and modelling per-operation scale/selector in the contract.
+  Fixed-point lowers to linear integer arithmetic and proves where float does not, so
+  "fixed-point vs float" is a proof decision worth making before committing to float

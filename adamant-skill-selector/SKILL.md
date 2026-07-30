@@ -192,6 +192,8 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 - Memory map / register map SPARK analysis
 - Converting existing integer logic to a proved logic package (extraction boundary, contracts)
 - Specified saturation vs proof-convenience clamping (documented override on vendor guidance)
+- Numeric code: fixed-point vs float -- fixed-point proves (linear integer obligations), float is
+  proof-hostile; decide before committing to float (references/fixed-point-proofs.md)
 
 **Also load if needed:**
 - `adamant-component-dev` -- if adding SPARK to a component's logic
@@ -236,6 +238,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | PR review (Adamant artifacts) | code-review | testing |
 | SPARK verification | formal-verification | component-dev |
 | Convert existing integer logic to a proved SPARK package | formal-verification | component-dev |
+| Numeric code: choosing fixed-point vs float for provability | formal-verification (fixed-point ref) | -- |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | COSMOS integration test scripts | cosmos-testing | cosmos-integration |
 | COSMOS suite execution headless/CI (stream + exit-code gate) | cosmos-suite-results | cosmos-integration |

@@ -87,6 +87,26 @@ When assumptions are unavoidable:
 3. Keep them in a single auditable location
 4. Minimize count; each assumption is a proof debt
 
+### Replacing N specialisations with one parameterisation needs a coverage argument
+
+Constrained systems often carry a family of near-identical routines: the same logic
+specialised per object class, per channel, or per instance rather than written once
+generically. A reimplementation naturally collapses each family into one parameterised
+implementation. That is a genuine improvement, and it carries a proof obligation that is easy
+to skip:
+
+> Replacing N specialisations with one parameterisation requires an argument that the parameter
+> space covers every specialisation's behaviour. Absent that argument, the generalisation is a
+> guess that happens to compile.
+
+Discharge it explicitly: enumerate the specialisations, identify the varying quantity, show the
+parameter domain includes each observed value, and state the correspondence as a contract or a
+proved lemma per specialisation. When a specialisation differs by more than a parameter value
+(an extra branch, a different primitive type), that is evidence the parameterisation is wrong,
+not evidence to widen the parameter. This is a design-review question before it is a proof
+question: settle it while deciding to generalise, not after the proof of the general form fails
+to say anything about the specific cases it replaced.
+
 ### Proof Architecture
 
 See [references/proof-patterns.md](references/proof-patterns.md) for the ghost lemma pattern, shared predicates, and expression function strategies.
