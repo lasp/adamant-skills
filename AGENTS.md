@@ -118,7 +118,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-assembly-dev` | 1455 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
 | `adamant-cosmos-integration` | 1955 | CCSDS pipeline, COSMOS plugin build/load |
 | `adamant-style` | 1153 | Ada/YAML/Python style rules enforced by `redo style` |
-| `adamant-formal-verification` | 2226 | SPARK contracts, GNATprove, ghost lemmas, proof chains, numeric proof methods |
+| `adamant-formal-verification` | 2240 | SPARK contracts, GNATprove, ghost lemmas, proof chains, numeric proof methods |
 | `adamant-build-system` | 1057 | Redo commands, code gen, build paths |
 | `adamant-debugging` | 1139 | Three-layer debugging: GDB (tests/assemblies), post-mortem LCH/stack-trace triage + symbolizer script, target/compiler pitfalls |
 | `adamant-cosmos-testing` | 1051 | Integration test scripts via COSMOS scripting API |
