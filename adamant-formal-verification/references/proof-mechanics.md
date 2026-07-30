@@ -106,6 +106,15 @@ satisfied and a violated clause look identical. Confirm the clause by compiling 
 (`gcc -c -gnatc <unit>.ads`): the violated form reports `error: <your message>`, the satisfied
 form compiles clean.
 
+More generally: **`--mode=check` does not generate code**, so nothing that arises during code
+generation can appear in it -- not `Compile_Time_Error`, not representation information, not
+code-generation warnings. When comparing two revisions to decide whether a diagnostic is new, run
+both the *same* way, and use a plain `gprbuild` for anything the compiler (not the prover) reports:
+a `--mode=check` run on the old revision can silently lack the entire class of message and make an
+unchanged diagnostic look introduced. The rule underneath: **a difference between two measurements
+is evidence only if the measurements were taken the same way** -- before trusting a negative
+result, confirm the comparison run can produce that class of message at all.
+
 ## Two reproducibility notes
 
 - **Version-control the proof switches.** A proof result is only meaningful with the switches
