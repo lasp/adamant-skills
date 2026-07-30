@@ -503,6 +503,12 @@ When creating SPARK logic packages for Adamant components:
   (especially a body defended by `pragma Assert`) into a proved logic package: extraction
   boundary, what modular register types do to your proof obligations, clamp-then-narrow,
   writing postconditions as properties, and the four verification fronts a conversion needs
+- `references/proof-mechanics.md` -- Read when a proof will not discharge or will not even run:
+  the loop-invariant "non-scalar object declared before loop-invariant" restriction (and using
+  it as a prompt to unroll a domain-fixed loop), variable-exponentiation nonlinearity (a product
+  with `2 ** N` defeats the provers; the failure surfaces in dependents, not at the cause; prefer
+  a divisor), and the compile-time-first ladder for discharging a fact (`Compile_Time_Error` over
+  derived constants, which `--mode=check` does not evaluate)
 - `references/fixed-point-proofs.md` -- Read when the numeric code is (or could be) fixed-point
   rather than float: declaring a type that means the hardware format (`delta`, explicit
   `Small`, `Size`), the `universal_fixed` conversion, widening products in the body AND the

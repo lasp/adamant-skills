@@ -239,6 +239,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | SPARK verification | formal-verification | component-dev |
 | Convert existing integer logic to a proved SPARK package | formal-verification | component-dev |
 | Numeric code: choosing fixed-point vs float for provability | formal-verification (fixed-point ref) | -- |
+| A proof will not discharge / times out / a loop-invariant error blocks the run | formal-verification (proof-mechanics ref) | -- |
 | Ground system integration (COSMOS) | cosmos-integration | assembly-dev |
 | COSMOS integration test scripts | cosmos-testing | cosmos-integration |
 | COSMOS suite execution headless/CI (stream + exit-code gate) | cosmos-suite-results | cosmos-integration |

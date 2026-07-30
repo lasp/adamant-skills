@@ -81,6 +81,12 @@ product's range and widen the operands *before* multiplying, so the multiply can
 This is the fixed-point form of the `Wider (A) * Wider (B)` rule from
 `integer-logic-conversion.md`: widen the operands, never narrow the result of a narrow product.
 
+The companion for accumulation: **bound the accumulator from the format parameters and require
+it to fit the device's register.** Derive the bound (`Operands * Operand_Max**2` for a dot
+product of `Operand_Max`-bounded terms) and, when both sides are static, pin it with a
+`Compile_Time_Error` so a later format correction moves the bound and fails the build rather than
+silently widening a proof obligation. See the compile-time-first ladder in `proof-mechanics.md`.
+
 **The same widening is required in the contract, and this bites.** A postcondition that names
 the raw product raises an overflow obligation the prover cannot discharge:
 
