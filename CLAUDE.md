@@ -105,34 +105,34 @@ Behind this: a headless `env use` pins only your session and **never moves the g
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (22 skills + 4 meta-skills = 26 total, ~25400 lines with refs)
+## Skill Inventory (22 skills + 4 meta-skills = 26 total, ~26200 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
-| `adamant-skill-selector` | 416 | **Read first.** Maps tasks to skills. |
+| `adamant-skill-selector` | 424 | **Read first.** Maps tasks to skills. |
 | `adamant-testing` | 2647 | Test harness, History API, assertions, coverage, advanced patterns |
 | `adamant-tools` | 2221 | API inspector, component scaffolder, YAML validator (Python scripts) |
-| `adamant-component-dev` | 2302 | Components: YAML models, generated API, implementation patterns, LASEL |
+| `adamant-component-dev` | 2301 | Components: YAML models, generated API, implementation patterns, LASEL |
 | `adamant-assembly-dev` | 1455 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
 | `adamant-cosmos-integration` | 1955 | CCSDS pipeline, COSMOS plugin build/load |
-| `adamant-style` | 1152 | Ada/YAML/Python style rules enforced by `redo style` |
-| `adamant-formal-verification` | 1528 | SPARK contracts, GNATprove, ghost lemmas, proof chains |
+| `adamant-style` | 1153 | Ada/YAML/Python style rules enforced by `redo style` |
+| `adamant-formal-verification` | 2226 | SPARK contracts, GNATprove, ghost lemmas, proof chains, numeric proof methods |
 | `adamant-build-system` | 1057 | Redo commands, code gen, build paths |
 | `adamant-debugging` | 1139 | Three-layer debugging: GDB (tests/assemblies), post-mortem LCH/stack-trace triage + symbolizer script, target/compiler pitfalls |
-| `adamant-cosmos-testing` | 1043 | Integration test scripts via COSMOS scripting API |
+| `adamant-cosmos-testing` | 1051 | Integration test scripts via COSMOS scripting API |
 | `adamant-cosmos-suite-results` | 133 | COSMOS suite execution (openc3cli / Script Runner REST API) + result verification |
 | `adamant-regression-suite` | 700 | Black-box Python regression suites driven through the COSMOS cmd/tlm interface (source-blind) |
 | `adamant-cosmos-tool-creation` | 638 | Custom COSMOS web UI tools + widgets: decision ladder (screen/widget/tool/microservice), build contract, data feeds |
 | `adamant-framework-components` | 675 | Catalog of all 58 built-in components + audit |
-| `adamant-type-system` | 931 | YAML type definitions, format codes, Ada type hierarchy |
+| `adamant-type-system` | 774 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-subassemblies` | 546 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
-| `adamant-project-setup` | 546 | New project scaffolding, adamant_env.sh, Docker, config |
+| `adamant-project-setup` | 493 | New project scaffolding, adamant_env.sh, Docker, config |
 | `adamant-code-review` | 362 | Component, test, type, assembly review checklists, design assessment |
 | `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
 | `adamant-generator-dev` | 672 | Custom generators: Ada source, YAML types, HTML docs, ground artifacts from YAML |
-| `high-assurance-design` | 304 | Design-by-invariant, non-goals, formal verification |
+| `high-assurance-design` | 324 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~25200 lines (SKILL.md + references)
+**Total:** ~26200 lines across all 26 skills (SKILL.md, references, and scripts)
 
 ## Meta-Skills
 
@@ -140,9 +140,9 @@ Skills about the skill system and about running large tasks, rather than about t
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
-| `adamant-skill-creation` | 1341 | Creating, validating, and refactoring Adamant skills |
-| `knowledge-acquisition` | 699 | Systematic codebase study with sub-agents |
-| `adamant-skill-campaign` | 482 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
+| `adamant-skill-creation` | 1362 | Creating, validating, and refactoring Adamant skills |
+| `knowledge-acquisition` | 706 | Systematic codebase study with sub-agents |
+| `adamant-skill-campaign` | 511 | Cold-start skill-validation campaigns in-session via the Workflow tool (HIT/MISS/GAP) |
 | `task-planning` | 193 | Time-boxing, progress tracking, batch execution for large tasks |
 
 **Read `task-planning/SKILL.md` FIRST** for any task with 5+ deliverables or 10+ components. It teaches how to manage time, track progress, and avoid rabbit holes.
@@ -152,7 +152,7 @@ Skills about the skill system and about running large tasks, rather than about t
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
 - **Compiler-validated.** 30+ rounds of build-test-fix cycles across 100+ components + unit tests. Components compile clean on first try when skills are followed.
 - **Capability-calibrated.** Skills state domain *invariants* absolutely (build-state corruption, generated-code contracts, buffer limits) and *conventions* with their rationale. The most capable current models (e.g. Claude 5-generation) should exercise judgment over execution order and verification cadence *within* those invariants; the explicit statements are what keep mid-tier and non-Anthropic models convergent. Treat degraded output from over-prescription as a skill defect and report it (see `adamant-skill-creation` Writing Rule 10).
-- **Selector-driven.** Load 1-2 skills per task, not all 24.
+- **Selector-driven.** Load 1-2 skills per task, not all 26.
 - **Three-tier prompt strategy:** This file (CLAUDE.md) -> skill-selector -> deep skills. Load order matters for cache efficiency:
   1. This file -- loaded automatically as system prompt
   2. `adamant-skill-selector/SKILL.md` -- always the first skill read

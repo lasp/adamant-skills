@@ -1,6 +1,6 @@
 # Repository Overview
 
-26 skills, ~25K lines for AI-assisted Adamant embedded software development.
+26 skills, ~26K lines for AI-assisted Adamant embedded software development.
 
 ## Top-Level Files
 
@@ -129,7 +129,7 @@ Skills are loaded in a fixed hierarchy that forms a stable, cacheable prefix:
 | Tier | Content | Size | Cache role |
 |------|---------|------|-----------|
 | 1 | `CLAUDE.md` (system prompt) | ~170 lines | Outermost prefix -- always identical |
-| 2 | `adamant-skill-selector/SKILL.md` | ~357 lines | Always loaded first, routes to 1-2 skills |
+| 2 | `adamant-skill-selector/SKILL.md` | ~378 lines | Always loaded first, routes to 1-2 skills |
 | 3 | Task-specific `SKILL.md` + `references/` | 250-800 lines | Stable per task type |
 
 Task-variant content (the actual user request, iteration state) appears at the end of the prompt, after all stable skill content. This is the key structural choice that enables caching -- stable content at the front, variant content at the back.
@@ -170,9 +170,10 @@ Skills are not all the same size. The SKILL.md target of 250-350 lines is a mini
 | Skill | Total lines (with refs) | SKILL.md lines | Notes |
 |-------|------------------------|----------------|-------|
 | `adamant-testing` | ~2647 | ~692 | Largest -- most frequently loaded alongside component dev |
-| `adamant-component-dev` | ~2302 | ~719 | Core skill, loaded on almost every task |
+| `adamant-component-dev` | ~2301 | ~718 | Core skill, loaded on almost every task |
+| `adamant-formal-verification` | ~2226 | ~539 | SPARK numeric proofs; fixed-point / integer-logic / proof-mechanics refs |
 | `adamant-assembly-dev` | ~1455 | ~661 | Second most common task type |
-| `adamant-style` | ~1152 | ~489 | Often loaded as a secondary skill |
+| `adamant-style` | ~1153 | ~490 | Often loaded as a secondary skill |
 | `adamant-framework-internals` | ~441 | ~260 | Lightweight -- narrow-use, loaded only for code gen debugging |
 
 **The cache efficiency implication:** a task that loads `adamant-component-dev/SKILL.md` (~719 lines, roughly 9,000-15,000 tokens) plus `adamant-testing/SKILL.md` (~692 lines) creates a stable cacheable prefix of 15,000-25,000 tokens from skill content alone, on top of CLAUDE.md and the selector. Every subsequent API call in that session serves those tokens at ~$0.50/1M instead of $5.00/1M.
