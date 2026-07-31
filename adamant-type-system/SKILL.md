@@ -167,6 +167,46 @@ fields:
     format: U6                       # 6 bits padding → byte-aligned
 ```ada
 
+### Format wider than the type -- deliberate padding without a ground-visible field
+
+Model the type to mean what the field means first. In Adamant the YAML model is the architectural
+source of truth and the generator enforces it, so a bounded quantity is best expressed as a
+constrained or range type (for example `range 0 .. 4095`), not a `mod` type. A `mod` type says "this
+wraps"; for a value that is really a bounded count that both hides the constraint from the
+architecture and lets an overflow wrap silently instead of failing a check. Depending on the model
+this way is the virtue -- reach for the patterns below only for the narrower question of a wire field
+that must be wider than its value, never to bound a value the type should have bounded.
+
+A field's packed width comes from its `format`, not its Ada type (the model derives the field size
+from the format's bit count). So a `format` MAY be **wider** than the type's natural width -- e.g. a
+value typed `Unsigned_12` carried in `format: U14` -- and the generator handles it. This byte-aligns
+the record exactly as an explicit `Reserved` field would, and is a legitimate alternative to one when
+the extra bits are genuinely padding.
+
+The consequence shows up in validation. `Always_Valid` compares the type's value range against the
+format's bit width, so a wider format makes the type NOT fill its bits: `Always_Valid` is `False`, and
+the generated `Validation` package guards the extra bit patterns. Those patterns are unreachable from
+Ada (the type still bounds the value) -- they can only arrive as raw wire bytes, which is exactly what
+`Validation` is for.
+
+Choose between the two by ground visibility (the same choice applies whether the value is a `mod`
+type or a range type):
+
+| | Wider format (`Unsigned_12` + `U14`) | Explicit pad (`Unsigned_12` + `U12`, then a 2-bit `Reserved` `U2`) |
+|---|---|---|
+| Byte-aligned | yes | yes |
+| `Always_Valid` | False -- needs `Validation` on untrusted bytes | True |
+| Ground / `.U` | one field, pad bits absorbed silently | pad appears as its own field |
+
+Use the wider format when ground should see a single clean field (a register value stored in a
+slightly wider slot). Use an explicit `Reserved` when you want **validation-free deserialization** --
+which matters wherever raw bytes arrive from outside the program and cannot be trusted to hold only
+valid patterns: reading an FPGA register, deserializing a message from an untrusted external system,
+or reading non-volatile memory that a bit flip may have corrupted. With `Always_Valid = True` those
+paths overlay the record directly; with a wider format they must call `Validation` first or risk a
+`Constraint_Error`. The value is bounded by the Ada type either way, so neither can carry an
+out-of-range value that originates in Ada.
+
 ## Generated Code Structure
 
 ### Record → 12+ files
