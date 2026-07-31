@@ -126,7 +126,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-regression-suite` | 700 | Black-box Python regression suites driven through the COSMOS cmd/tlm interface (source-blind) |
 | `adamant-cosmos-tool-creation` | 638 | Custom COSMOS web UI tools + widgets: decision ladder (screen/widget/tool/microservice), build contract, data feeds |
 | `adamant-framework-components` | 675 | Catalog of all 58 built-in components + audit |
-| `adamant-type-system` | 774 | YAML type definitions, format codes, Ada type hierarchy |
+| `adamant-type-system` | 814 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-subassemblies` | 546 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
 | `adamant-project-setup` | 493 | New project scaffolding, adamant_env.sh, Docker, config |
 | `adamant-code-review` | 362 | Component, test, type, assembly review checklists, design assessment |
