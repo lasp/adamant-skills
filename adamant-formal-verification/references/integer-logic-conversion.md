@@ -23,7 +23,8 @@ the main skill, Logic Package Conventions item 8).
 
 ## The extraction boundary
 
-Draw the line so the logic package imports nothing from the framework:
+Draw the line so the proof core is a small pure computation over wide plain types, with
+inputs passed by value:
 
 | Stays in the component body | Moves to the logic package |
 |---|---|
@@ -44,11 +45,14 @@ section), and the overlay/`Import` machinery around them is what is genuinely ou
 The component body then reads as: convert in, call the proved function, convert out. If the
 conversion at the boundary is the only remaining arithmetic, the extraction is complete.
 
-**Do not `with` a generated register-type package from a logic package**, even for a numeric
-subtype it happens to declare. Redeclare the bound locally as a named number with a comment
-naming the field width, and take the widened type as the parameter. This keeps the logic
-package framework-free (Logic Package Conventions item 7) and, more importantly, makes the
-width an explicit stated assumption rather than an inherited one.
+**A logic package may `with` framework packages that are themselves SPARK-analyzable** --
+the generated register-type packages included. The framework's direction is more of it under
+SPARK, not proved islands walled off from it, so importing a generated package is not a rule
+violation. For a narrow numeric bound there is still a reason to prefer redeclaring it
+locally: a named number with a comment naming the field width makes the width an explicit
+stated assumption of the proof rather than an inherited one, and it keeps the proof core's
+arithmetic out of the register package's modular types (Logic Package Conventions item 7).
+Both forms are legitimate; the worked conversion below uses the local redeclaration.
 
 ```ada
 -- In the logic package: the field width is a documented constant, not an import.
