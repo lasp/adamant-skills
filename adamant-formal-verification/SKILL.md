@@ -30,10 +30,6 @@ package body My_Package with SPARK_Mode => On is
 end My_Package;
 ```
 
-### SPARK Mode and the Adamant Dependency Scanner
-
-The aspect form on a package declaration is safe. Writing `package Foo_Logic with SPARK_Mode => On, Pure is` wraps the `is` keyword onto its own line, and the dependency scanner resolves it: it matches package declarations against comment-stripped, semicolon-split statements rather than a single line, so a multi-line or aspect-decorated declaration still registers the component's source directory. Use the aspect form the rest of this skill recommends; no pragma-in-the-body or shim workaround is needed.
-
 ### Selective SPARK Mode
 
 Disable for specific subprograms that can't satisfy SPARK restrictions:
@@ -308,8 +304,8 @@ mathematical justification (see the ghost lemma pattern above).
 ## Build System Integration
 
 > **Prefer `admt prove`.** It compiles the SPARK sources and runs GNATprove for you; you should not
-> need to invoke `gnatprove` or `gprbuild` directly, hand-build `SOURCE_DIRS`, or work around the
-> dependency scanner. If a build-system shortcoming ever does force a naked tool call, flag it and
+> need to invoke `gnatprove` or `gprbuild` directly or hand-build `SOURCE_DIRS`. If a
+> build-system shortcoming ever does force a naked tool call, flag it and
 > report it to the user as a candidate Adamant issue, quoting the exact command and the gap it works
 > around, rather than treating the naked invocation as the intended interface.
 
