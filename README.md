@@ -171,7 +171,7 @@ Skills are not all the same size. The SKILL.md target of 250-350 lines is a mini
 |-------|------------------------|----------------|-------|
 | `adamant-testing` | ~2647 | ~692 | Largest -- most frequently loaded alongside component dev |
 | `adamant-component-dev` | ~2301 | ~718 | Core skill, loaded on almost every task |
-| `adamant-formal-verification` | ~2240 | ~553 | SPARK numeric proofs; fixed-point / integer-logic / proof-mechanics refs |
+| `adamant-formal-verification` | ~2192 | ~553 | SPARK numeric proofs; fixed-point / integer-logic / proof-mechanics refs |
 | `adamant-assembly-dev` | ~1455 | ~661 | Second most common task type |
 | `adamant-style` | ~1153 | ~490 | Often loaded as a secondary skill |
 | `adamant-framework-internals` | ~441 | ~260 | Lightweight -- narrow-use, loaded only for code gen debugging |
