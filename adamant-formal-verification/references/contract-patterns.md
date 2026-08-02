@@ -333,10 +333,11 @@ end Compute_HMAC;
 ## Pragma Assume Discipline
 
 ### Rules
-1. **Zero assumes in business logic** -- all assumes confined to ghost lemmas
-2. Each assume has a documented mathematical justification string
-3. Assumes are for bridging prover limitations, not papering over real issues
-4. Audit: `grep -rn "pragma Assume" *.adb` should show only ghost procedures
+1. **User approval first** -- never introduce an assume unilaterally; present the property, the failed proof attempts, and the justification, and wait for explicit sign-off
+2. **Zero assumes in business logic** -- all assumes confined to ghost lemmas
+3. Each assume has a documented mathematical justification string
+4. Assumes are for bridging prover limitations, not papering over real issues
+5. Audit: `grep -rn "pragma Assume" *.adb` should show only ghost procedures
 
 ### Acceptable Assumes
 - Pure function determinism: `A = B implies f(A) = f(B)` for side-effect-free functions

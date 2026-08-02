@@ -204,6 +204,7 @@ end Lemma_Substitution;
 ```
 
 Rules:
+- Ask the user before introducing any assume -- present the property, the failed proof attempts, and the justification, and wait for explicit approval (see the assume gate below)
 - 0 assumes in business logic -- confine all to ghost lemmas
 - Each assume must be mathematically sound and documented
 - Ghost lemmas are compiled away -- zero runtime cost
@@ -289,8 +290,19 @@ Results go to `build/prove/prove.txt`.
 
 ### Keep the Silver-to-Gold boundary visible: count the assumes
 
-`pragma Assume` is the one construct that can make an unproved property look proved, so the
-proof gate should report how many exist, every run, alongside the unproved-subprogram count:
+`pragma Assume` tells the prover to take a property on faith. It is the one construct that can
+make an unproved property look proved -- the proof-level analogue of suppressing a warning on
+the code section where the tool struggles -- so it is never the agent's call alone. Two
+controls keep it honest:
+
+**Ask before assuming.** Do not introduce a `pragma Assume` on your own judgment. When the
+escalation ladder bottoms out at an assume, stop and present to the user: the exact property,
+why the proof cannot discharge it (and what was tried), and the mathematical justification.
+Only on explicit approval does the assume go in -- confined to ghost code with the
+justification string attached (see the ghost lemma pattern above).
+
+**Count every run.** The proof gate should report how many assumes exist, every run, alongside
+the unproved-subprogram count:
 
 ```bash
 grep -c "pragma Assume" *.adb
@@ -298,8 +310,7 @@ grep -c "pragma Assume" *.adb
 
 Print both numbers whenever the gate runs. A codebase that does not count its assumes drifts
 from Gold to "Gold with exceptions" invisibly; a counted one makes assume creep show up the
-moment it lands. Each surviving assume must be confined to ghost code and carry a written
-mathematical justification (see the ghost lemma pattern above).
+moment it lands.
 
 ## Build System Integration
 
@@ -409,7 +420,7 @@ function F (Tick : Unsigned_32; Period : Unsigned_16) return Unsigned_16
 3. Add loop invariants for any loop the prover must reason through
 4. Try higher level (`--level=3` or `--level=4`)
 5. If a non-expression function blocks proof, consider ghost lemma
-6. Last resort: `pragma Assume` with documented justification (confine to ghost code)
+6. Last resort: `pragma Assume` -- requires the user's explicit approval before it is introduced (present the property, what was tried, and the justification), then confine to ghost code
 
 ## Adamant-Specific SPARK Notes
 
@@ -459,7 +470,7 @@ When creating SPARK logic packages for Adamant components:
 7. Run `admt prove`
 8. Fix failures using escalation strategy
 9. Escalate to gold mode when silver passes clean
-10. Document any `pragma Assume` with mathematical justification
+10. Any `pragma Assume` was approved by the user before it went in and carries its mathematical justification
 
 ## References
 - `references/contract-patterns.md` -- Advanced contract patterns, ghost code examples, and proof chain walkthrough
