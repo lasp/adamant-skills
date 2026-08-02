@@ -33,6 +33,14 @@ Draw the line so the logic package imports nothing from the framework:
 | Framework calls, connectors, events | Nothing |
 | Conversions between the two worlds | Nothing |
 
+The left column is not a SPARK limitation. Adamant's generated packed-record packages are
+SPARK-analyzable -- `admt prove` on a component directory analyzes the autocoded child units
+(`component-<name>.ads`, the `*-representation` packages) as a matter of course, and the
+framework generates memory/register-map packages with `SPARK_Mode => On` precisely so they are
+checked. Register types stay in the component body for proof *shape*, not legality: their
+fields are narrow modular types whose wrap semantics complicate the obligations (next
+section), and the overlay/`Import` machinery around them is what is genuinely outside SPARK.
+
 The component body then reads as: convert in, call the proved function, convert out. If the
 conversion at the boundary is the only remaining arithmetic, the extraction is complete.
 
