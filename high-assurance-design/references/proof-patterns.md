@@ -11,7 +11,7 @@ Patterns for structuring formal verification in SPARK Ada (applicable concepts t
 1. Define shared predicates used by both validation and query functions
 2. Write query functions as expression functions (single-line, fully expanded during proof)
 3. Create a ghost lemma that proves predicate equality for equal inputs
-4. Confine `pragma Assume` to the ghost lemma only
+4. Confine `pragma Assume` to the ghost lemma only, and introduce one only with the user's prior approval (present the property and its justification first)
 
 ```ada
 -- Shared predicate (used by both validation and queries)
