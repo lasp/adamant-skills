@@ -319,6 +319,13 @@ moment it lands.
 > build-system shortcoming ever does force a naked tool call, flag it and
 > report it to the user as a candidate Adamant issue, quoting the exact command and the gap it works
 > around, rather than treating the naked invocation as the intended interface.
+>
+> The same reporting posture applies to framework-design limitations, not just build tooling.
+> When a framework choice costs the proof something -- a generated modular type whose wrap
+> semantics force extra obligations, overlay/`Import` machinery that keeps code outside SPARK,
+> a generated shape the prover cannot digest -- alert the user, name the limitation, and show
+> the workaround used (local redeclaration, boundary factoring, `SPARK_Mode => Off`
+> confinement). These reports are how framework limitations become framework improvements.
 
 ### `admt prove`
 
