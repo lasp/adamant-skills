@@ -116,6 +116,49 @@ NOT enforced: `c` (comment formatting), `m`/`M` (max line length), `s` (separate
 - **Max nesting depth 12** (`-gnatyL12`): Refactor deeply nested code
 - **`null;` required** in empty blocks: Cannot leave only a comment in an if/else/loop body
 
+## Case Statements Over If/Elsif Chains
+
+**Prefer `case` over an `if`/`elsif` chain when dispatching on an enumeration** (or any
+discrete value with static alternatives). A case statement is compiler-checked for totality:
+when a literal is added later, every unhandled `case` fails to compile, where an `if`/`elsif`
+chain falls silently into its `else`. This matters doubly for Adamant enumeration types
+(`Package.Enum_Name.E`) because models grow literals over time, and it is the pattern agents
+most often get wrong -- an `elsif` chain of equality tests against enum literals should be a
+`case`.
+
+```ada
+-- WRONG: silently absorbs a future literal into the else arm.
+if Status = Success then
+   ...
+elsif Status = Stale then
+   ...
+else
+   ...
+end if;
+
+-- RIGHT: adding a literal to the status enum breaks this statement until handled.
+case Status is
+   when Success =>
+      ...
+   when Stale =>
+      ...
+   when Not_Available | Error =>
+      ...
+end case;
+```
+
+Avoid `when others` on enumeration case statements for the same reason: it re-opens the
+silent-absorption hole that `case` exists to close. Enumerate the literals (grouping
+alternatives with `|` where they share an arm) unless the type is genuinely open-ended at
+this site.
+
+**An `if`/`elsif` chain is correct where `case` is not legal.** Case choices must be static
+(Ada RM 5.4), so matching a value against *non-static* comparands -- configured limits,
+stored identifiers, record components -- has no case form and the chain is the right tool.
+In that shape, have the classifier return an enumeration decision and let every caller
+`case` over it, so compiler-checked totality resumes at the dispatch site (and, for a proved
+logic package, contract equivalences can carry the disjointness the compiler cannot see).
+
 ## Array Aggregates (Ada 2022)
 
 - **Use `[]` not `()`** for array aggregates (`-gnatwj`)
