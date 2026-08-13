@@ -57,6 +57,7 @@ A review covers one or more of these artifact types:
 - [ ] No dynamic allocation (Ravenscar compliance)
 - [ ] Subtypes used to constrain ranges where appropriate
 - [ ] Pure logic separated from connector dispatch where feasible (SPARK candidate)
+- [ ] No `if`/`elsif` chain of equality tests against enumeration literals -- convert to `case` for compiler-checked totality, and avoid `when others` on enum cases (greppable: `elsif` + enum literal comparisons). Chains matching *non-static* values (configured limits, record components) are the legal exception; prefer returning a decision enum that callers `case` over (see `adamant-style`, Case Statements Over If/Elsif Chains)
 
 ### Active Component Patterns
 - [ ] `recv_async` connectors have explicit `priority` when multiple exist (higher = dequeued first)
