@@ -403,6 +403,19 @@ pragma Assert (Entry.Destinations /= null);
 
 **Data product counters** -- use `Interfaces.Unsigned_32` (matches `Packed_U32.T` directly, no type conversion needed). Use `@` syntax: `Self.Count := @ + 1;`
 
+**Dispatching on an enumeration** -- use `case`, never an `if`/`elsif` chain of equality tests. Handler bodies dispatch on enums constantly (command status, connector status, mode and state enums), and a `case` is compiler-checked for totality: a literal added to the YAML enum later breaks every unhandled dispatch instead of falling silently into `else`:
+```ada
+-- CORRECT: adding a literal to the enum breaks this until handled
+case Status is
+   when Success => ...
+   when Stale => ...
+   when Not_Available | Error => ...
+end case;
+-- WRONG: silently absorbs a future literal
+if Status = Success then ... elsif Status = Stale then ... else ... end if;
+```
+Avoid `when others` on an enum case for the same reason. An `if`/`elsif` chain is correct only where `case` is not legal -- matching against non-static values such as configured limits or stored ids -- and in that shape, return a decision enum so callers `case` over it. See `adamant-style` for the full rule.
+
 See `references/implementation-patterns.md` for detailed examples of each pattern.
 
 ## Spec vs Body `with` Clauses

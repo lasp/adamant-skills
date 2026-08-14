@@ -112,11 +112,11 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-skill-selector` | 424 | **Read first.** Maps tasks to skills. |
 | `adamant-testing` | 2647 | Test harness, History API, assertions, coverage, advanced patterns |
 | `adamant-tools` | 2221 | API inspector, component scaffolder, YAML validator (Python scripts) |
-| `adamant-component-dev` | 2301 | Components: YAML models, generated API, implementation patterns, LASEL |
+| `adamant-component-dev` | 2314 | Components: YAML models, generated API, implementation patterns, LASEL |
 | `adamant-assembly-dev` | 1455 | Assemblies: scheduling, routing, ID assignment, runtime monitoring |
 | `adamant-cosmos-integration` | 1955 | CCSDS pipeline, COSMOS plugin build/load |
-| `adamant-style` | 1153 | Ada/YAML/Python style rules enforced by `redo style` |
-| `adamant-formal-verification` | 2199 | SPARK contracts, GNATprove, ghost lemmas, proof chains, numeric proof methods |
+| `adamant-style` | 1196 | Ada/YAML/Python style rules enforced by `redo style` |
+| `adamant-formal-verification` | 2200 | SPARK contracts, GNATprove, ghost lemmas, proof chains, numeric proof methods |
 | `adamant-build-system` | 1057 | Redo commands, code gen, build paths |
 | `adamant-debugging` | 1139 | Three-layer debugging: GDB (tests/assemblies), post-mortem LCH/stack-trace triage + symbolizer script, target/compiler pitfalls |
 | `adamant-cosmos-testing` | 1051 | Integration test scripts via COSMOS scripting API |
@@ -127,7 +127,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-type-system` | 814 | YAML type definitions, format codes, Ada type hierarchy |
 | `adamant-subassemblies` | 546 | Splitting assemblies into reusable subassemblies, nesting, wiring rules |
 | `adamant-project-setup` | 493 | New project scaffolding, adamant_env.sh, Docker, config |
-| `adamant-code-review` | 362 | Component, test, type, assembly review checklists, design assessment |
+| `adamant-code-review` | 363 | Component, test, type, assembly review checklists, design assessment |
 | `adamant-framework-internals` | 441 | Framework Python model internals, code gen debugging, `is` vs `==` pitfall |
 | `adamant-generator-dev` | 672 | Custom generators: Ada source, YAML types, HTML docs, ground artifacts from YAML |
 | `high-assurance-design` | 324 | Design-by-invariant, non-goals, formal verification |

@@ -170,10 +170,10 @@ Skills are not all the same size. The SKILL.md target of 250-350 lines is a mini
 | Skill | Total lines (with refs) | SKILL.md lines | Notes |
 |-------|------------------------|----------------|-------|
 | `adamant-testing` | ~2647 | ~692 | Largest -- most frequently loaded alongside component dev |
-| `adamant-component-dev` | ~2301 | ~718 | Core skill, loaded on almost every task |
-| `adamant-formal-verification` | ~2199 | ~553 | SPARK numeric proofs; fixed-point / integer-logic / proof-mechanics refs |
+| `adamant-component-dev` | ~2314 | ~731 | Core skill, loaded on almost every task |
+| `adamant-formal-verification` | ~2200 | ~500 | SPARK numeric proofs; fixed-point / integer-logic / proof-mechanics refs |
 | `adamant-assembly-dev` | ~1455 | ~661 | Second most common task type |
-| `adamant-style` | ~1153 | ~490 | Often loaded as a secondary skill |
+| `adamant-style` | ~1196 | ~533 | Often loaded as a secondary skill |
 | `adamant-framework-internals` | ~441 | ~260 | Lightweight -- narrow-use, loaded only for code gen debugging |
 
 **The cache efficiency implication:** a task that loads `adamant-component-dev/SKILL.md` (~719 lines, roughly 9,000-15,000 tokens) plus `adamant-testing/SKILL.md` (~692 lines) creates a stable cacheable prefix of 15,000-25,000 tokens from skill content alone, on top of CLAUDE.md and the selector. Every subsequent API call in that session serves those tokens at ~$0.50/1M instead of $5.00/1M.
