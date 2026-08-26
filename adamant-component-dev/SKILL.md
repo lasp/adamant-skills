@@ -114,6 +114,8 @@ with:
 
 This avoids unreferenced package warnings and keeps generated code clean.
 
+**Plain ASCII only in model text**: Every `description:` in component and feature model YAML must be plain ASCII. Text pasted from ICDs or datasheets often carries curly quotes, em dashes, and micro signs -- replace them with `"`, `'`, `--`, and `u`. These descriptions flow into generated command/telemetry definitions that ground tooling (OpenC3 COSMOS) validates as US-ASCII and rejects.
+
 ## Feature Model Formats
 
 ```yaml
