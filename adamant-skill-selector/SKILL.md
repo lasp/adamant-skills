@@ -196,6 +196,8 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
   proof-hostile; decide before committing to float (references/fixed-point-proofs.md)
 
 **Also load if needed:**
+- `adamant-spark-logic-packages` -- the extraction shape (sibling logic packages), the
+  silver-by-default posture, and the review-recurrent idioms
 - `adamant-component-dev` -- if adding SPARK to a component's logic
 - `adamant-build-system` -- if debugging prove build path issues
 - The toolchain vendor's `gnatprove` skill, when available -- authoritative for raw tool
@@ -237,6 +239,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Review generated or hand-written code | code-review | component-dev |
 | PR review (Adamant artifacts) | code-review | testing |
 | SPARK verification | formal-verification | component-dev |
+| Extract component logic into a proved SPARK package / pick a proof level | spark-logic-packages | formal-verification |
 | Convert existing integer logic to a proved SPARK package | formal-verification | component-dev |
 | Numeric code: choosing fixed-point vs float for provability | formal-verification (fixed-point ref) | -- |
 | A proof will not discharge / times out / a loop-invariant error blocks the run | formal-verification (proof-mechanics ref) | -- |
