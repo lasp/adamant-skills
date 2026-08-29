@@ -17,9 +17,11 @@ to prove and at what level.
 - One package per concern, named for the component and the concern
   (`<component>_<topic>.ads`), living in the component directory so `admt prove` picks it
   up with the component's `all.prove.yaml`.
-- `SPARK_Mode => On` on the spec (and body, when one exists). Add `Pure` when the package
-  is stateless; expression functions with `Global => null` prove with no further
-  contracts.
+- `SPARK_Mode => On` on the spec (and body, when one exists), and `Global => null` on every
+  function; expression functions then prove with no further contracts. Add `Pure` only when
+  the package withs nothing generated: a Pure unit cannot depend on a non-Pure unit, and the
+  generated packed-record and register packages are not Pure, so a package that uses their
+  types or constants cannot be.
 - Memory overlays, address imports, connector calls, and other non-SPARK mechanics stay in
   the component implementation, or in a subprogram body marked `SPARK_Mode => Off` that
   delegates to a proved function.
@@ -49,7 +51,8 @@ mode: "silver"
 - **Derive constants from the generated type packages.** Generated packed-record constants
   and types are directly usable from SPARK: write
   `Num_Words : constant := <Record>.Size_In_Bytes / 4;` rather than pinning a magic number
-  and guarding it with a compile-time coverage check.
+  and guarding it with a compile-time coverage check. Such a package cannot be `Pure`, as
+  the package shape above states.
 - **Do not restate an expression function in its postcondition.** The prover inlines the
   body; a `Post` that repeats it adds nothing and costs review attention.
 - **When the only caller is outside SPARK, a precondition is just a runtime check.**
@@ -65,7 +68,8 @@ mode: "silver"
 ## Checklist
 
 1. Factor the provable logic into a sibling package; leave overlays and connectors behind.
-2. `SPARK_Mode => On` (plus `Pure` where stateless); expression functions where possible.
+2. `SPARK_Mode => On`, `Global => null` on every function, and `Pure` only when the package
+   withs nothing generated. Expression functions where possible.
 3. `all.prove.yaml` with `mode: "silver"`, `level: 2`, stated explicitly.
 4. `admt prove` from the component directory: zero unproved, zero assumes.
 5. Sweep the idioms above before requesting review.
