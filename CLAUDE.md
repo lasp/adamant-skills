@@ -133,7 +133,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-generator-dev` | 672 | Custom generators: Ada source, YAML types, HTML docs, ground artifacts from YAML |
 | `high-assurance-design` | 324 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~26200 lines across all 26 skills (SKILL.md, references, and scripts)
+**Total:** ~26200 lines across all 27 skills (SKILL.md, references, and scripts)
 
 ## Meta-Skills
 
@@ -153,7 +153,7 @@ Skills about the skill system and about running large tasks, rather than about t
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
 - **Compiler-validated.** 30+ rounds of build-test-fix cycles across 100+ components + unit tests. Components compile clean on first try when skills are followed.
 - **Capability-calibrated.** Skills state domain *invariants* absolutely (build-state corruption, generated-code contracts, buffer limits) and *conventions* with their rationale. The most capable current models (e.g. Claude 5-generation) should exercise judgment over execution order and verification cadence *within* those invariants; the explicit statements are what keep mid-tier and non-Anthropic models convergent. Treat degraded output from over-prescription as a skill defect and report it (see `adamant-skill-creation` Writing Rule 10).
-- **Selector-driven.** Load 1-2 skills per task, not all 26.
+- **Selector-driven.** Load 1-2 skills per task, not all 27.
 - **Three-tier prompt strategy:** This file (CLAUDE.md) -> skill-selector -> deep skills. Load order matters for cache efficiency:
   1. This file -- loaded automatically as system prompt
   2. `adamant-skill-selector/SKILL.md` -- always the first skill read

@@ -1,6 +1,6 @@
 # Adamant Agent Skills
 
-Skills for coding agents working on [Adamant](https://github.com/lasp/adamant) embedded flight software: 26 skills, about 26K lines, each pattern checked by compiling against a real GNAT/GNATprove toolchain. Together with [admt](https://github.com/lasp/admt) they are an experimental front end for users and agents; Adamant's own documentation remains the reference, and the skill set and its conventions may change between releases.
+Skills for coding agents working on [Adamant](https://github.com/lasp/adamant) embedded flight software: 27 skills, about 26K lines, each pattern checked by compiling against a real GNAT/GNATprove toolchain. Together with [admt](https://github.com/lasp/admt) they are an experimental front end for users and agents; Adamant's own documentation remains the reference, and the skill set and its conventions may change between releases.
 
 ## Repository Overview
 
@@ -30,6 +30,7 @@ Skills for coding agents working on [Adamant](https://github.com/lasp/adamant) e
 
 ### Specialized
 - `adamant-formal-verification` — SPARK contracts, GNATprove, ghost lemmas
+- `adamant-spark-logic-packages` — SPARK extraction shape, silver-by-default posture, review-recurrent idioms
 - `adamant-cosmos-integration` — CCSDS pipeline, COSMOS plugin
 - `adamant-cosmos-testing` — Integration test scripts
 - `adamant-subassemblies` — Splitting assemblies, nesting, wiring
