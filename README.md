@@ -1,6 +1,8 @@
-# Repository Overview
+# Adamant Agent Skills
 
-26 skills, ~26K lines for AI-assisted Adamant embedded software development.
+Skills for coding agents working on [Adamant](https://github.com/lasp/adamant) embedded flight software: 26 skills, about 26K lines, each pattern checked by compiling against a real GNAT/GNATprove toolchain. Together with [admt](https://github.com/lasp/admt) they are an experimental front end for users and agents; Adamant's own documentation remains the reference, and the skill set and its conventions may change between releases.
+
+## Repository Overview
 
 ## Top-Level Files
 
