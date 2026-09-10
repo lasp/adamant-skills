@@ -189,6 +189,31 @@ logic package, contract equivalences can carry the disjointness the compiler can
 
 Components with commands, init params, or data dependencies get `with Interfaces; use Interfaces;` in their generated base class. Adding it again in the implementation spec triggers `-gnatwr`. Simple tick-only components do NOT get it automatically and need it explicitly.
 
+## Scope Everything To The Smallest Unit Possible
+
+Let the compiler work for you. Declare each entity in the smallest region that needs it, so a misuse is a compile error instead of a review comment.
+
+- A helper subprogram with a single caller is declared inside that caller, before its `begin`, not at package level.
+- A helper with several callers is declared immediately above the first subprogram that uses it, not collected at the top of the body.
+- Types, constants, and variables used by one subprogram live in that subprogram's declarative part. Put state in the component `Instance` record only when it must persist between calls.
+- `use Package;` and `use type` go inside the one subprogram that needs them. Move them to body level only when several subprograms need them, and never to hide where calls into a package come from. Qualify the call instead.
+- Component helpers shared by several handlers are primitives declared in the private part of the implementation spec and called through `Self`.
+- Prefer a constant to a function that returns a constant expression, and a nested expression function to a body-level one.
+- Prefer the narrowest type: a range or modular type sized to the value, an enumeration over an integer code, and the packed `.T` when the caller already holds one, so the generated validation does the checking.
+
+```ada
+   procedure Update_Commanded (Self : in out Instance; Command_Ms : in Unsigned_16; Threshold_Ms : in Unsigned_16) is
+      -- Only Update_Commanded needs this, so it lives here and reads Threshold_Ms directly:
+      function Is_Actuation (Previous_Ms : in Unsigned_16) return Boolean is
+         (Command_Ms > 0 and then Previous_Ms < Threshold_Ms);
+   begin
+      if Is_Actuation (Self.Previous_Ms) then
+         Self.Actuations := @ + 1;
+      end if;
+      Self.Previous_Ms := Command_Ms;
+   end Update_Commanded;
+```
+
 ## Variables and Constants
 
 - **No unused variables** (`-gnatwu`): Use `pragma Unreferenced (Var);` if needed
@@ -274,7 +299,7 @@ P : Some_Type_Access := Y'Access;      -- aliased required here
 - **`use type Package.Type_Name;`** makes operators visible for that specific type. Preferred for arithmetic (`+`, `-`, `<`, etc.).
 - **`use all type Package.Type_Name;`** also makes primitive subprograms visible. Avoid unless needed -- broader scope risks name conflicts.
 - **`use Package;`** makes all public names visible including enum literals. Use when you need enum values directly (e.g., `use Command_Enums.Command_Response_Status;` to write `Success` instead of `Command_Response_Status.Success`).
-- Both `use type` and `use Package` can be placed at **package body level** (not just inside procedures) when needed across multiple subprograms. Body-level is the more common pattern in real code.
+- Both `use type` and `use Package` belong inside the subprogram that needs them. Place them at **package body level** only when several subprograms in the body need them (see Scope Everything To The Smallest Unit Possible).
 
 ### Expression Functions
 - Allowed for simple single-expression results:
