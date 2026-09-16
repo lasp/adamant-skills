@@ -128,7 +128,7 @@ A review covers one or more of these artifact types:
 
 ### Main Procedure Init Sequence
 The `main.adb` init sequence MUST follow this exact order:
-1. `Assembly.Init_Base` (active assemblies only -- allocates queues)
+1. `Assembly.Init_Base` (generated when any component has a queue, arrayed connectors, or parameters -- allocates queues and asserts default parameter values)
 2. `Assembly.Set_Id_Bases` (assigns event/command/DP IDs)
 3. `Assembly.Connect_Components` (wires connectors)
 4. `Assembly.Init_Components` (calls component Init -- only if any component has `init:` in YAML)
@@ -138,7 +138,8 @@ The `main.adb` init sequence MUST follow this exact order:
 - [ ] Sequence matches this exact order (no reordering, no missing steps)
 - [ ] `Start_Components` appears BEFORE `Set_Up_Components`
 - [ ] `Init_Components` only called if at least one component has `init:` in YAML
-- [ ] `Init_Base` and `Start_Components` omitted for all-passive assemblies
+- [ ] `Start_Components` omitted for all-passive assemblies
+- [ ] `Init_Base` called whenever the assembly generates one -- a component with parameters generates a parameterless `Init_Base` (asserts its default parameter values) even in an all-passive assembly; omit the call only when no component generates one
 - [ ] Infinite loop present for active assemblies (process would exit otherwise)
 
 ### Common Assembly Mistakes
