@@ -107,7 +107,7 @@ Behind this: a headless `env use` pins only your session and **never moves the g
 
 Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1-2 skills.
 
-## Skill Inventory (22 skills + 4 meta-skills = 26 total, ~26200 lines with refs)
+## Skill Inventory (23 skills + 4 meta-skills = 27 total, ~26200 lines with refs)
 
 | Skill | Lines | Purpose |
 |-------|-------|---------|
@@ -119,6 +119,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-cosmos-integration` | 1955 | CCSDS pipeline, COSMOS plugin build/load |
 | `adamant-style` | 1196 | Ada/YAML/Python style rules enforced by `redo style` |
 | `adamant-formal-verification` | 2200 | SPARK contracts, GNATprove, ghost lemmas, proof chains, numeric proof methods |
+| `adamant-spark-logic-packages` | 76 | SPARK extraction shape, silver-by-default posture, review-recurrent idioms |
 | `adamant-build-system` | 1057 | Redo commands, code gen, build paths |
 | `adamant-debugging` | 1139 | Three-layer debugging: GDB (tests/assemblies), post-mortem LCH/stack-trace triage + symbolizer script, target/compiler pitfalls |
 | `adamant-cosmos-testing` | 1051 | Integration test scripts via COSMOS scripting API |
@@ -134,7 +135,7 @@ Read `adamant-skill-selector/SKILL.md` first. It routes your task to the right 1
 | `adamant-generator-dev` | 672 | Custom generators: Ada source, YAML types, HTML docs, ground artifacts from YAML |
 | `high-assurance-design` | 324 | Design-by-invariant, non-goals, formal verification |
 
-**Total:** ~26200 lines across all 26 skills (SKILL.md, references, and scripts)
+**Total:** ~26200 lines across all 27 skills (SKILL.md, references, and scripts)
 
 ## Meta-Skills
 
@@ -154,7 +155,7 @@ Skills about the skill system and about running large tasks, rather than about t
 - **Framework-specific only.** Generic Ada/SPARK knowledge excluded.
 - **Compiler-validated.** 30+ rounds of build-test-fix cycles across 100+ components + unit tests. Components compile clean on first try when skills are followed.
 - **Capability-calibrated.** Skills state domain *invariants* absolutely (build-state corruption, generated-code contracts, buffer limits) and *conventions* with their rationale. The most capable current models (across providers) should exercise judgment over execution order and verification cadence *within* those invariants; the explicit statements are what keep mid-tier and non-Anthropic models convergent. Treat degraded output from over-prescription as a skill defect and report it (see `adamant-skill-creation` Writing Rule 10).
-- **Selector-driven.** Load 1-2 skills per task, not all 26.
+- **Selector-driven.** Load 1-2 skills per task, not all 27.
 - **Three-tier prompt strategy:** this file -> skill-selector -> deep skills. Load order matters for cache efficiency:
   1. This file -- your working instructions (load it first if your tooling supports a persistent instructions/context file)
   2. `adamant-skill-selector/SKILL.md` -- always the first skill read

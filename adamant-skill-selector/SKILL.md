@@ -5,7 +5,7 @@ description: Route Adamant framework tasks to the correct skill(s). Load this FI
 
 # Adamant Skill Selector
 
-You have 26 Adamant skills totaling ~24900 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
+You have 27 Adamant skills totaling ~26200 lines (with references). Loading all of them wastes context. This skill maps your task to the 1-2 skills you actually need.
 
 **After reading this file, read the skill(s) indicated for your task. Do not load skills you don't need.**
 
@@ -196,11 +196,24 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
   proof-hostile; decide before committing to float (references/fixed-point-proofs.md)
 
 **Also load if needed:**
+- `adamant-spark-logic-packages` -- the extraction shape (sibling logic packages), the
+  silver-by-default posture, and the review-recurrent idioms
 - `adamant-component-dev` -- if adding SPARK to a component's logic
 - `adamant-build-system` -- if debugging prove build path issues
 - The toolchain vendor's `gnatprove` skill, when available -- authoritative for raw tool
   mechanics and SPARK language idioms; `adamant-formal-verification` covers how they meet
   the framework and states the one override that applies
+
+### SPARK extraction into logic packages
+**Load:** `adamant-spark-logic-packages`
+- Factoring provable logic out of a component into sibling packages (the extraction shape)
+- Choosing the proof level: silver by default, gold only for a stated reason
+- Idioms that recur in review: generated types and constants over restated widths (which
+  rules out `Pure`), no postcondition that restates an expression function, boundary
+  preconditions that are runtime checks
+- Reworking an extraction after review feedback
+
+**Also load:** `adamant-formal-verification` (contract mechanics, ghost code, proof debugging)
 
 ### Code style checking and compliance
 **Load:** `adamant-style`
@@ -237,6 +250,7 @@ Every passthrough accepts an optional path argument; see `CLAUDE.md` for the ful
 | Review generated or hand-written code | code-review | component-dev |
 | PR review (Adamant artifacts) | code-review | testing |
 | SPARK verification | formal-verification | component-dev |
+| Extract component logic into a proved SPARK package / pick a proof level | spark-logic-packages | formal-verification |
 | Convert existing integer logic to a proved SPARK package | formal-verification | component-dev |
 | Numeric code: choosing fixed-point vs float for provability | formal-verification (fixed-point ref) | -- |
 | A proof will not discharge / times out / a loop-invariant error blocks the run | formal-verification (proof-mechanics ref) | -- |
@@ -284,6 +298,8 @@ These patterns cause compilation errors if violated:
 **Also load if needed:**
 - `adamant-component-dev` -- for generated API reference when reviewing implementations
 - `adamant-testing` -- for test pattern reference when reviewing test quality
+- `adamant-spark-logic-packages` -- when the review covers a SPARK extraction (shape, proof
+  level, and the idioms that recur in review)
 
 ### Creating or improving Adamant skills
 **Load:** `adamant-skill-creation`
