@@ -146,6 +146,8 @@ packets:
 
 Add `Assembly_Product_Packets` to assembly `with:`.
 
+Packet names and any `description:` text must be plain ASCII: COSMOS validates the generated command/telemetry definitions as US-ASCII, so curly quotes, em dashes, or micro signs anywhere in the model chain fail the plugin's target validation. Use `"`, `'`, `--`, and `u` instead.
+
 ## COSMOS Plugin Generation
 
 ### Build Pipeline

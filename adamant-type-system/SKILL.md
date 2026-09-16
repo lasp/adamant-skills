@@ -543,6 +543,7 @@ byte_image: True         # Print as byte array instead of typed Image
 9. Sub-byte fields MUST use `mod` or `subtype range` types defined in preamble
 10. Arrays are ALWAYS fixed-length -- `variable_length` applies only to record fields, not array definitions
 10. Enum literal `value:` is optional -- auto-increments from 0 if omitted
+11. `description:` text must be plain ASCII -- no curly quotes, em dashes, or micro signs (common when pasting from ICDs; use `"`, `'`, `--`, and `u` instead). Descriptions flow into generated command/telemetry definitions that ground tooling (OpenC3 COSMOS) validates as US-ASCII
 
 ## Common Type Errors and Fixes
 

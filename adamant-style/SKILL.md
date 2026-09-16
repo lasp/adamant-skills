@@ -352,6 +352,7 @@ P : Some_Type_Access := Y'Access;      -- aliased required here
 4. **No tabs**: Spaces only
 5. **Quoted string defaults**: Enum defaults and string values: `default: "Sensor_Id.Sensor_Id_Type.Temperature_1"`
 6. **`with:` only for preamble/field types**: Include a package in `with:` only if preamble code or field types reference it
+7. **Plain ASCII only**: All model YAML text -- `description:` fields especially -- must be plain ASCII. Text pasted from ICDs or datasheets often carries curly quotes, em dashes, and micro signs; replace them with straight quotes (`"`, `'`), `--`, and `u`. Non-ASCII survives into the generated command/telemetry definitions, which ground tooling (OpenC3 COSMOS) validates as US-ASCII and rejects
 
 ### Type YAML Preamble Style
 

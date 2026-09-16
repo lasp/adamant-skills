@@ -60,6 +60,8 @@ Every field from the schema (`gen/schemas/assembly.yaml`):
 | `components` | map[] | **Yes** | List of component instances (min 1) |
 | `connections` | map[] | No | List of connector wiring between components |
 
+All `description:` text in assembly YAML must be plain ASCII -- no curly quotes, em dashes, or micro signs (use `"`, `'`, `--`, and `u`). Descriptions flow into generated command/telemetry definitions that ground tooling (OpenC3 COSMOS) validates as US-ASCII.
+
 **CRITICAL -- `with:` for assembly-generated packages**: The code generator auto-deduces `with` clauses for component packages but does NOT auto-deduce assembly-generated packages. If your `init:` expressions reference assembly-generated packages (e.g. `Assembly_Name_Data_Products`, `Assembly_Name_Commands`, `Assembly_Name_Enums`), you MUST list them explicitly in `with:`. Without this, the assembly body will fail with "undefined" errors. Check the existing project assemblies for examples.
 
 ### Component Fields
